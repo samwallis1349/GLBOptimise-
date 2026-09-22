@@ -5,6 +5,7 @@ import { defineConfig } from 'vite';
 // Vite's dev server and by most static hosts in "SPA fallback" mode).
 export default defineConfig({
   root: '.',
+  plugins: [],
   build: {
     outDir: 'dist',
     emptyOutDir: true,
