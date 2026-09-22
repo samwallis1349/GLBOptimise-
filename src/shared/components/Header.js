@@ -20,7 +20,7 @@ export function Header() {
 
   const brand = document.createElement('a');
   brand.className = 'ab-header__brand';
-  brand.href = '#/';
+  brand.href = '/';
   brand.innerHTML = `<img src="/branding/asset-bench-logo.svg" alt="" /><span>${APP_NAME}</span>`;
 
   const nav = document.createElement('nav');
@@ -29,7 +29,7 @@ export function Header() {
 
   const links = NAV_LINKS.map(({ label, path }) => {
     const a = document.createElement('a');
-    a.href = `#${path}`;
+    a.href = path;
     a.textContent = label;
     a.dataset.path = path;
     nav.appendChild(a);

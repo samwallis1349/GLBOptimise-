@@ -1,11 +1,8 @@
 /**
- * Minimal hash-based client-side router.
+ * Minimal History API client-side router.
  *
- * Hash routing is used deliberately: Asset Bench is a static SPA that may
- * be deployed to plain static hosting later, and hash routes need no
- * server-side rewrite rules to support deep links or a hard refresh.
- * Browser Back/Forward work automatically because hash changes are
- * ordinary history entries.
+ * Real paths are used so each page has a distinct, crawlable URL. The
+ * production host falls back unknown paths to index.html via public/_redirects.
  */
 
 let routes = [];
@@ -44,16 +41,17 @@ export function onRouteChange(listener) {
 }
 
 export function navigate(path) {
-  if (location.hash.slice(1) === path) {
+  if (location.pathname === path) {
     resolveRoute(path);
     return;
   }
-  location.hash = path;
+  history.pushState({}, '', path);
+  resolveRoute(path);
 }
 
-function normalizeHash() {
-  const raw = location.hash.replace(/^#/, '');
-  return raw === '' ? '/' : raw;
+function normalizePath() {
+  const path = location.pathname.replace(/\/+$/, '');
+  return path === '' ? '/' : path;
 }
 
 function matchRoute(path) {
@@ -103,6 +101,12 @@ async function resolveRoute(path) {
 }
 
 export function startRouter() {
-  window.addEventListener('hashchange', () => resolveRoute(normalizeHash()));
-  resolveRoute(normalizeHash());
+  window.addEventListener('popstate', () => resolveRoute(normalizePath()));
+
+  // Preserve old bookmarked hash routes by upgrading them once.
+  if (location.hash.startsWith('#/')) {
+    history.replaceState({}, '', location.hash.slice(1));
+  }
+
+  resolveRoute(normalizePath());
 }

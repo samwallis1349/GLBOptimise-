@@ -8,9 +8,9 @@ export function Footer() {
     <div class="container ab-footer__inner">
       <div class="ab-footer__meta">${APP_NAME} — ${APP_TAGLINE}</div>
       <nav class="ab-footer__links" aria-label="Footer">
-        <a href="#/tools">Tools</a>
-        <a href="#/about">About</a>
-        <a href="#/pricing">Pricing</a>
+        <a href="/tools">Tools</a>
+        <a href="/about">About</a>
+        <a href="/pricing">Pricing</a>
       </nav>
     </div>
   `;

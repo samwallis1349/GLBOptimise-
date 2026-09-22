@@ -39,7 +39,7 @@ export function ToolCard(tool) {
 
   const card = document.createElement('a');
   card.className = 'tool-card';
-  card.href = `#${tool.route}`;
+  card.href = tool.route;
   card.dataset.status = tool.status;
   if (category) card.style.setProperty('--card-accent', `var(${category.accent})`);
 

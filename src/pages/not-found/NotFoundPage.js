@@ -9,7 +9,7 @@ export function render(container) {
     <p class="tool-page__description" style="margin: 0 auto var(--space-5);">
       That page doesn't exist.
     </p>
-    <a class="btn btn--primary" href="#/">Back to Home</a>
+    <a class="btn btn--primary" href="/">Back to Home</a>
   `;
 
   container.appendChild(section);

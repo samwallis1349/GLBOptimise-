@@ -49,8 +49,8 @@ function HeroSection() {
     <p class="hero-split__tagline">Small tools. Bigger worlds.</p>
     <p class="hero-split__description">${APP_DESCRIPTION}</p>
     <div class="hero-split__actions">
-      <a class="btn btn--primary" href="#/tools">Explore Tools →</a>
-      <a class="btn btn--secondary" href="#/optimise-glb">${iconSvg('package-open')} Optimise a GLB</a>
+      <a class="btn btn--primary" href="/tools">Explore Tools →</a>
+      <a class="btn btn--secondary" href="/optimise-glb">${iconSvg('package-open')} Optimise a GLB</a>
     </div>
     <div class="hero-benefits">
       ${BENEFITS.map(
@@ -158,7 +158,7 @@ function CTAPanel() {
       </div>
     </div>
     <div class="cta-panel__action">
-      <a class="btn btn--primary" href="#/optimise-glb">${iconSvg('package-open')} Optimise a GLB →</a>
+      <a class="btn btn--primary" href="/optimise-glb">${iconSvg('package-open')} Optimise a GLB →</a>
       <div class="format-pills">
         <span class="format-pill">GLB</span>
         <span class="format-pill">FBX</span>
