@@ -1,0 +1,848 @@
+/* ==========================================================================
+   Rig Inspector
+   --------------------------------------------------------------------------
+   `.panel`/`.btn`/`.hero` are namespaced as `.ri-panel`/`.ri-btn`/`.ri-hero`
+   so they never collide with the shared site-wide primitives in
+   src/styles/*.css — same convention as Reduce Polys's `.rp-*`, Optimise
+   GLB's `.og-*` and Generate LODs's `.gl-*`. The base-primitives section is
+   ported the same way those tools port it. Unlike the processing tools,
+   there is only ever one viewport (nothing to compare a "before" against)
+   and no run/progress step — inspection happens the moment a file loads.
+   ========================================================================== */
+
+/* ---------- Base primitives ---------- */
+
+.ri-page .hidden {
+  display: none;
+}
+
+.ri-shell {
+  width: 100%;
+  max-width: var(--content-max-width);
+  margin: 0 auto;
+  padding: 0 var(--space-5);
+}
+
+.ri-main {
+  padding: var(--space-6) 0 var(--space-7);
+}
+
+.ri-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-6);
+  text-align: left;
+  margin-bottom: var(--space-6);
+  flex-wrap: wrap;
+}
+
+#ri-identity {
+  flex: 0 0 auto;
+}
+
+.hero-benefits {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-6);
+}
+
+.benefit {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+
+.benefit-icon {
+  width: 20px;
+  height: 20px;
+  color: var(--color-accent);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.benefit-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.benefit-desc {
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+.ri-panel {
+  background: var(--color-panel);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+}
+
+.ri-panel-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin: 0 0 var(--space-1);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.dropzone {
+  border: 2px dashed var(--color-accent-border);
+  border-radius: var(--radius-lg);
+  background: rgba(255, 181, 71, 0.04);
+  min-height: 280px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: var(--space-3);
+  padding: var(--space-6);
+  cursor: pointer;
+  transition:
+    background var(--transition-base),
+    border-color var(--transition-base);
+}
+
+.dropzone:hover,
+.dropzone.drag-active {
+  background: rgba(255, 181, 71, 0.08);
+  border-color: var(--color-accent);
+}
+
+.dropzone-icon {
+  width: 44px;
+  height: 44px;
+  color: var(--color-accent);
+}
+
+.dropzone-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.dropzone-sub {
+  font-size: 13px;
+  color: var(--color-text-muted);
+  margin: -6px 0 0;
+}
+
+.dropzone-hint {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  margin-top: var(--space-1);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.ri-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: 11px 20px;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    filter var(--transition-fast),
+    border-color var(--transition-fast),
+    background var(--transition-fast);
+  white-space: nowrap;
+}
+
+.ri-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.ri-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.ri-btn-primary {
+  background: var(--color-accent);
+  color: #1c1305;
+}
+
+.ri-btn-primary:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
+.ri-btn-ghost {
+  background: transparent;
+  color: var(--color-text-secondary);
+  border-color: transparent;
+}
+
+.ri-btn-ghost:hover:not(:disabled) {
+  color: var(--color-text-primary);
+}
+
+.ri-btn-secondary {
+  background: var(--color-panel-alt);
+  color: var(--color-text-primary);
+  border-color: var(--color-border-strong);
+}
+
+.ri-btn-secondary:hover:not(:disabled) {
+  border-color: var(--color-accent-border);
+}
+
+.ri-btn-block {
+  width: 100%;
+}
+
+.ri-btn-lg {
+  padding: 14px 24px;
+  font-size: 15px;
+}
+
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 34px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.switch-track {
+  position: absolute;
+  inset: 0;
+  background: var(--color-border-strong);
+  border-radius: var(--radius-pill);
+  transition: background var(--transition-fast);
+  cursor: pointer;
+}
+
+.switch-track::before {
+  content: '';
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  left: 3px;
+  top: 3px;
+  background: #fff;
+  border-radius: 50%;
+  transition: transform var(--transition-fast);
+}
+
+.switch input:checked + .switch-track {
+  background: var(--color-accent);
+}
+
+.switch input:checked + .switch-track::before {
+  transform: translateX(14px);
+}
+
+.switch input:focus-visible + .switch-track {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* ---------- Page shell ---------- */
+
+.ri-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1.42fr) minmax(0, 1fr);
+  gap: var(--space-4);
+  align-items: stretch;
+}
+
+@media (max-width: 1100px) {
+  .ri-workspace {
+    grid-template-columns: 1fr;
+  }
+}
+
+.ri-stage-panel {
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: calc(var(--header-height) + var(--space-4));
+}
+
+.ri-controls {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+/* ---------- Notice ---------- */
+
+.ri-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--color-accent-border);
+  background: var(--color-accent-dim);
+  border-radius: var(--radius-md);
+  color: var(--color-text-primary);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.ri-notice > svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  color: var(--color-accent);
+  margin-top: 1px;
+}
+
+.ri-notice span {
+  flex: 1;
+}
+
+.ri-notice-close {
+  background: none;
+  border: none;
+  padding: 2px;
+  cursor: pointer;
+  color: var(--color-text-muted);
+  line-height: 0;
+  border-radius: var(--radius-sm);
+}
+
+.ri-notice-close:hover {
+  color: var(--color-text-primary);
+}
+
+.ri-notice-close svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* ---------- Dropzone ---------- */
+
+.ri-dropzone {
+  flex: 1;
+  min-height: 420px;
+}
+
+/* ---------- Viewport ---------- */
+
+.ri-stage {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.ri-viewports {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  min-height: 420px;
+  max-height: 720px;
+}
+
+.ri-viewport {
+  grid-area: 1 / 1;
+  position: relative;
+  overflow: hidden;
+  background: #000000;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.ri-viewport canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.ri-viewport-tag {
+  position: absolute;
+  top: var(--space-2);
+  left: var(--space-2);
+  z-index: 2;
+  padding: 3px 8px;
+  border-radius: var(--radius-pill);
+  background: rgba(0, 0, 0, 0.66);
+  border: 1px solid var(--color-border);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+  pointer-events: none;
+}
+
+/* ---------- Heads-up stats ---------- */
+
+.ri-hud {
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-2);
+  z-index: 2;
+  min-width: 168px;
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: rgba(0, 0, 0, 0.72);
+  border: 1px solid var(--color-border);
+  backdrop-filter: blur(6px);
+  pointer-events: none;
+}
+
+.ri-hud-title {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--color-accent);
+  margin-bottom: var(--space-2);
+}
+
+.ri-hud-stats {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ri-hud-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-4);
+  font-size: 12px;
+}
+
+.ri-hud-row dt {
+  color: var(--color-text-muted);
+}
+
+.ri-hud-row dd {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--color-text-primary);
+}
+
+/* ---------- Viewer bar ---------- */
+
+.ri-viewer-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.ri-toggles {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.ri-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+}
+
+.ri-viewer-tools {
+  display: flex;
+  gap: var(--space-2);
+  margin-left: auto;
+}
+
+/* ---------- Model details (formal stat table, under the preview) ---------- */
+
+.ri-model-details {
+  border-top: 1px solid var(--color-border);
+  padding-top: var(--space-3);
+}
+
+.ri-model-details-file {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin-bottom: var(--space-3);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ri-model-details-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 var(--space-5);
+  margin: 0;
+}
+
+.ri-model-details-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: 6px 0;
+  border-bottom: 1px solid var(--color-border);
+  font-size: 12.5px;
+}
+
+.ri-model-details-row dt {
+  color: var(--color-text-muted);
+}
+
+.ri-model-details-row dd {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.ri-model-details-row.is-warn dd {
+  color: var(--color-warning);
+}
+
+.ri-model-details-row.is-error dd {
+  color: var(--color-danger);
+}
+
+@media (max-width: 560px) {
+  .ri-model-details-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.ri-seg {
+  display: inline-flex;
+  padding: 2px;
+  gap: 2px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  background: var(--color-panel);
+}
+
+.ri-seg-btn {
+  appearance: none;
+  border: none;
+  background: none;
+  cursor: pointer;
+  padding: 5px 12px;
+  border-radius: var(--radius-pill);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  transition: background var(--transition-fast), color var(--transition-fast);
+  white-space: nowrap;
+}
+
+.ri-seg-btn:hover {
+  color: var(--color-text-primary);
+  background: var(--color-panel-alt);
+}
+
+.ri-seg-btn.is-active {
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+}
+
+.ri-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background: var(--color-panel);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.ri-icon-btn:hover {
+  color: var(--color-text-primary);
+  border-color: var(--color-border-strong);
+}
+
+.ri-icon-btn.is-active {
+  color: var(--color-on-accent);
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+.ri-icon-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* ---------- How it works / What gets checked (pre-upload filler) ---------- */
+
+.ri-steps {
+  list-style: none;
+  margin: var(--space-3) 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.ri-steps li {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--color-text-secondary);
+}
+
+.ri-step-num {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--color-on-accent);
+  background: var(--color-accent);
+}
+
+.ri-info-list {
+  list-style: none;
+  margin: var(--space-3) 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.ri-info-list li {
+  position: relative;
+  padding-left: var(--space-4);
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--color-text-secondary);
+}
+
+.ri-info-list li::before {
+  content: '';
+  position: absolute;
+  left: 2px;
+  top: 8px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  opacity: 0.7;
+}
+
+/* ---------- Rig summary ---------- */
+
+.ri-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2);
+  margin: var(--space-3) 0 var(--space-4);
+}
+
+.ri-stat-tile {
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: var(--color-panel-alt);
+}
+
+.ri-stat-value {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--color-text-primary);
+  line-height: 1.1;
+}
+
+.ri-stat-tile.is-warn .ri-stat-value {
+  color: var(--color-warning);
+}
+
+.ri-stat-tile.is-error .ri-stat-value {
+  color: var(--color-danger);
+}
+
+.ri-stat-label {
+  margin-top: 2px;
+  font-size: 11px;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.ri-download-btn {
+  margin-top: var(--space-1);
+}
+
+/* ---------- Model check ---------- */
+
+.ri-check-list {
+  list-style: none;
+  margin: var(--space-3) 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.ri-check {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--color-text-secondary);
+}
+
+.ri-check-mark {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: 11px;
+  font-weight: 700;
+  border: 1px solid var(--color-border-strong);
+  color: var(--color-text-muted);
+}
+
+.ri-check.is-ok .ri-check-mark {
+  color: var(--color-accent);
+  border-color: var(--color-accent-border);
+  background: var(--color-accent-dim);
+}
+
+.ri-check.is-warn .ri-check-mark {
+  color: var(--color-on-accent);
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+.ri-check.is-error .ri-check-mark {
+  color: #000000;
+  background: var(--color-white);
+  border-color: var(--color-white);
+}
+
+/* ---------- Skeleton hierarchy tree ---------- */
+
+.ri-hierarchy-hint {
+  margin: 0 0 var(--space-3);
+  font-size: 11.5px;
+  color: var(--color-text-muted);
+}
+
+.ri-tree {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  max-height: 360px;
+  overflow-y: auto;
+}
+
+.ri-tree-skin-name {
+  padding: var(--space-2) 0 var(--space-1);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+}
+
+.ri-tree-skin-name:not(:first-child) {
+  margin-top: var(--space-2);
+  border-top: 1px solid var(--color-border);
+  padding-top: var(--space-3);
+}
+
+.ri-tree-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  padding: 5px var(--space-2);
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: 12.5px;
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.ri-tree-row:hover {
+  background: var(--color-panel-alt);
+  color: var(--color-text-primary);
+}
+
+.ri-tree-row-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ri-tree-row.is-duplicate .ri-tree-row-name {
+  color: var(--color-warning);
+}
+
+.ri-tree-row-count {
+  margin-left: auto;
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--color-text-muted);
+}
+
+/* ---------- Restart ---------- */
+
+#ri-restart-panel {
+  padding: 0;
+  background: none;
+  border: none;
+}

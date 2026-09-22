@@ -1,0 +1,149 @@
+/**
+ * Optimise GLB page layout. Global element resets (box-sizing, body
+ * background, #app flex column) are intentionally NOT duplicated here —
+ * the site shell (src/styles/reset.css, global.css) already provides
+ * them for every page. This file only holds this tool's own layout.
+ */
+
+.og-shell {
+  width: 100%;
+  max-width: var(--content-max-width);
+  margin: 0 auto;
+  padding: 0 var(--space-5);
+}
+
+.og-main {
+  padding: var(--space-6) 0 var(--space-7);
+}
+
+.og-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-6);
+  text-align: left;
+  margin-bottom: var(--space-6);
+  flex-wrap: wrap;
+}
+
+#tool-identity {
+  flex: 0 0 auto;
+}
+
+.hero-benefits {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-6);
+}
+
+/* ---------- Upload + Preset row ---------- */
+
+.workspace-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: var(--space-5);
+  align-items: stretch;
+}
+
+@media (max-width: 900px) {
+  .workspace-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---------- Results row ---------- */
+
+.results-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 320px;
+  gap: var(--space-5);
+  margin-top: var(--space-5);
+  align-items: stretch;
+}
+
+@media (max-width: 1000px) {
+  .results-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.preview-stage {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  border-radius: var(--radius-md);
+  background: #000000;
+  border: 1px solid var(--color-border);
+  position: relative;
+  overflow: hidden;
+}
+
+.preview-stage canvas {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+}
+
+.stat-list {
+  margin-top: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.stat-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+.stat-row svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  opacity: 0.75;
+}
+
+/* ---------- Model check ---------- */
+
+.model-check {
+  margin-top: var(--space-5);
+}
+
+.model-check-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+}
+
+/* ---------- File queue ---------- */
+
+.file-queue {
+  margin-top: var(--space-4);
+}
+
+.file-queue-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin-top: var(--space-2);
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+/* ---------- Utility ---------- */
+
+.og-page .hidden {
+  display: none !important;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}

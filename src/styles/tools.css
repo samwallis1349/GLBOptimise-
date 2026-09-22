@@ -1,0 +1,75 @@
+/* Shared layout for individual tool pages. Tool-specific visuals should
+   still be composed from variables.css tokens and components.css
+   primitives — this file only holds the tool-page scaffolding. */
+
+.tool-page__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+  flex-wrap: wrap;
+}
+
+.tool-page__title {
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin-bottom: var(--space-1);
+}
+
+.tool-page__description {
+  color: var(--text-secondary);
+  max-width: 560px;
+}
+
+.tool-page__layout {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  gap: var(--space-5);
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .tool-page__layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.tool-page__stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.tool-page__placeholder {
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-6);
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.tool-page__viewer-slot {
+  aspect-ratio: 4 / 3;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.tool-page__results {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-3);
+}
+
+@media (max-width: 480px) {
+  .tool-page__results {
+    grid-template-columns: 1fr;
+  }
+}

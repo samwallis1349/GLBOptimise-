@@ -1,0 +1,14 @@
+node_modules
+dist
+.env
+.env.*
+*.log
+.DS_Store
+Thumbs.db
+
+# Local temporary processing output — never committed
+/tmp-processing/
+*.tmp
+
+# Local scratch outputs (review screenshots, generated zips) — not source
+/Claude outputs/

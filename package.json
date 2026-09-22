@@ -1,0 +1,24 @@
+{
+  "name": "asset-bench",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Asset Bench — browser-based tools for preparing 3D assets for games and realtime applications.",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "vite": "^8.3.0"
+  },
+  "dependencies": {
+    "@gltf-transform/core": "^4.5.0",
+    "@gltf-transform/extensions": "^4.5.0",
+    "@gltf-transform/functions": "^4.5.0",
+    "jszip": "^3.10.1",
+    "ktx2-encoder": "^0.6.0",
+    "meshoptimizer": "^1.2.0",
+    "three": "^0.186.0"
+  }
+}

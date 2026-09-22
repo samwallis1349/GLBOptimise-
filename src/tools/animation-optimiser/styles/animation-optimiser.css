@@ -1,0 +1,1093 @@
+/* ==========================================================================
+   Animation Optimiser
+   --------------------------------------------------------------------------
+   `.panel`/`.btn`/`.hero` are namespaced as `.ao-panel`/`.ao-btn`/`.ao-hero`
+   so they never collide with the shared site-wide primitives in
+   src/styles/*.css — same convention as Optimise GLB's `.og-*`, Reduce
+   Polys's `.rp-*`, Generate LODs's `.gl-*`, Strip Animations's `.sa-*` and
+   Rig Inspector's `.ri-*`. The base-primitives section is ported the same way
+   those tools port it.
+
+   Layout note: the transport scrubber and the curve editor sit directly
+   above/below each other inside the stage panel rather than being split
+   across columns, because they share one X axis — time. A playhead that
+   doesn't line up with the curve underneath it is worse than no playhead.
+   ========================================================================== */
+
+/* ---------- Base primitives ---------- */
+
+.ao-page .hidden {
+  display: none;
+}
+
+.ao-shell {
+  width: 100%;
+  max-width: var(--content-max-width);
+  margin: 0 auto;
+  padding: 0 var(--space-5);
+}
+
+.ao-main {
+  padding: var(--space-6) 0 var(--space-7);
+}
+
+.ao-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-6);
+  text-align: left;
+  margin-bottom: var(--space-6);
+  flex-wrap: wrap;
+}
+
+#ao-identity {
+  flex: 0 0 auto;
+}
+
+.hero-benefits {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-6);
+}
+
+.benefit {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+
+.benefit-icon {
+  width: 20px;
+  height: 20px;
+  color: var(--color-accent);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.benefit-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.benefit-desc {
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+.ao-panel {
+  background: var(--color-panel);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+}
+
+.ao-panel-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin: 0 0 var(--space-1);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.ao-panel-count {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  color: var(--color-text-muted);
+  font-family: var(--font-mono);
+}
+
+.dropzone {
+  border: 2px dashed var(--color-accent-border);
+  border-radius: var(--radius-lg);
+  background: rgba(255, 181, 71, 0.04);
+  min-height: 280px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: var(--space-3);
+  padding: var(--space-6);
+  cursor: pointer;
+  transition:
+    background var(--transition-base),
+    border-color var(--transition-base);
+}
+
+.dropzone:hover,
+.dropzone.drag-active {
+  background: rgba(255, 181, 71, 0.08);
+  border-color: var(--color-accent);
+}
+
+.dropzone-icon {
+  width: 44px;
+  height: 44px;
+  color: var(--color-accent);
+}
+
+.dropzone-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.dropzone-sub {
+  font-size: 13px;
+  color: var(--color-text-muted);
+  margin: -6px 0 0;
+}
+
+.dropzone-hint {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  margin-top: var(--space-1);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.ao-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: 11px 20px;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    filter var(--transition-fast),
+    border-color var(--transition-fast),
+    background var(--transition-fast);
+  white-space: nowrap;
+}
+
+.ao-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.ao-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.ao-btn-primary {
+  background: var(--color-accent);
+  color: #1c1305;
+}
+
+.ao-btn-primary:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
+.ao-btn-ghost {
+  background: transparent;
+  color: var(--color-text-secondary);
+  border-color: transparent;
+}
+
+.ao-btn-ghost:hover:not(:disabled) {
+  color: var(--color-text-primary);
+}
+
+.ao-btn-secondary {
+  background: var(--color-panel-alt);
+  color: var(--color-text-primary);
+  border-color: var(--color-border-strong);
+}
+
+.ao-btn-secondary:hover:not(:disabled) {
+  border-color: var(--color-accent-border);
+}
+
+.ao-btn-block {
+  width: 100%;
+}
+
+.ao-btn-lg {
+  padding: 14px 24px;
+  font-size: 15px;
+}
+
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 34px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.switch-track {
+  position: absolute;
+  inset: 0;
+  background: var(--color-border-strong);
+  border-radius: var(--radius-pill);
+  transition: background var(--transition-fast);
+  cursor: pointer;
+}
+
+.switch-track::before {
+  content: '';
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  left: 3px;
+  top: 3px;
+  background: #fff;
+  border-radius: 50%;
+  transition: transform var(--transition-fast);
+}
+
+.switch input:checked + .switch-track {
+  background: var(--color-accent);
+}
+
+.switch input:checked + .switch-track::before {
+  transform: translateX(14px);
+}
+
+.switch input:focus-visible + .switch-track {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.select {
+  appearance: none;
+  background: var(--color-panel-alt);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-primary);
+  font-size: 12.5px;
+  font-family: inherit;
+  padding: 6px 26px 6px 10px;
+  cursor: pointer;
+  background-image: linear-gradient(45deg, transparent 50%, currentColor 50%),
+    linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position: calc(100% - 14px) 50%, calc(100% - 9px) 50%;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+}
+
+.select:hover {
+  border-color: var(--color-accent-border);
+}
+
+.select:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+
+/* ---------- Page shell ---------- */
+
+.ao-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1.52fr) minmax(0, 1fr);
+  gap: var(--space-4);
+  align-items: stretch;
+}
+
+@media (max-width: 1180px) {
+  .ao-workspace {
+    grid-template-columns: 1fr;
+  }
+}
+
+.ao-stage-panel {
+  display: flex;
+  flex-direction: column;
+}
+
+.ao-controls {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+/* ---------- Notice ---------- */
+
+.ao-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--color-accent-border);
+  background: var(--color-accent-dim);
+  border-radius: var(--radius-md);
+  color: var(--color-text-primary);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.ao-notice > svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  color: var(--color-accent);
+  margin-top: 1px;
+}
+
+.ao-notice span {
+  flex: 1;
+}
+
+.ao-notice-close {
+  background: none;
+  border: none;
+  padding: 2px;
+  cursor: pointer;
+  color: var(--color-text-muted);
+  line-height: 0;
+  border-radius: var(--radius-sm);
+}
+
+.ao-notice-close:hover {
+  color: var(--color-text-primary);
+}
+
+.ao-notice-close svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* ---------- Dropzone ---------- */
+
+.ao-dropzone {
+  flex: 1;
+  min-height: 460px;
+}
+
+/* ---------- Viewport ---------- */
+
+.ao-stage {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.ao-viewports {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  min-height: 380px;
+}
+
+.ao-viewport {
+  grid-area: 1 / 1;
+  position: relative;
+  overflow: hidden;
+  background: #000000;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.ao-viewport canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.ao-viewport-tag {
+  position: absolute;
+  top: var(--space-2);
+  left: var(--space-2);
+  z-index: 2;
+  max-width: 60%;
+  padding: 3px 8px;
+  border-radius: var(--radius-pill);
+  background: rgba(0, 0, 0, 0.66);
+  border: 1px solid var(--color-border);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+  pointer-events: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---------- Heads-up stats ---------- */
+
+.ao-hud {
+  grid-area: 1 / 1;
+  align-self: start;
+  justify-self: end;
+  z-index: 2;
+  margin: var(--space-2);
+  min-width: 158px;
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: rgba(0, 0, 0, 0.72);
+  border: 1px solid var(--color-border);
+  backdrop-filter: blur(6px);
+  pointer-events: none;
+}
+
+.ao-hud-title {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--color-accent);
+  margin-bottom: var(--space-2);
+}
+
+.ao-hud-stats {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ao-hud-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-4);
+  font-size: 12px;
+}
+
+.ao-hud-row dt {
+  color: var(--color-text-muted);
+}
+
+.ao-hud-row dd {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--color-text-primary);
+}
+
+/* ---------- Transport ---------- */
+
+.ao-transport {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-panel-alt);
+}
+
+.ao-transport-buttons {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.ao-transport-readout {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--color-text-primary);
+  white-space: nowrap;
+}
+
+.ao-time-sep,
+.ao-time-total {
+  color: var(--color-text-muted);
+}
+
+.ao-fps-tag {
+  margin-left: var(--space-2);
+  padding: 2px 7px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--color-border);
+  font-size: 10.5px;
+  color: var(--color-text-secondary);
+}
+
+.ao-transport-options {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  padding-top: var(--space-1);
+}
+
+.ao-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+}
+
+.ao-speed-field {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+.ao-viewer-tools {
+  display: flex;
+  gap: var(--space-2);
+  margin-left: auto;
+}
+
+/* The scrubber. Styled explicitly on both engines — a default range input
+   next to a monospace timecode looks like a bug, not a control. */
+.ao-scrub {
+  appearance: none;
+  width: 100%;
+  height: 4px;
+  border-radius: var(--radius-pill);
+  background: var(--color-border-strong);
+  cursor: pointer;
+  outline: none;
+}
+
+.ao-scrub::-webkit-slider-thumb {
+  appearance: none;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  border: 2px solid var(--color-panel);
+  cursor: grab;
+}
+
+.ao-scrub::-moz-range-thumb {
+  width: 13px;
+  height: 13px;
+  border: 2px solid var(--color-panel);
+  border-radius: 50%;
+  background: var(--color-accent);
+  cursor: grab;
+}
+
+.ao-scrub:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 3px;
+}
+
+.ao-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background: var(--color-panel);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  padding: 0;
+}
+
+.ao-icon-btn:hover {
+  color: var(--color-text-primary);
+  border-color: var(--color-border-strong);
+}
+
+.ao-icon-btn.is-active {
+  color: var(--color-on-accent);
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+.ao-icon-btn svg {
+  width: 15px;
+  height: 15px;
+}
+
+.ao-play-btn {
+  width: 38px;
+  height: 38px;
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: var(--color-on-accent);
+}
+
+.ao-play-btn:hover {
+  filter: brightness(1.08);
+  color: var(--color-on-accent);
+  border-color: var(--color-accent);
+}
+
+.ao-play-btn svg {
+  width: 17px;
+  height: 17px;
+}
+
+.ao-play-btn #ao-play-icon {
+  display: inline-flex;
+  line-height: 0;
+}
+
+/* ---------- Model check ---------- */
+
+.ao-check-list {
+  list-style: none;
+  margin: var(--space-3) 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.ao-check {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--color-text-secondary);
+}
+
+.ao-check-mark {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: 11px;
+  font-weight: 700;
+  border: 1px solid var(--color-border-strong);
+  color: var(--color-text-muted);
+}
+
+.ao-check.is-ok .ao-check-mark {
+  color: var(--color-accent);
+  border-color: var(--color-accent-border);
+  background: var(--color-accent-dim);
+}
+
+.ao-check.is-warn .ao-check-mark {
+  color: var(--color-on-accent);
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+.ao-check.is-error .ao-check-mark {
+  color: #000000;
+  background: var(--color-white);
+  border-color: var(--color-white);
+}
+
+/* ---------- Pre-upload panels ---------- */
+
+.ao-steps {
+  list-style: none;
+  margin: var(--space-3) 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.ao-steps li {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--color-text-secondary);
+}
+
+.ao-step-num {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--color-on-accent);
+  background: var(--color-accent);
+}
+
+.ao-info-list {
+  list-style: none;
+  margin: var(--space-3) 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.ao-info-list li {
+  position: relative;
+  padding-left: var(--space-4);
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--color-text-secondary);
+}
+
+.ao-info-list li::before {
+  content: '';
+  position: absolute;
+  left: 2px;
+  top: 8px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  opacity: 0.7;
+}
+
+/* Pre-upload only: the last visible panel before a file loads, so letting it
+   grow squares the controls column up with the stage panel opposite it. The
+   ID selector outranks the shared `.hidden` rule's two-class specificity, so
+   that has to be restated at ID+class strength or hiding it stops working. */
+#ao-info-panel {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+}
+
+#ao-info-panel.hidden {
+  display: none;
+}
+
+/* ---------- Actions ---------- */
+
+#ao-actions-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-4);
+}
+
+#ao-actions-panel.hidden {
+  display: none;
+}
+
+/* ==========================================================================
+   Animation Optimiser — tool-specific blocks
+   ========================================================================== */
+
+/* ---------- A/B variant toggle ---------- */
+
+/* Sits over the viewport rather than beside it: the whole point is comparing
+   the same frame twice, so the control belongs in the same place your eye
+   already is. */
+.ao-ab {
+  grid-area: 1 / 1;
+  align-self: start;
+  justify-self: start;
+  z-index: 3;
+  margin: var(--space-2);
+  display: inline-flex;
+  padding: 2px;
+  gap: 2px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--color-border);
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(6px);
+}
+
+.ao-ab-btn {
+  appearance: none;
+  border: none;
+  background: none;
+  cursor: pointer;
+  padding: 5px 13px;
+  border-radius: var(--radius-pill);
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--color-text-secondary);
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.ao-ab-btn:hover:not(:disabled) {
+  color: var(--color-text-primary);
+}
+
+.ao-ab-btn.is-active {
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+}
+
+.ao-ab-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.ao-ab-hint {
+  margin: 0;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--color-text-muted);
+}
+
+.ao-clip-field {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  min-width: 0;
+}
+
+.ao-clip-field .ao-select {
+  max-width: 260px;
+}
+
+/* ---------- Reduction settings ---------- */
+
+.ao-preset-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: var(--space-3) 0 var(--space-4);
+}
+
+.ao-preset {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-3);
+  text-align: left;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: var(--color-panel-alt);
+  cursor: pointer;
+  transition: border-color var(--transition-fast), background var(--transition-fast);
+}
+
+.ao-preset:hover {
+  border-color: var(--color-border-strong);
+}
+
+.ao-preset.is-active {
+  border-color: var(--color-accent-border);
+  background: var(--color-accent-dim);
+}
+
+.ao-preset-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.ao-preset.is-active .ao-preset-label {
+  color: var(--color-accent);
+}
+
+.ao-preset-desc {
+  font-size: 11.5px;
+  line-height: 1.4;
+  color: var(--color-text-muted);
+}
+
+.ao-field-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.ao-field-label {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+.ao-switch-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.ao-run-btn {
+  margin-top: var(--space-1);
+}
+
+/* ---------- Progress ---------- */
+
+.ao-progress {
+  margin-top: var(--space-3);
+}
+
+.ao-progress-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-2);
+}
+
+.ao-progress-track {
+  height: 4px;
+  border-radius: var(--radius-pill);
+  background: var(--color-border-strong);
+  overflow: hidden;
+}
+
+.ao-progress-fill {
+  height: 100%;
+  width: 0;
+  border-radius: var(--radius-pill);
+  background: var(--color-accent);
+  transition: width 220ms ease;
+}
+
+/* ---------- Result stats ---------- */
+
+.ao-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2);
+  margin: var(--space-3) 0 var(--space-4);
+}
+
+.ao-stat-tile {
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: var(--color-panel-alt);
+}
+
+.ao-stat-value {
+  font-family: var(--font-mono);
+  font-size: 19px;
+  font-weight: 800;
+  color: var(--color-text-primary);
+  line-height: 1.1;
+}
+
+.ao-stat-tile.is-good .ao-stat-value {
+  color: var(--color-accent);
+}
+
+.ao-stat-tile.is-warn .ao-stat-value {
+  color: var(--color-warning);
+}
+
+.ao-stat-label {
+  margin-top: 2px;
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.ao-stat-sub {
+  margin-top: 1px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--color-text-muted);
+}
+
+/* ---------- Per-clip table ---------- */
+
+.ao-clip-table {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin-bottom: var(--space-4);
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.ao-clip-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) repeat(3, minmax(0, 0.75fr));
+  align-items: center;
+  gap: var(--space-2);
+  padding: 5px var(--space-2);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--color-text-secondary);
+}
+
+.ao-clip-row:nth-child(odd) {
+  background: var(--color-panel-alt);
+}
+
+.ao-clip-row--head {
+  background: none !important;
+  font-family: var(--font-sans);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.ao-clip-row > span:not(:first-child) {
+  text-align: right;
+}
+
+.ao-clip-name {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: var(--color-text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ao-clip-row.is-removed .ao-clip-name {
+  color: var(--color-text-muted);
+  text-decoration: line-through;
+}
+
+.ao-saved {
+  color: var(--color-accent);
+}
+
+.ao-download-btn {
+  margin-bottom: var(--space-2);
+}

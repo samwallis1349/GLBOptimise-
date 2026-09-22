@@ -1,0 +1,290 @@
+/**
+ * F8 visual layout editor — overlay, toolbar and interaction affordances.
+ * Entirely additive: nothing here is visible unless the editor is active,
+ * and none of it is ever part of the application's real layout.
+ */
+
+.ab-editor-overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 999900;
+}
+
+body.ab-edit-mode {
+  cursor: default;
+}
+
+body.ab-editor-placing-text {
+  cursor: crosshair;
+}
+
+/* --- Selection boxes ------------------------------------------------- */
+
+.ab-editor-box {
+  position: absolute;
+  pointer-events: none;
+  border: 1.5px solid var(--accent, #ffb547);
+  background: rgba(255, 181, 71, 0.06);
+  box-sizing: border-box;
+}
+
+.ab-editor-combined-box {
+  position: absolute;
+  pointer-events: none;
+  border: 1.5px dashed var(--accent, #ffb547);
+  box-sizing: border-box;
+}
+
+.ab-editor-box__name,
+.ab-editor-box__dim {
+  position: absolute;
+  pointer-events: none;
+  font: 500 11px/1.4 ui-monospace, "SF Mono", Consolas, monospace;
+  color: #10100e;
+  background: var(--accent, #ffb547);
+  padding: 2px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.ab-editor-box__name {
+  left: 0;
+  top: -22px;
+}
+
+.ab-editor-box__dim {
+  right: 0;
+  bottom: -22px;
+}
+
+/* --- Resize handles ---------------------------------------------------- */
+
+.ab-editor-handle {
+  position: absolute;
+  width: 9px;
+  height: 9px;
+  background: #10100e;
+  border: 2px solid var(--accent, #ffb547);
+  border-radius: 2px;
+  pointer-events: auto;
+  display: none;
+}
+
+.ab-editor-box--solo .ab-editor-handle {
+  pointer-events: auto;
+}
+
+.ab-editor-handle--nw { left: -5px; top: -5px; }
+.ab-editor-handle--n  { left: 50%; top: -5px; margin-left: -4.5px; }
+.ab-editor-handle--ne { right: -5px; top: -5px; }
+.ab-editor-handle--e  { right: -5px; top: 50%; margin-top: -4.5px; }
+.ab-editor-handle--se { right: -5px; bottom: -5px; }
+.ab-editor-handle--s  { left: 50%; bottom: -5px; margin-left: -4.5px; }
+.ab-editor-handle--sw { left: -5px; bottom: -5px; }
+.ab-editor-handle--w  { left: -5px; top: 50%; margin-top: -4.5px; }
+
+/* --- Alignment guides -------------------------------------------------- */
+
+.ab-editor-guide {
+  position: fixed;
+  pointer-events: none;
+  background: #5fb4ff;
+  display: none;
+  z-index: 999899;
+}
+
+.ab-editor-guide--v { top: 0; bottom: 0; width: 1px; }
+.ab-editor-guide--h { left: 0; right: 0; height: 1px; }
+
+/* --- Toolbar ------------------------------------------------------------ */
+
+.ab-editor-toolbar {
+  position: fixed;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 999999;
+  display: none;
+  flex-direction: column;
+  gap: 8px;
+  background: var(--panel, #1b1b17);
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.08));
+  border-radius: 10px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  padding: 8px 10px;
+  font: 500 12px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: var(--text-primary, #f4f1ea);
+  max-width: calc(100vw - 32px);
+}
+
+.ab-editor-grip {
+  align-self: center;
+  cursor: grab;
+  color: var(--text-muted, #6f6c65);
+  font-size: 12px;
+  user-select: none;
+  touch-action: none;
+}
+
+.ab-editor-badge {
+  align-self: center;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: var(--accent, #ffb547);
+}
+
+.ab-editor-badge__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent, #ffb547);
+  animation: ab-editor-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes ab-editor-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+
+.ab-editor-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.ab-editor-btn {
+  appearance: none;
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.08));
+  background: var(--panel-elevated, #211f1a);
+  color: var(--text-primary, #f4f1ea);
+  border-radius: 6px;
+  padding: 5px 9px;
+  font: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.ab-editor-btn:hover:not(:disabled) {
+  border-color: var(--border-hover, rgba(255, 181, 71, 0.45));
+}
+
+.ab-editor-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.ab-editor-btn--active {
+  background: var(--accent, #ffb547);
+  color: #10100e;
+  border-color: var(--accent, #ffb547);
+}
+
+.ab-editor-btn--flash {
+  background: var(--success, #5fce8f);
+  color: #10100e;
+  border-color: var(--success, #5fce8f);
+}
+
+.ab-editor-align-panel {
+  display: none;
+  flex-direction: column;
+  gap: 6px;
+  border-top: 1px solid var(--border, rgba(255, 255, 255, 0.08));
+  padding-top: 8px;
+}
+
+.ab-editor-align-panel--open {
+  display: flex;
+}
+
+.ab-editor-align-group {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.ab-editor-inspector {
+  display: none;
+  flex-direction: column;
+  gap: 6px;
+  border-top: 1px solid var(--border, rgba(255, 255, 255, 0.08));
+  padding-top: 8px;
+}
+
+.ab-editor-selected-label {
+  font-weight: 600;
+  color: var(--text-secondary, #a8a49b);
+}
+
+.ab-editor-row--xywh,
+.ab-editor-row--text {
+  display: none;
+}
+
+.ab-editor-field {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--text-muted, #6f6c65);
+  font-size: 10px;
+}
+
+.ab-editor-field input {
+  width: 56px;
+  background: var(--bg-secondary, #16160f);
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.08));
+  border-radius: 4px;
+  color: var(--text-primary, #f4f1ea);
+  padding: 3px 5px;
+  font: inherit;
+}
+
+.ab-editor-row--text input[type="number"] {
+  width: 52px;
+  background: var(--bg-secondary, #16160f);
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.08));
+  border-radius: 4px;
+  color: var(--text-primary, #f4f1ea);
+  padding: 3px 5px;
+  font: inherit;
+}
+
+.ab-editor-row--text select {
+  background: var(--bg-secondary, #16160f);
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.08));
+  border-radius: 4px;
+  color: var(--text-primary, #f4f1ea);
+  padding: 3px 5px;
+  font: inherit;
+}
+
+.ab-editor-row--text input[type="color"] {
+  width: 28px;
+  height: 24px;
+  padding: 0;
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.08));
+  border-radius: 4px;
+  background: none;
+}
+
+/* --- Editor-added assets ------------------------------------------------ */
+
+.ab-editor-asset {
+  user-select: none;
+}
+
+.ab-editor-text {
+  cursor: default;
+  outline: none;
+}
+
+.ab-editor-text--editing {
+  cursor: text;
+  outline: 1px dashed var(--accent, #ffb547);
+  user-select: text;
+}

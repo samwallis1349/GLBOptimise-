@@ -1,0 +1,6 @@
+<!-- TEMPORARY PLACEHOLDER LOGO — replace with final Asset Bench branding. -->
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect x="2" y="2" width="28" height="28" rx="6" fill="#1B1B17" stroke="#FFB547" stroke-width="1.5"/>
+  <path d="M16 8L23 12V20L16 24L9 20V12L16 8Z" stroke="#FFB547" stroke-width="1.5" stroke-linejoin="round"/>
+  <path d="M16 16L23 12M16 16L9 12M16 16V24" stroke="#FFB547" stroke-width="1.5" stroke-linejoin="round"/>
+</svg>

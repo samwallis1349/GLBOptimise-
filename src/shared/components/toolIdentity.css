@@ -1,0 +1,301 @@
+/**
+ * Styles for ToolIdentity.js. Each tool injects this alongside its own CSS
+ * (dynamically, only while mounted) rather than it being a globally-loaded
+ * site stylesheet — it uses each tool's own --color-* tokens, which don't
+ * exist outside a tool page.
+ */
+
+/* Horizontal by design: the mark stands roughly as tall as the text block
+   beside it, and the wordmark dominates the width. */
+.tool-identity {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.tool-identity-mark {
+  flex-shrink: 0;
+}
+
+/* Roughly the height of the text block it sits beside. */
+.tool-mark {
+  width: 90px;
+  height: 90px;
+  display: block;
+}
+
+.tool-mark-frame {
+  stroke: var(--color-accent);
+  opacity: 0.55;
+}
+
+.tool-mark-cube .face-top {
+  fill: rgba(255, 255, 255, 0.1);
+}
+
+.tool-mark-cube .face-left {
+  fill: rgba(255, 255, 255, 0.03);
+}
+
+.tool-mark-cube .face-right {
+  fill: rgba(255, 255, 255, 0.06);
+}
+
+.tool-mark-edges {
+  stroke: var(--color-accent);
+}
+
+.tool-mark-label {
+  fill: var(--color-text-secondary);
+  font-family: var(--font-sans);
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-anchor: middle;
+  dominant-baseline: middle;
+}
+
+/* Reduce Polys mark: a wireframe sphere, dense on the left, sparse on the
+   right. Not styled in the source this was adapted from — added here to
+   match the glb-cube mark's construction language (charcoal fill, amber
+   edges, opacity used to tell dense/sparse apart). */
+.poly-body {
+  fill: rgba(255, 255, 255, 0.05);
+  stroke: var(--color-accent);
+  opacity: 0.4;
+}
+
+.poly-dense {
+  stroke: var(--color-accent);
+  opacity: 0.85;
+}
+
+.poly-sparse {
+  stroke: var(--color-accent);
+}
+
+.poly-seam {
+  stroke: var(--color-accent);
+  opacity: 0.7;
+}
+
+/* Compress Textures mark: a sheet at two resolutions. */
+.tex-body {
+  fill: rgba(255, 255, 255, 0.05);
+  stroke: rgba(255, 255, 255, 0.16);
+  stroke-width: 1;
+}
+
+.tex-fine {
+  stroke: var(--color-accent);
+  opacity: 0.45;
+  fill: none;
+}
+
+.tex-fill-fine {
+  fill: rgba(255, 181, 71, 0.16);
+}
+
+.tex-coarse {
+  stroke: var(--color-accent);
+  opacity: 0.85;
+  fill: none;
+}
+
+.tex-fill-coarse {
+  fill: rgba(255, 181, 71, 0.3);
+}
+
+.tex-seam {
+  stroke: var(--color-white);
+  opacity: 0.34;
+  fill: none;
+}
+
+/* Generate LODs mark: three detail planes stacked in depth, from the
+   densest/closest (LOD0) to the sparsest/furthest (LOD2) — echoes the
+   poly-mesh mark's dense/sparse language, but stacked rather than
+   side-by-side to read as a level-of-detail chain. */
+.lod-plane {
+  fill: rgba(255, 255, 255, 0.05);
+  stroke: none;
+}
+
+.lod-plane-1 {
+  fill: rgba(255, 255, 255, 0.1);
+}
+
+.lod-plane-2 {
+  fill: rgba(255, 255, 255, 0.07);
+}
+
+.lod-plane-3 {
+  fill: rgba(255, 255, 255, 0.04);
+}
+
+.lod-lines {
+  stroke: var(--color-accent);
+  fill: none;
+}
+
+.lod-lines-1 {
+  opacity: 0.85;
+}
+
+.lod-lines-2 {
+  opacity: 0.55;
+}
+
+.lod-lines-3 {
+  opacity: 0.3;
+}
+
+.lod-edges {
+  stroke: var(--color-accent);
+  fill: none;
+  opacity: 0.9;
+}
+
+/* Strip Animations mark: a filmstrip of clips, one dashed and crossed out
+   to read as "marked for removal" against the others staying intact. */
+.strip-body {
+  fill: rgba(255, 255, 255, 0.05);
+  stroke: var(--color-accent);
+  opacity: 0.4;
+}
+
+.strip-sprockets {
+  fill: var(--color-accent);
+  opacity: 0.55;
+}
+
+.strip-dividers {
+  stroke: var(--color-accent);
+  opacity: 0.3;
+}
+
+.strip-kept {
+  fill: var(--color-accent);
+  opacity: 0.85;
+}
+
+.strip-removed {
+  stroke: var(--color-white);
+  opacity: 0.75;
+}
+
+/* Rig Inspector mark: a stick-figure skeleton. Opacity fades from the spine
+   (root of the rig) out toward the hands and feet, the same "core vs
+   extremity" language poly-mesh uses for dense/sparse and lod-stack uses
+   for near/far. */
+.rig-bone {
+  stroke: var(--color-accent);
+  fill: none;
+}
+
+.rig-bone-torso {
+  opacity: 0.85;
+}
+
+.rig-bone-limb {
+  opacity: 0.5;
+}
+
+.rig-joint {
+  fill: var(--color-accent);
+  stroke: rgba(0, 0, 0, 0.35);
+  stroke-width: 0.6;
+}
+
+.rig-joint-major {
+  opacity: 0.95;
+}
+
+.rig-joint-mid {
+  opacity: 0.75;
+}
+
+.rig-joint-minor {
+  opacity: 0.55;
+}
+
+.rig-joint-end {
+  opacity: 0.4;
+  fill: var(--color-white);
+}
+
+/* Animation Inspector mark: two animation curves over a baseline, with
+   keyframe diamonds and a playhead. Opacity separates the channel being read
+   from the one behind it — the same foreground/background language poly-mesh
+   uses for dense/sparse and lod-stack uses for near/far. */
+.anim-axis {
+  stroke: var(--color-accent);
+  opacity: 0.28;
+  fill: none;
+}
+
+.anim-curve {
+  fill: none;
+}
+
+.anim-curve-back {
+  stroke: var(--color-accent);
+  opacity: 0.32;
+}
+
+.anim-curve-front {
+  stroke: var(--color-accent);
+  opacity: 0.9;
+}
+
+.anim-key {
+  fill: var(--color-accent);
+  opacity: 0.95;
+}
+
+.anim-key-dropped {
+  fill: none;
+  stroke: var(--color-accent);
+  opacity: 0.4;
+}
+
+.anim-playhead {
+  stroke: var(--color-white);
+  opacity: 0.45;
+  fill: none;
+}
+
+.anim-playhead-cap {
+  fill: var(--color-white);
+  opacity: 0.6;
+}
+
+.tool-identity-eyebrow {
+  margin: 0 0 2px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+}
+
+/* The only oversized typography on the page. */
+.tool-identity-title {
+  font-size: 54px;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  margin: 0;
+  line-height: 1.02;
+  color: var(--color-text-primary);
+}
+
+.tool-identity-title .accent {
+  color: var(--color-accent);
+}
+
+.tool-identity-description {
+  margin: 6px 0 0;
+  font-size: 17px;
+  letter-spacing: 0.01em;
+  color: var(--color-text-secondary);
+}

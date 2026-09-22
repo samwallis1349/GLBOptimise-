@@ -1,0 +1,487 @@
+/**
+ * AssetBench homepage interaction/effects layer.
+ * Cursor spotlight, command palette, success burst — see
+ * src/shared/effects/*.js for the JS side of each of these.
+ */
+
+/* ---------------------------------------------------------------------
+   Cursor spotlight
+   A large, low-opacity radial gradient that follows the pointer. Position
+   is driven entirely by CSS custom properties set from rAF-throttled JS
+   (src/shared/effects/CursorSpotlight.js) — no per-frame DOM writes beyond
+   the two custom properties, so this never triggers layout.
+--------------------------------------------------------------------- */
+.cursor-spotlight {
+  position: fixed;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--transition-medium);
+  background: radial-gradient(
+    600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+    var(--accent-glow-soft),
+    transparent 45%
+  );
+}
+
+.cursor-spotlight.is-active {
+  opacity: 1;
+}
+
+/* Tool-card proximity lighting — a per-card local highlight plus a very
+   small tilt, both gated off under prefers-reduced-motion (see
+   CursorSpotlight.js, which never adds .is-lit there). */
+.tool-card {
+  position: relative;
+  transform: perspective(700px) rotateX(0deg) rotateY(0deg);
+  /* `translate` and `box-shadow` are the card's own hover lift (see the tool
+     card block in components.css). They are listed here because this file
+     loads last and would otherwise replace that transition wholesale — and
+     the lift uses `translate` rather than `transform` precisely so it
+     composes with the pointer tilt above instead of overwriting it. */
+  transition: border-color var(--transition-fast), transform 160ms ease, translate 200ms ease,
+    box-shadow 200ms ease;
+}
+
+.tool-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 200ms ease;
+  background: radial-gradient(220px circle at var(--card-mx, 50%) var(--card-my, 50%), var(--accent-glow-mid), transparent 60%);
+}
+
+.tool-card.is-lit::after {
+  opacity: 1;
+}
+
+.tool-card.is-lit {
+  border-color: var(--border-hover);
+}
+
+/* ---------------------------------------------------------------------
+   Command palette
+--------------------------------------------------------------------- */
+.cmdk-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: none;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 12vh;
+  background: rgba(0, 0, 0, 0);
+  backdrop-filter: blur(0px);
+  transition: background 220ms ease, backdrop-filter 220ms ease;
+}
+
+.cmdk-overlay.is-open {
+  display: flex;
+}
+
+.cmdk-overlay.is-entered {
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(6px);
+}
+
+.cmdk-panel {
+  width: min(560px, calc(100vw - 32px));
+  max-height: 70vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--panel-elevated);
+  border: 1px solid var(--border-hover);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md), 0 0 0 1px rgba(255, 181, 71, 0.08);
+  opacity: 0;
+  transform: translateY(-16px) scale(0.98);
+  transition: opacity 200ms ease, transform 200ms ease;
+}
+
+.cmdk-overlay.is-entered .cmdk-panel {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.cmdk-search {
+  position: relative;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.cmdk-search-icon {
+  position: absolute;
+  left: var(--space-4);
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.cmdk-input {
+  width: 100%;
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  font-size: 15px;
+  padding: var(--space-4) var(--space-4) var(--space-4) 44px;
+}
+
+.cmdk-input:focus {
+  outline: none;
+}
+
+.cmdk-input::placeholder {
+  color: var(--text-muted);
+}
+
+.cmdk-heading {
+  flex-shrink: 0;
+  padding: var(--space-3) var(--space-4) var(--space-1);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.cmdk-list {
+  overflow-y: auto;
+  padding: 0 var(--space-2) var(--space-2);
+}
+
+.cmdk-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  border-left: 2px solid transparent;
+  cursor: pointer;
+}
+
+.cmdk-item.is-active {
+  background: var(--accent-muted);
+  border-left-color: var(--accent);
+}
+
+.cmdk-item-icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  color: var(--accent);
+}
+
+.cmdk-item-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.cmdk-item-name {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.cmdk-item-desc {
+  font-size: 12px;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cmdk-item-category {
+  flex-shrink: 0;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.cmdk-empty {
+  padding: var(--space-6) var(--space-4);
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.cmdk-footer {
+  flex-shrink: 0;
+  display: flex;
+  gap: var(--space-4);
+  padding: var(--space-2) var(--space-4);
+  border-top: 1px solid var(--border);
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.cmdk-footer kbd {
+  display: inline-block;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 1px 5px;
+  margin-right: 3px;
+  font-family: inherit;
+  font-size: 10px;
+}
+
+body.cmdk-lock-scroll {
+  overflow: hidden;
+}
+
+/* ---------------------------------------------------------------------
+   Success burst — a brief amber ring pulse anchored at a viewport point.
+--------------------------------------------------------------------- */
+.success-burst {
+  position: fixed;
+  z-index: 150;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.success-burst__glow {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 220px;
+  height: 90px;
+  transform: translate(-50%, -50%) scale(0.6);
+  border-radius: 50%;
+  background: radial-gradient(closest-side, var(--accent-glow-mid), transparent);
+  opacity: 0;
+}
+
+.success-burst__ring {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 24px;
+  height: 24px;
+  transform: translate(-50%, -50%) scale(1);
+  border-radius: 50%;
+  border: 1.5px solid var(--accent);
+  opacity: 0;
+}
+
+.success-burst__ring--secondary {
+  border-color: var(--accent-strong);
+}
+
+.success-burst.is-active .success-burst__glow {
+  animation: burst-glow 800ms ease-out forwards;
+}
+
+.success-burst.is-active .success-burst__ring--primary {
+  animation: burst-ring 700ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.success-burst.is-active .success-burst__ring--secondary {
+  animation: burst-ring 700ms cubic-bezier(0.16, 1, 0.3, 1) 90ms forwards;
+}
+
+.success-burst.is-reduced .success-burst__glow {
+  opacity: 1;
+  transition: opacity 260ms ease 260ms;
+  transition-property: opacity;
+}
+
+.success-burst.is-reduced .success-burst__glow {
+  animation: none;
+  opacity: 0.5;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+@keyframes burst-glow {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.6); }
+  20% { opacity: 0.9; }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.6); }
+}
+
+@keyframes burst-ring {
+  0% { opacity: 0.9; width: 16px; height: 16px; }
+  60% { opacity: 0.5; }
+  100% { opacity: 0; width: 340px; height: 140px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tool-card {
+    transform: none !important;
+    /* The hover lift is motion too, so it goes with the tilt. The border and
+       lighting changes stay — those read as illumination, not movement. */
+    translate: none !important;
+    transition: border-color var(--transition-fast);
+  }
+}
+
+/* ---------------------------------------------------------------------
+   Homepage hero — interactive GLB (src/shared/effects/HeroReveal.js)
+--------------------------------------------------------------------- */
+.hero-gl {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  touch-action: none;
+}
+
+.hero-gl-canvas {
+  position: absolute;
+  inset: 0;
+}
+
+.hero-gl-canvas canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.hero-gl-sweep {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(100deg, transparent 40%, var(--accent-glow-strong) 48%, transparent 56%);
+  transform: translateX(-120%);
+  mix-blend-mode: screen;
+  opacity: 0;
+}
+
+.hero-gl-sweep.is-swept {
+  opacity: 1;
+  transition: transform 260ms ease-out, opacity 260ms ease-out 180ms;
+  transform: translateX(120%);
+}
+
+.hero-gl-divider {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 28px;
+  margin-left: -14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: ew-resize;
+  z-index: 3;
+}
+
+.hero-gl-divider-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 1px;
+  background: var(--accent);
+  opacity: 0.55;
+  box-shadow: 0 0 12px var(--accent-glow-strong);
+  transition: opacity 160ms ease;
+}
+
+.hero-gl-divider:hover .hero-gl-divider-line,
+.hero-gl-divider.is-dragging .hero-gl-divider-line {
+  opacity: 1;
+  animation: divider-pulse 1.4s ease-in-out infinite;
+}
+
+.hero-gl-divider-handle {
+  position: relative;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--panel-elevated);
+  border: 1px solid var(--accent);
+  box-shadow: var(--shadow-sm);
+}
+
+.hero-gl-divider-handle::before {
+  content: '';
+  position: absolute;
+  inset: 8px;
+  border-left: 1.5px solid var(--accent);
+  border-right: 1.5px solid var(--accent);
+  opacity: 0.7;
+}
+
+@keyframes divider-pulse {
+  0%, 100% { box-shadow: 0 0 8px var(--accent-glow-mid); }
+  50% { box-shadow: 0 0 18px var(--accent-glow-strong); }
+}
+
+.hero-gl-label {
+  position: absolute;
+  bottom: var(--space-3);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  background: rgba(0, 0, 0, 0.55);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 3px 8px;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.hero-gl-label--left {
+  left: var(--space-3);
+}
+
+.hero-gl-label--right {
+  right: var(--space-3);
+  color: var(--accent);
+}
+
+.hero-gl-stats {
+  position: absolute;
+  top: var(--space-3);
+  left: var(--space-3);
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: rgba(0, 0, 0, 0.55);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-3);
+  font-family: var(--font-mono, monospace);
+  pointer-events: none;
+  transition: opacity 200ms ease;
+}
+
+.hero-gl-stats.hidden {
+  display: none;
+}
+
+.hero-gl-stats-row {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 12px;
+}
+
+.hero-gl-stats-row span {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.hero-gl-stats-row label {
+  color: var(--text-muted);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+@media (max-width: 719px) {
+  .hero-gl-stats {
+    display: none;
+  }
+}

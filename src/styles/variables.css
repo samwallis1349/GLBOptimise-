@@ -1,0 +1,82 @@
+/**
+ * Asset Bench design tokens.
+ * Every color, radius, and spacing value used across the app should be
+ * referenced from here — never scatter raw values in components.
+ */
+:root {
+  /* Brand */
+  --bg: #000000;
+  --accent: #ffb547;
+  --accent-strong: #ffc973;
+  --accent-muted: rgba(255, 181, 71, 0.14);
+
+  /* Backgrounds — black page, grey surfaces layered on top for depth. */
+  --bg-secondary: #0c0c0c;
+  --panel: #131313;
+  --panel-elevated: #1a1a1a;
+
+  /* Grey scale, for anything that needs a neutral between black and white
+     without reaching for text-muted (which is warm-tinted, not neutral). */
+  --grey: #1a1a1a;
+  --grey-strong: #2a2a2a;
+  --grey-muted: #8a8a8a;
+
+  /* Borders */
+  --border: rgba(255, 255, 255, 0.08);
+  --border-hover: rgba(255, 181, 71, 0.45);
+
+  /* Text */
+  --text-primary: #f4f1ea;
+  --text-secondary: #a8a49b;
+  --text-muted: #6f6c65;
+
+  /* Status */
+  --success: #5fce8f;
+  --warning: #ffb547;
+  --danger: #ff6b5e;
+
+  /* Category accents — used only for small icons/headings on the homepage
+     tool groups (see shared/config/tools.js CATEGORIES). The app stays
+     fundamentally black/amber; these are restrained, not a re-theme. */
+  --cat-amber: var(--accent);
+  --cat-purple: #b48aff;
+  --cat-cyan: #4dd8e0;
+  --cat-blue: #5b9dff;
+  --cat-pink: #ff6b9d;
+  --cat-yellow: #e0c34a;
+
+  /* Radius */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+
+  /* Spacing scale */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+
+  /* Layout */
+  --content-width: 1180px;
+  --header-height: 64px;
+  --footer-height: 72px;
+
+  /* Shadows — restrained, not decorative */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4);
+
+  /* Motion */
+  --transition-fast: 120ms ease;
+  --transition-medium: 200ms ease;
+
+  /* Amber glow variants — used by the homepage effects layer (cursor
+     spotlight, command palette, success burst). Kept as tokens rather than
+     scattering rgba(255,181,71,...) through effects.css. */
+  --accent-glow-soft: rgba(255, 181, 71, 0.07);
+  --accent-glow-mid: rgba(255, 181, 71, 0.16);
+  --accent-glow-strong: rgba(255, 181, 71, 0.4);
+}
