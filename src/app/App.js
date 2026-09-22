@@ -1,14 +1,17 @@
 import { Header } from '../shared/components/Header.js';
 import { Footer } from '../shared/components/Footer.js';
+import { TrialBanner } from '../shared/components/TrialBanner.js';
 import { registerRoutes, setRouteContainer, startRouter } from './router.js';
 import { routes, notFound } from './routes.js';
 import { cleanupStaleSessions } from '../shared/storage/sessionCleanup.js';
+import { revalidateStoredLicense } from '../services/LicenseService.js';
 import { initLayoutEditor } from '../editor/LayoutEditor.js';
 import { initCommandPalette } from '../shared/effects/CommandPalette.js';
 
 /** Mounts the whole Asset Bench app (header, routed page content, footer) into rootEl. */
 export function App(rootEl) {
   rootEl.innerHTML = '';
+  rootEl.appendChild(TrialBanner());
   rootEl.appendChild(Header());
 
   const main = document.createElement('main');
@@ -23,6 +26,10 @@ export function App(rootEl) {
 
   cleanupStaleSessions().catch(() => {
     /* best-effort cleanup — never block app startup on it */
+  });
+
+  revalidateStoredLicense().catch(() => {
+    /* best-effort — never block app startup on it */
   });
 
   // F8 visual layout editor — lives outside the router's DOM so it

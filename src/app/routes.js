@@ -1,4 +1,13 @@
 import { TOOLS } from '../shared/config/tools.js';
+import { hasAccess } from '../shared/config/billing.js';
+import { Paywall } from '../shared/components/Paywall.js';
+
+const GATED_STATUSES = new Set(['available', 'beta']);
+
+async function mountTool(tool, container, params) {
+  const mod = await import(`../tools/${tool.id}/index.js`);
+  return mod.mount(container, params);
+}
 
 /**
  * Route table. Static pages and tools are all dynamically imported with
@@ -27,7 +36,19 @@ export const routes = [
   },
   ...TOOLS.map((tool) => ({
     path: tool.route,
-    handler: async (params, container) => (await import(`../tools/${tool.id}/index.js`)).mount(container, params),
+    handler: async (params, container) => {
+      if (GATED_STATUSES.has(tool.status) && !hasAccess()) {
+        container.innerHTML = '';
+        container.appendChild(
+          Paywall({
+            toolName: tool.name,
+            onUnlock: () => mountTool(tool, container, params),
+          }),
+        );
+        return;
+      }
+      return mountTool(tool, container, params);
+    },
   })),
 ];
 
