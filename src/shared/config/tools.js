@@ -320,7 +320,7 @@ export const TOOLS = [
       { icon: 'image-down', label: 'PNG out' },
       { icon: 'grid', label: 'Batch' },
     ],
-    status: 'coming-soon',
+    status: 'available',
     category: 'utilities',
   },
 ];
