@@ -1,9 +1,10 @@
 import { APP_DESCRIPTION } from '../../shared/config/app.js';
 import { CATEGORIES, TOOLS, getToolsByCategory } from '../../shared/config/tools.js';
 import { ToolCard } from '../../shared/components/ToolCard.js';
-import { iconSvg } from '../../shared/utils/icons.js';
 import { initCursorSpotlight } from '../../shared/effects/CursorSpotlight.js';
-import { mountHeroReveal } from '../../shared/effects/HeroReveal.js';
+import { iconSvg } from '../../shared/utils/icons.js';
+import { openCommandPalette } from '../../shared/effects/CommandPalette.js';
+import { WizardHero } from './wizard-hero/WizardHero.js';
 
 const BENEFITS = [
   { icon: 'zap', title: 'Works in browser', desc: 'Your files stay on your device' },
@@ -12,20 +13,16 @@ const BENEFITS = [
   { icon: 'grid', title: `${TOOLS.length} focused tools`, desc: 'Everything you need in one place' },
 ];
 
+const LIVE_STATUSES = new Set(['available', 'beta']);
+
 export function render(container) {
   container.innerHTML = '';
 
-  const hero = HeroSection();
-  container.append(hero, WorkbenchIntro(), CategoriesSection(), CTAPanel());
+  const wizard = WizardHero();
+  container.append(HeroSection(wizard.element), WorkbenchIntro(), CategoriesSection(), CTAPanel());
 
   const disposeSpotlight = initCursorSpotlight(container);
-  const disposeHero = mountHeroReveal({
-    root: hero.querySelector('.hero-gl'),
-    canvasHost: hero.querySelector('.hero-gl-canvas'),
-    divider: hero.querySelector('.hero-gl-divider'),
-    statsEl: hero.querySelector('.hero-gl-stats'),
-    sweepEl: hero.querySelector('.hero-gl-sweep'),
-  });
+  const disposeHero = wizard.mount();
 
   return () => {
     disposeSpotlight();
@@ -33,13 +30,17 @@ export function render(container) {
   };
 }
 
-function HeroSection() {
+function HeroSection(wizardEl) {
   const hero = document.createElement('section');
   hero.className = 'hero-split container';
   hero.dataset.layoutEditable = '';
   hero.dataset.layoutId = 'home-hero';
   hero.dataset.layoutName = 'Hero';
   hero.setAttribute('data-layout-lock-children', '');
+
+  const liveCount = TOOLS.filter((t) => LIVE_STATUSES.has(t.status)).length;
+  const quickTools = TOOLS.filter((t) => LIVE_STATUSES.has(t.status)).slice(0, 5);
+  const shortcut = navigator.platform?.includes('Mac') ? '⌘K' : 'Ctrl K';
 
   const content = document.createElement('div');
   content.className = 'hero-split__content';
@@ -48,6 +49,19 @@ function HeroSection() {
     <h1 class="hero-split__title">ASSET <span class="accent">BENCH</span></h1>
     <p class="hero-split__tagline">Small tools. Bigger worlds.</p>
     <p class="hero-split__description">${APP_DESCRIPTION}</p>
+    <div class="hero-finder">
+      <button type="button" class="hero-finder__search" aria-label="Search Asset Bench tools">
+        ${iconSvg('search', { class: 'hero-finder__icon' })}
+        <span class="hero-finder__placeholder">What do you need to do?<span class="hero-finder__placeholder-more"> Search ${TOOLS.length} tools…</span></span>
+        <kbd class="hero-finder__kbd">${shortcut}</kbd>
+      </button>
+      <div class="hero-finder__quick" aria-label="Popular tools">
+        ${quickTools
+          .map((t) => `<a class="hero-finder__chip" href="${t.route}">${iconSvg(t.icon, { class: 'hero-finder__chip-icon' })}${t.name}</a>`)
+          .join('')}
+        <a class="hero-finder__chip hero-finder__chip--all" href="/tools">All ${liveCount} live tools →</a>
+      </div>
+    </div>
     <div class="hero-split__actions">
       <a class="btn btn--primary" href="/tools">Explore Tools →</a>
       <a class="btn btn--secondary" href="/optimise-glb">${iconSvg('package-open')} Optimise a GLB</a>
@@ -65,31 +79,9 @@ function HeroSection() {
       ).join('')}
     </div>
   `;
+  content.querySelector('.hero-finder__search').addEventListener('click', () => openCommandPalette());
 
-  const visual = document.createElement('div');
-  visual.className = 'hero-visual';
-  visual.dataset.layoutEditable = '';
-  visual.dataset.layoutId = 'home-hero-visual';
-  visual.dataset.layoutName = 'Interactive Model Visual';
-  visual.innerHTML = `
-    <div class="hero-gl" role="img" aria-label="An interactive 3D model. Drag to rotate, scroll to zoom, drag the vertical divider to compare solid and wireframe views.">
-      <div class="hero-gl-canvas"></div>
-      <div class="hero-gl-sweep"></div>
-      <div class="hero-gl-divider" tabindex="0" role="slider" aria-label="Solid / wireframe comparison split" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50">
-        <span class="hero-gl-divider-line"></span>
-        <span class="hero-gl-divider-handle"></span>
-      </div>
-      <span class="hero-gl-label hero-gl-label--left">Solid</span>
-      <span class="hero-gl-label hero-gl-label--right">Wireframe</span>
-      <div class="hero-gl-stats hidden">
-        <div class="hero-gl-stats-row"><span data-stat="tris">0</span><label>triangles</label></div>
-        <div class="hero-gl-stats-row"><span data-stat="size">—</span><label>file size</label></div>
-        <div class="hero-gl-stats-row"><span data-stat="meshes">0</span><label>meshes</label></div>
-      </div>
-    </div>
-  `;
-
-  hero.append(content, visual);
+  hero.append(content, wizardEl);
   return hero;
 }
 

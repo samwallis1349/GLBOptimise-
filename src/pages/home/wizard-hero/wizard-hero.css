@@ -1,0 +1,596 @@
+/* ---------------------------------------------------------------------
+   Homepage wizard hero (src/pages/home/wizard-hero/)
+   Approved compact layout from the 25 Sep 2026 handoff, consolidated from
+   the prototype's layered overrides into final values.
+--------------------------------------------------------------------- */
+.wizard-hero {
+  --wh-gold: #ffbd43;
+  --wh-gold-soft: #ffcc70;
+  --wh-line: #44351b;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 18px 4% 22px;
+  color: #f5f1e7;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.wizard-hero__eyebrow {
+  margin: 0 0 10px;
+  padding: 0 5%;
+  text-align: center;
+  font-size: 11px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--wh-gold);
+}
+
+/* Stage: illustrated backdrop, vignette, transparent canvas on top. */
+.wizard-hero__stage {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1.16;
+  background: var(--hero-bg) center / 100% 100% no-repeat;
+  isolation: isolate;
+}
+
+.wizard-hero__stage::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  box-shadow: inset 0 0 35px 18px #000;
+}
+
+.wizard-hero__canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: pan-y; /* horizontal drag spins; vertical still scrolls the page */
+  cursor: grab;
+  opacity: 0;
+}
+
+.wizard-hero__canvas.is-dragging {
+  cursor: grabbing;
+}
+
+.wizard-hero__poster {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+/* Swap poster → live canvas only once the first model is on screen. */
+.wizard-hero__stage.is-live .wizard-hero__canvas {
+  opacity: 1;
+}
+
+.wizard-hero__stage.is-live .wizard-hero__poster {
+  visibility: hidden;
+}
+
+.wizard-hero__stage.is-failed .wizard-hero__canvas {
+  display: none;
+}
+
+.wizard-hero__stage.is-failed .wizard-hero__poster {
+  visibility: visible;
+}
+
+.wizard-hero__stats {
+  position: absolute;
+  top: 3%;
+  left: 5%;
+  min-width: 132px;
+  padding: 8px 10px;
+  border: 1px solid var(--wh-line);
+  border-radius: 9px;
+  background: #0009;
+  pointer-events: none;
+}
+
+.wizard-hero__stats b {
+  display: block;
+  font-size: 19px;
+  color: var(--wh-gold);
+}
+
+.wizard-hero__stats-label {
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #a49b88;
+}
+
+.wizard-hero__reduction {
+  display: block;
+  margin-top: 7px;
+  font-size: 11px;
+  color: #efca77;
+}
+
+.wizard-hero__minor {
+  display: block;
+  margin-top: 3px;
+  font-size: 9px;
+  color: #8e897f;
+}
+
+.wizard-hero__glb {
+  display: block;
+  margin-top: 6px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #f3d79b;
+}
+
+.wizard-hero__meter {
+  height: 2px;
+  margin-top: 8px;
+  overflow: hidden;
+  background: #33291a;
+}
+
+.wizard-hero__meter i {
+  display: block;
+  width: 0;
+  height: 100%;
+  background: var(--wh-gold);
+  transition: width 0.25s;
+}
+
+.wizard-hero__status {
+  position: absolute;
+  inset: 45% 10% auto;
+  padding: 16px;
+  border-radius: 8px;
+  background: #000b;
+  color: #ffd58b;
+  text-align: center;
+  pointer-events: none;
+}
+
+.wizard-hero__status[hidden] {
+  display: none;
+}
+
+/* Buttons shared by the zoom group and the control row. */
+.wizard-hero button {
+  padding: 7px 11px;
+  border: 1px solid #4f3b1b;
+  border-radius: 7px;
+  background: #14120e;
+  color: var(--wh-gold-soft);
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.wizard-hero button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.wizard-hero button:focus-visible,
+.wizard-hero input:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 1px;
+}
+
+.wizard-hero__zoom {
+  position: absolute;
+  top: 3%;
+  right: 5%;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  padding: 3px;
+  border: 1px solid #59421e;
+  border-radius: 8px;
+  background: #080704cc;
+}
+
+.wizard-hero .wizard-hero__zoom button {
+  min-height: 28px;
+  padding: 4px 8px;
+  border: 0;
+  background: transparent;
+  color: #f3cf87;
+  font-size: 17px;
+}
+
+.wizard-hero .wizard-hero__zoom [data-el='zoom-reset'] {
+  min-width: 42px;
+  padding: 4px;
+  font-size: 10px;
+}
+
+.wizard-hero .wizard-hero__zoom button:hover:not(:disabled) {
+  border-radius: 4px;
+  background: #4a341d;
+}
+
+.wizard-hero .wizard-hero__zoom button:disabled {
+  opacity: 0.3;
+}
+
+.wizard-hero__controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 5%;
+}
+
+.wizard-hero__controls input[type='range'] {
+  flex: 1;
+  min-width: 0;
+  accent-color: var(--wh-gold);
+}
+
+.wizard-hero .wizard-hero__optimise {
+  white-space: nowrap;
+  border-color: #766039;
+  background: #221b0e;
+  color: #e7c881;
+}
+
+.wizard-hero .wizard-hero__optimise[aria-pressed='true'] {
+  border-color: #a3ae76;
+  background: #1a2113;
+  color: #d5e1a7;
+}
+
+.wizard-hero__strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 23px;
+  margin: 10px 5% 0;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #262017;
+  font-size: 10px;
+  color: #aaa18f;
+}
+
+.wizard-hero__strip span {
+  white-space: nowrap;
+}
+
+.wizard-hero__strip b {
+  font-weight: 400;
+  color: #f4c968;
+}
+
+.wizard-hero__strip i {
+  display: inline-block;
+  width: 4px;
+  height: 4px;
+  margin-right: 4px;
+  border-radius: 50%;
+  background: #e6aa38;
+}
+
+.wizard-hero__textures {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.wizard-hero__textures > span {
+  color: #8f897b;
+}
+
+.wizard-hero__textures label {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: #e6c887;
+  cursor: pointer;
+}
+
+.wizard-hero__textures input {
+  width: 11px;
+  height: 11px;
+  margin: 0;
+  accent-color: #ffc451;
+}
+
+.wizard-hero__textures[aria-busy='true'] {
+  opacity: 0.6;
+}
+
+.wizard-hero__hint {
+  margin: 7px auto;
+  text-align: center;
+  font-size: 10px;
+  color: #a8a08d;
+}
+
+.wizard-hero__sample {
+  margin: 12px 5% 0;
+  text-align: center;
+}
+
+/* Gold download button. */
+.wizard-hero__download {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 54px;
+  overflow: hidden;
+  border: 1px solid #e8a936;
+  border-radius: 9px;
+  background: linear-gradient(105deg, #382004 0%, #100b05 35%, #171004 75%, #553207 100%);
+  box-shadow: 0 0 0 1px #ffca4820, inset 0 1px 0 #ffe5a547, inset 0 -1px 0 #de93182b, 0 0 17px #ffae2429;
+  color: #f6f3ed;
+  text-align: left;
+  text-decoration: none;
+  transition: box-shadow 0.2s, border-color 0.2s, transform 0.2s;
+}
+
+.wizard-hero__download::before {
+  content: '';
+  position: absolute;
+  inset: -80% auto -80% -45%;
+  z-index: -1;
+  width: 30%;
+  background: linear-gradient(90deg, transparent, #ffdc8b35, transparent);
+  transform: skewX(-22deg);
+  animation: wizard-hero-shimmer 5.5s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.wizard-hero__download::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 11%;
+  right: 11%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #fff0b2, transparent);
+  box-shadow: 0 0 7px #ffc85b;
+  pointer-events: none;
+}
+
+.wizard-hero__download:hover {
+  transform: translateY(-1px);
+  border-color: #ffeab0;
+  background: linear-gradient(110deg, #332106, #0e0a04 60%, #62400a);
+  box-shadow: 0 0 0 1px #ffc64c55, inset 0 0 20px #fba92320, 0 0 25px #ffaa2855;
+}
+
+.wizard-hero__download:active {
+  transform: translateY(1px);
+}
+
+.wizard-hero__download:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 4px;
+}
+
+.wizard-hero__download-emblem {
+  position: relative;
+  flex: none;
+  width: 65px;
+  text-align: center;
+  font-size: 34px;
+  color: #ffe3a0;
+  text-shadow: 0 0 8px #ffcd57, 0 0 22px #ffac16;
+  transition: transform 0.35s;
+}
+
+.wizard-hero__download-emblem::after {
+  content: '';
+  position: absolute;
+  top: 65%;
+  left: 50%;
+  width: 35px;
+  height: 12px;
+  border: 1px solid #ffbf3b;
+  border-radius: 50%;
+  box-shadow: 0 0 8px #ffad25;
+  opacity: 0.8;
+  transform: translateX(-50%) rotate(-14deg);
+}
+
+.wizard-hero__download:hover .wizard-hero__download-emblem {
+  transform: rotate(-12deg) scale(1.1);
+}
+
+.wizard-hero__download-copy {
+  flex: 1;
+  min-width: 0;
+}
+
+.wizard-hero__download-copy strong {
+  display: block;
+  font-size: 18px;
+  letter-spacing: 0.55px;
+  text-transform: uppercase;
+  text-shadow: 0 1px 8px #ffb02b22;
+}
+
+.wizard-hero__download-copy em {
+  font-style: normal;
+  color: #ffc44b;
+}
+
+.wizard-hero__download-copy small {
+  display: block;
+  margin-top: 5px;
+  font-size: 7px;
+  letter-spacing: 1.15px;
+  text-transform: uppercase;
+  color: #d2c4a3;
+}
+
+.wizard-hero__download-arrow {
+  display: grid;
+  place-items: center;
+  width: 49px;
+  height: 100%;
+  border-left: 1px solid #8a631f;
+  background: linear-gradient(120deg, #99611330, #efab2840);
+  font-size: 28px;
+  color: #ffe198;
+  text-shadow: 0 0 9px #ffb800;
+  transition: background 0.2s;
+}
+
+.wizard-hero__download:hover .wizard-hero__download-arrow {
+  background: #cd841855;
+}
+
+@keyframes wizard-hero-shimmer {
+  0%, 60% { left: -45%; }
+  88%, 100% { left: 125%; }
+}
+
+.wizard-hero__note {
+  margin-top: 6px;
+  font-size: 9px;
+  color: #8f8a80;
+}
+
+.wizard-hero__compare {
+  display: inline-block;
+  margin-top: 10px;
+  font-size: 11px;
+  color: #cfb77f;
+}
+
+@media (max-width: 760px) {
+  .wizard-hero {
+    max-width: 560px;
+    padding: 20px 4% 16px;
+  }
+
+  .wizard-hero__eyebrow {
+    font-size: 9px;
+    letter-spacing: 2px;
+  }
+
+  .wizard-hero__stage {
+    aspect-ratio: 1.22;
+  }
+
+  .wizard-hero__stats {
+    transform: scale(0.9);
+    transform-origin: top left;
+  }
+
+  .wizard-hero__strip {
+    gap: 5px;
+    font-size: 9px;
+  }
+
+  .wizard-hero__download {
+    height: 50px;
+  }
+
+  .wizard-hero__sample {
+    margin-top: 10px;
+  }
+}
+
+@media (max-width: 440px) {
+  .wizard-hero__stats {
+    min-width: 118px;
+  }
+
+  .wizard-hero__controls button {
+    padding: 7px 8px;
+  }
+
+  .wizard-hero .wizard-hero__optimise {
+    padding: 7px;
+    font-size: 10px;
+  }
+
+  .wizard-hero__strip {
+    gap: 4px;
+    font-size: 8px;
+  }
+
+  .wizard-hero__textures {
+    gap: 4px;
+  }
+
+  .wizard-hero__textures > span {
+    display: none;
+  }
+
+  .wizard-hero__download-emblem {
+    width: 43px;
+  }
+
+  .wizard-hero__download-emblem::after {
+    width: 27px;
+  }
+
+  .wizard-hero__download-copy strong {
+    font-size: 14px;
+    letter-spacing: 0.15px;
+  }
+
+  .wizard-hero__download-copy small {
+    font-size: 6px;
+    letter-spacing: 0.55px;
+  }
+
+  .wizard-hero__download-arrow {
+    width: 40px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wizard-hero__download::before {
+    animation: none;
+  }
+
+  .wizard-hero__download,
+  .wizard-hero__download-emblem,
+  .wizard-hero__download-arrow,
+  .wizard-hero__meter i {
+    transition: none;
+  }
+
+  .wizard-hero__download:hover,
+  .wizard-hero__download:hover .wizard-hero__download-emblem,
+  .wizard-hero__download:active {
+    transform: none;
+  }
+}
+
+/* Inside the homepage split hero the wizard sits in the right column. */
+.hero-split > .wizard-hero {
+  width: 100%;
+  max-width: 600px;
+  padding: 0;
+  justify-self: end;
+}
+
+@media (max-width: 980px) {
+  .hero-split > .wizard-hero {
+    justify-self: center;
+  }
+}

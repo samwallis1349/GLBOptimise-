@@ -11,8 +11,8 @@ export function ThumbnailMakerPage() {
     </header>
     <div id="tm-notice" class="tm-notice" role="status" hidden></div>
     <section id="tm-drop" class="tm-drop" role="button" tabindex="0">
-      <input id="tm-file" type="file" accept=".glb,.gltf,.fbx" hidden>
-      <div class="tm-drop__icon">◇</div><h2>Drop a 3D model here</h2><p>GLB, glTF or FBX · one model at a time</p>
+      <input id="tm-file" type="file" accept=".glb,.gltf,.fbx" multiple hidden>
+      <div class="tm-drop__icon">◇</div><h2>Drop models here</h2><p>One GLB, glTF or FBX · or batch up to 200 self-contained GLBs</p>
       <button id="tm-choose" class="tm-btn tm-btn--primary" type="button">Choose model</button>
     </section>
     <section id="tm-workspace" class="tm-workspace" hidden>
@@ -29,9 +29,12 @@ export function ThumbnailMakerPage() {
           <label id="tm-colour-field" class="tm-colour-field"><span>Colour</span><input id="tm-background" type="color" value="#111318"><output id="tm-background-value">#111318</output></label>
         </fieldset>
         <fieldset><legend>Presentation</legend>
+          <label class="tm-field"><span>Camera angle</span><select id="tm-angle"><option value="three-quarter">Three-quarter</option><option value="front">Front</option><option value="side">Side</option><option value="back">Back</option></select></label>
           <label class="tm-field"><span>Lighting</span><select id="tm-lighting"><option value="studio" selected>Studio</option><option value="bright">Bright</option><option value="dramatic">Dramatic</option></select></label>
           <label class="tm-range"><span>Exposure <output id="tm-exposure-value">1.0</output></span><input id="tm-exposure" type="range" min="0.5" max="2" step="0.1" value="1"></label>
           <label class="tm-check"><input id="tm-grid" type="checkbox"><span>Show ground grid in preview</span></label>
+          <label class="tm-check"><input id="tm-shadow" type="checkbox"><span>Soft ground shadow</span></label>
+          <label class="tm-range"><span>Shadow strength</span><input id="tm-shadow-strength" type="range" min="0" max="1" step="0.05" value="0.3"></label>
         </fieldset>
         <div class="tm-actions"><button id="tm-reset" class="tm-btn tm-btn--secondary" type="button">Reset view</button><button id="tm-replace" class="tm-btn tm-btn--secondary" type="button">Replace model</button><button id="tm-download" class="tm-btn tm-btn--primary tm-download" type="button">Download PNG</button></div>
         <p class="tm-tip">The exported image uses the exact angle and zoom shown in the preview.</p>

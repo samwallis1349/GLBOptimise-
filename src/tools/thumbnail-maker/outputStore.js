@@ -1,0 +1,8 @@
+// Keep full-resolution PNGs on browser storage; only small previews remain in RAM.
+export class OutputStore {
+  constructor(){this.name='assetbench-thumbnails-'+crypto.randomUUID();this.memory=new Map();this.bytes=0;this.closed=false;this.ready=new Promise(resolve=>{try{const req=indexedDB.open(this.name,1);req.onupgradeneeded=()=>req.result.createObjectStore('png');req.onsuccess=()=>{this.db=req.result;if(this.closed){this.db.close();try{indexedDB.deleteDatabase(this.name);}catch{}}resolve(this.closed?null:this.db);};req.onerror=()=>resolve(null);}catch{resolve(null);}});}
+  async put(key,blob){const db=await this.ready;if(this.closed)throw Error('Session closed.');if(!db){if(this.bytes-(this.memory.get(key)?.size||0)+blob.size>64*1024*1024)throw Error('Browser storage unavailable and output memory limit reached. Download results and start a smaller batch.');this.bytes-=this.memory.get(key)?.size||0;this.memory.set(key,blob);this.bytes+=blob.size;return;}await new Promise((resolve,reject)=>{const tx=db.transaction('png','readwrite');tx.objectStore('png').put(blob,key);tx.oncomplete=resolve;tx.onerror=tx.onabort=()=>reject(Error('Browser storage is full. Download completed results and start a smaller batch.'));});}
+  async get(key){const db=await this.ready;if(!db)return this.memory.get(key);return new Promise((resolve,reject)=>{const req=db.transaction('png').objectStore('png').get(key);req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(Error('Could not read saved thumbnail.'));});}
+  close(){this.closed=true;this.memory.clear();this.bytes=0;if(this.db)this.db.close();try{indexedDB.deleteDatabase(this.name);}catch{}}
+}
+

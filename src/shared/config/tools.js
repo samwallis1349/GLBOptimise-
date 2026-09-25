@@ -281,7 +281,7 @@ export const TOOLS = [
     description: 'Compare models, stats and file size.',
     keywords: ['diff', 'before after', 'side by side'],
     icon: 'columns-2',
-    thumbnail: '/thumbnails/asset-compare.png',
+    thumbnail: '/thumbnails/asset-compare.webp',
     features: [
       { icon: 'columns-2', label: 'Compare' },
       { icon: 'gauge', label: 'Stat diff' },
@@ -297,7 +297,7 @@ export const TOOLS = [
     description: 'Generate detailed reports for a whole asset library.',
     keywords: ['audit', 'batch', 'summary', 'export csv'],
     icon: 'file-text',
-    thumbnail: '/thumbnails/asset-report.png',
+    thumbnail: '/thumbnails/asset-report.webp',
     features: [
       { icon: 'file-text', label: 'Audit' },
       { icon: 'grid', label: 'Batch' },

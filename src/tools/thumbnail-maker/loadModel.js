@@ -17,13 +17,21 @@ async function createGltfLoader() {
   return loader;
 }
 
-export async function loadThumbnailModel(file) {
+export async function loadThumbnailModel(file, { selfContained = false } = {}) {
   const extension = file.name.split('.').pop()?.toLowerCase();
   const buffer = await file.arrayBuffer();
+  if(selfContained){
+    const view=new DataView(buffer);
+    if(buffer.byteLength<20||view.getUint32(0,true)!==0x46546c67||view.getUint32(4,true)!==2||view.getUint32(16,true)!==0x4e4f534a)throw new Error('Invalid GLB file.');
+    const length=view.getUint32(12,true);
+    if(20+length>buffer.byteLength)throw new Error('Truncated GLB file.');
+    const json=JSON.parse(new TextDecoder().decode(new Uint8Array(buffer,20,length)));
+    if([...(json.buffers||[]),...(json.images||[])].some(x=>x.uri&&!x.uri.startsWith('data:')))throw new Error('Batch GLBs must embed their textures and buffers.');
+  }
   if (extension === 'fbx') return new FBXLoader().parse(buffer, '');
   const loader = await createGltfLoader();
   const payload = extension === 'gltf' ? new TextDecoder().decode(buffer) : buffer;
-  return new Promise((resolve, reject) => {
+  try { return await new Promise((resolve, reject) => {
     loader.parse(payload, '', (gltf) => resolve(gltf.scene), (error) => reject(error));
-  });
+  }); } finally { loader.dracoLoader?.dispose(); }
 }

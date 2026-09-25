@@ -34,6 +34,11 @@ export const routes = [
     handler: async (params, container) =>
       (await import('../pages/pricing/PricingPage.js')).render(container, params),
   },
+  {
+    path: '/wizard-compare',
+    handler: async (params, container) =>
+      (await import('../pages/wizard-compare/WizardComparePage.js')).render(container, params),
+  },
   ...TOOLS.map((tool) => ({
     path: tool.route,
     handler: async (params, container) => {

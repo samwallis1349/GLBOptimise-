@@ -241,6 +241,96 @@ main {
   height: 16px;
 }
 
+/* Tool finder — the homepage's primary "choose a tool" entry point. Opens
+   the same Ctrl/Cmd+K command palette as the header search. */
+.hero-finder {
+  margin-bottom: var(--space-5);
+  max-width: 520px;
+}
+
+.hero-finder__search {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  padding: 14px 14px 14px 16px;
+  background: var(--panel);
+  border: 1px solid var(--border-hover);
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: 15px;
+  text-align: left;
+  cursor: pointer;
+  box-shadow: 0 0 0 4px var(--accent-muted);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.hero-finder__search:hover,
+.hero-finder__search:focus-visible {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px var(--accent-muted), 0 0 22px rgba(255, 181, 71, 0.18);
+  color: var(--text-primary);
+  outline: none;
+}
+
+.hero-finder__icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  color: var(--accent);
+}
+
+.hero-finder__placeholder {
+  flex: 1;
+  min-width: 0;
+}
+
+.hero-finder__kbd {
+  font-family: inherit;
+  font-size: 11px;
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 2px 6px;
+}
+
+.hero-finder__quick {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+
+.hero-finder__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  font-size: 12.5px;
+  text-decoration: none;
+  transition: border-color var(--transition-fast), color var(--transition-fast);
+}
+
+.hero-finder__chip:hover {
+  border-color: var(--border-hover);
+  color: var(--text-primary);
+}
+
+.hero-finder__chip-icon {
+  width: 14px;
+  height: 14px;
+  color: var(--accent);
+}
+
+.hero-finder__chip--all {
+  color: var(--accent);
+}
+
 /* Benefits — deliberately not cards, so the hero doesn't get box-heavy. */
 .hero-benefits {
   display: grid;
@@ -270,23 +360,6 @@ main {
 .hero-benefit__desc {
   font-size: 12.5px;
   color: var(--text-muted);
-}
-
-/* Before/after visual — height follows the image's own natural aspect
-   ratio at the column's fixed width, so the full picture is always shown
-   with no cropping, instead of being cropped to a fixed box. */
-.hero-visual {
-  position: relative;
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--border);
-  background: var(--bg-secondary);
-  overflow: hidden;
-}
-
-.hero-visual__img {
-  display: block;
-  width: 100%;
-  height: auto;
 }
 
 /* Workbench section intro */
@@ -508,6 +581,11 @@ main {
 
   .hero-benefits {
     grid-template-columns: 1fr;
+  }
+
+  .hero-finder__placeholder-more,
+  .hero-finder__kbd {
+    display: none;
   }
 
   .cta-panel {

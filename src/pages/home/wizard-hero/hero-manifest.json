@@ -1,0 +1,87 @@
+{
+  "bounds": {
+    "min": [
+      -0.4040985107421875,
+      0,
+      -0.416900634765625
+    ],
+    "max": [
+      0.4040985107421875,
+      0.980743408203125,
+      0.416900634765625
+    ]
+  },
+  "lods": [
+    {
+      "file": "wizard-lod0.glb",
+      "triangles": 975597,
+      "bytes": 7390524
+    },
+    {
+      "file": "wizard-lod1.glb",
+      "triangles": 399999,
+      "bytes": 3369412
+    },
+    {
+      "file": "wizard-lod2.glb",
+      "triangles": 159999,
+      "bytes": 1487336
+    },
+    {
+      "file": "wizard-lod3.glb",
+      "triangles": 59999,
+      "bytes": 645088
+    },
+    {
+      "file": "wizard-lod4.glb",
+      "triangles": 24999,
+      "bytes": 319816
+    },
+    {
+      "file": "wizard-lod5.glb",
+      "triangles": 9999,
+      "bytes": 162980
+    }
+  ],
+  "textures": {
+    "1": {
+      "map": "tex-1k-map.jpg",
+      "normalMap": "tex-1k-normalMap.png",
+      "roughnessMap": "tex-1k-roughnessMap.jpg"
+    },
+    "2": {
+      "map": "tex-2k-map.jpg",
+      "normalMap": "tex-2k-normalMap.png",
+      "roughnessMap": "tex-2k-roughnessMap.jpg"
+    },
+    "4": {
+      "map": "tex-4k-map.jpg",
+      "normalMap": "tex-4k-normalMap.png",
+      "roughnessMap": "tex-4k-roughnessMap.jpg"
+    }
+  },
+  "textureBytes": {
+    "1": 1350417,
+    "2": 4057327,
+    "4": 13147462
+  },
+  "downloads": {
+    "balanced": {
+      "file": "downloads/assetbench-wizard-balanced.glb",
+      "bytes": 2957912
+    },
+    "optimised": {
+      "file": "downloads/assetbench-wizard-optimised.glb",
+      "bytes": 2375796
+    },
+    "small": {
+      "file": "downloads/assetbench-wizard-small.glb",
+      "bytes": 1339212
+    },
+    "before-25k": {
+      "file": "downloads/assetbench-wizard-before-25k.glb",
+      "bytes": 13967616
+    }
+  },
+  "backgroundBytes": 239378
+}
