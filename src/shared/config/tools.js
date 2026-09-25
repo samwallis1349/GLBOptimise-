@@ -198,6 +198,7 @@ export const TOOLS = [
     description: 'Resize textures to 4K / 2K / 1K or a custom size.',
     keywords: ['downscale', 'resolution', 'image'],
     icon: 'maximize-2',
+    thumbnail: '/thumbnails/texture-resizer.webp',
     features: [
       { icon: 'maximize-2', label: 'Smaller' },
       { icon: 'shield', label: 'Detail' },
