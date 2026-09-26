@@ -1,13 +1,22 @@
 /**
- * Recursively disposes geometries, materials, and textures of a loaded
- * model to prevent GPU memory leaks when switching previews.
- *
- * NOT YET IMPLEMENTED — see loadModel.js for why. Intended to traverse
- * the Object3D graph and call .dispose() on every geometry, material, and
- * any texture referenced by a material.
- *
- * @param {unknown} _scene three.Object3D
+ * Releases GPU resources for an Object3D subtree: geometries, materials and
+ * every texture those materials reference. Call before dropping a preview
+ * model, or Three.js leaks GPU memory across model switches.
  */
-export function disposeModel(_scene) {
-  throw new Error('disposeModel() is not implemented yet — Three.js is not wired up.');
+export function disposeModel(root) {
+  if (!root) return;
+  root.traverse((node) => {
+    node.geometry?.dispose();
+    if (node.material) {
+      for (const material of Array.isArray(node.material) ? node.material : [node.material]) disposeMaterial(material);
+    }
+  });
+}
+
+export function disposeMaterial(material) {
+  if (!material) return;
+  for (const value of Object.values(material)) {
+    if (value?.isTexture) value.dispose();
+  }
+  material.dispose();
 }

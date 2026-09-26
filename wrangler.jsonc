@@ -1,0 +1,11 @@
+// Cloudflare Worker (static assets) that serves www.assetbench.co.uk.
+// Deploy with: npm run deploy
+{
+  "name": "glboptimise",
+  "compatibility_date": "2026-09-22",
+  "assets": {
+    "directory": "./dist",
+    // SPA fallback: unknown paths serve index.html for client-side routing.
+    "not_found_handling": "single-page-application"
+  }
+}

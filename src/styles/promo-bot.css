@@ -1,0 +1,343 @@
+/* Bench Bot — floating tool-finder / promo helper (src/shared/effects/PromoBot.js). */
+
+.promo-bot {
+  position: fixed;
+  right: var(--space-5);
+  bottom: var(--space-5);
+  z-index: 900;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--space-3);
+  pointer-events: none;
+}
+
+.promo-bot > * {
+  pointer-events: auto;
+}
+
+.promo-bot__launcher {
+  width: 52px;
+  height: 52px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1px solid var(--border-hover);
+  background: var(--accent);
+  color: #000;
+  box-shadow: var(--shadow-md), 0 0 24px rgba(255, 181, 71, 0.25);
+  cursor: pointer;
+  transition: transform 160ms ease, background 160ms ease;
+}
+
+.promo-bot__launcher:hover {
+  background: var(--accent-strong);
+  transform: translateY(-2px);
+}
+
+.promo-bot__launcher svg {
+  width: 24px;
+  height: 24px;
+}
+
+.promo-bot.is-open .promo-bot__launcher {
+  background: var(--panel-elevated);
+  color: var(--accent);
+}
+
+/* ---------- Nudge bubble ---------- */
+
+.promo-bot__nudge {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  max-width: 260px;
+  padding: var(--space-3) var(--space-3) var(--space-3) var(--space-4);
+  background: var(--panel-elevated);
+  border: 1px solid var(--border-hover);
+  border-radius: var(--radius-lg) var(--radius-lg) var(--radius-sm) var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  animation: promo-bot-pop 240ms ease both;
+}
+
+.promo-bot__nudge-text {
+  background: none;
+  border: 0;
+  padding: 0;
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 0.875rem;
+  line-height: 1.4;
+  text-align: left;
+  cursor: pointer;
+}
+
+.promo-bot__nudge-close,
+.promo-bot__close {
+  flex-shrink: 0;
+  background: none;
+  border: 0;
+  color: var(--text-muted);
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.promo-bot__nudge-close:hover,
+.promo-bot__close:hover {
+  color: var(--text-primary);
+}
+
+/* ---------- Panel ---------- */
+
+.promo-bot__panel {
+  width: 360px;
+  max-height: min(560px, calc(100vh - 120px));
+  display: flex;
+  flex-direction: column;
+  background: var(--panel-elevated);
+  border: 1px solid var(--border-hover);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md), 0 0 0 1px rgba(255, 181, 71, 0.08);
+  overflow: hidden;
+  animation: promo-bot-pop 200ms ease both;
+}
+
+.promo-bot__panel[hidden] {
+  display: none;
+}
+
+.promo-bot__header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--border);
+}
+
+.promo-bot__avatar {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--accent-muted);
+  color: var(--accent);
+}
+
+.promo-bot__avatar svg {
+  width: 18px;
+  height: 18px;
+}
+
+.promo-bot__title {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.promo-bot__title small {
+  font-weight: 400;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.promo-bot__log {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.promo-bot__msg {
+  max-width: 92%;
+  font-size: 0.875rem;
+  line-height: 1.45;
+}
+
+.promo-bot__msg p {
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+}
+
+.promo-bot__msg--bot p {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+}
+
+.promo-bot__msg--user {
+  align-self: flex-end;
+}
+
+.promo-bot__msg--user p {
+  background: var(--accent-muted);
+  color: var(--text-primary);
+}
+
+.promo-bot__tools,
+.promo-bot__actions,
+.promo-bot__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+.promo-bot__tools {
+  flex-direction: column;
+}
+
+.promo-bot__tool {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 140ms ease;
+}
+
+.promo-bot__tool:hover {
+  border-color: var(--border-hover);
+}
+
+.promo-bot__tool-icon {
+  color: var(--accent);
+  display: grid;
+}
+
+.promo-bot__tool-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.promo-bot__tool-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.promo-bot__tool-name {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.promo-bot__tool-name em {
+  font-style: normal;
+  font-weight: 400;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  margin-left: var(--space-1);
+}
+
+.promo-bot__tool-desc {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.promo-bot__chip,
+.promo-bot__action {
+  padding: 6px var(--space-3);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: 0.8rem;
+  text-decoration: none;
+  cursor: pointer;
+  transition: border-color 140ms ease, color 140ms ease;
+}
+
+.promo-bot__chip:hover,
+.promo-bot__action:hover {
+  border-color: var(--border-hover);
+  color: var(--text-primary);
+}
+
+.promo-bot__action--primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #000;
+  font-weight: 600;
+}
+
+.promo-bot__action--primary:hover {
+  background: var(--accent-strong);
+  color: #000;
+}
+
+.promo-bot__form {
+  display: flex;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border-top: 1px solid var(--border);
+}
+
+.promo-bot__input {
+  flex: 1;
+  min-width: 0;
+  padding: var(--space-2) var(--space-3);
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 0.875rem;
+}
+
+.promo-bot__input:focus {
+  outline: none;
+  border-color: var(--border-hover);
+}
+
+.promo-bot__send {
+  width: 38px;
+  background: var(--accent);
+  border: 0;
+  border-radius: var(--radius-md);
+  color: #000;
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+
+@keyframes promo-bot-pop {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .promo-bot {
+    right: var(--space-4);
+    bottom: var(--space-4);
+  }
+
+  .promo-bot__panel {
+    width: calc(100vw - 32px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .promo-bot__panel,
+  .promo-bot__nudge {
+    animation: none;
+  }
+}

@@ -61,6 +61,31 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://www.assetbench.co.uk/convert-files</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.assetbench.co.uk/glb-builder</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.assetbench.co.uk/inspect-glb</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.assetbench.co.uk/asset-compare</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.assetbench.co.uk/asset-report</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://www.assetbench.co.uk/about</loc>
     <changefreq>yearly</changefreq>
     <priority>0.5</priority>

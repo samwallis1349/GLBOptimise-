@@ -7,6 +7,7 @@ import { cleanupStaleSessions } from '../shared/storage/sessionCleanup.js';
 import { revalidateStoredLicense } from '../services/LicenseService.js';
 import { initLayoutEditor } from '../editor/LayoutEditor.js';
 import { initCommandPalette } from '../shared/effects/CommandPalette.js';
+import { initPromoBot } from '../shared/effects/PromoBot.js';
 
 /** Mounts the whole Asset Bench app (header, routed page content, footer) into rootEl. */
 export function App(rootEl) {
@@ -39,4 +40,7 @@ export function App(rootEl) {
   // Ctrl/Cmd+K tool finder — same pattern: mounted once, outside the
   // router's DOM, reachable from any page.
   initCommandPalette();
+
+  // Bench Bot tool-finder / promo helper — floating, same mount-once pattern.
+  initPromoBot();
 }
