@@ -103,7 +103,8 @@ function CategoriesSection() {
   section.className = 'categories container';
 
   for (const category of CATEGORIES) {
-    const tools = getToolsByCategory(category.id);
+    // Tools with wide banner artwork lead their group as a double-width card.
+    const tools = getToolsByCategory(category.id).sort((a, b) => Boolean(b.banner) - Boolean(a.banner));
     if (!tools.length) continue;
 
     const block = document.createElement('div');
@@ -124,7 +125,7 @@ function CategoriesSection() {
 
     const grid = document.createElement('div');
     grid.className = 'tool-grid';
-    tools.forEach((tool) => grid.appendChild(ToolCard(tool)));
+    tools.forEach((tool) => grid.appendChild(ToolCard(tool, { featured: Boolean(tool.banner) })));
 
     block.append(header, grid);
     section.appendChild(block);
