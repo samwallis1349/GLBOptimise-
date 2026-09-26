@@ -313,6 +313,7 @@ export const TOOLS = [
     description: 'Create thumbnails from GLBs and FBXs.',
     keywords: ['preview image', 'render', 'icon', 'snapshot'],
     icon: 'camera',
+    thumbnail: '/thumbnails/thumbnail-maker.webp',
     features: [
       { icon: 'camera', label: 'Renders' },
       { icon: 'image-down', label: 'PNG out' },
