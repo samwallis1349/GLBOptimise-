@@ -313,7 +313,7 @@ function wireEvents() {
     document.querySelectorAll('[data-tab]').forEach((b) => b.classList.toggle('is-active', b === button));
     if (button.dataset.tab === 'import') el.file.click();
     if (button.dataset.tab === 'export') flash(el.exportPanel);
-    if (button.dataset.tab === 'arrange') flash(el.q('.aa-arrange'));
+    if (button.dataset.tab === 'arrange') flash(el.q('.aa-toolbar'));
   }));
   on(el.settingsBtn, 'click', (event) => {
     event.stopPropagation();
@@ -396,7 +396,7 @@ async function importFiles(files) {
     setBusy(false);
   }
   if (loaded.length) toast(`${loaded.length} asset${loaded.length === 1 ? '' : 's'} added to the library`);
-  renderLibrary();
+  renderAll();
 }
 
 function removeAsset(asset) {
@@ -700,10 +700,6 @@ function runAction(action) {
     case 'align-z':
       if (!needMany(2)) return;
       align(action === 'align-x' ? 'x' : 'z');
-      break;
-    case 'align':
-      if (!needMany(2)) return;
-      align(s.arrangeAxis === 'x' ? 'z' : 'x');
       break;
     case 'arrange':
       if (!needMany(2)) return;
@@ -1135,6 +1131,9 @@ async function runExport(instances, options) {
 // ---------------------------------------------------------------- ui
 
 function renderAll() {
+  // Steps light up as the workflow progresses.
+  el.q('[data-tab="import"]').classList.toggle('is-done', s.assets.length > 0);
+  el.q('[data-tab="arrange"]').classList.toggle('is-done', s.instances.length > 0);
   renderLibrary();
   renderOutliner();
   updateSelectionUi();
@@ -1147,10 +1146,11 @@ function updateSelectionUi() {
   el.transformTarget.textContent = main ? (selected.length > 1 ? `${main.name} +${selected.length - 1}` : main.name) : 'Nothing selected';
   el.snapFloor.disabled = !has;
   document.querySelectorAll('.aa-transform [data-action], .aa-toolbar [data-action], .aa-arrange [data-action]').forEach((button) => {
-    const needs = { 'align-x': 2, 'align-z': 2, align: 2, arrange: 2, distribute: 3 }[button.dataset.action] || 1;
+    const needs = { 'align-x': 2, 'align-z': 2, arrange: 2, distribute: 3 }[button.dataset.action] || 1;
     button.disabled = selected.length < needs;
   });
-  el.arrangeMeta.textContent = selected.length > 1 ? `${selected.length} selected` : 'Shift-click 2+ objects';
+  el.arrangeMeta.textContent = `${selected.length} selected`;
+  el.q('#aa-arrange').classList.toggle('is-open', selected.length > 1);
   el.downloadSelected.disabled = !has;
   el.selectedMeta.textContent = has ? `${selected.length} object${selected.length === 1 ? '' : 's'}` : 'Nothing selected';
   const visibleCount = s.instances.filter((i) => i.object.visible).length;
