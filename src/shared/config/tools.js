@@ -233,6 +233,8 @@ export const TOOLS = [
     keywords: ['arranger', 'arrange', 'combine', 'join', 'assemble', 'scene build', 'layout', 'place', 'level', 'merge'],
     icon: 'package-plus',
     thumbnail: '/thumbnails/glb-builder.webp',
+    // Double-width artwork for the featured slot on the All Tools page.
+    banner: '/thumbnails/glb-builder-wide.webp',
     features: [
       { icon: 'package-plus', label: 'Arrange' },
       { icon: 'git-merge', label: 'Merge' },

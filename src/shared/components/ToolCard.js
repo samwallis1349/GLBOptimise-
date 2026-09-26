@@ -30,31 +30,38 @@ import { iconSvg } from '../utils/icons.js';
  * rather than to run its own pointer listeners — 17 cards each with their
  * own listener is exactly the cost that system exists to avoid.
  *
+ * Options: `index` overrides the numbered pill (for pages that show tools
+ * in their own order), and `featured` renders the double-width variant
+ * using the tool's wide `banner` artwork.
+ *
  * @param {import('../config/tools.js').TOOLS[number]} tool
+ * @param {{ index?: number, featured?: boolean }} [options]
  * @returns {HTMLElement}
  */
-export function ToolCard(tool) {
+export function ToolCard(tool, { index: displayIndex, featured = false } = {}) {
   const category = getCategoryById(tool.category);
   const isAvailable = tool.status === 'available' || tool.status === 'beta';
 
   const card = document.createElement('a');
-  card.className = 'tool-card';
+  const wide = featured && Boolean(tool.banner);
+  card.className = `tool-card${wide ? ' tool-card--featured' : ''}`;
   card.href = tool.route;
   card.dataset.status = tool.status;
   if (category) card.style.setProperty('--card-accent', `var(${category.accent})`);
 
-  const position = TOOLS.indexOf(tool);
-  const index = String(position >= 0 ? position + 1 : 0).padStart(2, '0');
+  const position = displayIndex ?? TOOLS.indexOf(tool) + 1;
+  const index = String(position > 0 ? position : 0).padStart(2, '0');
+  const image = wide ? tool.banner : tool.thumbnail;
 
   card.innerHTML = `
-    <div class="tool-card__visual${tool.thumbnail ? ' tool-card__visual--photo' : ''}">
+    <div class="tool-card__visual${image ? ' tool-card__visual--photo' : ''}">
       ${
-        tool.thumbnail
-          ? `<img class="tool-card__visual-img" src="${escapeAttr(tool.thumbnail)}" alt="" loading="lazy" decoding="async" />`
+        image
+          ? `<img class="tool-card__visual-img" src="${escapeAttr(image)}" alt="" ${wide ? 'fetchpriority="high"' : 'loading="lazy"'} decoding="async" />`
           : iconSvg(tool.icon, { class: 'tool-card__visual-icon' })
       }
       <span class="tool-card__scan" aria-hidden="true"></span>
-      <span class="tool-card__index">#${index}</span>
+      <span class="tool-card__index">${wide ? 'New · ' : ''}#${index}</span>
     </div>
 
     <div class="tool-card__body">
