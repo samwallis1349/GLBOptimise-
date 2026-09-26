@@ -29,13 +29,10 @@
  * these are deliberately restrained accents, not a full re-theme per tool.
  */
 export const CATEGORIES = [
-  // Build & Repair leads so the featured Asset Arranger is the homepage's first card.
-  { id: 'build', label: 'Build & Repair', icon: 'tools', accent: '--cat-blue' },
-  { id: 'optimise', label: 'Optimise & Reduce', icon: 'gauge', accent: '--cat-amber' },
-  { id: 'animation', label: 'Animations & Rigging', icon: 'bone', accent: '--cat-purple' },
-  { id: 'materials', label: 'Materials & Textures', icon: 'layers-3', accent: '--cat-cyan' },
-  { id: 'inspect', label: 'Inspect & Analyse', icon: 'search', accent: '--cat-pink' },
-  { id: 'utilities', label: 'Preview & Utilities', icon: 'eye', accent: '--cat-yellow' },
+  // Build & Convert leads so the featured Asset Arranger is the homepage's first card.
+  { id: 'build', label: 'Build & Convert', icon: 'tools', accent: '--cat-blue' },
+  { id: 'optimise', label: 'Optimise', icon: 'gauge', accent: '--cat-amber' },
+  { id: 'inspect', label: 'Inspect & Preview', icon: 'search', accent: '--cat-pink' },
 ];
 
 export function getCategoryById(id) {
@@ -43,7 +40,7 @@ export function getCategoryById(id) {
 }
 
 export const TOOLS = [
-  // ---------- Optimise & Reduce ----------
+  // ---------- Optimise (geometry, textures, animation) ----------
   {
     id: 'optimise-glb',
     name: 'Optimise GLB',
@@ -109,7 +106,6 @@ export const TOOLS = [
     category: 'optimise',
   },
 
-  // ---------- Animations & Rigging ----------
   {
     id: 'strip-animations',
     name: 'Strip Animations',
@@ -124,39 +120,7 @@ export const TOOLS = [
       { icon: 'gamepad', label: 'Game ready' },
     ],
     status: 'available',
-    category: 'animation',
-  },
-  {
-    id: 'rig-inspector',
-    name: 'Rig Inspector',
-    route: '/rig-inspector',
-    description: 'Inspect bones, weights and skinning.',
-    keywords: ['skeleton', 'joints', 'weights', 'skin', 'rigging'],
-    icon: 'bone',
-    thumbnail: '/thumbnails/rig-inspector.webp',
-    features: [
-      { icon: 'bone', label: 'Joints' },
-      { icon: 'search', label: 'Weights' },
-      { icon: 'shield', label: 'Validate' },
-    ],
-    status: 'available',
-    category: 'animation',
-  },
-  {
-    id: 'animation-inspector',
-    name: 'Animation Inspector',
-    route: '/animation-inspector',
-    description: 'View and analyse animation clips.',
-    keywords: ['clips', 'preview', 'playback', 'timeline'],
-    icon: 'play-circle',
-    thumbnail: '/thumbnails/animation-inspector.webp',
-    features: [
-      { icon: 'play-circle', label: 'Preview' },
-      { icon: 'activity', label: 'Curves' },
-      { icon: 'search', label: 'Issues' },
-    ],
-    status: 'available',
-    category: 'animation',
+    category: 'optimise',
   },
   {
     id: 'animation-optimiser',
@@ -172,10 +136,9 @@ export const TOOLS = [
       { icon: 'gamepad', label: 'Game ready' },
     ],
     status: 'available',
-    category: 'animation',
+    category: 'optimise',
   },
 
-  // ---------- Materials & Textures ----------
   {
     id: 'pack-pbr',
     name: 'Pack PBR',
@@ -190,7 +153,7 @@ export const TOOLS = [
       { icon: 'gauge', label: 'Faster' },
     ],
     status: 'available',
-    category: 'materials',
+    category: 'optimise',
   },
   {
     id: 'texture-resizer',
@@ -206,10 +169,10 @@ export const TOOLS = [
       { icon: 'zap', label: 'Fast' },
     ],
     status: 'available',
-    category: 'materials',
+    category: 'optimise',
   },
 
-  // ---------- Build & Repair ----------
+  // ---------- Build & Convert ----------
   {
     id: 'convert-files',
     name: 'Convert Files',
@@ -261,7 +224,7 @@ export const TOOLS = [
     category: 'build',
   },
 
-  // ---------- Inspect & Analyse ----------
+  // ---------- Inspect & Preview ----------
   {
     id: 'inspect-glb',
     name: 'Inspect GLB',
@@ -311,7 +274,38 @@ export const TOOLS = [
     category: 'inspect',
   },
 
-  // ---------- Preview & Utilities ----------
+  {
+    id: 'rig-inspector',
+    name: 'Rig Inspector',
+    route: '/rig-inspector',
+    description: 'Inspect bones, weights and skinning.',
+    keywords: ['skeleton', 'joints', 'weights', 'skin', 'rigging'],
+    icon: 'bone',
+    thumbnail: '/thumbnails/rig-inspector.webp',
+    features: [
+      { icon: 'bone', label: 'Joints' },
+      { icon: 'search', label: 'Weights' },
+      { icon: 'shield', label: 'Validate' },
+    ],
+    status: 'available',
+    category: 'inspect',
+  },
+  {
+    id: 'animation-inspector',
+    name: 'Animation Inspector',
+    route: '/animation-inspector',
+    description: 'View and analyse animation clips.',
+    keywords: ['clips', 'preview', 'playback', 'timeline'],
+    icon: 'play-circle',
+    thumbnail: '/thumbnails/animation-inspector.webp',
+    features: [
+      { icon: 'play-circle', label: 'Preview' },
+      { icon: 'activity', label: 'Curves' },
+      { icon: 'search', label: 'Issues' },
+    ],
+    status: 'available',
+    category: 'inspect',
+  },
   {
     id: 'thumbnail-maker',
     name: 'Thumbnail Maker',
@@ -325,7 +319,7 @@ export const TOOLS = [
       { icon: 'grid', label: 'Batch' },
     ],
     status: 'available',
-    category: 'utilities',
+    category: 'inspect',
   },
 ];
 
