@@ -1,0 +1,1308 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Convert 3D game models between FBX, GLB, glTF, OBJ, DAE, STL, 3MF, USDZ and more, in your browser.">
+<title>Model Convertor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap">
+<style>
+:root{
+  color-scheme:dark;
+  --bg:#000000; --panel:#121212; --tile:#0B0B0B; --field:#0A0A0A;
+  --line:#262626; --line-warm:rgba(255,179,64,.22); --line-tile:#1E1E1E;
+  --ink:#F3EFE6; --text:#D9D6D0; --muted:#8C8A86; --dim:#5E5C59;
+  --accent:#FFB340; --accent-deep:#3A2A12; --accent-soft:rgba(255,179,64,.10);
+  --ok:#3DDC84; --err:#FF6B5E; --warn:#FFB340;
+  --stage:#0A0A0A;
+  --display:"Outfit", "Segoe UI", system-ui, sans-serif;
+  --body:"Inter", "Segoe UI", system-ui, sans-serif;
+  --mono:"JetBrains Mono", ui-monospace, Consolas, monospace;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font:13px/1.5 var(--body);padding-inline:16px;padding-block:28px 56px}
+[hidden]{display:none!important}
+.wrap{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+
+/* Hero */
+.hero{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px 24px;margin-bottom:10px}
+.eyebrow{font:700 10.5px var(--body);letter-spacing:.2em;text-transform:uppercase;color:var(--accent);margin:0 0 14px}
+h1{font:800 clamp(44px,8vw,68px)/0.95 var(--display);letter-spacing:-.035em;margin:0;color:var(--ink)}
+h1 em{font-style:normal;color:var(--accent)}
+.lede{margin:16px 0 0;font-size:15px;line-height:1.6;color:var(--muted);max-width:62ch}
+.pill{display:inline-flex;align-items:center;gap:8px;font-size:11px;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:8px 14px;background:var(--tile);white-space:nowrap}
+.pill::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--ok);box-shadow:0 0 8px rgba(61,220,132,.6)}
+
+/* Cards */
+.grid{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:18px;align-items:start}
+@media (max-width:920px){.grid{grid-template-columns:1fr}}
+.col{display:flex;flex-direction:column;gap:18px;min-width:0}
+.card{background:var(--panel);border:1px solid var(--line-warm);border-radius:12px;min-width:0}
+.card-h{display:flex;align-items:center;gap:14px;padding:16px 16px 14px;border-bottom:1px solid var(--line)}
+.num{flex:none;width:26px;height:26px;display:grid;place-items:center;border:1px solid rgba(255,179,64,.45);border-radius:6px;background:var(--accent-deep);color:var(--accent);font:700 10px var(--body)}
+.card-h h2{margin:0;font:700 14.5px var(--body);color:#fff;letter-spacing:-.005em}
+.card-h p{margin:2px 0 0;font-size:10.5px;color:var(--muted)}
+.card-h .spacer{flex:1}
+.tag{font:700 9px var(--display);letter-spacing:.12em;text-transform:uppercase;color:var(--ok);border:1px solid rgba(61,220,132,.55);border-radius:999px;padding:6px 10px;white-space:nowrap}
+.card-b{padding:16px;display:flex;flex-direction:column;gap:14px}
+
+/* Stage */
+.stage{position:relative;border:1px dashed #3a3226;border-radius:10px;overflow:hidden;aspect-ratio:4/3;max-width:100%;min-height:300px;
+  background:
+    radial-gradient(ellipse at 50% 55%, rgba(255,179,64,.10), transparent 60%),
+    repeating-conic-gradient(#111 0% 25%, #0B0B0B 0% 50%) 0 0/24px 24px;}
+@media (min-width:921px){.stage-card{position:sticky;top:calc(env(safe-area-inset-top,0px) + 16px)}}
+.stage canvas{display:block;width:100%;height:100%;touch-action:none}
+.stage.drag::after{content:"Drop to load";position:absolute;inset:10px;border:1px dashed var(--accent);border-radius:8px;display:grid;place-items:center;font:800 26px var(--display);letter-spacing:.08em;color:var(--accent);background:rgba(0,0,0,.72)}
+.tools{position:absolute;top:10px;right:10px;display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end}
+.tool{font:600 10.5px var(--body);background:rgba(10,10,10,.85);color:var(--text);border:1px solid var(--line);border-radius:6px;padding:6px 10px;cursor:pointer}
+.tool:hover{border-color:#3a3a3a}
+.tool[aria-pressed="true"]{background:var(--accent-deep);color:var(--accent);border-color:var(--accent)}
+.tool:disabled{opacity:.4;cursor:default}
+.badge{position:absolute;left:10px;bottom:10px;right:10px;display:flex;gap:6px;align-items:center;pointer-events:none}
+.badge b{font:600 10.5px var(--mono);color:var(--text);background:rgba(10,10,10,.85);border:1px solid var(--line);padding:4px 8px;border-radius:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.busy{position:absolute;inset:0;display:grid;place-items:center;font:800 22px var(--display);letter-spacing:.14em;color:var(--accent);background:rgba(0,0,0,.6)}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:0}
+.stats div{background:var(--tile);border:1px dashed var(--line-tile);border-radius:8px;padding:9px 11px;min-width:0}
+.stats dt{font:700 9.5px var(--body);color:var(--muted);text-transform:uppercase;letter-spacing:.12em}
+.stats dd{margin:3px 0 0;font:600 14px var(--mono);color:var(--ink);font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media (max-width:520px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* Source */
+.drop{border:1px dashed #3a3226;border-radius:10px;padding:22px 16px;text-align:center;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;background:radial-gradient(ellipse at 50% 40%, rgba(255,179,64,.07), transparent 70%), var(--tile);transition:border-color .15s}
+.drop:hover,.drop.drag{border-color:var(--accent)}
+.plus{width:38px;height:38px;border:1px solid rgba(255,179,64,.55);border-radius:8px;display:grid;place-items:center;color:var(--accent);font:400 22px/1 var(--body);margin-bottom:6px;background:var(--accent-deep)}
+.drop strong{font:700 13px var(--body);color:#fff}
+.drop small{color:var(--muted);font-size:10.5px}
+.exts{font:500 10px var(--mono);color:var(--dim);margin-top:2px}
+.notes{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;font-size:11.5px}
+.notes:empty{display:none}
+.notes li{padding:8px 11px;border-radius:7px;background:var(--tile);border:1px solid var(--line-tile);border-left:2px solid var(--warn);color:var(--text)}
+.notes li.e{border-left-color:var(--err)}
+
+/* Formats */
+.fmt-groups{display:flex;flex-direction:column;gap:14px}
+.fgroup{display:flex;flex-direction:column;gap:8px}
+.fglabel{font:700 9.5px var(--body);color:var(--muted);text-transform:uppercase;letter-spacing:.14em}
+.fmts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+@media (max-width:420px){.fmts{grid-template-columns:1fr}}
+.fmt{position:relative;background:var(--tile);border:1px solid var(--line-tile);border-radius:8px;padding:11px 12px;cursor:pointer;display:flex;flex-direction:column;gap:3px;transition:border-color .15s}
+.fmt:hover{border-color:#3a3a3a}
+.fmt input{position:absolute;opacity:0;pointer-events:none}
+.fmt b{font:700 13px var(--body);color:#fff}
+.fmt b i{font:500 10px var(--mono);color:var(--dim);font-style:normal;margin-left:6px}
+.fmt small{color:var(--muted);font-size:10.5px;line-height:1.4}
+.fmt:has(input:checked){border-color:var(--accent);background:linear-gradient(180deg,#3A2A12,#1E170D)}
+.fmt:has(input:checked) b{color:var(--accent)}
+
+/* Adjust */
+.opts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+@media (max-width:420px){.opts{grid-template-columns:1fr}}
+.field{display:flex;flex-direction:column;gap:6px;min-width:0}
+.field > label,.field .lbl{font:700 9.5px var(--body);color:var(--muted);text-transform:uppercase;letter-spacing:.14em}
+select,input[type=number]{font:500 12px var(--body);color:var(--text);background:var(--field);border:1px solid var(--line);border-radius:7px;padding:9px 11px;width:100%}
+select:hover,input[type=number]:hover{border-color:#3a3a3a}
+.scale-row{display:flex;gap:6px}
+.scale-row input{flex:1;min-width:0}
+.chip{font:600 10.5px var(--mono);border:1px solid var(--line);background:var(--field);color:var(--text);border-radius:7px;padding:0 9px;cursor:pointer}
+.chip:hover{border-color:var(--accent);color:var(--accent)}
+.check{display:flex;gap:8px;align-items:center;font-size:12px;color:var(--text);padding-block:8px}
+.check input{accent-color:var(--accent);width:15px;height:15px}
+
+/* Export */
+.btn{font:700 13px var(--body);background:var(--accent);color:#1A1206;border:1px solid var(--accent);border-radius:9px;padding:14px 16px;cursor:pointer;transition:filter .15s,box-shadow .15s}
+.btn:hover{filter:brightness(1.06);box-shadow:0 0 24px rgba(255,179,64,.25)}
+.btn:disabled{background:#161616;color:var(--dim);border-color:var(--line);box-shadow:none;cursor:default;filter:none}
+.status{font-size:11.5px;min-height:38px;color:var(--muted);background:var(--field);border:1px solid var(--line);border-radius:7px;padding:10px 12px}
+.status.ok{color:var(--ok)} .status.err{color:var(--err)}
+.fine{font-size:10.5px;color:var(--dim);margin:0;line-height:1.55}
+
+.tool:focus-visible,.btn:focus-visible,.fmt:focus-within,.drop:focus-visible,select:focus-visible,input:focus-visible,.chip:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* Matrix */
+.tscroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:620px;font-size:12px}
+th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font:700 9.5px var(--body);text-transform:uppercase;letter-spacing:.14em;color:var(--muted)}
+td{color:var(--text)}
+td:first-child{font:600 12px var(--mono);color:var(--accent);white-space:nowrap}
+.y{color:var(--ok);font-weight:600}.n{color:var(--dim)}
+tr:last-child td{border-bottom:0}
+.fallback{padding:14px 16px;border:1px solid var(--err);border-radius:10px;color:var(--err);background:var(--panel)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+
+<div class="wrap">
+  <header class="hero">
+    <div>
+      <p class="eyebrow">Model pipeline utility</p>
+      <h1>Model <em>Convertor</em></h1>
+      <p class="lede">Open 24 model formats and save to 14, including FBX, GLB, OBJ, DAE and 3MF. Preview, rescale and re-pivot before you export.</p>
+    </div>
+    <span class="pill">Private · browser-only processing</span>
+  </header>
+
+  <div id="jsFail" class="fallback" hidden>The 3D engine didn't load. Check your connection and reload the page.</div>
+
+  <div class="grid">
+    <div class="col">
+      <section class="card stage-card">
+        <div class="card-h">
+          <span class="num">3D</span>
+          <div><h2>Preview</h2><p>Drag to orbit, scroll to zoom. Drop a file anywhere on the viewport.</p></div>
+          <span class="spacer"></span>
+          <span class="tag">Local viewer</span>
+        </div>
+        <div class="card-b">
+          <div class="stage" id="stage">
+            <canvas id="view" aria-label="3D preview of the loaded model"></canvas>
+            <div class="tools">
+              <button class="tool" id="tWire" aria-pressed="false">Wireframe</button>
+              <button class="tool" id="tGrid" aria-pressed="true">Grid</button>
+              <button class="tool" id="tAnim" aria-pressed="false">Play animation</button>
+              <button class="tool" id="tFrame">Reset view</button>
+            </div>
+            <div class="badge"><b id="srcName">Loading engine…</b></div>
+            <div class="busy" id="busy">LOADING</div>
+          </div>
+          <dl class="stats" id="stats">
+            <div><dt>Meshes</dt><dd id="sMesh">–</dd></div>
+            <div><dt>Triangles</dt><dd id="sTri">–</dd></div>
+            <div><dt>Vertices</dt><dd id="sVert">–</dd></div>
+            <div><dt>Materials</dt><dd id="sMat">–</dd></div>
+            <div><dt>Textures</dt><dd id="sTex">–</dd></div>
+            <div><dt>Bones</dt><dd id="sBone">–</dd></div>
+            <div><dt>Animations</dt><dd id="sAnim">–</dd></div>
+            <div><dt>Size (units)</dt><dd id="sSize">–</dd></div>
+          </dl>
+        </div>
+      </section>
+    </div>
+
+    <div class="col">
+      <section class="card">
+        <div class="card-h">
+          <span class="num">01</span>
+          <div><h2>Source model</h2><p>Drop the model with its textures, .mtl or .bin files</p></div>
+        </div>
+        <div class="card-b">
+          <div class="drop" id="drop" tabindex="0" role="button" aria-label="Choose model files">
+            <span class="plus" aria-hidden="true">+</span>
+            <strong>Add a model</strong>
+            <small>Or drop everything as one .zip</small>
+            <span class="exts">.glb .gltf .fbx .obj .dae .kmz .pmx .pmd .md2 .vox .lwo .3ds .usdz .wrl .amf .3mf .ply .stl .off .vtk .vtp .pcd .xyz .zip</span>
+          </div>
+          <input type="file" id="file" multiple hidden accept=".glb,.gltf,.fbx,.obj,.mtl,.dae,.kmz,.pmx,.pmd,.md2,.vox,.lwo,.3ds,.usdz,.wrl,.vrml,.amf,.3mf,.ply,.stl,.off,.vtk,.vtp,.pcd,.xyz,.zip,.bin,.png,.jpg,.jpeg,.tga,.webp,.bmp,.gif,.spa,.sph">
+          <ul class="notes" id="notes"></ul>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-h">
+          <span class="num">02</span>
+          <div><h2>Target format</h2><p>Pick where the model is going</p></div>
+        </div>
+        <div class="card-b">
+          <div class="fmt-groups" id="fmts"><div class="fgroup"><span class="fglabel">Game engines</span><div class="fmts"><label class="fmt"><input type="radio" name="fmt" value="glb" checked><b>GLB<i>.glb</i></b><small>One file with textures, skeletons and animation. Godot, Unity, Unreal, Blender.</small></label><label class="fmt"><input type="radio" name="fmt" value="fbx"><b>FBX<i>.fbx</i></b><small>Binary FBX 7.4, static meshes with embedded textures. Unity, Unreal, Roblox.</small></label><label class="fmt"><input type="radio" name="fmt" value="gltfsep"><b>glTF + bin<i>.gltf .bin</i></b><small>glTF with separate buffer and texture files, easy to edit.</small></label><label class="fmt"><input type="radio" name="fmt" value="gltf"><b>glTF<i>.gltf</i></b><small>Single JSON file with everything embedded.</small></label><label class="fmt"><input type="radio" name="fmt" value="obj"><b>OBJ<i>.obj + .mtl</i></b><small>Static mesh with materials and PNG textures.</small></label><label class="fmt"><input type="radio" name="fmt" value="dae"><b>Collada<i>.dae</i></b><small>Meshes, materials and textures. SketchUp, older engines.</small></label></div></div><div class="fgroup"><span class="fglabel">3D printing</span><div class="fmts"><label class="fmt"><input type="radio" name="fmt" value="stl"><b>STL<i>.stl</i></b><small>Shape only, binary. Every slicer.</small></label><label class="fmt"><input type="radio" name="fmt" value="3mf"><b>3MF<i>.3mf</i></b><small>Modern print format with colours, units in millimetres.</small></label></div></div><div class="fgroup"><span class="fglabel">AR & web</span><div class="fmts"><label class="fmt"><input type="radio" name="fmt" value="usdz"><b>USDZ<i>.usdz</i></b><small>Apple AR Quick Look and Reality Composer.</small></label><label class="fmt"><input type="radio" name="fmt" value="x3d"><b>X3D<i>.x3d</i></b><small>Web3D standard XML with textures.</small></label><label class="fmt"><input type="radio" name="fmt" value="wrl"><b>VRML<i>.wrl</i></b><small>VRML 2.0, older viewers and CAD tools.</small></label></div></div><div class="fgroup"><span class="fglabel">Scans & data</span><div class="fmts"><label class="fmt"><input type="radio" name="fmt" value="ply"><b>PLY<i>.ply</i></b><small>Mesh with vertex colours and UVs.</small></label><label class="fmt"><input type="radio" name="fmt" value="off"><b>OFF<i>.off</i></b><small>Plain vertex and face list for research tools.</small></label><label class="fmt"><input type="radio" name="fmt" value="xyz"><b>XYZ<i>.xyz</i></b><small>Point cloud, one point per line with colour.</small></label></div></div></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-h">
+          <span class="num">03</span>
+          <div><h2>Adjust &amp; export</h2><p>Transform the model, then download</p></div>
+        </div>
+        <div class="card-b">
+          <div class="opts">
+            <div class="field">
+              <label for="scale">Scale</label>
+              <div class="scale-row">
+                <input type="number" id="scale" value="1" step="any" min="0.00001">
+                <button class="chip" data-scale="0.01" title="Centimetres to metres">÷100</button>
+                <button class="chip" data-scale="100" title="Metres to centimetres">×100</button>
+              </div>
+            </div>
+            <div class="field">
+              <label for="up">Up axis</label>
+              <select id="up">
+                <option value="y">Keep (Y-up)</option>
+                <option value="z">Rotate to Z-up</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="pivot">Pivot</label>
+              <select id="pivot">
+                <option value="keep">Keep original</option>
+                <option value="center">Centre of model</option>
+                <option value="bottom" selected>Bottom centre</option>
+              </select>
+            </div>
+            <div class="field">
+              <span class="lbl">Extras</span>
+              <label class="check"><input type="checkbox" id="anims" checked>Include animations</label>
+            </div>
+          </div>
+          <button class="btn" id="convert" disabled>Convert and download</button>
+          <div class="status" id="status" role="status">Waiting for a model</div>
+          <p class="fine">Files are saved inside a .zip with any textures. FBX export writes static meshes with materials and embedded textures; use GLB when you need skeletons or animation.</p>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <section class="card">
+    <div class="card-h">
+      <span class="num">i</span>
+      <div><h2>Format support</h2><p>What each format can carry</p></div>
+    </div>
+    <div class="card-b tscroll">
+      <table>
+        <thead><tr><th>Format</th><th>Open</th><th>Save</th><th>Keeps</th><th>Typical use</th></tr></thead>
+        <tbody>
+          <tr><td>.glb / .gltf</td><td class="y">Yes</td><td class="y">Yes</td><td>Meshes, PBR materials, textures, skeletons, animation</td><td>Godot, Blender, Unity and Unreal importers, web</td></tr>
+          <tr><td>.fbx</td><td class="y">Yes</td><td class="y">Yes</td><td>Open: meshes, materials, skeletons, animation. Save: meshes, materials, textures</td><td>Unity, Unreal, Roblox, Maya, 3ds Max</td></tr>
+          <tr><td>.obj + .mtl</td><td class="y">Yes</td><td class="y">Yes</td><td>Meshes, basic materials, textures</td><td>Universal static props, sculpting tools</td></tr>
+          <tr><td>.dae / .kmz</td><td class="y">Yes</td><td class="y">DAE</td><td>Meshes, materials, textures (animation on open)</td><td>SketchUp, Google Earth, older engines</td></tr>
+          <tr><td>.pmx / .pmd</td><td class="y">Yes</td><td class="n">No</td><td>Meshes, toon materials, bones</td><td>MikuMikuDance characters</td></tr>
+          <tr><td>.md2</td><td class="y">Yes</td><td class="n">No</td><td>Meshes, vertex animation</td><td>Quake II era game models</td></tr>
+          <tr><td>.vox</td><td class="y">Yes</td><td class="n">No</td><td>Voxel meshes with palette colours</td><td>MagicaVoxel</td></tr>
+          <tr><td>.lwo / .3ds</td><td class="y">Yes</td><td class="n">No</td><td>Meshes, materials, textures</td><td>LightWave and legacy 3ds Max assets</td></tr>
+          <tr><td>.usdz</td><td class="y">USDA only</td><td class="y">Yes</td><td>Meshes, PBR materials, textures</td><td>iPhone and iPad AR</td></tr>
+          <tr><td>.wrl / .x3d</td><td class="y">WRL</td><td class="y">Yes</td><td>Meshes, materials, textures</td><td>Web3D viewers, CAD</td></tr>
+          <tr><td>.stl</td><td class="y">Yes</td><td class="y">Yes</td><td>Triangles only</td><td>3D printing, slicers</td></tr>
+          <tr><td>.3mf / .amf</td><td class="y">Yes</td><td class="y">3MF</td><td>Meshes, colours</td><td>Modern 3D printing</td></tr>
+          <tr><td>.ply / .off / .vtk</td><td class="y">Yes</td><td class="y">PLY, OFF</td><td>Vertices, faces, colours</td><td>Scans, research and simulation data</td></tr>
+          <tr><td>.pcd / .xyz</td><td class="y">Yes</td><td class="y">XYZ</td><td>Points, colours</td><td>Point clouds and lidar</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+
+<script>
+  // Show a message if the module graph never boots.
+  window.__convBoot = setTimeout(function(){ var el=document.getElementById('jsFail'); if(el) el.hidden=false; var b=document.getElementById('busy'); if(b) b.textContent='Engine failed to load'; }, 20000);
+</script>
+<script type="importmap">
+{"imports":{
+  "three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+  "three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+}}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
+import { MTLLoader } from 'three/addons/loaders/MTLLoader.js';
+import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
+import { STLLoader } from 'three/addons/loaders/STLLoader.js';
+import { PLYLoader } from 'three/addons/loaders/PLYLoader.js';
+import { ColladaLoader } from 'three/addons/loaders/ColladaLoader.js';
+import { ThreeMFLoader } from 'three/addons/loaders/3MFLoader.js';
+import { TDSLoader } from 'three/addons/loaders/TDSLoader.js';
+import { TGALoader } from 'three/addons/loaders/TGALoader.js';
+import { VOXLoader, VOXMesh } from 'three/addons/loaders/VOXLoader.js';
+import { MD2Loader } from 'three/addons/loaders/MD2Loader.js';
+import { MMDLoader } from 'three/addons/loaders/MMDLoader.js';
+import { VRMLLoader } from 'three/addons/loaders/VRMLLoader.js';
+import { VTKLoader } from 'three/addons/loaders/VTKLoader.js';
+import { AMFLoader } from 'three/addons/loaders/AMFLoader.js';
+import { PCDLoader } from 'three/addons/loaders/PCDLoader.js';
+import { XYZLoader } from 'three/addons/loaders/XYZLoader.js';
+import { LWOLoader } from 'three/addons/loaders/LWOLoader.js';
+import { KMZLoader } from 'three/addons/loaders/KMZLoader.js';
+import { USDZLoader } from 'three/addons/loaders/USDZLoader.js';
+import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
+import { STLExporter } from 'three/addons/exporters/STLExporter.js';
+import { PLYExporter } from 'three/addons/exporters/PLYExporter.js';
+import { USDZExporter } from 'three/addons/exporters/USDZExporter.js';
+import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
+import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
+import { unzipSync, zipSync, strToU8 } from 'three/addons/libs/fflate.module.js';
+
+clearTimeout(window.__convBoot);
+const $ = id => document.getElementById(id);
+const downloadsP = (window.claude && window.claude.use) ? window.claude.use('downloads').catch(() => null) : Promise.resolve(null);
+
+// ---------- Viewer ----------
+const canvas = $('view'), stageEl = $('stage');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+renderer.setClearColor(0x000000, 0);
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(45, 4/3, 0.01, 1000);
+const controls = new OrbitControls(camera, canvas);
+controls.enableDamping = true;
+scene.add(new THREE.HemisphereLight(0xffffff, 0x445066, 1.6));
+const sun = new THREE.DirectionalLight(0xffffff, 2.2); sun.position.set(3, 5, 4); scene.add(sun);
+const rim = new THREE.DirectionalLight(0xffe2cc, 0.8); rim.position.set(-4, 2, -3); scene.add(rim);
+let grid = null;
+const view = new THREE.Group();   // display-only correction (undoes Z-up rotation for preview)
+const pivot = new THREE.Group();  // export root: scale + up-axis rotation
+const holder = new THREE.Group(); // pivot offset
+view.add(pivot); pivot.add(holder); scene.add(view);
+
+function cssVar(n){ return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+function applyTheme(){
+  scene.background = null;
+  const dark = true;
+  if (grid) { scene.remove(grid); grid.geometry.dispose(); }
+  grid = new THREE.GridHelper(10, 20, 0x6b4e22, 0x2a2218);
+  grid.visible = $('tGrid').getAttribute('aria-pressed') === 'true';
+  scene.add(grid); fitGrid();
+}
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyTheme);
+new MutationObserver(applyTheme).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
+function resize(){
+  const r = stageEl.getBoundingClientRect();
+  renderer.setSize(r.width, r.height, false);
+  camera.aspect = r.width / Math.max(1, r.height); camera.updateProjectionMatrix();
+}
+new ResizeObserver(resize).observe(stageEl);
+
+const clock = new THREE.Clock();
+let mixer = null;
+renderer.setAnimationLoop(() => {
+  const dt = clock.getDelta();
+  if (mixer && $('tAnim').getAttribute('aria-pressed') === 'true') mixer.update(dt);
+  controls.update(); renderer.render(scene, camera);
+});
+
+// ---------- State ----------
+let current = null; // { model, clips, name, notes, hadTextures }
+
+function worldBox(obj){ obj.updateMatrixWorld(true); return new THREE.Box3().setFromObject(obj, true); }
+function fitGrid(){
+  if (!grid || !current) return;
+  const b = worldBox(view); if (b.isEmpty()) return;
+  const s = b.getSize(new THREE.Vector3());
+  const span = Math.max(s.x, s.z, 0.001) * 2.2;
+  const unit = Math.pow(10, Math.ceil(Math.log10(span)));
+  grid.scale.setScalar(unit / 10); grid.position.y = b.min.y;
+}
+function frame(){
+  const b = worldBox(view); if (b.isEmpty()) return;
+  const c = b.getCenter(new THREE.Vector3()), s = b.getSize(new THREE.Vector3());
+  const d = Math.max(s.x, s.y, s.z, 0.001);
+  const dist = d / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2))) * 1.5;
+  camera.near = d / 1000; camera.far = d * 100; camera.updateProjectionMatrix();
+  camera.position.copy(c).add(new THREE.Vector3(0.9, 0.6, 1).normalize().multiplyScalar(dist));
+  controls.target.copy(c); controls.update();
+  fitGrid();
+}
+
+function applyAdjust(refit){
+  if (!current) return;
+  const sc = parseFloat($('scale').value);
+  const upZ = $('up').value === 'z';
+  pivot.scale.setScalar(sc > 0 ? sc : 1);
+  pivot.rotation.set(upZ ? Math.PI / 2 : 0, 0, 0);
+  view.rotation.set(upZ ? -Math.PI / 2 : 0, 0, 0);
+  holder.position.set(0, 0, 0);
+  const mode = $('pivot').value;
+  if (mode !== 'keep') {
+    view.updateMatrixWorld(true);
+    // Measure in export space (pivot space without view correction)
+    const saved = view.rotation.x; view.rotation.x = 0; view.updateMatrixWorld(true);
+    const b = worldBox(pivot);
+    view.rotation.x = saved;
+    if (!b.isEmpty()) {
+      const c = b.getCenter(new THREE.Vector3());
+      if (mode === 'bottom') { if (upZ) c.z = b.min.z; else c.y = b.min.y; }
+      const off = c.negate();
+      // convert world offset into pivot-local vector
+      const inv = new THREE.Matrix4().compose(new THREE.Vector3(), pivot.quaternion, pivot.scale).invert();
+      holder.position.copy(off.applyMatrix4(inv));
+    }
+  }
+  view.updateMatrixWorld(true);
+  updateSize();
+  if (refit) frame(); else fitGrid();
+}
+['scale', 'up', 'pivot'].forEach(id => $(id).addEventListener('change', () => applyAdjust(true)));
+$('scale').addEventListener('input', () => applyAdjust(false));
+document.querySelectorAll('[data-scale]').forEach(b => b.addEventListener('click', () => {
+  $('scale').value = String(+(parseFloat($('scale').value || 1) * parseFloat(b.dataset.scale)).toPrecision(6));
+  applyAdjust(true);
+}));
+
+// ---------- Stats ----------
+const TEX_KEYS = ['map','normalMap','roughnessMap','metalnessMap','emissiveMap','aoMap','specularMap','bumpMap','alphaMap','lightMap'];
+const fmtN = n => n.toLocaleString('en-GB');
+function mats(o){ return (Array.isArray(o.material) ? o.material : [o.material]).filter(Boolean); }
+function showStats(){
+  let meshes = 0, verts = 0, tris = 0, bones = 0; const m = new Set(), t = new Set();
+  current.model.traverse(o => {
+    if (o.isBone) bones++;
+    if (o.isPoints && o.geometry.attributes.position) verts += o.geometry.attributes.position.count;
+    if (o.isMesh) {
+      meshes++;
+      const g = o.geometry, p = g.attributes.position;
+      if (p) { verts += p.count; tris += Math.floor((g.index ? g.index.count : p.count) / 3); }
+      mats(o).forEach(x => { m.add(x); TEX_KEYS.forEach(k => x[k] && t.add(x[k])); });
+    }
+  });
+  current.textureCount = t.size; current.bones = bones;
+  $('sMesh').textContent = fmtN(meshes); $('sTri').textContent = fmtN(tris); $('sVert').textContent = fmtN(verts);
+  $('sMat').textContent = fmtN(m.size); $('sTex').textContent = fmtN(t.size); $('sBone').textContent = fmtN(bones);
+  $('sAnim').textContent = fmtN(current.clips.length);
+  $('tAnim').disabled = current.clips.length === 0;
+  updateSize();
+}
+function updateSize(){
+  if (!current) return;
+  const saved = view.rotation.x; view.rotation.x = 0;
+  const s = worldBox(pivot).getSize(new THREE.Vector3());
+  view.rotation.x = saved; view.updateMatrixWorld(true);
+  const f = v => v >= 100 ? v.toFixed(0) : v >= 10 ? v.toFixed(1) : v.toFixed(2);
+  $('sSize').textContent = `${f(s.x)}×${f(s.y)}×${f(s.z)}`;
+  $('sSize').title = `X ${s.x}  Y ${s.y}  Z ${s.z}`;
+}
+function showNotes(list){
+  const ul = $('notes'); ul.textContent = '';
+  list.forEach(n => { const li = document.createElement('li'); if (n.e) li.className = 'e'; li.textContent = n.t; ul.appendChild(li); });
+}
+function setStatus(kind, text){ const s = $('status'); s.className = 'status ' + (kind || ''); s.textContent = text; }
+
+// ---------- Install model ----------
+function install(model, clips, name, notes){
+  if (current) { holder.remove(current.model); }
+  mixer && mixer.stopAllAction(); mixer = null;
+  model.traverse(o => { if (o.isMesh) { o.castShadow = o.receiveShadow = false; } });
+  { const b = new THREE.Box3().setFromObject(model); const d = b.isEmpty() ? 1 : b.getSize(new THREE.Vector3()).length();
+    model.traverse(o => { if (o.isPoints) mats(o).forEach(m => { m.size = d / 400; m.sizeAttenuation = true; }); }); }
+  current = { model, clips: clips || [], name, notes: notes || [] };
+  holder.add(model);
+  if (current.clips.length) {
+    mixer = new THREE.AnimationMixer(model);
+    const a = mixer.clipAction(current.clips[0]); a.play();
+  }
+  setWire($('tWire').getAttribute('aria-pressed') === 'true');
+  $('srcName').textContent = name;
+  showStats(); showNotes(current.notes); applyAdjust(true);
+  $('convert').disabled = false;
+}
+
+// ---------- Sample: treasure chest ----------
+function woodTexture(){
+  const c = document.createElement('canvas'); c.width = c.height = 256;
+  const g = c.getContext('2d');
+  g.fillStyle = '#7a4a26'; g.fillRect(0, 0, 256, 256);
+  for (let y = 0; y < 256; y += 32) {
+    g.fillStyle = y % 64 ? '#6c3f1f' : '#84522b'; g.fillRect(0, y, 256, 30);
+    g.fillStyle = '#3e2412'; g.fillRect(0, y + 30, 256, 2);
+    for (let i = 0; i < 18; i++) { g.strokeStyle = 'rgba(40,20,8,.25)'; g.beginPath(); const yy = y + 3 + Math.random() * 24; g.moveTo(0, yy); g.bezierCurveTo(80, yy + 4, 170, yy - 4, 256, yy + 1); g.stroke(); }
+  }
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.name = 'chest_wood'; return t;
+}
+function sampleChest(){
+  const wood = new THREE.MeshStandardMaterial({ name: 'Wood', map: woodTexture(), roughness: 0.85 });
+  const gold = new THREE.MeshStandardMaterial({ name: 'Gold', color: 0xd9a431, metalness: 0.9, roughness: 0.3 });
+  const iron = new THREE.MeshStandardMaterial({ name: 'Iron', color: 0x3b3f45, metalness: 0.7, roughness: 0.5 });
+  const root = new THREE.Group(); root.name = 'TreasureChest';
+  const body = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.7, 0.8), wood); body.name = 'Body'; body.position.y = 0.35; root.add(body);
+  const hinge = new THREE.Group(); hinge.name = 'Lid'; hinge.position.set(0, 0.7, -0.4); root.add(hinge);
+  const lidGeo = new THREE.CylinderGeometry(0.4, 0.4, 1.2, 16, 1, false, 0, Math.PI); lidGeo.rotateZ(Math.PI / 2); lidGeo.rotateX(Math.PI / 2);
+  const lid = new THREE.Mesh(lidGeo, wood); lid.name = 'LidShell'; lid.position.z = 0.4; lid.rotation.x = -Math.PI / 2; hinge.add(lid);
+  for (const x of [-0.45, 0.45]) {
+    const band = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.72, 0.82), gold); band.name = 'Band'; band.position.set(x, 0.35, 0); root.add(band);
+    const lb = new THREE.Mesh(new THREE.CylinderGeometry(0.41, 0.41, 0.1, 16, 1, false, 0, Math.PI), gold);
+    lb.name = 'LidBand'; lb.geometry.rotateZ(Math.PI / 2); lb.geometry.rotateX(Math.PI / 2); lb.rotation.x = -Math.PI / 2; lb.position.set(x, 0, 0.4); hinge.add(lb);
+  }
+  const lock = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.2, 0.06), iron); lock.name = 'Lock'; lock.position.set(0, 0.62, 0.42); root.add(lock);
+  const foot = new THREE.BoxGeometry(0.12, 0.06, 0.12);
+  for (const [x, z] of [[-0.55,-0.35],[0.55,-0.35],[-0.55,0.35],[0.55,0.35]]) { const f = new THREE.Mesh(foot, iron); f.name = 'Foot'; f.position.set(x, 0.03, z); root.add(f); }
+  body.position.y += 0.06; lock.position.y += 0.06; hinge.position.y += 0.06;
+  root.children.filter(c => c.name === 'Band').forEach(b => b.position.y += 0.06);
+  const q0 = new THREE.Quaternion(), q1 = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), -1.1);
+  const track = new THREE.QuaternionKeyframeTrack('Lid.quaternion', [0, 0.6, 1.6, 2.4], [...q0.toArray(), ...q1.toArray(), ...q1.toArray(), ...q0.toArray()]);
+  const clip = new THREE.AnimationClip('LidOpen', 2.4, [track]);
+  return { model: root, clips: [clip] };
+}
+
+// ---------- Loading ----------
+const ext = n => (n.split('.').pop() || '').toLowerCase();
+const MAIN_ORDER = ['glb','gltf','fbx','dae','kmz','obj','pmx','pmd','md2','vox','lwo','3ds','usdz','wrl','vrml','amf','3mf','ply','stl','off','vtk','vtp','pcd','xyz'];
+const baseName = n => n.replace(/\.[^.]+$/, '').replace(/[^\w\-]+/g, '_').replace(/^_+|_+$/g, '') || 'model';
+
+function parseOFF(text){
+  const lines = text.split(/\r?\n/).map(l => l.replace(/#.*/, '').trim()).filter(Boolean);
+  let head = lines.shift() || '';
+  if (!/^[A-Z]*OFF/i.test(head)) throw new Error('This isn’t a valid OFF file.');
+  let counts = head.replace(/^[A-Z]*OFF/i, '').trim();
+  if (!counts) counts = lines.shift() || '';
+  const [nv, nf] = counts.split(/\s+/).map(Number);
+  const pos = new Float32Array(nv * 3);
+  for (let i = 0; i < nv; i++) { const t = (lines[i] || '').split(/\s+/).map(Number); pos[i*3] = t[0]; pos[i*3+1] = t[1]; pos[i*3+2] = t[2]; }
+  const idx = [];
+  for (let f = 0; f < nf; f++) {
+    const t = (lines[nv + f] || '').split(/\s+/).map(Number); const n = t[0];
+    for (let k = 1; k + 1 < n; k++) idx.push(t[1], t[1 + k], t[2 + k]);
+  }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setIndex(idx); g.computeVertexNormals();
+  return g;
+}
+async function expand(files){
+  const out = [];
+  for (const f of files) {
+    if (ext(f.name) === 'zip') {
+      const entries = unzipSync(new Uint8Array(await f.arrayBuffer()));
+      for (const [p, d] of Object.entries(entries)) {
+        if (p.endsWith('/') || p.startsWith('__MACOSX') || !d.length) continue;
+        out.push(new File([d], p.split('/').pop()));
+      }
+    } else out.push(f);
+  }
+  return out;
+}
+
+async function loadFiles(fileList){
+  const busy = $('busy'); busy.hidden = false; busy.textContent = 'LOADING';
+  setStatus('', '');
+  const notes = [];
+  const urls = [];
+  try {
+    const files = await expand([...fileList]);
+    const map = new Map();
+    for (const f of files) { const u = URL.createObjectURL(f); urls.push(u); map.set(f.name.toLowerCase(), u); }
+    const main = MAIN_ORDER.map(e => files.find(f => ext(f.name) === e)).find(Boolean);
+    if (!main) throw new Error('No model file found. Include one of: ' + MAIN_ORDER.map(e => '.' + e).join(' '));
+    const missing = new Set();
+    const manager = new THREE.LoadingManager();
+    manager.setURLModifier(url => {
+      if (url.startsWith('data:') || urls.includes(url)) return url;
+      // blob URLs made by loaders (embedded images) pass through; blob-relative paths get mapped
+      if (url.startsWith('blob:') && !/\.[a-z0-9]{2,5}$/i.test(url.split('?')[0])) return url;
+      let name = url.split(/[\\/]/).pop().split('?')[0];
+      try { name = decodeURIComponent(name); } catch {}
+      const hit = map.get(name.toLowerCase());
+      if (!hit) missing.add(name);
+      return hit || url;
+    });
+    manager.addHandler(/\.tga$/i, new TGALoader(manager));
+    const mainUrl = map.get(main.name.toLowerCase());
+    const e = ext(main.name);
+    let model, clips = [];
+
+    if (e === 'glb' || e === 'gltf') {
+      const l = new GLTFLoader(manager); l.setMeshoptDecoder(MeshoptDecoder);
+      try {
+        const g = await l.loadAsync(mainUrl); model = g.scene; clips = g.animations || [];
+      } catch (err) {
+        if (/draco/i.test(String(err && err.message))) throw new Error('This file uses Draco compression, which this converter can’t decode. Export it again without Draco.');
+        if (/ktx|basis/i.test(String(err && err.message))) throw new Error('This file uses KTX2/Basis textures, which aren’t supported here.');
+        throw err;
+      }
+    } else if (e === 'fbx') {
+      model = await new FBXLoader(manager).loadAsync(mainUrl); clips = model.animations || [];
+    } else if (e === 'dae') {
+      const c = await new ColladaLoader(manager).loadAsync(mainUrl); model = c.scene; clips = c.scene.animations || [];
+    } else if (e === 'obj') {
+      const text = await main.text();
+      const loader = new OBJLoader(manager);
+      const lib = (text.match(/^\s*mtllib\s+(.+?)\s*$/m) || [])[1];
+      if (lib) {
+        const mtlUrl = map.get(lib.split(/[\\/]/).pop().toLowerCase());
+        if (mtlUrl) { const m = await new MTLLoader(manager).loadAsync(mtlUrl); m.preload(); loader.setMaterials(m); }
+        else notes.push({ t: `The OBJ refers to ${lib}, which wasn’t included. Using a plain grey material.` });
+      }
+      model = loader.parse(text);
+    } else if (e === '3mf') {
+      model = await new ThreeMFLoader(manager).loadAsync(mainUrl);
+    } else if (e === '3ds') {
+      model = await new TDSLoader(manager).loadAsync(mainUrl);
+    } else if (e === 'kmz') {
+      model = (await new KMZLoader(manager).loadAsync(mainUrl)).scene;
+    } else if (e === 'pmx' || e === 'pmd') {
+      model = await new MMDLoader(manager).loadAsync(mainUrl + '#model.' + e);
+    } else if (e === 'md2') {
+      const geo = await new MD2Loader(manager).loadAsync(mainUrl);
+      const skin = files.find(f => /\.(png|jpe?g|webp|bmp|gif)$/i.test(f.name));
+      const mat = new THREE.MeshStandardMaterial({ name: 'Skin', roughness: 0.8 });
+      if (skin) { mat.map = await new THREE.TextureLoader(manager).loadAsync(map.get(skin.name.toLowerCase())); mat.map.colorSpace = THREE.SRGBColorSpace; }
+      else notes.push({ t: 'MD2 files don’t embed their skin. Drop the skin image (PNG or JPG) with the model to texture it.' });
+      model = new THREE.Mesh(geo, mat); model.name = baseName(main.name); clips = geo.animations || [];
+    } else if (e === 'vox') {
+      const chunks = await new VOXLoader(manager).loadAsync(mainUrl);
+      model = new THREE.Group(); model.name = baseName(main.name);
+      chunks.forEach((c, i) => { const m = new VOXMesh(c); m.name = 'voxels_' + i; if (m.material) m.material.name = 'Voxel'; model.add(m); });
+    } else if (e === 'lwo') {
+      const r = await new LWOLoader(manager).loadAsync(mainUrl);
+      model = new THREE.Group(); model.name = baseName(main.name); r.meshes.forEach(m => model.add(m));
+    } else if (e === 'usdz') {
+      model = await new USDZLoader(manager).loadAsync(mainUrl);
+      notes.push({ t: 'USDZ opening supports text-based (USDA) files. Binary USDC files may show no geometry.' });
+    } else if (e === 'wrl' || e === 'vrml') {
+      model = await new VRMLLoader(manager).loadAsync(mainUrl);
+    } else if (e === 'amf') {
+      model = await new AMFLoader(manager).loadAsync(mainUrl);
+    } else if (e === 'pcd') {
+      model = await new PCDLoader(manager).loadAsync(mainUrl); model.name = baseName(main.name);
+    } else if (e === 'xyz') {
+      const geo = await new XYZLoader(manager).loadAsync(mainUrl);
+      model = new THREE.Points(geo, new THREE.PointsMaterial({ name: 'Points', vertexColors: !!geo.attributes.color, color: geo.attributes.color ? 0xffffff : 0xffb340 }));
+      model.name = baseName(main.name);
+    } else if (e === 'off') {
+      const geo = parseOFF(await main.text());
+      model = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ name: 'Default', color: geo.attributes.color ? 0xffffff : 0xb9c0c8, vertexColors: !!geo.attributes.color, roughness: 0.7 }));
+      model.name = baseName(main.name);
+    } else if (e === 'vtk' || e === 'vtp') {
+      const geo = await new VTKLoader(manager).loadAsync(mainUrl);
+      if (!geo.attributes.normal) geo.computeVertexNormals();
+      model = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ name: 'Default', color: geo.attributes.color ? 0xffffff : 0xb9c0c8, vertexColors: !!geo.attributes.color, roughness: 0.7, side: THREE.DoubleSide }));
+      model.name = baseName(main.name);
+    } else if (e === 'stl' || e === 'ply') {
+      const geo = await (e === 'stl' ? new STLLoader(manager) : new PLYLoader(manager)).loadAsync(mainUrl);
+      if (!geo.attributes.normal) geo.computeVertexNormals();
+      const mat = new THREE.MeshStandardMaterial({ name: 'Default', color: geo.attributes.color ? 0xffffff : 0xb9c0c8, vertexColors: !!geo.attributes.color, roughness: 0.7 });
+      model = new THREE.Mesh(geo, mat); model.name = baseName(main.name);
+    }
+    // wait for textures still in flight
+    await new Promise(r => { if (!manager.itemsLoaded || manager.itemsLoaded >= manager.itemsTotal) { setTimeout(r, 50); } else { const prev = manager.onLoad; manager.onLoad = () => { prev && prev(); r(); }; setTimeout(r, 8000); } });
+    if (missing.size) notes.push({ t: `Missing ${missing.size === 1 ? 'file' : 'files'}: ${[...missing].slice(0, 6).join(', ')}${missing.size > 6 ? '…' : ''}. Drop them together with the model to keep textures.` });
+    const extras = files.length - 1;
+    install(model, clips, main.name + (extras > 0 ? `  +${extras} file${extras > 1 ? 's' : ''}` : ''), notes);
+    current.base = baseName(main.name);
+    setStatus('', 'Loaded. Pick a format and convert.');
+  } catch (err) {
+    console.error(err);
+    showNotes([{ e: true, t: (err && err.message) ? err.message : 'That file couldn’t be read.' }]);
+    setStatus('err', 'Loading failed. The previous model is still loaded.');
+  } finally {
+    busy.hidden = true;
+  }
+}
+
+// file input + drag/drop
+const input = $('file');
+$('drop').addEventListener('click', () => input.click());
+$('drop').addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); input.click(); } });
+input.addEventListener('change', () => { if (input.files.length) loadFiles(input.files); input.value = ''; });
+for (const el of [$('drop'), stageEl]) {
+  el.addEventListener('dragover', e => { e.preventDefault(); el.classList.add('drag'); });
+  el.addEventListener('dragleave', e => { if (!el.contains(e.relatedTarget)) el.classList.remove('drag'); });
+  el.addEventListener('drop', e => { e.preventDefault(); el.classList.remove('drag'); if (e.dataTransfer.files.length) loadFiles(e.dataTransfer.files); });
+}
+
+// viewer tools
+function toggle(btn){ const on = btn.getAttribute('aria-pressed') !== 'true'; btn.setAttribute('aria-pressed', String(on)); return on; }
+function setWire(on){ current && current.model.traverse(o => { if (o.isMesh) mats(o).forEach(m => { m.wireframe = on; }); }); }
+$('tWire').addEventListener('click', e => setWire(toggle(e.currentTarget)));
+$('tGrid').addEventListener('click', e => { grid.visible = toggle(e.currentTarget); });
+$('tAnim').addEventListener('click', e => { const on = toggle(e.currentTarget); e.currentTarget.textContent = on ? 'Pause animation' : 'Play animation'; });
+$('tFrame').addEventListener('click', frame);
+
+// ---------- Export helpers ----------
+function validTex(t){ const i = t && t.image; return !!i && ((i.width || i.videoWidth || 0) > 0); }
+function toStandard(m, cache){
+  if (!m) return new THREE.MeshStandardMaterial();
+  if (cache.has(m)) return cache.get(m);
+  let out;
+  if (m.isMeshStandardMaterial) out = m.clone();
+  else {
+    out = new THREE.MeshStandardMaterial({
+      name: m.name, color: m.color ? m.color.clone() : new THREE.Color(1, 1, 1),
+      map: m.map || null, normalMap: m.normalMap || null, alphaMap: m.alphaMap || null, aoMap: m.aoMap || null,
+      emissive: m.emissive ? m.emissive.clone() : new THREE.Color(0), emissiveMap: m.emissiveMap || null,
+      opacity: m.opacity, transparent: m.transparent, alphaTest: m.alphaTest, side: m.side, vertexColors: m.vertexColors,
+      roughness: m.isMeshBasicMaterial ? 1 : (m.shininess !== undefined ? Math.min(1, Math.sqrt(2 / (m.shininess + 2))) : 0.9),
+      metalness: 0
+    });
+  }
+  out.wireframe = false;
+  for (const k of TEX_KEYS) if (out[k] && !validTex(out[k])) out[k] = null;
+  cache.set(m, out); return out;
+}
+function buildExportRoot(){
+  const playing = !!mixer;
+  if (mixer) mixer.stopAllAction(); // restores rest pose
+  const root = SkeletonUtils.clone(pivot);
+  if (mixer && current.clips.length) mixer.clipAction(current.clips[0]).play();
+  root.name = current.base || 'model';
+  const cache = new Map();
+  root.traverse(o => { if (o.isMesh) o.material = Array.isArray(o.material) ? o.material.map(m => toStandard(m, cache)) : toStandard(o.material, cache); });
+  root.updateMatrixWorld(true);
+  return root;
+}
+function texToPNG(tex){
+  return new Promise(res => {
+    const img = tex.image; const w = img.width || img.videoWidth, h = img.height || img.videoHeight;
+    const c = document.createElement('canvas'); c.width = w; c.height = h; const g = c.getContext('2d');
+    try {
+      if (img.data && !(img instanceof HTMLCanvasElement)) {
+        const src = img.data, px = new Uint8ClampedArray(w * h * 4), ch = src.length / (w * h);
+        for (let i = 0; i < w * h; i++) { px[i*4] = src[i*ch]; px[i*4+1] = src[i*ch+(ch>1?1:0)]; px[i*4+2] = src[i*ch+(ch>2?2:0)]; px[i*4+3] = ch > 3 ? src[i*ch+3] : 255; }
+        g.putImageData(new ImageData(px, w, h), 0, 0);
+      } else g.drawImage(img, 0, 0);
+    } catch { return res(null); }
+    c.toBlob(b => res(b), 'image/png');
+  });
+}
+const safeName = s => (s || '').replace(/[^\w\-]+/g, '_').replace(/^_+|_+$/g, '');
+const f6 = n => (Math.abs(n) < 1e-9 ? 0 : +n.toFixed(6)).toString();
+
+async function exportOBJ(root, base){
+  const lines = [`# Exported by Model Convertor`, `mtllib ${base}.mtl`];
+  const matNames = new Map(), texFiles = new Map(), used = new Set(), files = {};
+  const nameMat = m => {
+    if (matNames.has(m)) return matNames.get(m);
+    let n = safeName(m.name) || 'material', k = n, i = 2; while (used.has(k)) k = `${n}_${i++}`;
+    used.add(k); matNames.set(m, k); return k;
+  };
+  let vo = 1, to = 1, no = 1; const v = new THREE.Vector3(), nm = new THREE.Matrix3();
+  let meshIndex = 0;
+  root.traverse(o => {
+    if (!o.isMesh || !o.geometry.attributes.position) return;
+    const g = o.geometry, pos = g.attributes.position, nor = g.attributes.normal, uv = g.attributes.uv;
+    const ml = mats(o);
+    const flipV = ml.some(m => m.map && m.map.flipY === false);
+    lines.push(`o ${safeName(o.name) || 'mesh_' + meshIndex}`); meshIndex++;
+    // skinned meshes are written in their bind pose
+    for (let i = 0; i < pos.count; i++) { v.fromBufferAttribute(pos, i).applyMatrix4(o.matrixWorld); lines.push(`v ${f6(v.x)} ${f6(v.y)} ${f6(v.z)}`); }
+    if (uv) for (let i = 0; i < uv.count; i++) { const y = uv.getY(i); lines.push(`vt ${f6(uv.getX(i))} ${f6(flipV ? 1 - y : y)}`); }
+    if (nor) { nm.getNormalMatrix(o.matrixWorld); for (let i = 0; i < nor.count; i++) { v.fromBufferAttribute(nor, i).applyMatrix3(nm).normalize(); lines.push(`vn ${f6(v.x)} ${f6(v.y)} ${f6(v.z)}`); } }
+    const idx = g.index, count = idx ? idx.count : pos.count, at = i => (idx ? idx.getX(i) : i);
+    const flip = o.matrixWorld.determinant() < 0;
+    const groups = g.groups.length ? g.groups : [{ start: 0, count, materialIndex: 0 }];
+    const ref = a => { const vi = a + vo; return uv && nor ? `${vi}/${a + to}/${a + no}` : uv ? `${vi}/${a + to}` : nor ? `${vi}//${a + no}` : `${vi}`; };
+    for (const gr of groups) {
+      const m = ml[gr.materialIndex] || ml[0]; lines.push(`usemtl ${nameMat(m)}`);
+      const end = Math.min(gr.start + gr.count, count);
+      for (let i = gr.start; i + 2 < end; i += 3) {
+        const a = at(i), b = at(i + 1), c = at(i + 2);
+        lines.push(flip ? `f ${ref(a)} ${ref(c)} ${ref(b)}` : `f ${ref(a)} ${ref(b)} ${ref(c)}`);
+      }
+    }
+    vo += pos.count; if (uv) to += uv.count; if (nor) no += nor.count;
+  });
+  const mtl = ['# Exported by Model Convertor'];
+  const srgb = c => { const t = {}; c.getRGB(t, THREE.SRGBColorSpace); return `${f6(t.r)} ${f6(t.g)} ${f6(t.b)}`; };
+  for (const [m, n] of matNames) {
+    mtl.push('', `newmtl ${n}`, `Ka 0 0 0`, `Kd ${srgb(m.color || new THREE.Color(1,1,1))}`, `Ks 0.2 0.2 0.2`);
+    const r = Math.max(0.05, m.roughness ?? 0.8); mtl.push(`Ns ${Math.min(1000, Math.max(1, 2 / (r * r) - 2)).toFixed(1)}`);
+    if (m.emissive && m.emissive.getHex()) mtl.push(`Ke ${srgb(m.emissive)}`);
+    mtl.push(`d ${f6(m.transparent ? m.opacity : 1)}`, 'illum 2');
+    for (const [key, tag] of [['map', 'map_Kd'], ['normalMap', 'map_Bump'], ['emissiveMap', 'map_Ke'], ['alphaMap', 'map_d']]) {
+      const t = m[key]; if (!t) continue;
+      if (!texFiles.has(t)) {
+        const blob = await texToPNG(t); if (!blob) continue;
+        let fn = (safeName(t.name) || `${n}_${key.replace('Map', '') || 'diffuse'}`) + '.png', i = 2;
+        while (files['textures/' + fn]) fn = fn.replace(/(_\d+)?\.png$/, `_${i++}.png`);
+        files['textures/' + fn] = new Uint8Array(await blob.arrayBuffer()); texFiles.set(t, 'textures/' + fn);
+      }
+      mtl.push(`${tag} ${texFiles.get(t)}`);
+    }
+  }
+  files[`${base}.obj`] = strToU8(lines.join('\n') + '\n');
+  files[`${base}.mtl`] = strToU8(mtl.join('\n') + '\n');
+  return files;
+}
+
+// ---------- Shared mesh gathering (world space, v-up UVs) ----------
+function gatherMeshes(root){
+  const out = []; const v = new THREE.Vector3(), nm = new THREE.Matrix3(); let n = 0;
+  root.traverse(o => {
+    if (!o.isMesh || !o.geometry.attributes.position) return;
+    const g = o.geometry, pos = g.attributes.position, nor = g.attributes.normal, uv = g.attributes.uv, col = g.attributes.color;
+    const ml = mats(o); const flipV = ml.some(m => m.map && m.map.flipY === false);
+    const P = new Float32Array(pos.count * 3);
+    for (let i = 0; i < pos.count; i++) { v.fromBufferAttribute(pos, i).applyMatrix4(o.matrixWorld); P[i*3] = v.x; P[i*3+1] = v.y; P[i*3+2] = v.z; }
+    let N = null;
+    if (nor) { N = new Float32Array(nor.count * 3); nm.getNormalMatrix(o.matrixWorld); for (let i = 0; i < nor.count; i++) { v.fromBufferAttribute(nor, i).applyMatrix3(nm).normalize(); N[i*3] = v.x; N[i*3+1] = v.y; N[i*3+2] = v.z; } }
+    let U = null;
+    if (uv) { U = new Float32Array(uv.count * 2); for (let i = 0; i < uv.count; i++) { U[i*2] = uv.getX(i); const y = uv.getY(i); U[i*2+1] = flipV ? 1 - y : y; } }
+    let C = null;
+    if (col) { C = new Float32Array(col.count * 3); const c = new THREE.Color(); for (let i = 0; i < col.count; i++) { c.setRGB(col.getX(i), col.getY(i), col.getZ(i)); c.convertLinearToSRGB(); C[i*3] = c.r; C[i*3+1] = c.g; C[i*3+2] = c.b; } }
+    const idx = g.index, count = idx ? idx.count : pos.count, at = i => (idx ? idx.getX(i) : i);
+    const flip = o.matrixWorld.determinant() < 0;
+    const groups = (g.groups.length ? g.groups : [{ start: 0, count, materialIndex: 0 }]).map(gr => {
+      const t = []; const end = Math.min(gr.start + gr.count, count);
+      for (let i = gr.start; i + 2 < end; i += 3) { const a = at(i), b = at(i + 1), c = at(i + 2); if (flip) t.push(a, c, b); else t.push(a, b, c); }
+      return { material: ml[gr.materialIndex] || ml[0], tris: t };
+    }).filter(gr => gr.tris.length);
+    out.push({ name: safeName(o.name) || 'mesh_' + n, P, N, U, C, count: pos.count, groups }); n++;
+  });
+  return out;
+}
+function materialTable(meshes){
+  const list = [], index = new Map(), used = new Set();
+  for (const m of meshes) for (const g of m.groups) {
+    const mat = g.material || new THREE.MeshStandardMaterial();
+    g.material = mat;
+    if (index.has(mat)) continue;
+    let n = safeName(mat.name) || 'material', k = n, i = 2; while (used.has(k)) k = `${n}_${i++}`;
+    used.add(k); index.set(mat, list.length); list.push({ mat, name: k });
+  }
+  return { list, index };
+}
+function textureStore(files, dir){
+  const seen = new Map();
+  return async (tex, fallback) => {
+    if (!tex || !validTex(tex)) return null;
+    if (seen.has(tex)) return seen.get(tex);
+    const blob = await texToPNG(tex); if (!blob) return null;
+    let fn = (safeName(tex.name) || fallback) + '.png', i = 2;
+    while (files[dir + fn]) fn = fn.replace(/(_\d+)?\.png$/, `_${i++}.png`);
+    const bytes = new Uint8Array(await blob.arrayBuffer());
+    files[dir + fn] = bytes; const rec = { path: dir + fn, bytes, name: fn.replace(/\.png$/, '') };
+    seen.set(tex, rec); return rec;
+  };
+}
+const srgbOf = c => { const t = {}; (c || new THREE.Color(1, 1, 1)).getRGB(t, THREE.SRGBColorSpace); return [t.r, t.g, t.b]; };
+const shininessOf = m => { const r = Math.max(0.05, m.roughness ?? 0.8); return Math.min(1000, Math.max(1, 2 / (r * r) - 2)); };
+const xmlEsc = s => String(s).replace(/[<>&"']/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;', "'": '&apos;' }[c]));
+const numList = (arr, d = 6) => { const o = new Array(arr.length); for (let i = 0; i < arr.length; i++) o[i] = f6(+arr[i].toFixed(d)); return o.join(' '); };
+
+// ---------- glTF with separate .bin and textures ----------
+function dataUriBytes(uri){ const b64 = uri.split(',')[1]; const s = atob(b64); const u = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) u[i] = s.charCodeAt(i); return u; }
+async function exportGLTFSeparate(root, base, clips){
+  const json = await new GLTFExporter().parseAsync(root, { binary: false, animations: clips, onlyVisible: true, embedImages: true, maxTextureSize: 4096 });
+  const files = {};
+  (json.buffers || []).forEach((b, i) => { if (b.uri && b.uri.startsWith('data:')) { const fn = i ? `${base}_${i}.bin` : `${base}.bin`; files[fn] = dataUriBytes(b.uri); b.uri = fn; } });
+  const used = new Set();
+  (json.images || []).forEach((im, i) => {
+    if (!im.uri || !im.uri.startsWith('data:')) return;
+    const extn = /image\/jpeg/.test(im.uri) ? 'jpg' : 'png';
+    let n = safeName(im.name) || `texture_${i}`, k = n, j = 2; while (used.has(k)) k = `${n}_${j++}`; used.add(k);
+    files[`textures/${k}.${extn}`] = dataUriBytes(im.uri); im.uri = `textures/${k}.${extn}`;
+  });
+  files[`${base}.gltf`] = strToU8(JSON.stringify(json, null, 1));
+  return files;
+}
+
+// ---------- Collada (.dae) ----------
+async function exportDAE(root, base){
+  const files = {}; const meshes = gatherMeshes(root); const { list, index } = materialTable(meshes);
+  const store = textureStore(files, 'textures/');
+  const now = new Date().toISOString().replace(/\.\d+Z$/, 'Z');
+  const img = [], fx = [], mt = [], geo = [], nodes = [];
+  for (let i = 0; i < list.length; i++) {
+    const { mat, name } = list[i]; const tex = await store(mat.map, name + '_diffuse');
+    const [r, g, b] = srgbOf(mat.color); const [er, eg, eb] = srgbOf(mat.emissive || new THREE.Color(0));
+    let params = '', diffuse = `<color>${f6(r)} ${f6(g)} ${f6(b)} 1</color>`;
+    if (tex) {
+      img.push(`<image id="img${i}" name="${xmlEsc(tex.name)}"><init_from>${xmlEsc(tex.path)}</init_from></image>`);
+      params = `<newparam sid="img${i}-surface"><surface type="2D"><init_from>img${i}</init_from></surface></newparam><newparam sid="img${i}-sampler"><sampler2D><source>img${i}-surface</source></sampler2D></newparam>`;
+      diffuse = `<texture texture="img${i}-sampler" texcoord="UVMap"/>`;
+    }
+    fx.push(`<effect id="mat${i}-fx"><profile_COMMON>${params}<technique sid="common"><phong><emission><color>${f6(er)} ${f6(eg)} ${f6(eb)} 1</color></emission><diffuse>${diffuse}</diffuse><specular><color>0.2 0.2 0.2 1</color></specular><shininess><float>${shininessOf(mat).toFixed(1)}</float></shininess><transparency><float>${f6(mat.transparent ? mat.opacity : 1)}</float></transparency></phong></technique></profile_COMMON></effect>`);
+    mt.push(`<material id="mat${i}" name="${xmlEsc(name)}"><instance_effect url="#mat${i}-fx"/></material>`);
+  }
+  meshes.forEach((m, gi) => {
+    const id = `geo${gi}`; const src = [];
+    const source = (suffix, arr, stride, names) => `<source id="${id}-${suffix}"><float_array id="${id}-${suffix}-arr" count="${arr.length}">${numList(arr)}</float_array><technique_common><accessor source="#${id}-${suffix}-arr" count="${arr.length / stride}" stride="${stride}">${names.map(n => `<param name="${n}" type="float"/>`).join('')}</accessor></technique_common></source>`;
+    src.push(source('pos', m.P, 3, ['X', 'Y', 'Z']));
+    if (m.N) src.push(source('nor', m.N, 3, ['X', 'Y', 'Z']));
+    if (m.U) src.push(source('uv', m.U, 2, ['S', 'T']));
+    if (m.C) src.push(source('col', m.C, 3, ['R', 'G', 'B']));
+    const inputs = `<input semantic="VERTEX" source="#${id}-vtx" offset="0"/>` + (m.N ? `<input semantic="NORMAL" source="#${id}-nor" offset="0"/>` : '') + (m.U ? `<input semantic="TEXCOORD" source="#${id}-uv" offset="0" set="0"/>` : '') + (m.C ? `<input semantic="COLOR" source="#${id}-col" offset="0" set="0"/>` : '');
+    const tris = m.groups.map(g => `<triangles material="mat${index.get(g.material)}" count="${g.tris.length / 3}">${inputs}<p>${g.tris.join(' ')}</p></triangles>`).join('');
+    geo.push(`<geometry id="${id}" name="${xmlEsc(m.name)}"><mesh>${src.join('')}<vertices id="${id}-vtx"><input semantic="POSITION" source="#${id}-pos"/></vertices>${tris}</mesh></geometry>`);
+    const binds = [...new Set(m.groups.map(g => index.get(g.material)))].map(k => `<instance_material symbol="mat${k}" target="#mat${k}"><bind_vertex_input semantic="UVMap" input_semantic="TEXCOORD" input_set="0"/></instance_material>`).join('');
+    nodes.push(`<node id="node${gi}" name="${xmlEsc(m.name)}" type="NODE"><instance_geometry url="#${id}" name="${xmlEsc(m.name)}"><bind_material><technique_common>${binds}</technique_common></bind_material></instance_geometry></node>`);
+  });
+  const up = $('up').value === 'z' ? 'Z_UP' : 'Y_UP';
+  const xml = `<?xml version="1.0" encoding="utf-8"?>
+<COLLADA xmlns="http://www.collada.org/2005/11/COLLADASchema" version="1.4.1">
+<asset><contributor><authoring_tool>Model Convertor</authoring_tool></contributor><created>${now}</created><modified>${now}</modified><unit name="meter" meter="1"/><up_axis>${up}</up_axis></asset>
+${img.length ? `<library_images>${img.join('')}</library_images>` : ''}
+<library_effects>${fx.join('')}</library_effects>
+<library_materials>${mt.join('')}</library_materials>
+<library_geometries>${geo.join('\n')}</library_geometries>
+<library_visual_scenes><visual_scene id="Scene" name="Scene">${nodes.join('')}</visual_scene></library_visual_scenes>
+<scene><instance_visual_scene url="#Scene"/></scene>
+</COLLADA>
+`;
+  files[`${base}.dae`] = strToU8(xml);
+  return files;
+}
+
+// ---------- 3MF ----------
+function export3MF(root, base){
+  const meshes = gatherMeshes(root); const { list, index } = materialTable(meshes);
+  const hex = x => Math.round(Math.min(1, Math.max(0, x)) * 255).toString(16).padStart(2, '0').toUpperCase();
+  const bases = list.map(({ mat, name }) => { const [r, g, b] = srgbOf(mat.color); return `<base name="${xmlEsc(name)}" displaycolor="#${hex(r)}${hex(g)}${hex(b)}${hex(mat.transparent ? mat.opacity : 1)}"/>`; }).join('');
+  const objs = [], items = []; let id = 2;
+  for (const m of meshes) {
+    const verts = []; for (let i = 0; i < m.count; i++) verts.push(`<vertex x="${f6(m.P[i*3])}" y="${f6(m.P[i*3+1])}" z="${f6(m.P[i*3+2])}"/>`);
+    const tris = [];
+    for (const g of m.groups) { const p = index.get(g.material); for (let i = 0; i < g.tris.length; i += 3) { const a = g.tris[i], b = g.tris[i+1], c = g.tris[i+2]; if (a === b || b === c || a === c) continue; tris.push(`<triangle v1="${a}" v2="${b}" v3="${c}" pid="1" p1="${p}"/>`); } }
+    if (!tris.length) continue;
+    objs.push(`<object id="${id}" type="model" name="${xmlEsc(m.name)}"><mesh><vertices>${verts.join('')}</vertices><triangles>${tris.join('')}</triangles></mesh></object>`);
+    items.push(`<item objectid="${id}"/>`); id++;
+  }
+  const model = `<?xml version="1.0" encoding="UTF-8"?>
+<model unit="millimeter" xml:lang="en-US" xmlns="http://schemas.microsoft.com/3dmanufacturing/core/2015/02">
+<metadata name="Application">Model Convertor</metadata>
+<resources><basematerials id="1">${bases || '<base name="Default" displaycolor="#B9C0C8FF"/>'}</basematerials>${objs.join('\n')}</resources>
+<build>${items.join('')}</build>
+</model>
+`;
+  const pkg = zipSync({
+    '[Content_Types].xml': strToU8('<?xml version="1.0" encoding="UTF-8"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="model" ContentType="application/vnd.ms-package.3dmanufacturing-3dmodel+xml"/></Types>'),
+    '_rels/.rels': strToU8('<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Target="/3D/3dmodel.model" Id="rel0" Type="http://schemas.microsoft.com/3dmanufacturing/2013/01/3dmodel"/></Relationships>'),
+    '3D/3dmodel.model': strToU8(model)
+  }, { level: 6 });
+  return { [`${base}.3mf`]: pkg };
+}
+
+// ---------- OFF ----------
+function exportOFF(root, base){
+  const meshes = gatherMeshes(root); const v = [], f = []; let off = 0;
+  for (const m of meshes) {
+    for (let i = 0; i < m.count; i++) v.push(`${f6(m.P[i*3])} ${f6(m.P[i*3+1])} ${f6(m.P[i*3+2])}`);
+    for (const g of m.groups) for (let i = 0; i < g.tris.length; i += 3) f.push(`3 ${g.tris[i] + off} ${g.tris[i+1] + off} ${g.tris[i+2] + off}`);
+    off += m.count;
+  }
+  return { [`${base}.off`]: strToU8(`OFF\n# Exported by Model Convertor\n${v.length} ${f.length} 0\n${v.join('\n')}\n${f.join('\n')}\n`) };
+}
+
+// ---------- XYZ point cloud ----------
+function exportXYZ(root, base){
+  const lines = []; const v = new THREE.Vector3(), c = new THREE.Color();
+  root.traverse(o => {
+    if (!(o.isMesh || o.isPoints) || !o.geometry.attributes.position) return;
+    const pos = o.geometry.attributes.position, col = o.geometry.attributes.color;
+    for (let i = 0; i < pos.count; i++) {
+      v.fromBufferAttribute(pos, i).applyMatrix4(o.matrixWorld);
+      let line = `${f6(v.x)} ${f6(v.y)} ${f6(v.z)}`;
+      if (col) { c.setRGB(col.getX(i), col.getY(i), col.getZ(i)).convertLinearToSRGB(); line += ` ${Math.round(c.r * 255)} ${Math.round(c.g * 255)} ${Math.round(c.b * 255)}`; }
+      lines.push(line);
+    }
+  });
+  return { [`${base}.xyz`]: strToU8(lines.join('\n') + '\n') };
+}
+
+// ---------- VRML 2.0 (.wrl) ----------
+async function exportWRL(root, base){
+  const files = {}; const meshes = gatherMeshes(root); const store = textureStore(files, 'textures/');
+  const shapes = [];
+  for (const m of meshes) for (const g of m.groups) {
+    const mat = g.material; const [r, gg, b] = srgbOf(mat.color); const tex = await store(mat.map, (safeName(mat.name) || 'material') + '_diffuse');
+    const ci = []; for (let i = 0; i < g.tris.length; i += 3) ci.push(`${g.tris[i]} ${g.tris[i+1]} ${g.tris[i+2]} -1`);
+    shapes.push(`  Shape {
+    appearance Appearance {
+      material Material { diffuseColor ${f6(r)} ${f6(gg)} ${f6(b)} transparency ${f6(mat.transparent ? 1 - mat.opacity : 0)} }${tex ? `\n      texture ImageTexture { url "${tex.path}" }` : ''}
+    }
+    geometry IndexedFaceSet {
+      solid FALSE
+      coord Coordinate { point [ ${numList(m.P)} ] }${m.N ? `\n      normal Normal { vector [ ${numList(m.N)} ] }` : ''}${m.U ? `\n      texCoord TextureCoordinate { point [ ${numList(m.U)} ] }` : ''}${m.C ? `\n      color Color { color [ ${numList(m.C)} ] }` : ''}
+      coordIndex [ ${ci.join(', ')} ]
+    }
+  }`);
+  }
+  files[`${base}.wrl`] = strToU8(`#VRML V2.0 utf8\n# Exported by Model Convertor\nTransform {\n children [\n${shapes.join('\n')}\n ]\n}\n`);
+  return files;
+}
+
+// ---------- X3D ----------
+async function exportX3D(root, base){
+  const files = {}; const meshes = gatherMeshes(root); const store = textureStore(files, 'textures/');
+  const shapes = [];
+  for (const m of meshes) for (const g of m.groups) {
+    const mat = g.material; const [r, gg, b] = srgbOf(mat.color); const tex = await store(mat.map, (safeName(mat.name) || 'material') + '_diffuse');
+    shapes.push(`<Shape DEF="${xmlEsc(m.name)}"><Appearance><Material diffuseColor="${f6(r)} ${f6(gg)} ${f6(b)}" transparency="${f6(mat.transparent ? 1 - mat.opacity : 0)}"/>${tex ? `<ImageTexture url="${xmlEsc(tex.path)}"/>` : ''}</Appearance><IndexedTriangleSet solid="false" index="${g.tris.join(' ')}"><Coordinate point="${numList(m.P)}"/>${m.N ? `<Normal vector="${numList(m.N)}"/>` : ''}${m.U ? `<TextureCoordinate point="${numList(m.U)}"/>` : ''}${m.C ? `<Color color="${numList(m.C)}"/>` : ''}</IndexedTriangleSet></Shape>`);
+  }
+  files[`${base}.x3d`] = strToU8(`<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE X3D PUBLIC "ISO//Web3D//DTD X3D 3.3//EN" "http://www.web3d.org/specifications/x3d-3.3.dtd">
+<X3D profile="Interchange" version="3.3"><head><meta name="generator" content="Model Convertor"/></head><Scene>
+${shapes.join('\n')}
+</Scene></X3D>
+`);
+  return files;
+}
+
+// ---------- FBX 7.4 binary ----------
+class FBXNode { constructor(name, props = [], children = []){ this.name = name; this.props = props; this.children = children; } add(n){ this.children.push(n); return n; } }
+const P_ = {
+  I: v => ['I', v], L: v => ['L', BigInt(v)], D: v => ['D', v], S: v => ['S', v], C: v => ['C', v], R: v => ['R', v],
+  di: a => ['d', a], ii: a => ['i', a]
+};
+function fbxP(name, type, label, flags, ...vals){ // Properties70 "P" row
+  return new FBXNode('P', [P_.S(name), P_.S(type), P_.S(label), P_.S(flags), ...vals]);
+}
+function fbxSerialize(roots){
+  const enc = new TextEncoder(); const parts = []; let offset = 0;
+  const push = u8 => { parts.push(u8); offset += u8.length; };
+  const u32 = n => { const b = new Uint8Array(4); new DataView(b.buffer).setUint32(0, n, true); return b; };
+  const propBytes = ([t, v]) => {
+    let b, dv;
+    switch (t) {
+      case 'C': return new Uint8Array([67, v ? 1 : 0]);
+      case 'I': b = new Uint8Array(5); b[0] = 73; new DataView(b.buffer).setInt32(1, v, true); return b;
+      case 'L': b = new Uint8Array(9); b[0] = 76; new DataView(b.buffer).setBigInt64(1, v, true); return b;
+      case 'D': b = new Uint8Array(9); b[0] = 68; new DataView(b.buffer).setFloat64(1, v, true); return b;
+      case 'S': case 'R': {
+        const s = t === 'S' ? enc.encode(v) : v; b = new Uint8Array(5 + s.length); b[0] = t.charCodeAt(0);
+        new DataView(b.buffer).setUint32(1, s.length, true); b.set(s, 5); return b;
+      }
+      case 'd': case 'i': {
+        const el = t === 'd' ? 8 : 4; const n = v.length; b = new Uint8Array(13 + n * el); dv = new DataView(b.buffer);
+        b[0] = t.charCodeAt(0); dv.setUint32(1, n, true); dv.setUint32(5, 0, true); dv.setUint32(9, n * el, true);
+        for (let i = 0; i < n; i++) t === 'd' ? dv.setFloat64(13 + i * 8, v[i], true) : dv.setInt32(13 + i * 4, v[i], true);
+        return b;
+      }
+    }
+    throw new Error('bad fbx prop ' + t);
+  };
+  const NULL = new Uint8Array(13);
+  const write = node => {
+    const props = node.props.map(propBytes); const plen = props.reduce((a, p) => a + p.length, 0);
+    const name = enc.encode(node.name);
+    const head = new Uint8Array(13 + name.length); const dv = new DataView(head.buffer);
+    const start = offset; push(head);
+    props.forEach(push);
+    const needsNull = node.children.length > 0 || node.props.length === 0;
+    node.children.forEach(write);
+    if (needsNull) push(NULL);
+    dv.setUint32(0, offset, true); dv.setUint32(4, node.props.length, true); dv.setUint32(8, plen, true);
+    head[12] = name.length; head.set(name, 13);
+    void start;
+  };
+  const header = new Uint8Array(27); header.set(enc.encode('Kaydara FBX Binary  '), 0); header[20] = 0; header[21] = 0x1a; header[22] = 0;
+  new DataView(header.buffer).setUint32(23, 7400, true); push(header);
+  roots.forEach(write);
+  push(NULL);
+  // footer (matches Blender's writer)
+  push(new Uint8Array([0xfa,0xbc,0xab,0x09,0xd0,0xc8,0xd4,0x66,0xb1,0x76,0xfb,0x83,0x1c,0xf7,0x26,0x7e]));
+  push(new Uint8Array(4));
+  let pad = ((offset + 15) & ~15) - offset; if (pad === 0) pad = 16; push(new Uint8Array(pad));
+  push(u32(7400)); push(new Uint8Array(120));
+  push(new Uint8Array([0xf8,0x5a,0x8c,0x6a,0xde,0xf5,0xd9,0x7e,0xec,0xe9,0x0c,0xe3,0x75,0x8f,0x29,0x0b]));
+  const out = new Uint8Array(offset); let o = 0; for (const p of parts) { out.set(p, o); o += p.length; } return out;
+}
+async function exportFBX(root, base){
+  const files = {}; const meshes = gatherMeshes(root); const { list, index } = materialTable(meshes);
+  const store = textureStore(files, 'textures/');
+  let nextId = 1000000; const nid = () => nextId++;
+  const cls = (name, c) => name + '\u0000\u0001' + c;
+  const objects = new FBXNode('Objects'); const conns = new FBXNode('Connections');
+  const OO = (a, b) => conns.add(new FBXNode('C', [P_.S('OO'), P_.L(a), P_.L(b)]));
+  const OP = (a, b, p) => conns.add(new FBXNode('C', [P_.S('OP'), P_.L(a), P_.L(b), P_.S(p)]));
+  const counts = { Model: 0, Geometry: 0, Material: 0, Texture: 0, Video: 0 };
+  // materials
+  const matIds = [];
+  for (const { mat, name } of list) {
+    const id = nid(); matIds.push(id); counts.Material++;
+    const [r, g, b] = srgbOf(mat.color); const [er, eg, eb] = srgbOf(mat.emissive || new THREE.Color(0));
+    const op = mat.transparent ? mat.opacity : 1;
+    objects.add(new FBXNode('Material', [P_.L(id), P_.S(cls(name, 'Material')), P_.S('')], [
+      new FBXNode('Version', [P_.I(102)]), new FBXNode('ShadingModel', [P_.S('phong')]), new FBXNode('MultiLayer', [P_.I(0)]),
+      new FBXNode('Properties70', [], [
+        fbxP('DiffuseColor', 'Color', '', 'A', P_.D(r), P_.D(g), P_.D(b)),
+        fbxP('DiffuseFactor', 'Number', '', 'A', P_.D(1)),
+        fbxP('EmissiveColor', 'Color', '', 'A', P_.D(er), P_.D(eg), P_.D(eb)),
+        fbxP('SpecularColor', 'Color', '', 'A', P_.D(0.2), P_.D(0.2), P_.D(0.2)),
+        fbxP('Shininess', 'double', 'Number', '', P_.D(shininessOf(mat))),
+        fbxP('ShininessExponent', 'Number', '', 'A', P_.D(shininessOf(mat))),
+        fbxP('TransparencyFactor', 'Number', '', 'A', P_.D(1 - op)),
+        fbxP('Opacity', 'double', 'Number', '', P_.D(op)),
+        fbxP('Diffuse', 'Vector3D', 'Vector', '', P_.D(r), P_.D(g), P_.D(b)),
+        fbxP('Emissive', 'Vector3D', 'Vector', '', P_.D(er), P_.D(eg), P_.D(eb))
+      ])
+    ]));
+    for (const [key, prop] of [['map', 'DiffuseColor'], ['normalMap', 'NormalMap'], ['emissiveMap', 'EmissiveColor']]) {
+      const tex = await store(mat[key], `${name}_${key === 'map' ? 'diffuse' : key.replace('Map', '')}`); if (!tex) continue;
+      const tid = nid(), vid = nid(); counts.Texture++; counts.Video++;
+      objects.add(new FBXNode('Video', [P_.L(vid), P_.S(cls(tex.name, 'Video')), P_.S('Clip')], [
+        new FBXNode('Type', [P_.S('Clip')]),
+        new FBXNode('Properties70', [], [fbxP('Path', 'KString', 'XRefUrl', '', P_.S(tex.path))]),
+        new FBXNode('UseMipMap', [P_.I(0)]), new FBXNode('Filename', [P_.S(tex.path)]), new FBXNode('RelativeFilename', [P_.S(tex.path)]),
+        new FBXNode('Content', [P_.R(tex.bytes)])
+      ]));
+      objects.add(new FBXNode('Texture', [P_.L(tid), P_.S(cls(tex.name, 'Texture')), P_.S('')], [
+        new FBXNode('Type', [P_.S('TextureVideoClip')]), new FBXNode('Version', [P_.I(202)]),
+        new FBXNode('TextureName', [P_.S(cls(tex.name, 'Texture'))]),
+        new FBXNode('Properties70', [], [fbxP('UseMaterial', 'bool', '', '', P_.I(1)), fbxP('UVSet', 'KString', '', '', P_.S('UVMap'))]),
+        new FBXNode('Media', [P_.S(cls(tex.name, 'Video'))]), new FBXNode('FileName', [P_.S(tex.path)]), new FBXNode('RelativeFilename', [P_.S(tex.path)]),
+        new FBXNode('ModelUVTranslation', [P_.D(0), P_.D(0)]), new FBXNode('ModelUVScaling', [P_.D(1), P_.D(1)]),
+        new FBXNode('Texture_Alpha_Source', [P_.S('None')]), new FBXNode('Cropping', [P_.I(0), P_.I(0), P_.I(0), P_.I(0)])
+      ]));
+      OP(tid, id, prop); OO(vid, tid);
+    }
+  }
+  // geometry + models
+  for (const m of meshes) {
+    const gid = nid(), mid = nid(); counts.Geometry++; counts.Model++;
+    const pvi = [], nrm = [], uvIdx = [], cols = [], matIdx = [];
+    const local = [...new Set(m.groups.map(g => index.get(g.material)))];
+    for (const g of m.groups) {
+      const li = local.indexOf(index.get(g.material));
+      for (let i = 0; i < g.tris.length; i += 3) {
+        const a = g.tris[i], b = g.tris[i+1], c = g.tris[i+2];
+        pvi.push(a, b, -c - 1); matIdx.push(li);
+        for (const k of [a, b, c]) {
+          if (m.N) nrm.push(m.N[k*3], m.N[k*3+1], m.N[k*3+2]);
+          if (m.U) uvIdx.push(k);
+          if (m.C) cols.push(m.C[k*3], m.C[k*3+1], m.C[k*3+2], 1);
+        }
+      }
+    }
+    const layer = [new FBXNode('Version', [P_.I(100)])];
+    const kids = [new FBXNode('Vertices', [P_.di(m.P)]), new FBXNode('PolygonVertexIndex', [P_.ii(pvi)]), new FBXNode('GeometryVersion', [P_.I(124)])];
+    if (m.N) {
+      kids.push(new FBXNode('LayerElementNormal', [P_.I(0)], [new FBXNode('Version', [P_.I(101)]), new FBXNode('Name', [P_.S('')]), new FBXNode('MappingInformationType', [P_.S('ByPolygonVertex')]), new FBXNode('ReferenceInformationType', [P_.S('Direct')]), new FBXNode('Normals', [P_.di(nrm)])]));
+      layer.push(new FBXNode('LayerElement', [], [new FBXNode('Type', [P_.S('LayerElementNormal')]), new FBXNode('TypedIndex', [P_.I(0)])]));
+    }
+    if (m.C) {
+      kids.push(new FBXNode('LayerElementColor', [P_.I(0)], [new FBXNode('Version', [P_.I(101)]), new FBXNode('Name', [P_.S('Col')]), new FBXNode('MappingInformationType', [P_.S('ByPolygonVertex')]), new FBXNode('ReferenceInformationType', [P_.S('Direct')]), new FBXNode('Colors', [P_.di(cols)])]));
+      layer.push(new FBXNode('LayerElement', [], [new FBXNode('Type', [P_.S('LayerElementColor')]), new FBXNode('TypedIndex', [P_.I(0)])]));
+    }
+    if (m.U) {
+      kids.push(new FBXNode('LayerElementUV', [P_.I(0)], [new FBXNode('Version', [P_.I(101)]), new FBXNode('Name', [P_.S('UVMap')]), new FBXNode('MappingInformationType', [P_.S('ByPolygonVertex')]), new FBXNode('ReferenceInformationType', [P_.S('IndexToDirect')]), new FBXNode('UV', [P_.di(m.U)]), new FBXNode('UVIndex', [P_.ii(uvIdx)])]));
+      layer.push(new FBXNode('LayerElement', [], [new FBXNode('Type', [P_.S('LayerElementUV')]), new FBXNode('TypedIndex', [P_.I(0)])]));
+    }
+    kids.push(new FBXNode('LayerElementMaterial', [P_.I(0)], [new FBXNode('Version', [P_.I(101)]), new FBXNode('Name', [P_.S('')]), new FBXNode('MappingInformationType', [P_.S(local.length > 1 ? 'ByPolygon' : 'AllSame')]), new FBXNode('ReferenceInformationType', [P_.S('IndexToDirect')]), new FBXNode('Materials', [P_.ii(local.length > 1 ? matIdx : [0])])]));
+    layer.push(new FBXNode('LayerElement', [], [new FBXNode('Type', [P_.S('LayerElementMaterial')]), new FBXNode('TypedIndex', [P_.I(0)])]));
+    kids.push(new FBXNode('Layer', [P_.I(0)], layer));
+    objects.add(new FBXNode('Geometry', [P_.L(gid), P_.S(cls(m.name, 'Geometry')), P_.S('Mesh')], kids));
+    objects.add(new FBXNode('Model', [P_.L(mid), P_.S(cls(m.name, 'Model')), P_.S('Mesh')], [
+      new FBXNode('Version', [P_.I(232)]),
+      new FBXNode('Properties70', [], [
+        fbxP('Lcl Translation', 'Lcl Translation', '', 'A', P_.D(0), P_.D(0), P_.D(0)),
+        fbxP('Lcl Rotation', 'Lcl Rotation', '', 'A', P_.D(0), P_.D(0), P_.D(0)),
+        fbxP('Lcl Scaling', 'Lcl Scaling', '', 'A', P_.D(1), P_.D(1), P_.D(1)),
+        fbxP('DefaultAttributeIndex', 'int', 'Integer', '', P_.I(0))
+      ]),
+      new FBXNode('Shading', [P_.C(true)]), new FBXNode('Culling', [P_.S('CullingOff')])
+    ]));
+    OO(mid, 0); OO(gid, mid); local.forEach(k => OO(matIds[k], mid));
+  }
+  const d = new Date(); const upZ = $('up').value === 'z';
+  const ts = new FBXNode('CreationTimeStamp', [], [
+    new FBXNode('Version', [P_.I(1000)]), new FBXNode('Year', [P_.I(d.getFullYear())]), new FBXNode('Month', [P_.I(d.getMonth() + 1)]), new FBXNode('Day', [P_.I(d.getDate())]),
+    new FBXNode('Hour', [P_.I(d.getHours())]), new FBXNode('Minute', [P_.I(d.getMinutes())]), new FBXNode('Second', [P_.I(d.getSeconds())]), new FBXNode('Millisecond', [P_.I(0)])
+  ]);
+  const defs = new FBXNode('Definitions', [], [new FBXNode('Version', [P_.I(100)])]);
+  const types = [['GlobalSettings', 1], ...Object.entries(counts).filter(([, n]) => n > 0)];
+  defs.add(new FBXNode('Count', [P_.I(types.reduce((a, [, n]) => a + n, 0))]));
+  types.forEach(([t, n]) => defs.add(new FBXNode('ObjectType', [P_.S(t)], [new FBXNode('Count', [P_.I(n)])])));
+  const roots = [
+    new FBXNode('FBXHeaderExtension', [], [new FBXNode('FBXHeaderVersion', [P_.I(1003)]), new FBXNode('FBXVersion', [P_.I(7400)]), new FBXNode('EncryptionType', [P_.I(0)]), ts, new FBXNode('Creator', [P_.S('Model Convertor')])]),
+    new FBXNode('FileId', [P_.R(new Uint8Array([0x28,0xb3,0x2a,0xeb,0xb6,0x24,0xcc,0xc2,0xbf,0xc8,0xb0,0x2a,0xa9,0x2b,0xfc,0xf1]))]),
+    new FBXNode('CreationTime', [P_.S('1970-01-01 10:00:00:000')]),
+    new FBXNode('Creator', [P_.S('Model Convertor')]),
+    new FBXNode('GlobalSettings', [], [new FBXNode('Version', [P_.I(1000)]), new FBXNode('Properties70', [], [
+      fbxP('UpAxis', 'int', 'Integer', '', P_.I(upZ ? 2 : 1)), fbxP('UpAxisSign', 'int', 'Integer', '', P_.I(1)),
+      fbxP('FrontAxis', 'int', 'Integer', '', P_.I(upZ ? 1 : 2)), fbxP('FrontAxisSign', 'int', 'Integer', '', P_.I(upZ ? -1 : 1)),
+      fbxP('CoordAxis', 'int', 'Integer', '', P_.I(0)), fbxP('CoordAxisSign', 'int', 'Integer', '', P_.I(1)),
+      fbxP('OriginalUpAxis', 'int', 'Integer', '', P_.I(-1)), fbxP('OriginalUpAxisSign', 'int', 'Integer', '', P_.I(1)),
+      fbxP('UnitScaleFactor', 'double', 'Number', '', P_.D(100)), fbxP('OriginalUnitScaleFactor', 'double', 'Number', '', P_.D(100)),
+      fbxP('AmbientColor', 'ColorRGB', 'Color', '', P_.D(0), P_.D(0), P_.D(0)),
+      fbxP('DefaultCamera', 'KString', '', '', P_.S('Producer Perspective')),
+      fbxP('TimeMode', 'enum', '', '', P_.I(11)), fbxP('TimeSpanStart', 'KTime', 'Time', '', P_.L(0)), fbxP('TimeSpanStop', 'KTime', 'Time', '', P_.L(46186158000)),
+      fbxP('CustomFrameRate', 'double', 'Number', '', P_.D(-1))
+    ])]),
+    new FBXNode('Documents', [], [new FBXNode('Count', [P_.I(1)]), new FBXNode('Document', [P_.L(nid()), P_.S('Scene'), P_.S('Scene')], [
+      new FBXNode('Properties70', [], [fbxP('SourceObject', 'object', '', ''), fbxP('ActiveAnimStackName', 'KString', '', '', P_.S(''))]),
+      new FBXNode('RootNode', [P_.L(0)])
+    ])]),
+    new FBXNode('References'),
+    defs, objects, conns,
+    new FBXNode('Takes', [], [new FBXNode('Current', [P_.S('')])])
+  ];
+  files[`${base}.fbx`] = fbxSerialize(roots);
+  return files;
+}
+
+function callbackOrPromise(fn){ return new Promise((res, rej) => { try { const r = fn(res, rej); if (r && typeof r.then === 'function') r.then(res, rej); } catch (e) { rej(e); } }); }
+
+const FORMAT_CAPS = {
+  glb:     { label: 'GLB',  anim: 1, skin: 1, tex: 1 },
+  gltf:    { label: 'glTF', anim: 1, skin: 1, tex: 1 },
+  gltfsep: { label: 'glTF', anim: 1, skin: 1, tex: 1 },
+  fbx:     { label: 'FBX',  tex: 1 },
+  obj:     { label: 'OBJ',  tex: 1 },
+  dae:     { label: 'DAE',  tex: 1 },
+  usdz:    { label: 'USDZ', tex: 1 },
+  x3d:     { label: 'X3D',  tex: 1 },
+  wrl:     { label: 'VRML', tex: 1 },
+  stl:     { label: 'STL' },
+  '3mf':   { label: '3MF' },
+  ply:     { label: 'PLY' },
+  off:     { label: 'OFF' },
+  xyz:     { label: 'XYZ' }
+};
+async function convert(){
+  if (!current) return;
+  const fmt = document.querySelector('input[name=fmt]:checked').value;
+  const base = current.base || 'model';
+  const btn = $('convert'); btn.disabled = true; setStatus('', 'Converting…');
+  try {
+    const root = buildExportRoot();
+    const clips = $('anims').checked ? current.clips : [];
+    let files = {};
+    if (fmt === 'glb' || fmt === 'gltf') {
+      const out = await new GLTFExporter().parseAsync(root, { binary: fmt === 'glb', animations: clips, onlyVisible: true, embedImages: true, maxTextureSize: 4096 });
+      files[`${base}.${fmt}`] = fmt === 'glb' ? new Uint8Array(out) : strToU8(JSON.stringify(out));
+    } else if (fmt === 'gltfsep') files = await exportGLTFSeparate(root, base, clips);
+    else if (fmt === 'obj') files = await exportOBJ(root, base);
+    else if (fmt === 'fbx') files = await exportFBX(root, base);
+    else if (fmt === 'dae') files = await exportDAE(root, base);
+    else if (fmt === '3mf') files = export3MF(root, base);
+    else if (fmt === 'off') files = exportOFF(root, base);
+    else if (fmt === 'xyz') files = exportXYZ(root, base);
+    else if (fmt === 'wrl') files = await exportWRL(root, base);
+    else if (fmt === 'x3d') files = await exportX3D(root, base);
+    else if (fmt === 'stl') {
+      const dv = new STLExporter().parse(root, { binary: true });
+      files[`${base}.stl`] = new Uint8Array(dv.buffer, dv.byteOffset, dv.byteLength);
+    } else if (fmt === 'ply') {
+      const buf = await callbackOrPromise(res => new PLYExporter().parse(root, res, { binary: true }));
+      files[`${base}.ply`] = new Uint8Array(buf);
+    } else if (fmt === 'usdz') {
+      const exp = new USDZExporter();
+      const out = exp.parseAsync ? await exp.parseAsync(root, { quickLookCompatible: true }) : await callbackOrPromise((res, rej) => exp.parse(root, res, rej, { quickLookCompatible: true }));
+      files[`${base}.usdz`] = new Uint8Array(out);
+    }
+    const cap = FORMAT_CAPS[fmt]; const lost = [];
+    if (current.clips.length && !cap.anim) lost.push('animations');
+    if (current.bones && !cap.skin) lost.push('skeletons (the mesh is saved in its rest pose)');
+    if (current.textureCount && !cap.tex) lost.push('textures');
+    const zipName = `${base}-${fmt}.zip`;
+    const zip = zipSync(files, { level: 6 });
+    const size = zip.byteLength > 1048576 ? (zip.byteLength / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(zip.byteLength / 1024)) + ' KB';
+    const lostNote = lost.length ? ` ${cap.label} can’t store ${lost.join(' or ')}, so they were left out.` : '';
+    await offer(zipName, new Blob([zip], { type: 'application/zip' }), size, lostNote);
+  } catch (err) {
+    console.error(err);
+    setStatus('err', 'Conversion failed: ' + ((err && err.message) || 'unknown error') + '. Try another format.');
+  } finally { btn.disabled = false; }
+}
+
+async function offer(filename, blob, size, extra){
+  const dl = await downloadsP;
+  if (dl) {
+    try { await dl.save({ filename, data: blob }); setStatus('ok', `Saved ${filename} (${size}).${extra}`); }
+    catch (e) {
+      const code = e && e.code;
+      if (code === 'declined') setStatus('', 'Download cancelled.');
+      else if (code === 'rate_limited') setStatus('err', 'A save prompt is already open. Finish it, then try again.');
+      else setStatus('err', 'Saving isn’t available in this view.');
+    }
+  } else {
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = filename; document.body.appendChild(a); a.click(); a.remove();
+    setStatus('ok', `Prepared ${filename} (${size}).${extra}`);
+  }
+}
+$('convert').addEventListener('click', convert);
+
+// ---------- Boot ----------
+applyTheme(); resize();
+const s = sampleChest();
+install(s.model, s.clips, 'Sample: treasure chest (built in)', [{ t: 'This is a built-in example. Drop your own model to replace it.' }]);
+current.base = 'treasure_chest';
+$('busy').hidden = true;
+</script>
+
+</body>
+</html>

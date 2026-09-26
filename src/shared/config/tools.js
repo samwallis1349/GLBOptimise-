@@ -213,8 +213,8 @@ export const TOOLS = [
     id: 'convert-files',
     name: 'Convert Files',
     route: '/convert-files',
-    description: 'Convert FBX, OBJ, DAE, STL and more to GLB, OBJ or USDZ.',
-    keywords: ['fbx', 'obj', 'gltf', 'glb', 'usd', 'usdz', 'stl', 'ply', 'dae', 'collada', '3mf', '3ds', 'format', 'model forge'],
+    description: 'Open 24 model formats and save to 14, including FBX, GLB, OBJ, DAE and 3MF.',
+    keywords: ['fbx', 'obj', 'gltf', 'glb', 'usd', 'usdz', 'stl', 'ply', 'dae', 'collada', '3mf', '3ds', 'pmx', 'vox', 'x3d', 'vrml', 'format', 'model convertor', 'model converter'],
     icon: 'refresh-cw',
     thumbnail: '/thumbnails/convert-files.webp',
     features: [
