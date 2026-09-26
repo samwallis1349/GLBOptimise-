@@ -15,7 +15,7 @@ const VALUE_ORDER = [
   'generate-lods',
   'reduce-polys',
   'optimise-glb',
-  'convert-files',
+  'thumbnail-maker',
   'animation-optimiser',
   'compress-textures',
   'pack-pbr',
@@ -25,7 +25,7 @@ const VALUE_ORDER = [
   'animation-inspector',
   'strip-animations',
   'inspect-glb',
-  'thumbnail-maker',
+  'convert-files',
   'texture-resizer',
   'model-splitter',
 ];
