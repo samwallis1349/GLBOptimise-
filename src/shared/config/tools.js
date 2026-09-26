@@ -29,10 +29,11 @@
  * these are deliberately restrained accents, not a full re-theme per tool.
  */
 export const CATEGORIES = [
+  // Build & Repair leads so the featured Asset Arranger is the homepage's first card.
+  { id: 'build', label: 'Build & Repair', icon: 'tools', accent: '--cat-blue' },
   { id: 'optimise', label: 'Optimise & Reduce', icon: 'gauge', accent: '--cat-amber' },
   { id: 'animation', label: 'Animations & Rigging', icon: 'bone', accent: '--cat-purple' },
   { id: 'materials', label: 'Materials & Textures', icon: 'layers-3', accent: '--cat-cyan' },
-  { id: 'build', label: 'Build & Repair', icon: 'tools', accent: '--cat-blue' },
   { id: 'inspect', label: 'Inspect & Analyse', icon: 'search', accent: '--cat-pink' },
   { id: 'utilities', label: 'Preview & Utilities', icon: 'eye', accent: '--cat-yellow' },
 ];

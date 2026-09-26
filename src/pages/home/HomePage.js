@@ -102,6 +102,8 @@ function CategoriesSection() {
   const section = document.createElement('section');
   section.className = 'categories container';
 
+  // Number cards in on-page order, since categories aren't in registry order.
+  let shown = 0;
   for (const category of CATEGORIES) {
     // Tools with wide banner artwork lead their group as a double-width card.
     const tools = getToolsByCategory(category.id).sort((a, b) => Boolean(b.banner) - Boolean(a.banner));
@@ -125,7 +127,7 @@ function CategoriesSection() {
 
     const grid = document.createElement('div');
     grid.className = 'tool-grid';
-    tools.forEach((tool) => grid.appendChild(ToolCard(tool, { featured: Boolean(tool.banner) })));
+    tools.forEach((tool) => grid.appendChild(ToolCard(tool, { index: ++shown, featured: Boolean(tool.banner) })));
 
     block.append(header, grid);
     section.appendChild(block);
