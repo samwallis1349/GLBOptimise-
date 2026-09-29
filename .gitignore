@@ -12,3 +12,6 @@ Thumbs.db
 
 # Local scratch outputs (review screenshots, generated zips) — not source
 /Claude outputs/
+
+# Wrangler local dev state (local KV etc.)
+/.wrangler/

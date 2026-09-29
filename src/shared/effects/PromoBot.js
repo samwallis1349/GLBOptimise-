@@ -66,7 +66,7 @@ function pricePitch() {
   if (hasStoredLicense()) return "You've got a lifetime license — every tool is unlocked for good. Thanks for backing Asset Bench!";
   if (isFreePeriodActive()) {
     const days = freeDaysRemaining();
-    return `Everything is free for the next ${days} day${days === 1 ? '' : 's'}. After that it's ${LIFETIME_PRICE_LABEL} once — no subscription, every tool, forever.`;
+    return `Your free trial has ${days} day${days === 1 ? '' : 's'} left. After that it's ${LIFETIME_PRICE_LABEL} once — no subscription, every tool, forever.`;
   }
   return `Asset Bench is ${LIFETIME_PRICE_LABEL} once for lifetime access to every tool — no subscription, and your files never leave your browser.`;
 }
@@ -232,7 +232,7 @@ function build() {
   });
 
   addMessage('bot', {
-    text: `Hi, I'm Bench Bot. What are you trying to do with your model? ${isFreePeriodActive() && !hasStoredLicense() ? `(Heads up: everything's free for ${freeDaysRemaining()} more day${freeDaysRemaining() === 1 ? '' : 's'}.)` : ''}`.trim(),
+    text: `Hi, I'm Bench Bot. What are you trying to do with your model? ${isFreePeriodActive() && !hasStoredLicense() ? `(Heads up: your free trial has ${freeDaysRemaining()} day${freeDaysRemaining() === 1 ? '' : 's'} left.)` : ''}`.trim(),
     quick: true,
   });
 }

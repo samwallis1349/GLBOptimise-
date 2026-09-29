@@ -40,6 +40,38 @@ export function getCategoryById(id) {
 }
 
 export const TOOLS = [
+  {
+    id: 'alpha-cutout',
+    name: 'Alpha Cutout',
+    route: '/alpha-cutout',
+    description: 'Cut sprite sheets, remove backgrounds and export clean transparent frames.',
+    keywords: ['sprites', 'alpha', 'cutout', 'background remover', 'sprite sheet cutter', 'trim'],
+    icon: 'image-down',
+    thumbnail: '/thumbnails/alpha-cutout.webp',
+    features: [
+      { icon: 'scan', label: 'Auto detect' },
+      { icon: 'grid', label: 'Sprite sheets' },
+      { icon: 'image-down', label: 'PNG + JSON' },
+    ],
+    status: 'available',
+    category: 'build',
+  },
+  {
+    id: 'model-to-isometric',
+    name: 'Model to Isometric',
+    route: '/model-to-isometric',
+    description: 'Turn a 3D model into eight consistent isometric sprites.',
+    keywords: ['isometric', 'sprite sheet', 'eight directions', 'orthographic'],
+    icon: 'camera',
+    thumbnail: '/thumbnails/model-to-isometric.svg',
+    features: [
+      { icon: 'camera', label: '8 views' },
+      { icon: 'image-down', label: 'PNG + ZIP' },
+      { icon: 'grid', label: 'Sprite sheet' },
+    ],
+    status: 'available',
+    category: 'build',
+  },
   // ---------- Optimise (geometry, textures, animation) ----------
   {
     id: 'optimise-glb',

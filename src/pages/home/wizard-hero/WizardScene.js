@@ -1,21 +1,19 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
-import { HERO_BASE, HERO_CONFIG, OPTIMISED } from './config.js';
+import { HERO_BASE, HERO_CONFIG } from './config.js';
 
 const LOD_COUNT = 6;
 const clamp = THREE.MathUtils.clamp;
 
 /**
- * The wizard hero's Three.js side: one renderer, six precomputed detail
- * levels loaded on demand, shared texture sets, and the optional balanced
- * preset. It never decimates at runtime — switching between levels is
+ * The hero's Three.js side: one renderer, six precomputed detail levels
+ * loaded on demand, and shared texture sets. It never decimates at runtime — switching between levels is
  * discrete — and every triangle count it reports is read from the mesh
  * actually on screen.
  *
  * Drag maps to "progress" (0 = full detail, 1 = lowest level) only once
- * full detail is available and the balanced preset is not applied; in every
- * other state dragging just spins the model (`spin`), so simplification
+ * full detail is available; before that dragging just spins the model (`spin`), so simplification
  * state can never drift away from what the slider shows.
  *
  * @param {{
@@ -26,7 +24,7 @@ const clamp = THREE.MathUtils.clamp;
  *   onTarget: (target: number) => void,
  * }} options
  *
- * @typedef {{ displayedLod: number, desiredLod: number, triangles: number, optimised: boolean, simplifying: boolean }} SceneState
+ * @typedef {{ displayedLod: number, desiredLod: number, triangles: number, simplifying: boolean }} SceneState
  */
 export function createWizardScene({ stage, manifest, reducedMotion, onChange, onTarget }) {
   const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
@@ -81,12 +79,9 @@ export function createWizardScene({ stage, manifest, reducedMotion, onChange, on
   /** @type {{ promise: Promise<THREE.Object3D> | null, object: THREE.Object3D | null }[]} */
   const lods = Array.from({ length: LOD_COUNT }, () => ({ promise: null, object: null }));
   const textureSets = new Map();
-  let optimisedPromise = null;
-  let optimisedObject = null;
 
   let disposed = false;
   let fullDetail = false;
-  let optimised = false;
   let wireframe = false;
   let target = 0;
   let progress = 0;
@@ -132,17 +127,19 @@ export function createWizardScene({ stage, manifest, reducedMotion, onChange, on
   function loadTextureSet(key) {
     if (textureSets.has(key)) return textureSets.get(key);
     const files = manifest.textures[key];
+    // A normal map is optional — not every source model ships one.
     const promise = Promise.all(
-      ['map', 'normalMap', 'roughnessMap'].map((slot) => textureLoader.loadAsync(HERO_BASE + files[slot])),
+      ['map', 'normalMap', 'roughnessMap'].map((slot) => files[slot] ? textureLoader.loadAsync(HERO_BASE + files[slot]) : null),
     )
       .then(([map, normalMap, roughnessMap]) => {
         for (const texture of [map, normalMap, roughnessMap]) {
+          if (!texture) continue;
           texture.flipY = false;
           texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
           texture.anisotropy = Math.min(4, renderer.capabilities.getMaxAnisotropy());
         }
         map.colorSpace = THREE.SRGBColorSpace;
-        return { map, normalMap, roughnessMap };
+        return Object.fromEntries(Object.entries({ map, normalMap, roughnessMap }).filter(([, t]) => t));
       })
       .catch((error) => {
         textureSets.delete(key);
@@ -162,7 +159,7 @@ export function createWizardScene({ stage, manifest, reducedMotion, onChange, on
     if (ticket !== textureTicket || disposed) return false;
     const previous = appliedTextures;
     material.map = set.map;
-    material.normalMap = set.normalMap;
+    material.normalMap = set.normalMap ?? null;
     material.roughnessMap = set.roughnessMap;
     material.metalnessMap = set.roughnessMap; // glTF packs roughness (G) + metalness (B)
     material.needsUpdate = true;
@@ -172,56 +169,6 @@ export function createWizardScene({ stage, manifest, reducedMotion, onChange, on
     if (previous && previous !== set) for (const t of Object.values(previous)) t.dispose();
     dirty = true;
     return true;
-  }
-
-  function loadOptimised() {
-    if (!optimisedPromise) {
-      optimisedPromise = loader
-        .loadAsync(HERO_BASE + OPTIMISED.file)
-        .then((gltf) => {
-          if (disposed) {
-            disposeObject(gltf.scene, true);
-            throw new Error('disposed');
-          }
-          gltf.scene.visible = false;
-          gltf.scene.traverse((node) => {
-            if (node.isMesh) node.material.wireframe = wireframe;
-          });
-          holder.add(gltf.scene);
-          optimisedObject = gltf.scene;
-          return gltf.scene;
-        })
-        .catch((error) => {
-          optimisedPromise = null;
-          throw error;
-        });
-    }
-    return optimisedPromise;
-  }
-
-  let optimiseTicket = 0;
-
-  /** Resolves true if the preset is now showing, false if superseded. */
-  async function applyOptimised() {
-    const ticket = ++optimiseTicket;
-    await loadOptimised();
-    if (ticket !== optimiseTicket || disposed) return false;
-    optimised = true;
-    // Park progress at the preset's level so the slider and stats agree.
-    const parked = OPTIMISED.lod / (LOD_COUNT - 1);
-    target = progress = parked;
-    velocity = 0;
-    onTarget(target);
-    fx.flash(reducedMotion.matches);
-    updateVisibility();
-    return true;
-  }
-
-  function leaveOptimised() {
-    optimiseTicket++; // cancels an in-flight apply
-    if (!optimised) return;
-    optimised = false;
-    updateVisibility();
   }
 
   // ---------------------------------------------------------------- state
@@ -243,22 +190,20 @@ export function createWizardScene({ stage, manifest, reducedMotion, onChange, on
   let lastReported = '';
   function updateVisibility() {
     const want = desiredLod();
-    if (fullDetail && !optimised && !lods[want].object) {
+    if (fullDetail && !lods[want].object) {
       loadLod(want).catch(() => {}); // failure is reported via state below
     }
-    const show = optimised ? -1 : nearestLoaded(want);
+    const show = nearestLoaded(want);
     if (show !== displayed && displayed !== -1 && show !== -1) fx.flash(reducedMotion.matches);
     displayed = show;
-    lods.forEach((slot, i) => slot.object && (slot.object.visible = !optimised && i === show));
-    if (optimisedObject) optimisedObject.visible = optimised;
+    lods.forEach((slot, i) => slot.object && (slot.object.visible = i === show));
     dirty = true;
 
     const state = {
-      displayedLod: optimised ? OPTIMISED.lod : show,
-      desiredLod: optimised ? OPTIMISED.lod : want,
-      triangles: optimised ? countTriangles(optimisedObject) : show >= 0 ? countTriangles(lods[show].object) : 0,
-      optimised,
-      simplifying: fullDetail && !optimised,
+      displayedLod: show,
+      desiredLod: want,
+      triangles: show >= 0 ? countTriangles(lods[show].object) : 0,
+      simplifying: fullDetail,
     };
     const signature = JSON.stringify(state);
     if (signature !== lastReported) {
@@ -274,7 +219,7 @@ export function createWizardScene({ stage, manifest, reducedMotion, onChange, on
   let pointerId = null;
 
   function onPointerDown(event) {
-    if (!event.isPrimary || event.button > 0 || (displayed === -1 && !optimised)) return;
+    if (!event.isPrimary || event.button > 0 || displayed === -1) return;
     dragging = true;
     pointerId = event.pointerId;
     lastX = event.clientX;
@@ -289,7 +234,7 @@ export function createWizardScene({ stage, manifest, reducedMotion, onChange, on
     const dx = event.clientX - lastX;
     lastX = event.clientX;
     const width = stage.clientWidth || 1;
-    if (fullDetail && !optimised) {
+    if (fullDetail) {
       target = clamp(target + dx / (width * HERO_CONFIG.totalTurns), 0, 1);
       onTarget(target);
     } else {
@@ -381,7 +326,7 @@ export function createWizardScene({ stage, manifest, reducedMotion, onChange, on
     pivot.rotation.y = rotation;
     pivot.rotation.z = still ? 0 : -clamp(angularSpeed * 0.00175, -HERO_CONFIG.maxTilt, HERO_CONFIG.maxTilt);
 
-    if (!optimised) updateVisibility();
+    updateVisibility();
 
     fxTime += dt;
     const fxActive = fx.update({ dt, time: fxTime, rotation, motion: still ? 0 : Math.min(1, Math.abs(angularSpeed) * 0.38), still });
@@ -410,14 +355,6 @@ export function createWizardScene({ stage, manifest, reducedMotion, onChange, on
     },
     prefetchLods,
     setTextures: (key) => setTextures(key).finally(wake),
-    applyOptimised: () => applyOptimised().finally(wake),
-    leaveOptimised() {
-      leaveOptimised();
-      wake();
-    },
-    get optimised() {
-      return optimised;
-    },
     setTarget(value) {
       target = clamp(value, 0, 1);
       prefetchLods();
@@ -426,7 +363,6 @@ export function createWizardScene({ stage, manifest, reducedMotion, onChange, on
     setWireframe(on) {
       wireframe = on;
       material.wireframe = on;
-      optimisedObject?.traverse((node) => node.isMesh && (node.material.wireframe = on));
       dirty = true;
       wake();
     },
@@ -437,7 +373,6 @@ export function createWizardScene({ stage, manifest, reducedMotion, onChange, on
       wake();
     },
     reset() {
-      leaveOptimised();
       target = progress = 0;
       velocity = 0;
       spin = 0;
@@ -455,7 +390,6 @@ export function createWizardScene({ stage, manifest, reducedMotion, onChange, on
       reducedMotion.removeEventListener?.('change', wake);
       canvas.removeEventListener('webglcontextlost', onContextLost);
       for (const slot of lods) if (slot.object) disposeObject(slot.object);
-      if (optimisedObject) disposeObject(optimisedObject, true);
       material.dispose();
       for (const promise of textureSets.values()) {
         promise.then((set) => Object.values(set).forEach((t) => t.dispose())).catch(() => {});
@@ -477,14 +411,9 @@ function countTriangles(object) {
   return Math.round(count);
 }
 
-function disposeObject(object, withMaterials = false) {
-  object.traverse((node) => {
-    if (!node.isMesh) return;
-    node.geometry.dispose();
-    if (!withMaterials) return;
-    for (const key of ['map', 'normalMap', 'roughnessMap', 'metalnessMap']) node.material[key]?.dispose();
-    node.material.dispose();
-  });
+function disposeObject(object) {
+  // Materials are shared (see `material` above) and disposed separately.
+  object.traverse((node) => node.isMesh && node.geometry.dispose());
   object.removeFromParent();
 }
 

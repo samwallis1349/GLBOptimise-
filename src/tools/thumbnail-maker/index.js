@@ -62,9 +62,35 @@ export function mount(container) {
 
   function syncBackground() {
     const transparent = el.mode.value === 'transparent';
-    el.colourField.hidden = transparent;
-    viewer?.setBackground(el.colour.value, transparent);
+    el.colourField.hidden = el.mode.value !== 'colour';
+    byId('tm-image-fields').hidden = el.mode.value !== 'image';
+    byId('tm-background-opacity-value').value = `${Math.round(Number(byId('tm-background-opacity').value)*100)}%`;
+    viewer?.setBackground(el.colour.value, transparent, el.mode.value === 'image', Number(byId('tm-background-opacity').value));
   }
+  byId('tm-background-opacity').addEventListener('input', syncBackground);
+  byId('tm-background-file').addEventListener('change', async (event) => {
+    const file = event.target.files[0]; event.target.value = '';
+    if (!file || loading || exporting || batch.isBusy()) return;
+    if (!['image/png','image/jpeg','image/webp'].includes(file.type) || file.size > 20*1024*1024) return showNotice('Choose a PNG, JPG or WebP image under 20 MB.', true);
+    loading = true;
+    try {
+      const image = await createImageBitmap(file, {imageOrientation:'flipY'});
+      if (dead) { image.close(); return; }
+      if (image.width > 8192 || image.height > 8192) { image.close(); throw Error('Use an image no larger than 8192 pixels on either side.'); }
+      viewer ||= new ThumbnailViewer(el.viewer);
+      viewer.setBackgroundImage(image);
+      byId('tm-background-name').textContent = file.name + ' - fills the canvas. Image stays in this session; re-import it when using saved looks later.';
+      syncBackground();
+    } catch (error) { showNotice(`Could not load background: ${error.message}`, true); }
+    finally { loading = false; }
+  });
+  byId('tm-background-remove').addEventListener('click', () => {
+    if (loading || exporting || batch.isBusy()) return;
+    viewer?.setBackgroundImage(null);
+    el.mode.value = 'transparent';
+    byId('tm-background-name').textContent = 'Choose a PNG, JPG or WebP image, up to 20 MB.';
+    syncBackground();
+  });
   el.mode.addEventListener('change', syncBackground);
   el.colour.addEventListener('input', () => { el.colourValue.value = el.colour.value.toUpperCase(); syncBackground(); });
   el.lighting.addEventListener('change', () => viewer?.setLighting(el.lighting.value));
@@ -79,7 +105,7 @@ export function mount(container) {
     try {
       const blob = await viewer.capture(Number(el.size.value));
       const url = URL.createObjectURL(blob); const anchor = document.createElement('a');
-      anchor.href = url; anchor.download = `${baseName}-thumbnail-${el.size.value}.png`; anchor.click();
+      anchor.href = url; anchor.download = `${(el.name.textContent || baseName).replace(/\.[^.]+$/, '').replace(/[^a-z0-9_-]+/gi, '-')}-thumbnail-${el.size.value}.png`; anchor.click();
       setTimeout(() => URL.revokeObjectURL(url), 1000);
     } catch (error) { showNotice(`Export failed: ${error.message}`, true); }
     finally { exporting=false;el.download.disabled = false; el.download.textContent = 'Download PNG'; }

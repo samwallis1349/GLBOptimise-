@@ -1,6 +1,7 @@
 import { TOOLS } from '../shared/config/tools.js';
 import { hasAccess } from '../shared/config/billing.js';
 import { Paywall } from '../shared/components/Paywall.js';
+import { initTrial } from '../services/TrialService.js';
 
 const GATED_STATUSES = new Set(['available', 'beta']);
 
@@ -42,6 +43,7 @@ export const routes = [
   ...TOOLS.map((tool) => ({
     path: tool.route,
     handler: async (params, container) => {
+      if (GATED_STATUSES.has(tool.status)) await initTrial();
       if (GATED_STATUSES.has(tool.status) && !hasAccess()) {
         container.innerHTML = '';
         container.appendChild(

@@ -1,0 +1,65 @@
+<!doctype html><html><body style="background:#111827;color:white"><h1>Isometric render verification</h1><pre id="status">RUNNING</pre><div id="viewer" style="width:400px;height:400px"></div><div id="results" style="display:flex;flex-wrap:wrap"></div><script type="module">
+import {IsometricViewer} from '/src/tools/model-to-isometric/IsometricViewer.js';
+import {createDemoBuilding} from '/src/tools/model-to-isometric/demo.js';
+import {makeMetadata} from '/src/tools/model-to-isometric/framing.js';
+import {makeDownload} from '/src/tools/model-to-isometric/downloads.js';
+import {loadModel} from '/src/tools/model-to-isometric/loadModel.js';
+import JSZip from 'jszip';
+import {mountRotation} from '/src/tools/model-to-isometric/rotation.js';
+import {mount} from '/src/tools/model-to-isometric/index.js';
+const status=document.querySelector('#status');const assert=(v,m)=>{if(!v)throw Error(m)};
+try{
+ const viewer=new IsometricViewer(document.querySelector('#viewer'));viewer.setModel(createDemoBuilding());
+ const settings={front:0,elevation:35.26438968,shadow:false,background:'transparent',colour:'#111827',lighting:'studio',size:256};viewer.configure(settings);
+ const metadata=makeMetadata('test',256,settings,viewer.fit),results=[];const signatures=[];
+ for(let i=0;i<8;i++){
+  viewer.setDirection(i);const blob=await viewer.capture(256);results.push({blob});
+  const bitmap=await createImageBitmap(blob);assert(bitmap.width===256&&bitmap.height===256,'PNG dimensions');
+  const canvas=document.createElement('canvas');canvas.width=canvas.height=256;const ctx=canvas.getContext('2d');ctx.drawImage(bitmap,0,0);bitmap.close();
+  const pixels=ctx.getImageData(0,0,256,256).data;assert(pixels[3]===0,'Transparent corner');
+  let visible=0,sum=0;for(let j=0;j<pixels.length;j+=4){if(pixels[j+3])visible++;sum=(sum+pixels[j]*(j+1))%1000000007;}
+  assert(visible>100,'Visible geometry');signatures.push(sum);
+  for(let x=0;x<256;x++)assert(pixels[x*4+3]===0&&pixels[((255*256)+x)*4+3]===0,'No top/bottom clipping');
+  const img=new Image();img.src=URL.createObjectURL(blob);img.width=180;document.querySelector('#results').append(img);
+ }
+ assert(new Set(signatures).size===8,'Eight distinct directions');
+ for(const sheet of [false,true]){
+  const zip=await JSZip.loadAsync(await (await makeDownload(results,metadata,sheet)).arrayBuffer());
+  assert(Object.keys(zip.files).length===(sheet?2:9),'ZIP file count');
+  const m=JSON.parse(await zip.file('test-isometric.json').async('string'));assert(m.frames.length===8,'Metadata frames');
+  if(sheet){const bitmap=await createImageBitmap(new Blob([await zip.file(metadata.image).async('uint8array')],{type:'image/png'}));assert(bitmap.width===1024&&bitmap.height===512,'Sheet dimensions');bitmap.close();}
+ }
+ viewer.setFront(22.5);assert(Math.abs(viewer.fit.ground.x)<1e-8&&viewer.settings.front===22.5,'Precise model rotation');
+ const rotatedMeta=makeMetadata('test-rotated',256,{...settings,front:22.5},viewer.fit);assert(JSON.stringify(rotatedMeta.frames.map(f=>f.angle))===JSON.stringify([22.5,67.5,112.5,157.5,202.5,247.5,292.5,337.5]),'Eight exported 45-degree offsets from arbitrary rotation');
+ const rotationNodes=new Map(['[data-front]','[data-front-number]','[data-front-snap]','[data-viewer]','[data-front-value]','[data-front-reset]','[data-elevation-control]','[data-elevation-number]','[data-elevation-value]','[data-elevation-reset]'].map(key=>[key,new EventTarget()]));
+ const slider=rotationNodes.get('[data-front]'),number=rotationNodes.get('[data-front-number]'),snap=rotationNodes.get('[data-front-snap]'),surface=rotationNodes.get('[data-viewer]'),elevation=rotationNodes.get('[data-elevation-control]'),elevationNumber=rotationNodes.get('[data-elevation-number]');
+ for(const [node,defaults] of [[slider,{value:'0'}],[number,{value:'0'}],[snap,{checked:false}],[elevation,{value:'35.3'}],[elevationNumber,{value:'35.3'}],[surface,{clientWidth:400,clientHeight:400,classList:{add(){},remove(){}},setPointerCapture(){},hasPointerCapture(){return false},releasePointerCapture(){}}],[rotationNodes.get('[data-front-value]'),{textContent:'0?'}],[rotationNodes.get('[data-elevation-value]'),{textContent:'35.3?'}],[rotationNodes.get('[data-front-reset]'),{}],[rotationNodes.get('[data-elevation-reset]'),{}]])Object.assign(node,defaults);
+ const frontChanges=[],disposeRotation=mountRotation({querySelector:key=>rotationNodes.get(key)},{enabled:()=>true,changed:(front,pitch)=>frontChanges.push([front,pitch])});
+ number.value='22.5';number.dispatchEvent(new Event('input'));assert(slider.value==='22.5'&&number.value==='22.5','Precise degree input stays editable');
+ snap.checked=true;snap.dispatchEvent(new Event('change'));assert(slider.value==='45'&&number.value==='45','Snap checkbox rounds current value to 45 degrees');
+ slider.value='45';slider.dispatchEvent(new Event('input'));assert(number.value==='45','45-degree slider synchronization');
+ const pointer=(name,props)=>{const e=new Event(name);Object.assign(e,props);return e;};
+ surface.dispatchEvent(pointer('pointerdown',{pointerId:7,isPrimary:true,button:0,clientX:200,clientY:200}));surface.dispatchEvent(pointer('pointermove',{pointerId:7,clientX:150,clientY:160}));surface.dispatchEvent(pointer('pointerup',{pointerId:7}));assert(slider.value==='90'&&number.value==='90','Horizontal drag rotation and snapping');assert(Number(elevation.value)>35.3&&Number(elevationNumber.value)>35.3,'Vertical drag adjusts camera elevation');
+ rotationNodes.get('[data-front-reset]').dispatchEvent(new Event('click'));assert(slider.value==='0'&&number.value==='0','Reset rotation');rotationNodes.get('[data-elevation-reset]').dispatchEvent(new Event('click'));assert(Number(elevation.value)===35.3,'Reset elevation');disposeRotation();
+ viewer.configure({...settings,background:'colour'});const solid=await createImageBitmap(await viewer.capture(256));const c=document.createElement('canvas');c.width=c.height=256;const ctx=c.getContext('2d');ctx.drawImage(solid,0,0);assert(ctx.getImageData(0,0,1,1).data[3]===255,'Solid background alpha');solid.close();
+ const file=new File([await (await fetch('/hero/downloads/assetbench-colossus-small.glb')).arrayBuffer()],'colossus.glb');
+ viewer.setModel(await loadModel(file));viewer.configure(settings);assert((await viewer.capture(256)).size>1000,'Real GLB render');
+ viewer.dispose();
+ const appRoot=document.createElement('div');document.body.append(appRoot);const cleanup=mount(appRoot);
+ const find=selector=>appRoot.querySelector(selector);
+ assert(find('[data-front-number]')&&find('[data-front-snap]')&&find('[data-front-reset]')&&find('[data-elevation-control]')&&find('[data-elevation-number]'),'Actual tool angle controls mount');
+ find('[data-demo]').click();assert(find('[data-generate]').disabled===false,'Sample enables generation');
+ find('[data-front-number]').value='22.5';find('[data-front-number]').dispatchEvent(new Event('input',{bubbles:true}));
+ assert(find('[data-front-value]').textContent.startsWith('22.5'),'Actual precise angle input updates: '+find('[data-front-value]').textContent+' / '+find('[data-front-number]').value);
+ find('[data-front-snap]').checked=true;find('[data-front-snap]').dispatchEvent(new Event('change',{bubbles:true}));
+ assert(find('[data-front-number]').value==='0'||find('[data-front-number]').value==='45','Actual snap rounds to 45-degree increments');
+ find('[data-front-snap]').checked=false;find('[data-front-snap]').dispatchEvent(new Event('change',{bubbles:true}));
+ find('[data-front-number]').value='22.5';find('[data-front-number]').dispatchEvent(new Event('input',{bubbles:true}));
+ find('[data-size]').value='256';find('[data-generate]').click();
+ for(let i=0;i<200&&!find('.iso-results article');i++)await new Promise(resolve=>setTimeout(resolve,50));
+ assert(appRoot.querySelectorAll('.iso-results article').length===8,'Actual tool generates all eight rotated sprite previews');
+ cleanup();appRoot.remove();
+ status.textContent='PASS: complete tool mount, sample model, degree inputs, horizontal and vertical drag, 45-degree snap, reset, eight generated views, transparent/solid PNGs, ZIPs and metadata.';
+}catch(e){status.textContent='FAIL: '+e.stack;}
+fetch('http://127.0.0.1:5191/report',{method:'POST',body:status.textContent}).catch(()=>{});
+</script></body></html>

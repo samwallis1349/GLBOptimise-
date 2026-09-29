@@ -2,32 +2,34 @@ import './wizard-compare.css';
 import manifest from '../home/wizard-hero/hero-manifest.json';
 import { HERO_BASE, mb } from '../home/wizard-hero/config.js';
 
+const tris = (d) => d.triangles.toLocaleString('en-GB');
+
 const PRESETS = {
   original: {
     label: 'Before',
     download: manifest.downloads['before-25k'],
-    text: '24,999 triangles · Original 4K textures · Standard GLB',
+    text: `${tris(manifest.downloads['before-25k'])} triangles · Original 2K textures · Standard GLB`,
   },
   balanced: {
     label: 'Balanced',
     download: manifest.downloads.optimised,
-    text: '24,999 triangles · 2K colour / 1K normal / 512px material map · Meshopt',
+    text: `${tris(manifest.downloads.optimised)} triangles · 2K colour / 512px material map · Meshopt`,
   },
   small: {
     label: 'Small',
     download: manifest.downloads.small,
-    text: '9,999 triangles · 1K colour + normal / 512px material map · Meshopt',
+    text: `${tris(manifest.downloads.small)} triangles · 1K colour / 512px material map · Meshopt`,
   },
 };
 
-/** "Quality versus size" page: the free wizard at three export presets. */
+/** "Quality versus size" page: the free Colossus at three export presets. */
 export function render(container) {
   container.innerHTML = '';
   const section = document.createElement('section');
   section.className = 'wizard-compare container';
   section.innerHTML = `
     <h1 class="wizard-compare__title">More detail. Less to download.</h1>
-    <p class="wizard-compare__intro">Compare texture optimisation and mesh compression on the same free wizard. Drag to turn; scroll over the model to zoom.</p>
+    <p class="wizard-compare__intro">Compare texture optimisation and mesh compression on the same free Colossus. Drag to turn; scroll over the model to zoom.</p>
     <div class="wizard-compare__options" role="group" aria-label="Export preset">
       ${Object.entries(PRESETS)
         .map(([key, p]) => `<button type="button" data-preset="${key}" aria-pressed="false">${p.label} · ${mb(p.download.bytes)}</button>`)
@@ -39,9 +41,9 @@ export function render(container) {
     <p class="wizard-compare__info" aria-live="polite"></p>
     <div class="wizard-compare__links">
       <a class="wizard-compare__download" download>Download this version</a>
-      <a href="/">Back to the wizard</a>
+      <a href="/">Back to the Colossus</a>
     </div>
-    <small class="wizard-compare__small">Sizes include embedded textures. Meshopt versions need an importer with EXT_meshopt_compression support. Static model, no rig. “Before” uses the same 24,999-triangle geometry as Balanced.</small>
+    <small class="wizard-compare__small">Sizes include embedded textures. Meshopt versions need an importer with EXT_meshopt_compression support. Static model, no rig. “Before” uses the same ${tris(manifest.downloads.balanced)}-triangle geometry as Balanced.</small>
   `;
   container.appendChild(section);
 

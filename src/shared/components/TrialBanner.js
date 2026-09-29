@@ -1,4 +1,5 @@
 import { isFreePeriodActive, freeDaysRemaining, LIFETIME_PRICE_LABEL } from '../config/billing.js';
+import { hasStoredLicense } from '../../services/LicenseService.js';
 
 const DISMISS_KEY = 'assetbench_trial_banner_dismissed';
 
@@ -10,15 +11,15 @@ function isDismissed() {
   }
 }
 
-/** Slim top-of-page banner shown only during the free launch window. */
+/** Slim top-of-page banner shown only while an unlicensed visitor's free trial is running. */
 export function TrialBanner() {
-  if (!isFreePeriodActive() || isDismissed()) return document.createDocumentFragment();
+  if (!isFreePeriodActive() || hasStoredLicense() || isDismissed()) return document.createDocumentFragment();
 
   const days = freeDaysRemaining();
   const bar = document.createElement('div');
   bar.className = 'trial-banner';
   bar.innerHTML = `
-    <span>Free for everyone — ${days} day${days === 1 ? '' : 's'} left, then ${LIFETIME_PRICE_LABEL} once, forever.</span>
+    <span>Free trial — ${days} day${days === 1 ? '' : 's'} left, then ${LIFETIME_PRICE_LABEL} once, forever.</span>
     <button type="button" class="trial-banner__close" aria-label="Dismiss">&times;</button>
   `;
 

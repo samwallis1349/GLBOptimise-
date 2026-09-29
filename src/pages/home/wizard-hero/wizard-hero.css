@@ -243,19 +243,6 @@
   accent-color: var(--wh-gold);
 }
 
-.wizard-hero .wizard-hero__optimise {
-  white-space: nowrap;
-  border-color: #766039;
-  background: #221b0e;
-  color: #e7c881;
-}
-
-.wizard-hero .wizard-hero__optimise[aria-pressed='true'] {
-  border-color: #a3ae76;
-  background: #1a2113;
-  color: #d5e1a7;
-}
-
 .wizard-hero__strip {
   display: flex;
   align-items: center;
@@ -287,17 +274,17 @@
   background: #e6aa38;
 }
 
-.wizard-hero__textures {
+.wizard-hero__choice {
   display: inline-flex;
   align-items: center;
   gap: 6px;
 }
 
-.wizard-hero__textures > span {
+.wizard-hero__choice > span {
   color: #8f897b;
 }
 
-.wizard-hero__textures label {
+.wizard-hero__choice label {
   display: inline-flex;
   align-items: center;
   gap: 3px;
@@ -305,14 +292,14 @@
   cursor: pointer;
 }
 
-.wizard-hero__textures input {
+.wizard-hero__choice input {
   width: 11px;
   height: 11px;
   margin: 0;
   accent-color: #ffc451;
 }
 
-.wizard-hero__textures[aria-busy='true'] {
+.wizard-hero__choice[aria-busy='true'] {
   opacity: 0.6;
 }
 
@@ -521,22 +508,15 @@
     padding: 7px 8px;
   }
 
-  .wizard-hero .wizard-hero__optimise {
-    padding: 7px;
-    font-size: 10px;
-  }
-
   .wizard-hero__strip {
-    gap: 4px;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 4px 10px;
     font-size: 8px;
   }
 
-  .wizard-hero__textures {
+  .wizard-hero__choice {
     gap: 4px;
-  }
-
-  .wizard-hero__textures > span {
-    display: none;
   }
 
   .wizard-hero__download-emblem {

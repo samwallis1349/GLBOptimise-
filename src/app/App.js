@@ -5,14 +5,15 @@ import { registerRoutes, setRouteContainer, startRouter } from './router.js';
 import { routes, notFound } from './routes.js';
 import { cleanupStaleSessions } from '../shared/storage/sessionCleanup.js';
 import { revalidateStoredLicense } from '../services/LicenseService.js';
+import { initTrial } from '../services/TrialService.js';
 import { initLayoutEditor } from '../editor/LayoutEditor.js';
 import { initCommandPalette } from '../shared/effects/CommandPalette.js';
 import { initPromoBot } from '../shared/effects/PromoBot.js';
+import { initWelcomeOffer } from '../shared/components/WelcomeOffer.js';
 
 /** Mounts the whole Asset Bench app (header, routed page content, footer) into rootEl. */
 export function App(rootEl) {
   rootEl.innerHTML = '';
-  rootEl.appendChild(TrialBanner());
   rootEl.appendChild(Header());
 
   const main = document.createElement('main');
@@ -41,6 +42,13 @@ export function App(rootEl) {
   // router's DOM, reachable from any page.
   initCommandPalette();
 
-  // Bench Bot tool-finder / promo helper — floating, same mount-once pattern.
-  initPromoBot();
+  // The banner and Bench Bot both quote days left, so they wait for the
+  // trial clock. initTrial() never rejects — it falls back to local time.
+  initTrial().then(() => {
+    rootEl.prepend(TrialBanner());
+    // Bench Bot tool-finder / promo helper — floating, same mount-once pattern.
+    initPromoBot();
+    // One-time pricing popup for first-time, unlicensed visitors.
+    initWelcomeOffer();
+  });
 }

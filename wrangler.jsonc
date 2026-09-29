@@ -1,11 +1,22 @@
-// Cloudflare Worker (static assets) that serves www.assetbench.co.uk.
+// Cloudflare Worker that serves www.assetbench.co.uk: static assets from
+// ./dist, plus a tiny /api/* layer (worker/index.js) for the free-trial clock.
 // Deploy with: npm run deploy
 {
   "name": "glboptimise",
   "compatibility_date": "2026-09-22",
+  "main": "worker/index.js",
   "assets": {
     "directory": "./dist",
+    "binding": "ASSETS",
     // SPA fallback: unknown paths serve index.html for client-side routing.
-    "not_found_handling": "single-page-application"
-  }
+    "not_found_handling": "single-page-application",
+    // Only /api/* reaches the Worker script; everything else is served
+    // straight from the static assets.
+    "run_worker_first": ["/api/*"]
+  },
+  // Trial start times keyed by a salted hash of the visitor's IP.
+  // Create once with: npx wrangler kv namespace create TRIALS
+  // then paste the printed id below.
+  "kv_namespaces": [{ "binding": "TRIALS", "id": "1bbbbc6dc36f40268430887895a49835" }]
+  // Optional secret salt for the IP hash: npx wrangler secret put TRIAL_SALT
 }

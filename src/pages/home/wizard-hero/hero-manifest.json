@@ -1,86 +1,104 @@
 {
+  "source": {
+    "triangles": 2522737,
+    "bytes": 23574360
+  },
   "bounds": {
     "min": [
-      -0.4040985107421875,
-      0,
-      -0.416900634765625
+      -0.7995588183838667,
+      -0.9503943219206121,
+      -0.5804083788924146
     ],
     "max": [
-      0.4040985107421875,
-      0.980743408203125,
-      0.416900634765625
+      0.7972848415810407,
+      0.9480991363525391,
+      0.5782143424065254
     ]
   },
   "lods": [
     {
-      "file": "wizard-lod0.glb",
-      "triangles": 975597,
-      "bytes": 7390524
+      "file": "hero-lod0.glb",
+      "triangles": 999905,
+      "bytes": 9286540
     },
     {
-      "file": "wizard-lod1.glb",
-      "triangles": 399999,
-      "bytes": 3369412
+      "file": "hero-lod1.glb",
+      "triangles": 559892,
+      "bytes": 5773440
     },
     {
-      "file": "wizard-lod2.glb",
-      "triangles": 159999,
-      "bytes": 1487336
+      "file": "hero-lod2.glb",
+      "triangles": 339928,
+      "bytes": 3797612
     },
     {
-      "file": "wizard-lod3.glb",
-      "triangles": 59999,
-      "bytes": 645088
+      "file": "hero-lod3.glb",
+      "triangles": 209942,
+      "bytes": 2519516
     },
     {
-      "file": "wizard-lod4.glb",
-      "triangles": 24999,
-      "bytes": 319816
+      "file": "hero-lod4.glb",
+      "triangles": 139974,
+      "bytes": 1794872
     },
     {
-      "file": "wizard-lod5.glb",
-      "triangles": 9999,
-      "bytes": 162980
+      "file": "hero-lod5.glb",
+      "triangles": 91958,
+      "bytes": 1279772
     }
   ],
   "textures": {
     "1": {
       "map": "tex-1k-map.jpg",
-      "normalMap": "tex-1k-normalMap.png",
       "roughnessMap": "tex-1k-roughnessMap.jpg"
     },
     "2": {
       "map": "tex-2k-map.jpg",
-      "normalMap": "tex-2k-normalMap.png",
       "roughnessMap": "tex-2k-roughnessMap.jpg"
-    },
-    "4": {
-      "map": "tex-4k-map.jpg",
-      "normalMap": "tex-4k-normalMap.png",
-      "roughnessMap": "tex-4k-roughnessMap.jpg"
     }
   },
   "textureBytes": {
-    "1": 1350417,
-    "2": 4057327,
-    "4": 13147462
+    "1": 529589,
+    "2": 1907968
+  },
+  "exportBytes": {
+    "1": [
+      33455440,
+      20230764,
+      13122940,
+      8661536,
+      6177136,
+      4437836
+    ],
+    "2": [
+      34833816,
+      21609148,
+      14501324,
+      10039920,
+      7555520,
+      5816224
+    ]
   },
   "downloads": {
+    "before-25k": {
+      "file": "downloads/assetbench-colossus-before-25k.glb",
+      "bytes": 9808688,
+      "triangles": 24884
+    },
     "balanced": {
-      "file": "downloads/assetbench-wizard-balanced.glb",
-      "bytes": 2957912
+      "file": "downloads/assetbench-colossus-balanced.glb",
+      "bytes": 2659844,
+      "triangles": 24884
     },
     "optimised": {
-      "file": "downloads/assetbench-wizard-optimised.glb",
-      "bytes": 2375796
+      "file": "downloads/assetbench-colossus-optimised.glb",
+      "bytes": 1877148,
+      "triangles": 24884
     },
     "small": {
-      "file": "downloads/assetbench-wizard-small.glb",
-      "bytes": 1339212
-    },
-    "before-25k": {
-      "file": "downloads/assetbench-wizard-before-25k.glb",
-      "bytes": 13967616
+      "file": "downloads/assetbench-colossus-small.glb",
+      "bytes": 604176,
+      "triangles": 9865
     }
   },
   "backgroundBytes": 239378

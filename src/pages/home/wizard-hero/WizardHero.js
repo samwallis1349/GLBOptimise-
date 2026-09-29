@@ -1,13 +1,22 @@
 import './wizard-hero.css';
 import manifest from './hero-manifest.json';
-import { DOWNLOADS, EXPORT_BYTES, HERO_BASE, HERO_CONFIG, OPTIMISED, mb } from './config.js';
+import { DOWNLOAD, EXPORT_BYTES, HERO_BASE, HERO_CONFIG, TEXTURE_KEYS, mb } from './config.js';
 
 const ORIGINAL_TRIANGLES = manifest.lods[0].triangles;
-const ORIGINAL_BYTES = EXPORT_BYTES[4][0];
-const HINT = 'Five turns to simplify · Mesh to inspect · Reset to compare';
+const ORIGINAL_BYTES = EXPORT_BYTES[TEXTURE_KEYS.at(-1)][0];
+const HINT = 'Drag or slide to cut triangles · Pick a texture size · Mesh to inspect';
+
+/** One labelled radio group in the strip under the controls. */
+const choiceGroup = (name, label, options) => `
+  <span class="wizard-hero__choice" role="radiogroup" aria-label="${label}" data-el="${name}">
+    <span>${label}</span>
+    ${options.map(([value, text]) => `<label><input type="radio" name="hero-${name}" value="${value}" disabled />${text}</label>`).join('')}
+  </span>`;
 
 /**
- * Homepage hero: a free wizard model the visitor simplifies by dragging.
+ * Homepage hero: a free Rusted Colossus model the visitor simplifies by
+ * dragging. Triangle count and texture size are independent choices; the
+ * GLB readout combines the two.
  * The section and its still poster render immediately; Three.js and the
  * model stream in afterwards (see WizardScene.js).
  *
@@ -18,7 +27,7 @@ export function WizardHero() {
   section.className = 'wizard-hero';
   section.dataset.layoutEditable = '';
   section.dataset.layoutId = 'home-hero-visual';
-  section.dataset.layoutName = 'Wizard Model';
+  section.dataset.layoutName = 'Colossus Model';
   section.innerHTML = `
     <div class="wizard-hero__eyebrow">Prepare your next game asset</div>
     <div class="wizard-hero__stage" data-el="stage" style="--hero-bg: url('${HERO_BASE}background.webp')">
@@ -36,29 +45,23 @@ export function WizardHero() {
         <button type="button" data-el="zoom-reset" aria-label="Reset zoom" title="Reset zoom">100%</button>
         <button type="button" data-el="zoom-in" aria-label="Zoom in">+</button>
       </div>
-      <div class="wizard-hero__status" data-el="status" role="status">Loading the wizard…</div>
+      <div class="wizard-hero__status" data-el="status" role="status">Loading the Colossus…</div>
     </div>
     <div class="wizard-hero__controls">
       <button type="button" data-el="reset" disabled>Reset</button>
-      <button type="button" class="wizard-hero__optimise" data-el="optimise" aria-pressed="false" title="Balanced preset: 25k triangles, tuned textures and Meshopt compression" disabled>✧ Optimise</button>
       <input type="range" data-el="detail" min="0" max="1" step="0.001" value="0" aria-label="Simplification: left is detailed, right is low polygon" disabled />
       <button type="button" data-el="wire" aria-pressed="false" disabled>Mesh</button>
     </div>
     <div class="wizard-hero__strip">
-      <span><i></i>Geometry <b data-el="geometry-result">original</b></span>
-      <span><i></i>GLB <b data-el="size-result">original</b></span>
-      <span class="wizard-hero__textures" role="group" aria-label="Texture resolution" data-el="textures">
-        <span>Textures</span>
-        ${['1', '2', '4']
-          .map((k) => `<label><input type="checkbox" name="wizard-texture" value="${k}" aria-label="${k}K textures" disabled />${k}K</label>`)
-          .join('')}
-      </span>
+      <span class="wizard-hero__choice"><span>Triangles</span><b data-el="geometry-result">original</b></span>
+      ${choiceGroup('textures', 'Textures', TEXTURE_KEYS.map((k) => [k, `${k}K`]))}
+      <span class="wizard-hero__choice"><span>Size</span><b data-el="size-result">original</b></span>
     </div>
     <p class="wizard-hero__hint" data-el="hint">${HINT}</p>
     <div class="wizard-hero__sample">
-      <a class="wizard-hero__download" data-el="download" href="${HERO_BASE}${DOWNLOADS.standard.file}" download="${DOWNLOADS.standard.name}">
+      <a class="wizard-hero__download" data-el="download" href="${HERO_BASE}${DOWNLOAD.file}" download="${DOWNLOAD.name}">
         <span class="wizard-hero__download-emblem" aria-hidden="true">✧</span>
-        <span class="wizard-hero__download-copy"><strong><em>Grab your</em> free wizard</strong><small>Download GLB · Try the tools · Make some magic</small></span>
+        <span class="wizard-hero__download-copy"><strong><em>Grab your</em> free Colossus</strong><small>Download GLB · Try the tools · Make some magic</small></span>
         <span class="wizard-hero__download-arrow" aria-hidden="true">→</span>
       </a>
       <div class="wizard-hero__note" data-el="download-note"></div>
@@ -67,7 +70,7 @@ export function WizardHero() {
   `;
 
   const el = Object.fromEntries([...section.querySelectorAll('[data-el]')].map((node) => [node.dataset.el, node]));
-  const textureInputs = [...section.querySelectorAll('[name="wizard-texture"]')];
+  const textureInputs = [...section.querySelectorAll('[name="hero-textures"]')];
 
   function mount() {
     const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
@@ -93,18 +96,20 @@ export function WizardHero() {
 
     const checkTextures = (key) => textureInputs.forEach((input) => (input.checked = input.value === key));
 
-    function setDownload(kind) {
-      const d = DOWNLOADS[kind];
-      el.download.href = HERO_BASE + d.file;
-      el.download.download = d.name;
-      el.download.setAttribute('aria-label', `Download ${kind === 'optimised' ? 'optimised' : 'free textured'} wizard GLB, ${mb(d.bytes)}`);
-      el['download-note'].textContent = `${mb(d.bytes)} · ${d.note}`;
-    }
-    setDownload('standard');
+    el.download.setAttribute('aria-label', `Download the free textured Colossus GLB, ${mb(DOWNLOAD.bytes)}`);
+    el['download-note'].textContent = `${mb(DOWNLOAD.bytes)} · ${DOWNLOAD.note}`;
 
     function renderStats(state) {
       lastState = state;
-      const { triangles, displayedLod, desiredLod, optimised } = state;
+      const { triangles, displayedLod, desiredLod } = state;
+      if (fullDetail) {
+        const minimum = desiredLod === manifest.lods.length - 1;
+        if (minimum !== atMinimumDetail) {
+          atMinimumDetail = minimum;
+          // Optimise textures with the final mesh step; restore HD when moving back.
+          chooseTextures(minimum ? '1' : defaultTextures);
+        }
+      }
       el.count.textContent = triangles ? triangles.toLocaleString('en-GB') : '—';
       const saving = triangles ? 100 * (1 - triangles / ORIGINAL_TRIANGLES) : 0;
       el.meter.style.width = `${saving}%`;
@@ -122,28 +127,12 @@ export function WizardHero() {
         displayedLod !== desiredLod ? 'Loading next detail level…' : saving > 0 ? `${saving.toFixed(1)}% fewer triangles` : 'Original detail';
       el['geometry-result'].textContent = saving > 0 ? `−${saving.toFixed(1)}%` : 'original';
 
-      const bytes = optimised ? OPTIMISED.bytes : EXPORT_BYTES[textureChoice]?.[displayedLod];
+      const bytes = EXPORT_BYTES[textureChoice]?.[displayedLod];
       if (!bytes) return;
       const saved = 100 * (1 - bytes / ORIGINAL_BYTES);
-      el['glb-size'].textContent = `${mb(bytes, optimised ? 2 : 1)} GLB`;
-      el['glb-saving'].textContent = `${saved.toFixed(1)}% smaller · ${optimised ? 'balanced' : `${textureChoice}K textures`}`;
+      el['glb-size'].textContent = `${mb(bytes, 1)} GLB`;
+      el['glb-saving'].textContent = saved > 0.05 ? `${saved.toFixed(1)}% smaller · ${textureChoice}K textures` : 'GLB export · textures included';
       el['size-result'].textContent = saved > 0.05 ? `−${saved.toFixed(1)}%` : 'original';
-    }
-
-    function showOptimisedUI(on) {
-      el.optimise.textContent = on ? '✓ Optimised' : '✧ Optimise';
-      el.optimise.setAttribute('aria-pressed', String(on));
-      el.hint.textContent = on ? OPTIMISED.summary : HINT;
-      setDownload(on ? 'optimised' : 'standard');
-      // Mixed resolutions: none of the uniform texture sizes applies.
-      checkTextures(on ? null : textureChoice);
-    }
-
-    function leaveOptimised() {
-      if (!scene) return;
-      scene.leaveOptimised();
-      showOptimisedUI(false);
-      el.optimise.disabled = false;
     }
 
     function setZoom(value) {
@@ -157,12 +146,12 @@ export function WizardHero() {
     setZoom(1);
 
     let textureRequest = 0;
+    let atMinimumDetail = false;
     async function chooseTextures(key) {
-      leaveOptimised();
       const request = ++textureRequest;
       checkTextures(key);
       el.textures.setAttribute('aria-busy', 'true');
-      if (key === '4') setStatus(`Loading 4K textures (${mb(manifest.textureBytes[4], 1)})…`);
+      if (key === TEXTURE_KEYS.at(-1) && key !== HERO_CONFIG.defaultTextures) setStatus(`Loading ${key}K textures (${mb(manifest.textureBytes[key], 1)})…`);
       try {
         const applied = await scene.setTextures(key);
         if (!applied || disposed) return;
@@ -191,7 +180,6 @@ export function WizardHero() {
     });
 
     el.detail.addEventListener('input', () => {
-      leaveOptimised();
       scene?.setTarget(Number(el.detail.value));
     });
 
@@ -206,40 +194,10 @@ export function WizardHero() {
       textureRequest++; // drop any texture request still in flight
       setStatus('');
       scene.reset();
-      showOptimisedUI(false);
-      el.optimise.disabled = false;
       el.detail.value = '0';
       setZoom(1);
       if (textureChoice !== defaultTextures) chooseTextures(defaultTextures);
       else el.textures.removeAttribute('aria-busy');
-    };
-
-    let optimiseRequest = 0;
-    el.optimise.onclick = async () => {
-      if (!scene) return;
-      if (scene.optimised) {
-        leaveOptimised();
-        return;
-      }
-      const request = ++optimiseRequest;
-      textureRequest++; // a pending texture change must not land on top of the preset
-      el.textures.removeAttribute('aria-busy');
-      setStatus('');
-      el.optimise.disabled = true;
-      el.optimise.textContent = 'Applying…';
-      try {
-        const applied = await scene.applyOptimised();
-        if (disposed || request !== optimiseRequest) return;
-        if (applied) showOptimisedUI(true);
-        else showOptimisedUI(false);
-      } catch (error) {
-        console.error(error);
-        if (request !== optimiseRequest) return;
-        showOptimisedUI(false);
-        el.hint.textContent = 'Could not apply the preset. Try Optimise again.';
-      } finally {
-        if (request === optimiseRequest) el.optimise.disabled = false;
-      }
     };
 
     // ------------------------------------------------------------ loading
@@ -275,12 +233,12 @@ export function WizardHero() {
       }
       scene.setZoom(zoom);
 
-      // 1. Small preview (25k triangles, 1K textures ≈ 1.6 MB) so the hero is
+      // 1. Small preview (lowest level, ~63k triangles + 1K textures ≈ 1.4 MB) so the hero is
       //    interactive quickly.
       try {
-        await Promise.all([scene.loadPreview(), scene.setTextures('1')]);
+        await Promise.all([scene.loadPreview(), scene.setTextures(defaultTextures)]);
       } catch (error) {
-        return fail('Could not load the wizard. The free download below still works.', error);
+        return fail('Could not load the Colossus. The free download below still works.', error);
       }
       if (disposed) return;
       stage.classList.add('is-live');
@@ -305,7 +263,6 @@ export function WizardHero() {
       textureInputs.forEach((input) => (input.disabled = false));
       el.detail.disabled = false;
       el.reset.disabled = false;
-      el.optimise.disabled = false;
       if (lastState) renderStats(lastState);
     })();
 

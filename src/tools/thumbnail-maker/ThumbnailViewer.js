@@ -19,6 +19,7 @@ export class ThumbnailViewer {
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1;
+    this.renderer.autoClear=false;
     this.renderer.shadowMap.enabled=true;
     this.renderer.shadowMap.type=THREE.PCFSoftShadowMap;
     container.appendChild(this.renderer.domElement);
@@ -98,7 +99,42 @@ export class ThumbnailViewer {
     key.shadow.mapSize.set(1024,1024);Object.assign(key.shadow.camera,{left:-r*3,right:r*3,top:r*3,bottom:-r*3,near:r*.1,far:r*20});key.shadow.normalBias=r*.005;key.shadow.bias=-.0001;key.shadow.camera.updateProjectionMatrix();
   }
 
-  setBackground(value, transparent = false) { this.background.set(value); this.transparent = transparent; }
+  setBackground(value, transparent = false, imageMode = false, opacity = .5) {
+    this.background.set(value); this.transparent = transparent || imageMode;
+    this.imageMode = imageMode; this.backgroundOpacity = opacity;
+  }
+
+  setBackgroundImage(image) {
+    this.backgroundTexture?.dispose();
+    this.backgroundTexture?.image?.close?.();
+    this.backgroundTexture = image ? new THREE.Texture(image) : null;
+    if (this.backgroundTexture) {
+      this.backgroundTexture.colorSpace = THREE.SRGBColorSpace;
+      this.backgroundTexture.needsUpdate = true;
+    }
+    if (!this.backgroundScene) {
+      this.backgroundScene = new THREE.Scene();
+      this.backgroundCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+      this.backgroundQuad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), new THREE.MeshBasicMaterial({transparent:true, depthTest:false, depthWrite:false, toneMapped:false}));
+      this.backgroundScene.add(this.backgroundQuad);
+    }
+    this.backgroundQuad.material.map = this.backgroundTexture;
+    this.backgroundQuad.material.needsUpdate = true;
+  }
+
+  renderScene(aspect) {
+    this.renderer.setClearColor(this.background, this.transparent ? 0 : 1);
+    this.renderer.clear();
+    if (this.imageMode && this.backgroundTexture) {
+      const texture = this.backgroundTexture, imageAspect = texture.image.width / texture.image.height;
+      texture.repeat.set(Math.min(1, aspect / imageAspect), Math.min(1, imageAspect / aspect));
+      texture.offset.set((1 - texture.repeat.x) / 2, (1 - texture.repeat.y) / 2);
+      this.backgroundQuad.material.opacity = this.backgroundOpacity;
+      this.renderer.render(this.backgroundScene, this.backgroundCamera);
+      this.renderer.clearDepth();
+    }
+    this.renderer.render(this.scene, this.camera);
+  }
   setGridVisible(visible) { this.gridVisible = visible; this.updateGrid(); }
 
   updateGrid() {
@@ -121,7 +157,7 @@ export class ThumbnailViewer {
     this.renderer.setSize(width, height, false);
   }
 
-  render() { this.renderer.setClearColor(this.background, this.transparent ? 0 : 1); this.renderer.render(this.scene, this.camera); }
+  render() { this.renderScene(this.camera.aspect); }
   animate() { if (!this.running) return; requestAnimationFrame(() => this.animate()); this.controls.update(); this.render(); }
 
   async capture(size) {
@@ -134,8 +170,7 @@ export class ThumbnailViewer {
     const pixels = new Uint8Array(size * size * 4);
     try {
     this.renderer.setRenderTarget(target);
-    this.renderer.setClearColor(this.background, this.transparent ? 0 : 1);
-    this.renderer.render(this.scene, this.camera);
+    this.renderScene(1);
     this.renderer.readRenderTargetPixels(target, 0, 0, size, size, pixels);
     } finally {
     this.renderer.setRenderTarget(null);
@@ -152,6 +187,15 @@ export class ThumbnailViewer {
       const source = (size - y - 1) * size * 4;
       image.data.set(pixels.subarray(source, source + size * 4), y * size * 4);
     }
+    // WebGL blending stores premultiplied colour; ImageData expects straight alpha.
+    for (let i = 0; i < image.data.length; i += 4) {
+      const alpha = image.data[i + 3];
+      if (alpha > 0 && alpha < 255) {
+        image.data[i] = Math.min(255, Math.round(image.data[i] * 255 / alpha));
+        image.data[i + 1] = Math.min(255, Math.round(image.data[i + 1] * 255 / alpha));
+        image.data[i + 2] = Math.min(255, Math.round(image.data[i + 2] * 255 / alpha));
+      }
+    }
     context.putImageData(image, 0, 0);
     return new Promise((resolve, reject) => canvas.toBlob((blob) => blob ? resolve(blob) : reject(new Error('PNG encoding failed.')), 'image/png'));
   }
@@ -160,6 +204,9 @@ export class ThumbnailViewer {
     this.running = false; this.resizeObserver.disconnect(); this.controls.dispose();
     this.clearModel();
     this.lights.children.forEach(light=>light.shadow?.dispose());
+    this.setBackgroundImage(null);
+    this.backgroundQuad?.geometry.dispose();
+    this.backgroundQuad?.material.dispose();
     this.renderer.dispose();
     this.renderer.domElement.remove();
   }

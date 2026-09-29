@@ -39,7 +39,7 @@ function HeroSection(wizardEl) {
   hero.setAttribute('data-layout-lock-children', '');
 
   const liveCount = TOOLS.filter((t) => LIVE_STATUSES.has(t.status)).length;
-  const quickTools = TOOLS.filter((t) => LIVE_STATUSES.has(t.status)).slice(0, 5);
+  const quickTools = TOOLS.filter((t) => LIVE_STATUSES.has(t.status)).sort((a,b) => Number(b.id === 'thumbnail-maker') - Number(a.id === 'thumbnail-maker')).slice(0, 5);
   const shortcut = navigator.platform?.includes('Mac') ? '⌘K' : 'Ctrl K';
 
   const content = document.createElement('div');
@@ -104,9 +104,20 @@ function CategoriesSection() {
 
   // Number cards in on-page order, since categories aren't in registry order.
   let shown = 0;
+  const featured = document.createElement('div');
+  featured.className = 'category-section';
+  featured.style.setProperty('--card-accent', 'var(--accent)');
+  const heading = document.createElement('div');
+  heading.className = 'category-section__header';
+  heading.innerHTML = '<span class="category-section__title">Generate thumbnails &amp; free catalogues</span>';
+  const featuredGrid = document.createElement('div');
+  featuredGrid.className = 'tool-grid';
+  featuredGrid.appendChild(ToolCard(TOOLS.find(tool => tool.id === 'thumbnail-maker'), {index: ++shown}));
+  featured.append(heading, featuredGrid);
+  section.appendChild(featured);
   for (const category of CATEGORIES) {
     // Tools with wide banner artwork lead their group as a double-width card.
-    const tools = getToolsByCategory(category.id).sort((a, b) => Boolean(b.banner) - Boolean(a.banner));
+    const tools = getToolsByCategory(category.id).filter(tool => tool.id !== 'thumbnail-maker').sort((a, b) => Boolean(b.banner) - Boolean(a.banner));
     if (!tools.length) continue;
 
     const block = document.createElement('div');

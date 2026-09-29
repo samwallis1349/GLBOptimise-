@@ -1,15 +1,15 @@
 /**
  * Renders a modal into document.body and returns a `close()` function.
  *
- * @param {{ title: string, content: HTMLElement|string, actions?: HTMLElement[] }} options
+ * @param {{ title: string, content: HTMLElement|string, actions?: HTMLElement[], className?: string }} options
  * @returns {() => void} close
  */
-export function openModal({ title, content, actions = [] }) {
+export function openModal({ title, content, actions = [], className = '' }) {
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
 
   const modal = document.createElement('div');
-  modal.className = 'modal';
+  modal.className = className ? `modal ${className}` : 'modal';
   modal.setAttribute('role', 'dialog');
   modal.setAttribute('aria-modal', 'true');
 
