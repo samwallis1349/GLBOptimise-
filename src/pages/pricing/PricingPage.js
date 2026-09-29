@@ -1,5 +1,6 @@
 import {
   CHECKOUT_URL,
+  DISCOUNT_CODE,
   LICENSE_MACHINE_LIMIT,
   LIFETIME_PRICE_LABEL,
   MY_ORDERS_URL,
@@ -67,6 +68,21 @@ function buyPanel(onChange) {
       subscription, no credits, no account. One key unlocks every current and
       future tool on up to ${LICENSE_MACHINE_LIMIT} machines.
     </p>
+    <div class="pricing-discount">
+      <div class="pricing-discount__art-wrap" aria-hidden="true">
+        <img class="pricing-discount__art" src="/pricing/ten-percent-off.webp" alt="" loading="lazy" decoding="async" />
+      </div>
+      <div class="pricing-discount__content">
+        <span class="pricing-discount__eyebrow">Special offer</span>
+        <strong>10% off lifetime access</strong>
+        <span>Use this code at checkout:</span>
+        <div class="pricing-discount__code-row">
+          <code>${DISCOUNT_CODE}</code>
+          <button type="button" class="pricing-discount__copy" aria-label="Copy discount code ${DISCOUNT_CODE}">Copy code</button>
+        </div>
+        <span class="pricing-discount__status" role="status" aria-live="polite"></span>
+      </div>
+    </div>
     <a class="btn btn--primary" style="margin-top: var(--space-4); width: 100%;" href="${CHECKOUT_URL}" target="_blank" rel="noopener">
       Buy lifetime access — ${LIFETIME_PRICE_LABEL}
     </a>
@@ -74,6 +90,17 @@ function buyPanel(onChange) {
       ${free ? 'Already bought?' : 'Bought already?'} Paste the key from your receipt email:
     </p>
   `;
+
+  const copy = panel.querySelector('.pricing-discount__copy');
+  const copyStatus = panel.querySelector('.pricing-discount__status');
+  copy.addEventListener('click', async () => {
+    try {
+      await navigator.clipboard.writeText(DISCOUNT_CODE);
+      copyStatus.textContent = 'Code copied. Enter it at checkout.';
+    } catch {
+      copyStatus.textContent = 'Select the code above to copy it.';
+    }
+  });
 
   panel.appendChild(LicenseActivationForm({ onActivated: () => setTimeout(onChange, 800) }));
 

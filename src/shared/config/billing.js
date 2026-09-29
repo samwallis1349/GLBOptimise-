@@ -12,6 +12,8 @@ export const LIFETIME_PRICE_LABEL = '£13';
 
 export const CHECKOUT_URL = 'https://assetbench.lemonsqueezy.com/checkout/buy/d07980c2-c239-43d1-bcc8-f315a9bd21aa';
 
+export const DISCOUNT_CODE = 'G0MTE1NA';
+
 /** Lemon Squeezy IDs for the lifetime product — keys from any other store/product are rejected. */
 export const LICENSE_STORE_ID = 480634;
 export const LICENSE_PRODUCT_ID = 1379921;

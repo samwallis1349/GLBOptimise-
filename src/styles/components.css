@@ -914,6 +914,110 @@
   margin: 0 calc(-1 * var(--space-5)) var(--space-5);
 }
 
+.pricing-discount {
+  position: relative;
+  min-height: 180px;
+  margin-top: var(--space-5);
+  overflow: hidden;
+  border: 1px solid rgba(255, 181, 71, 0.5);
+  border-radius: var(--radius-md);
+  background: #090706;
+  box-shadow: inset 0 0 28px rgba(255, 181, 71, 0.08);
+}
+
+.pricing-discount__art-wrap {
+  position: absolute;
+  inset: 0 0 0 auto;
+  width: 55%;
+  overflow: hidden;
+  mask-image: linear-gradient(to right, transparent 30%, #000 70%);
+  pointer-events: none;
+}
+
+.pricing-discount__art {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  width: 185%;
+  max-width: none;
+  height: auto;
+  transform: translateY(-50%);
+  opacity: 0.8;
+}
+
+.pricing-discount__content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 5px;
+  max-width: 78%;
+  padding: var(--space-4);
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+.pricing-discount__eyebrow {
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.pricing-discount__content strong {
+  color: var(--text-primary);
+  font-size: 21px;
+}
+
+.pricing-discount__code-row {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 5px;
+}
+
+.pricing-discount__code-row code {
+  display: flex;
+  align-items: center;
+  padding: 7px 10px;
+  border: 1px solid rgba(255, 181, 71, 0.6);
+  border-radius: 6px;
+  color: var(--accent);
+  background: #070707;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  user-select: all;
+}
+
+.pricing-discount__copy {
+  padding: 7px 12px;
+  border: 1px solid rgba(255, 181, 71, 0.6);
+  border-radius: 6px;
+  background: var(--accent);
+  color: #100b02;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.pricing-discount__copy:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+.pricing-discount__status {
+  min-height: 1.2em;
+}
+
+@media (max-width: 480px) {
+  .pricing-discount__content { max-width: 100%; }
+  .pricing-discount__art-wrap { opacity: 0.5; }
+}
+
 /* Trial banner */
 .trial-banner {
   display: flex;

@@ -63,7 +63,7 @@ export const TOOLS = [
     description: 'Turn a 3D model into eight consistent isometric sprites.',
     keywords: ['isometric', 'sprite sheet', 'eight directions', 'orthographic'],
     icon: 'camera',
-    thumbnail: '/thumbnails/model-to-isometric.svg',
+    thumbnail: '/thumbnails/model-to-isometric.webp',
     features: [
       { icon: 'camera', label: '8 views' },
       { icon: 'image-down', label: 'PNG + ZIP' },
