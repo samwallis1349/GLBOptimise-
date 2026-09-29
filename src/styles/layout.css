@@ -396,42 +396,9 @@ main {
   font-size: 14px;
 }
 
-/* Category sections */
-.categories {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-7);
+/* All homepage tools sit in one continuous block. */
+.home-tools {
   padding: var(--space-6) 0;
-}
-
-.category-section__header {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  margin-bottom: var(--space-4);
-  color: var(--card-accent, var(--accent));
-}
-
-.category-section__icon {
-  width: 18px;
-  height: 18px;
-}
-
-.category-section__title {
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--text-primary);
-}
-
-.category-section__count {
-  color: var(--text-muted);
-  font-size: 12px;
-  margin-left: var(--space-2);
-  text-transform: none;
-  letter-spacing: normal;
-  font-weight: 500;
 }
 
 /* Tool grid */

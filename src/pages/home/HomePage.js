@@ -1,5 +1,5 @@
 import { APP_DESCRIPTION } from '../../shared/config/app.js';
-import { CATEGORIES, TOOLS, getToolsByCategory } from '../../shared/config/tools.js';
+import { TOOLS } from '../../shared/config/tools.js';
 import { ToolCard } from '../../shared/components/ToolCard.js';
 import { initCursorSpotlight } from '../../shared/effects/CursorSpotlight.js';
 import { iconSvg } from '../../shared/utils/icons.js';
@@ -19,7 +19,7 @@ export function render(container) {
   container.innerHTML = '';
 
   const wizard = WizardHero();
-  container.append(HeroSection(wizard.element), WorkbenchIntro(), CategoriesSection(), CTAPanel());
+  container.append(HeroSection(wizard.element), WorkbenchIntro(), ToolsBlock(), CTAPanel());
 
   const disposeSpotlight = initCursorSpotlight(container);
   const disposeHero = wizard.mount();
@@ -98,51 +98,19 @@ function WorkbenchIntro() {
   return section;
 }
 
-function CategoriesSection() {
+function ToolsBlock() {
   const section = document.createElement('section');
-  section.className = 'categories container';
+  section.className = 'home-tools container';
+  section.dataset.layoutEditable = '';
+  section.dataset.layoutId = 'home-tools';
+  section.dataset.layoutName = 'Tools';
+  section.setAttribute('data-layout-lock-children', '');
 
-  // Number cards in on-page order, since categories aren't in registry order.
-  let shown = 0;
-  const featured = document.createElement('div');
-  featured.className = 'category-section';
-  featured.style.setProperty('--card-accent', 'var(--accent)');
-  const heading = document.createElement('div');
-  heading.className = 'category-section__header';
-  heading.innerHTML = '<span class="category-section__title">Generate thumbnails &amp; free catalogues</span>';
-  const featuredGrid = document.createElement('div');
-  featuredGrid.className = 'tool-grid';
-  featuredGrid.appendChild(ToolCard(TOOLS.find(tool => tool.id === 'thumbnail-maker'), {index: ++shown}));
-  featured.append(heading, featuredGrid);
-  section.appendChild(featured);
-  for (const category of CATEGORIES) {
-    // Tools with wide banner artwork lead their group as a double-width card.
-    const tools = getToolsByCategory(category.id).filter(tool => tool.id !== 'thumbnail-maker').sort((a, b) => Boolean(b.banner) - Boolean(a.banner));
-    if (!tools.length) continue;
-
-    const block = document.createElement('div');
-    block.className = 'category-section';
-    block.dataset.layoutEditable = '';
-    block.dataset.layoutId = `home-category-${category.id}`;
-    block.dataset.layoutName = `Category: ${category.label}`;
-    block.setAttribute('data-layout-lock-children', '');
-    block.style.setProperty('--card-accent', `var(${category.accent})`);
-
-    const header = document.createElement('div');
-    header.className = 'category-section__header';
-    header.innerHTML = `
-      ${iconSvg(category.icon, { class: 'category-section__icon' })}
-      <span class="category-section__title">${category.label}</span>
-      <span class="category-section__count">${tools.length} tool${tools.length === 1 ? '' : 's'}</span>
-    `;
-
-    const grid = document.createElement('div');
-    grid.className = 'tool-grid';
-    tools.forEach((tool) => grid.appendChild(ToolCard(tool, { index: ++shown, featured: Boolean(tool.banner) })));
-
-    block.append(header, grid);
-    section.appendChild(block);
-  }
+  const grid = document.createElement('div');
+  grid.className = 'tool-grid';
+  const tools = [...TOOLS].sort((a, b) => Number(b.id === 'thumbnail-maker') - Number(a.id === 'thumbnail-maker'));
+  tools.forEach((tool, index) => grid.appendChild(ToolCard(tool, { index: index + 1, featured: Boolean(tool.banner) })));
+  section.appendChild(grid);
 
   return section;
 }
