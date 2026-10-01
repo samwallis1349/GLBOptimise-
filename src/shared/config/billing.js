@@ -6,7 +6,7 @@ import { trialStartedAt } from '../../services/TrialService.js';
  * every 'available'/'beta' tool needs a paid lifetime license key. The
  * trial clock itself lives in services/TrialService.js.
  */
-export const TRIAL_DAYS = 4;
+export const TRIAL_DAYS = 3;
 
 export const LIFETIME_PRICE_LABEL = '£13';
 
@@ -26,7 +26,7 @@ export const MY_ORDERS_URL = 'https://app.lemonsqueezy.com/my-orders';
 
 const DAY_MS = 86_400_000;
 
-function trialEndsAt() {
+export function trialEndsAt() {
   // Before the clock has loaded, treat the trial as just started so nothing
   // flashes a paywall; routes.js waits for initTrial() before gating anyway.
   return (trialStartedAt() ?? Date.now()) + TRIAL_DAYS * DAY_MS;

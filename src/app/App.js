@@ -10,6 +10,9 @@ import { initLayoutEditor } from '../editor/LayoutEditor.js';
 import { initCommandPalette } from '../shared/effects/CommandPalette.js';
 import { initPromoBot } from '../shared/effects/PromoBot.js';
 import { initWelcomeOffer } from '../shared/components/WelcomeOffer.js';
+import { hasAccess, trialEndsAt } from '../shared/config/billing.js';
+import { TOOLS } from '../shared/config/tools.js';
+import { navigate } from './router.js';
 
 /** Mounts the whole Asset Bench app (header, routed page content, footer) into rootEl. */
 export function App(rootEl) {
@@ -50,5 +53,25 @@ export function App(rootEl) {
     initPromoBot();
     // One-time pricing popup for first-time, unlicensed visitors.
     initWelcomeOffer();
+
+    // An open tool must lock when the trial expires, not only on the next
+    // navigation. Recheck after tab suspension or a system-clock change too.
+    let hadAccess = hasAccess();
+    const lockExpiredTool = () => {
+      if (hasAccess()) {
+        hadAccess = true;
+        return;
+      }
+      if (!hadAccess) return;
+      hadAccess = false;
+      if (TOOLS.some((tool) => tool.route === location.pathname && ['available', 'beta'].includes(tool.status))) {
+        navigate(location.pathname);
+      }
+    };
+    setTimeout(lockExpiredTool, Math.max(0, trialEndsAt() - Date.now()) + 1);
+    window.addEventListener('focus', lockExpiredTool);
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) lockExpiredTool();
+    });
   });
 }
