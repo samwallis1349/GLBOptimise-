@@ -2,10 +2,31 @@ import { TOOLS } from '../shared/config/tools.js';
 import { hasAccess } from '../shared/config/billing.js';
 import { Paywall } from '../shared/components/Paywall.js';
 import { initTrial } from '../services/TrialService.js';
+import { recordToolOpen } from '../services/UsageService.js';
+import { pageSeo } from '../shared/config/seo.js';
 
 const GATED_STATUSES = new Set(['available', 'beta']);
 
+/** Keeps the tab title and search tags in step with in-app navigation (see shared/config/seo.js). */
+function applyHead(path) {
+  const seo = pageSeo(path);
+  document.title = seo.title;
+  const set = (selector, attr, value) => document.querySelector(selector)?.setAttribute(attr, value);
+  set('meta[name="description"]', 'content', seo.description);
+  set('link[rel="canonical"]', 'href', seo.url);
+  set('meta[property="og:title"]', 'content', seo.title);
+  set('meta[property="og:description"]', 'content', seo.description);
+  set('meta[property="og:url"]', 'content', seo.url);
+  set('meta[property="og:image"]', 'content', seo.image);
+}
+
+const page = (path, load) => async (params, container) => {
+  applyHead(path);
+  return (await load()).render(container, params);
+};
+
 async function mountTool(tool, container, params) {
+  if (GATED_STATUSES.has(tool.status)) recordToolOpen(tool.id);
   const mod = await import(`../tools/${tool.id}/index.js`);
   return mod.mount(container, params);
 }
@@ -20,29 +41,28 @@ async function mountTool(tool, container, params) {
 export const routes = [
   {
     path: '/',
-    handler: async (params, container) => (await import('../pages/home/HomePage.js')).render(container, params),
+    handler: page('/', () => import('../pages/home/HomePage.js')),
   },
   {
     path: '/tools',
-    handler: async (params, container) => (await import('../pages/tools/ToolsPage.js')).render(container, params),
+    handler: page('/tools', () => import('../pages/tools/ToolsPage.js')),
   },
   {
     path: '/about',
-    handler: async (params, container) => (await import('../pages/about/AboutPage.js')).render(container, params),
+    handler: page('/about', () => import('../pages/about/AboutPage.js')),
   },
   {
     path: '/pricing',
-    handler: async (params, container) =>
-      (await import('../pages/pricing/PricingPage.js')).render(container, params),
+    handler: page('/pricing', () => import('../pages/pricing/PricingPage.js')),
   },
   {
     path: '/wizard-compare',
-    handler: async (params, container) =>
-      (await import('../pages/wizard-compare/WizardComparePage.js')).render(container, params),
+    handler: page('/wizard-compare', () => import('../pages/wizard-compare/WizardComparePage.js')),
   },
   ...TOOLS.map((tool) => ({
     path: tool.route,
     handler: async (params, container) => {
+      applyHead(tool.route);
       if (GATED_STATUSES.has(tool.status)) await initTrial();
       if (GATED_STATUSES.has(tool.status) && !hasAccess()) {
         container.innerHTML = '';

@@ -472,6 +472,65 @@
   }
 }
 
+/* Blue card theme (tool.cardTheme = 'blue') — the same card, with every
+   gold touch swapped for blue. Re-pointing the accent tokens covers the
+   var() uses; the hard-coded gold rgba()s are overridden one by one. */
+.tool-card--blue {
+  --accent: var(--cat-blue);
+  --card-accent: var(--cat-blue);
+  --accent-glow-mid: rgba(91, 157, 255, 0.16);
+}
+
+.tool-card--blue:hover {
+  border-color: rgba(91, 157, 255, 0.38);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(91, 157, 255, 0.06);
+}
+
+.tool-card--blue .tool-card__visual--photo {
+  background:
+    radial-gradient(120% 90% at 50% 62%, rgba(91, 157, 255, 0.1), transparent 68%),
+    var(--bg-secondary);
+}
+
+.tool-card--blue .tool-card__visual::after {
+  background: radial-gradient(90% 70% at 50% 70%, rgba(91, 157, 255, 0.16), transparent 70%);
+}
+
+.tool-card--blue .tool-card__scan {
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    rgba(91, 157, 255, 0.13) 45%,
+    rgba(139, 186, 255, 0.5) 50%,
+    rgba(91, 157, 255, 0.13) 55%,
+    transparent
+  );
+}
+
+.tool-card--blue .tool-card__index {
+  border-color: rgba(91, 157, 255, 0.3);
+  color: rgba(91, 157, 255, 0.72);
+}
+
+.tool-card--blue .tool-card__spec-dot {
+  color: rgba(91, 157, 255, 0.5);
+}
+
+.tool-card--blue:hover .tool-card__feature {
+  border-color: rgba(91, 157, 255, 0.22);
+}
+
+.tool-card--blue .tool-card__cta {
+  border-color: rgba(91, 157, 255, 0.35);
+  background: rgba(91, 157, 255, 0.05);
+}
+
+.tool-card--blue:hover .tool-card__cta {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #06111f;
+}
+
 /* Status badge */
 .status-badge {
   display: inline-flex;

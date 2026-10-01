@@ -2,8 +2,8 @@
  * Cloudflare Worker entry for www.assetbench.co.uk.
  *
  * Everything is static assets (./dist) except /api/*, which runs here first
- * (see run_worker_first in wrangler.jsonc). The only API today is the
- * per-visitor free trial clock.
+ * (see run_worker_first in wrangler.jsonc): the per-visitor free trial
+ * clock and the site-wide tool usage counter.
  *
  * Trial clock: the first time a visitor is seen, their trial start time is
  * stored in KV under a salted SHA-256 of their IP — the raw IP is never
@@ -12,7 +12,18 @@
  * storage doesn't reset the trial (the IP remembers), and moving networks
  * doesn't either (the browser remembers). A client can only ever shorten
  * its own trial by sending a value, never extend it.
+ *
+ * Usage counter: one KV key per tool (usage:<id>), with the count held in
+ * the key's metadata so a single list() call reads every tool at once. The
+ * read-modify-write can drop a count under a race, which is fine for a
+ * popularity ranking. Reads are edge-cached for a few minutes.
  */
+
+import { TOOLS } from '../src/shared/config/tools.js';
+
+const TOOL_IDS = new Set(TOOLS.map((tool) => tool.id));
+const USAGE_PREFIX = 'usage:';
+const USAGE_CACHE_SECONDS = 300;
 
 const JSON_HEADERS = {
   'Content-Type': 'application/json',
@@ -63,10 +74,49 @@ async function handleTrial(request, env) {
   return json({ startedAt, now });
 }
 
+async function handleUsage(request, env, ctx) {
+  if (request.method === 'POST') {
+    const body = await request.json().catch(() => ({}));
+    const tool = body?.tool;
+    if (!TOOL_IDS.has(tool)) return json({ error: 'Unknown tool' }, 400);
+    if (!env.TRIALS) return json({ ok: true });
+    const key = USAGE_PREFIX + tool;
+    const { metadata } = await env.TRIALS.getWithMetadata(key);
+    const count = (Number(metadata?.count) || 0) + 1;
+    await env.TRIALS.put(key, '', { metadata: { count } });
+    return json({ ok: true });
+  }
+  if (request.method !== 'GET') return json({ error: 'Method not allowed' }, 405);
+
+  const cache = globalThis.caches?.default;
+  const cacheKey = new Request(new URL('/api/usage', request.url));
+  const hit = await cache?.match(cacheKey);
+  if (hit) return hit;
+
+  const counts = {};
+  if (env.TRIALS) {
+    let cursor;
+    do {
+      const page = await env.TRIALS.list({ prefix: USAGE_PREFIX, cursor });
+      for (const { name, metadata } of page.keys) {
+        const id = name.slice(USAGE_PREFIX.length);
+        if (TOOL_IDS.has(id)) counts[id] = Number(metadata?.count) || 0;
+      }
+      cursor = page.list_complete ? null : page.cursor;
+    } while (cursor);
+  }
+  const response = new Response(JSON.stringify({ counts }), {
+    headers: { 'Content-Type': 'application/json', 'Cache-Control': `public, max-age=${USAGE_CACHE_SECONDS}` },
+  });
+  if (cache) ctx?.waitUntil?.(cache.put(cacheKey, response.clone()));
+  return response;
+}
+
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     const { pathname } = new URL(request.url);
     if (pathname === '/api/trial') return handleTrial(request, env);
+    if (pathname === '/api/usage') return handleUsage(request, env, ctx);
     if (pathname.startsWith('/api/')) return json({ error: 'Not found' }, 404);
     return env.ASSETS.fetch(request);
   },

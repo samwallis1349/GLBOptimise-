@@ -57,6 +57,29 @@ export const TOOLS = [
     category: 'build',
   },
   {
+    id: 'line-studio',
+    name: 'Line Studio',
+    route: '/line-studio',
+    description: 'Cleans up fine line art, like colouring book pages. Rough lines in, smooth lines out.',
+    keywords: ['colouring', 'line art', 'smooth lines', 'colouring pages', 'rough to smooth', 'line weight', 'join breaks', 'remove white', 'svg', 'trace', 'vectorise', 'colouring book'],
+    icon: 'image-down',
+    thumbnail: '/thumbnails/line-studio.webp',
+    seo: {
+      title: 'Line Studio — Free Colouring Page & Line Art Cleaner | Asset Bench',
+      description:
+        'Clean up fine line art and colouring book pages free in your browser. Turn rough, broken lines smooth at an even line weight, join gaps, remove the white background and export a transparent PNG or SVG.',
+    },
+    // Card-only re-tint: this card swaps the site's gold for blue.
+    cardTheme: 'blue',
+    features: [
+      { icon: 'wand-2', label: 'Smooth lines' },
+      { icon: 'activity', label: 'Line weight' },
+      { icon: 'image-down', label: 'PNG + SVG' },
+    ],
+    status: 'available',
+    category: 'build',
+  },
+  {
     id: 'model-to-isometric',
     name: 'Model to Isometric',
     route: '/model-to-isometric',

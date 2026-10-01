@@ -44,7 +44,7 @@ export function ToolCard(tool, { index: displayIndex, featured = false } = {}) {
 
   const card = document.createElement('a');
   const wide = featured && Boolean(tool.banner);
-  card.className = `tool-card${wide ? ' tool-card--featured' : ''}`;
+  card.className = `tool-card${wide ? ' tool-card--featured' : ''}${tool.cardTheme ? ` tool-card--${tool.cardTheme}` : ''}`;
   card.href = tool.route;
   card.dataset.status = tool.status;
   if (category) card.style.setProperty('--card-accent', `var(${category.accent})`);

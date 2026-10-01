@@ -1,0 +1,628 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- Embedded at /line-studio: index its content as part of that page, not as a page of its own. -->
+<meta name="robots" content="noindex, indexifembedded">
+</head>
+<body>
+<title>Line Studio</title>
+<style>
+/* Layout: AssetBench tool shell. Controls stacked on the left, a sticky preview + export card on the right. Single dark look, shared with the other AssetBench tools. */
+:root{
+  color-scheme:dark;
+  --bg:#000000; --panel:#121212; --tile:#0B0B0B; --field:#0A0A0A;
+  --line:#262626; --line-cool:rgba(64,140,255,.22); --line-tile:#1E1E1E;
+  --ink:#F3EFE6; --text:#D9D6D0; --muted:#8C8A86; --dim:#5E5C59;
+  --accent:#4A94FF; --accent-deep:#122A4A; --accent-ink:#06111F;
+  --gold:#FFC861; --gold-line:rgba(255,179,64,.5);
+  --ok:#3DDC84; --err:#FF6B5E;
+  --display:"Outfit","Segoe UI",system-ui,sans-serif;
+  --body:"Inter","Segoe UI",system-ui,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+.bgpick{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.bgpick button{font:600 11px var(--body);color:var(--text);background:var(--tile);border:1px solid var(--line-tile);border-radius:8px;padding:8px 12px;cursor:pointer;display:inline-flex;align-items:center;gap:7px}
+.bgpick button[aria-pressed="true"]{border-color:var(--accent);color:var(--accent);background:linear-gradient(180deg,#122A4A,#0D1A2D)}
+.bgpick .sw{width:14px;height:14px;border-radius:4px;border:1px solid #444;flex:none}
+.bgpick input[type=color]{width:34px;height:30px;padding:0;border:1px solid var(--line);border-radius:7px;background:var(--field);cursor:pointer}
+.bgpick .hex{font:500 11px var(--mono);color:var(--muted)}
+body{background:var(--bg);color:var(--text);font:13px/1.5 var(--body);padding-inline:16px;padding-block:28px 56px}
+.wrap{max-width:1240px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+.hero{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px 24px;margin-bottom:6px}
+.eyebrow{font:700 10.5px var(--body);letter-spacing:.2em;text-transform:uppercase;color:var(--accent);margin:0 0 12px}
+h1{font:800 clamp(40px,7vw,62px)/.95 var(--display);letter-spacing:-.035em;margin:0;color:var(--ink);text-wrap:balance}
+h1 em{font-style:normal;color:var(--accent)}
+.lede{margin:14px 0 0;font-size:15px;line-height:1.6;color:var(--muted);max-width:62ch}
+.pill{display:inline-flex;align-items:center;gap:8px;font-size:11px;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:8px 14px;background:var(--tile);white-space:nowrap}
+.pill::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--ok);box-shadow:0 0 8px rgba(61,220,132,.6)}
+.grid{display:grid;grid-template-columns:minmax(0,.85fr) minmax(0,1.25fr);gap:18px;align-items:start}
+@media (max-width:940px){.grid{grid-template-columns:1fr}.out{order:-1}}
+@media (min-width:941px){.out{position:sticky;top:calc(env(safe-area-inset-top,0px) + 16px)}}
+.col{display:flex;flex-direction:column;gap:18px;min-width:0}
+.card{background:var(--panel);border:1px solid var(--line-cool);border-radius:12px;min-width:0}
+.card-h{display:flex;align-items:center;gap:14px;padding:15px 16px 13px;border-bottom:1px solid var(--line)}
+.num{flex:none;min-width:26px;height:26px;display:grid;place-items:center;border:1px solid rgba(74,148,255,.45);border-radius:6px;background:var(--accent-deep);color:var(--accent);font:700 10px var(--body)}
+.card-h h2{margin:0;font:700 14.5px var(--body);color:#fff}
+.card-h p{margin:2px 0 0;font-size:10.5px;color:var(--muted)}
+.sp{flex:1}
+.card-b{padding:16px;display:flex;flex-direction:column;gap:15px}
+.ghost{font:600 10.5px var(--body);color:var(--muted);background:var(--field);border:1px solid var(--line);border-radius:7px;padding:7px 11px;cursor:pointer}
+.ghost:hover{color:var(--text);border-color:#3a3a3a}
+.drop{border:1px dashed #263449;border-radius:10px;padding:18px 16px;cursor:pointer;display:flex;align-items:center;gap:14px;background:radial-gradient(ellipse at 30% 50%,rgba(74,148,255,.08),transparent 70%),var(--tile)}
+.drop:hover,.drop.drag{border-color:var(--accent)}
+.plus{flex:none;width:44px;height:44px;border:1px solid rgba(74,148,255,.55);border-radius:8px;display:grid;place-items:center;color:var(--accent);font:400 22px/1 var(--body);background:var(--accent-deep)}
+.drop strong{display:block;font:700 13px var(--body);color:#fff}
+.drop small{color:var(--muted);font-size:10.5px}
+.srcinfo{font:500 11px var(--mono);color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.srcinfo b{color:var(--text);font-weight:500}
+.seg{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.seg button{font:600 11.5px var(--body);color:var(--text);background:var(--tile);border:1px solid var(--line-tile);border-radius:8px;padding:10px 8px;cursor:pointer;line-height:1.3}
+.seg button small{display:block;font-weight:500;font-size:9.5px;color:var(--dim);margin-top:2px}
+.seg button[aria-pressed="true"]{border-color:var(--accent);color:var(--accent);background:linear-gradient(180deg,#122A4A,#0D1A2D)}
+.seg button[aria-pressed="true"] small{color:#6f93c4}
+.sliders{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px 20px}
+@media (max-width:480px){.sliders{grid-template-columns:1fr}}
+.sl{display:flex;flex-direction:column;gap:7px;min-width:0}
+.sl-top{display:flex;justify-content:space-between;gap:8px;font:600 11px var(--body);color:var(--text)}
+.sl-top output{color:var(--accent);font:700 11px var(--body);font-variant-numeric:tabular-nums}
+.hint{font-size:10px;color:var(--dim);margin:-3px 0 0}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:18px;background:transparent;cursor:pointer;--p:50%}
+input[type=range]::-webkit-slider-runnable-track{height:6px;border-radius:99px;background:linear-gradient(90deg,var(--accent) 0 var(--p),#2e2e2e var(--p) 100%)}
+input[type=range]::-moz-range-track{height:6px;border-radius:99px;background:#2e2e2e}
+input[type=range]::-moz-range-progress{height:6px;border-radius:99px;background:var(--accent)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--accent);margin-top:-5px;box-shadow:0 0 0 3px rgba(74,148,255,.18)}
+input[type=range]::-moz-range-thumb{width:16px;height:16px;border:0;border-radius:50%;background:var(--accent)}
+.check{display:flex;gap:10px;align-items:flex-start;font-size:12px;color:var(--text);cursor:pointer}
+.check input{accent-color:var(--accent);width:15px;height:15px;margin-top:1px;flex:none}
+.check small{display:block;color:var(--dim);font-size:10px}
+.lbl{font:700 9.5px var(--body);color:var(--muted);text-transform:uppercase;letter-spacing:.14em}
+.tip{border:1px solid var(--gold-line);background:linear-gradient(135deg,rgba(255,179,64,.12),rgba(255,179,64,.03));border-radius:8px;padding:9px 12px;font-size:11px;color:#EADDC4;line-height:1.45}
+.tip b{color:var(--gold)}
+.seg3{grid-template-columns:repeat(3,minmax(0,1fr))}
+@media (max-width:420px){.seg3{grid-template-columns:1fr}}
+.tag{font:700 9px var(--display);letter-spacing:.12em;text-transform:uppercase;color:var(--dim);border:1px solid var(--line);border-radius:999px;padding:6px 10px;white-space:nowrap}
+.tag.on{color:var(--gold);border-color:var(--gold-line);box-shadow:0 0 12px rgba(255,179,64,.18)}
+.row2{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.row2 .grow{flex:1}
+.ghost[aria-pressed="true"]{color:var(--gold);border-color:var(--gold-line);background:rgba(255,179,64,.08)}
+.ghost:disabled{opacity:.4;cursor:default}
+.weights{display:flex;gap:6px;align-items:flex-end;height:30px;padding:0 2px}
+.weights i{flex:1;background:var(--text);border-radius:99px;opacity:.9}
+.marks{position:absolute;inset:0;pointer-events:none}
+.marks.on{pointer-events:auto;cursor:crosshair}
+.marks b{position:absolute;border:1.5px dashed var(--gold);background:rgba(255,179,64,.12);border-radius:3px}
+.marks b span{position:absolute;top:-17px;left:-1px;font:700 9px var(--body);letter-spacing:.08em;color:#1a1206;background:var(--gold);padding:1px 5px;border-radius:3px;white-space:nowrap}
+/* preview */
+.stage{position:relative;border:1px dashed #263449;border-radius:10px;overflow:hidden;aspect-ratio:4/3;max-height:64vh;width:100%;max-width:100%;display:grid;place-items:center}
+.stage[data-bg="checker"]{background:repeating-conic-gradient(#2a2a2a 0 25%,#1a1a1a 0 50%) 0 0/16px 16px}
+.stage[data-bg="black"]{background:#000}.stage[data-bg="white"]{background:#fff}.stage[data-bg="magenta"]{background:#f0f}.stage[data-bg="green"]{background:#00c853}
+.stage img,.stage canvas{max-width:92%;max-height:92%;display:block;image-rendering:auto}
+.stage.drag::after{content:"Drop image";position:absolute;inset:10px;border:1px dashed var(--accent);border-radius:8px;display:grid;place-items:center;font:800 24px var(--display);color:var(--accent);background:rgba(0,0,0,.72)}
+.hud{position:absolute;left:10px;right:10px;top:10px;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;pointer-events:none}
+.hud>*{pointer-events:auto}
+.chips{display:flex;gap:4px;background:rgba(10,10,10,.85);border:1px solid var(--line);border-radius:7px;padding:3px}
+.chip{font:700 10px var(--body);color:var(--muted);background:transparent;border:0;border-radius:5px;padding:5px 9px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--accent-deep);color:var(--accent)}
+.bgs .chip{width:24px;height:22px;padding:0;border:1px solid #333}
+.bgs .chip[aria-pressed="true"]{outline:2px solid var(--accent);outline-offset:1px}
+.busy{position:absolute;right:12px;bottom:12px;font:700 10px var(--body);letter-spacing:.14em;color:var(--accent);background:rgba(0,0,0,.75);padding:5px 9px;border-radius:5px}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:0}
+.stats div{background:var(--tile);border:1px dashed var(--line-tile);border-radius:8px;padding:9px 11px;min-width:0}
+.stats dt{font:700 9.5px var(--body);color:var(--muted);text-transform:uppercase;letter-spacing:.12em}
+.stats dd{margin:3px 0 0;font:600 13px var(--mono);color:var(--ink);font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media (max-width:520px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.field{display:flex;flex-direction:column;gap:6px;min-width:0}
+input[type=text]{font:500 12px var(--body);color:var(--text);background:var(--field);border:1px solid var(--line);border-radius:7px;padding:10px 11px;width:100%}
+.btns{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+@media (max-width:480px){.btns{grid-template-columns:1fr}}
+.btn{font:700 12.5px var(--body);background:var(--field);color:var(--accent);border:1px solid var(--accent);border-radius:9px;padding:13px 10px;cursor:pointer}
+.btn.primary{background:linear-gradient(180deg,#5C99FF,#147CFD);color:var(--accent-ink);border-color:transparent;box-shadow:0 0 22px rgba(20,124,253,.25)}
+.btn:hover{filter:brightness(1.08)}
+.btn:disabled{background:#161616;color:var(--dim);border-color:var(--line);box-shadow:none;cursor:default}
+.status{font-size:11.5px;color:var(--muted);background:var(--field);border:1px solid var(--line);border-radius:7px;padding:10px 12px;min-height:38px}
+.status.ok{color:var(--ok)}.status.err{color:var(--err)}
+button:focus-visible,input:focus-visible,.drop:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+  <header class="hero">
+    <div>
+      <p class="eyebrow">Line art cleanup</p>
+      <h1>Line <em>Studio</em></h1>
+      <p class="lede">Cleans up fine line art, like colouring book pages. Drop in a scan or drawing and rough, broken lines are redrawn smooth, at the weight you choose. You can join small gaps, keep solid black areas and lettering as drawn, remove the white background, and export a transparent PNG or a scalable SVG.</p>
+    </div>
+    <span class="pill">Private · browser-only processing</span>
+  </header>
+
+  <div class="grid">
+    <div class="col">
+      <section class="card">
+        <div class="card-h"><span class="num">01</span><div><h2>Image</h2><p>PNG, WebP or JPG. You can also paste with Ctrl+V.</p></div><span class="sp"></span><button class="ghost" id="sampleBtn">Badge</button><button class="ghost" id="sample2Btn">Colouring page</button></div>
+        <div class="card-b">
+          <div class="drop" id="drop" tabindex="0" role="button" aria-label="Choose an image"><span class="plus" aria-hidden="true">+</span><div><strong>Add an image</strong><small>Drop a file here or click to browse</small></div></div>
+          <input type="file" id="file" accept="image/png,image/webp,image/jpeg,image/gif,image/bmp" hidden>
+          <div class="srcinfo">Loaded <b id="srcName">–</b></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-h"><span class="num">02</span><div><h2>Remove white</h2><p>How close to white a pixel must be to disappear</p></div></div>
+        <div class="card-b">
+          <div class="sliders">
+            <div class="sl"><div class="sl-top"><label for="tol">White tolerance</label><output id="tolV"></output></div><input type="range" id="tol" min="0" max="40" value="8"><span class="hint">Pixels this close to white turn fully clear</span></div>
+            <div class="sl"><div class="sl-top"><label for="soft">Edge softness</label><output id="softV"></output></div><input type="range" id="soft" min="1" max="60" value="18"><span class="hint">Width of the fade on the PNG edges</span></div>
+          </div>
+          <label class="check"><input type="checkbox" id="edgeOnly" checked><span>Only remove white touching the outside<small>Keeps white inside the artwork, like eyes, highlights and stars. The colouring page cleaner always removes all white.</small></span></label>
+          <label class="check"><input type="checkbox" id="despill" checked><span>Remove white fringe<small>Takes the white glow out of soft edge pixels</small></span></label>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-h"><span class="num">03</span><div><p class="eyebrow" style="margin:0 0 3px;font-size:9px">Line enhancement</p><h2>Colouring Page – Image Cleaner</h2><p>Every line redrawn clean, at a thickness you choose</p></div><span class="sp"></span><span class="tag" id="inkTag">Off</span></div>
+        <div class="card-b">
+          <div class="seg seg3" id="inkMode">
+            <button data-k="off" aria-pressed="true">Off<small>Lines as drawn</small></button>
+            <button data-k="mixed" aria-pressed="false">3 weights<small>Fine · medium · bold</small></button>
+            <button data-k="single" aria-pressed="false">1 weight<small>Every line the same</small></button>
+          </div>
+          <div id="inkBox" hidden>
+            <div class="sliders" id="mixedOpts">
+              <div class="sl"><div class="sl-top"><label for="inkFine">Fine lines</label><output id="inkFineV"></output></div><input type="range" id="inkFine" min="1" max="12" value="3"><span class="hint">Hair, details, texture</span></div>
+              <div class="sl"><div class="sl-top"><label for="inkMid">Medium lines</label><output id="inkMidV"></output></div><input type="range" id="inkMid" min="1" max="12" value="4"><span class="hint">Most shapes</span></div>
+              <div class="sl"><div class="sl-top"><label for="inkBold">Bold lines</label><output id="inkBoldV"></output></div><input type="range" id="inkBold" min="1" max="16" value="5"><span class="hint">Outer outlines</span></div>
+              <div class="sl"><span class="lbl">Preview</span><div class="weights" id="weightBars" aria-hidden="true"><i></i><i></i><i></i></div></div>
+            </div>
+            <div class="sliders" id="singleOpts" hidden>
+              <div class="sl"><div class="sl-top"><label for="inkOne">Line weight</label><output id="inkOneV"></output></div><input type="range" id="inkOne" min="1" max="16" value="4"><span class="hint">Every line gets this thickness</span></div>
+            </div>
+            <label class="check"><input type="checkbox" id="keepFills" checked><span>Keep solid black areas as drawn<small>Pupils, dots and filled shapes</small></span></label>
+            <label class="check"><input type="checkbox" id="bridge" checked><span>Join small breaks<small>Connects line ends up to 7 px apart that point at each other</small></span></label>
+            <div class="row2"><button class="ghost" id="markText" aria-pressed="false">Mark lettering to keep</button><span class="srcinfo grow" id="keepInfo">No areas marked</span><button class="ghost" id="clearKeep" disabled>Clear</button></div>
+            <p class="tip"><b>Lettering:</b> redrawn text can change shape (an “a” can close into an “o”). Drag a box over any text on the preview and it keeps its original lines.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-h"><span class="num">04</span><div><h2>SVG</h2><p>Traced shapes, or the cut-out image wrapped in an SVG</p></div></div>
+        <div class="card-b">
+          <div class="seg" id="svgMode">
+            <button data-m="trace" aria-pressed="true">Traced vectors<small>Scales sharp to any size</small></button>
+            <button data-m="embed" aria-pressed="false">Image in SVG<small>Pixel-perfect copy</small></button>
+          </div>
+          <div class="sliders" id="traceOpts">
+            <div class="sl"><div class="sl-top"><label for="cols">Colours</label><output id="colsV"></output></div><input type="range" id="cols" min="2" max="48" value="12"><span class="hint">More colours keep shading, fewer give a flat look</span></div>
+            <div class="sl"><div class="sl-top"><label for="detail">Detail</label><output id="detailV"></output></div><input type="range" id="detail" min="1" max="10" value="6"><span class="hint">Higher follows edges closely, lower smooths them</span></div>
+            <div class="sl"><div class="sl-top"><label for="speck">Ignore specks under</label><output id="speckV"></output></div><input type="range" id="speck" min="0" max="64" value="8"><span class="hint">Drops tiny shapes so the file stays small</span></div>
+            <div class="sl"><div class="sl-top"><label for="res">Trace size</label><output id="resV"></output></div><input type="range" id="res" min="256" max="2048" step="64" value="1024"><span class="hint">Longest side used for tracing. Bigger is slower</span></div>
+          </div>
+          <label class="check" id="sealWrap"><input type="checkbox" id="seal" checked><span>Close hairline gaps<small>Adds a thin matching outline so shapes meet without seams</small></span></label>
+          <p class="tip" id="tip"><b>Tip:</b> tracing suits logos, icons and flat game art. For photos or painterly sprites, use <b>Image in SVG</b> or the PNG.</p>
+        </div>
+      </section>
+    </div>
+
+    <div class="col out">
+      <section class="card">
+        <div class="card-h"><span class="num">05</span><div><h2>Preview &amp; export</h2><p>Check the edges on dark and light backgrounds</p></div></div>
+        <div class="card-b">
+          <div class="stage" id="stage" data-bg="checker">
+            <img id="svgView" alt="SVG preview" hidden>
+            <canvas id="pngView" aria-label="PNG preview" hidden></canvas>
+            <canvas id="origView" aria-label="Original image" hidden></canvas>
+            <div class="hud">
+              <div class="chips" id="viewTabs"><button class="chip" data-v="svg" aria-pressed="true">SVG</button><button class="chip" data-v="png" aria-pressed="false">PNG</button><button class="chip" data-v="orig" aria-pressed="false">Original</button></div>
+              <div class="chips bgs" id="bgs">
+                <button class="chip" data-bg="checker" aria-pressed="true" title="Checkerboard" style="background:repeating-conic-gradient(#3a3a3a 0 25%,#1a1a1a 0 50%) 0 0/8px 8px"></button>
+                <button class="chip" data-bg="black" aria-pressed="false" title="Black" style="background:#000"></button>
+                <button class="chip" data-bg="white" aria-pressed="false" title="White" style="background:#fff"></button>
+                <button class="chip" data-bg="magenta" aria-pressed="false" title="Magenta" style="background:#f0f"></button>
+                <button class="chip" data-bg="green" aria-pressed="false" title="Green" style="background:#00c853"></button>
+              </div>
+            </div>
+            <div class="marks" id="marks"></div>
+            <div class="busy" id="busy" hidden>TRACING</div>
+          </div>
+          <dl class="stats">
+            <div><dt>Size</dt><dd id="stDims">–</dd></div>
+            <div><dt>PNG</dt><dd id="stPng">–</dd></div>
+            <div><dt>SVG</dt><dd id="stSvg">–</dd></div>
+            <div><dt>Shapes</dt><dd id="stPaths">–</dd></div>
+          </dl>
+          <div class="field"><span class="lbl">Add a background</span>
+            <div class="bgpick" id="outBg">
+              <button data-b="none" aria-pressed="true"><span class="sw" style="background:repeating-conic-gradient(#555 0 25%,#222 0 50%) 0 0/6px 6px"></span>Transparent</button>
+              <button data-b="#FFFFFF" aria-pressed="false"><span class="sw" style="background:#fff"></span>White</button>
+              <button data-b="custom" aria-pressed="false"><span class="sw" id="customSw" style="background:#FFF4D6"></span>Colour</button>
+              <input type="color" id="bgColor" value="#fff4d6" aria-label="Background colour"><span class="hex" id="bgHex"></span>
+            </div>
+            <span class="hint" style="margin:0">Fills behind the artwork in both the PNG and the SVG. Transparent keeps the cut-out.</span>
+          </div>
+          <div class="field"><label class="lbl" for="fname">File name</label><input type="text" id="fname" value="cutout" spellcheck="false"></div>
+          <div class="btns">
+            <button class="btn" id="dlPng" disabled>Download PNG</button>
+            <button class="btn" id="dlSvg" disabled>Download SVG</button>
+            <button class="btn primary" id="dlBoth" disabled>Both (.zip)</button>
+          </div>
+          <div class="status" id="status" role="status">Loading the colouring page sample…</div>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/imagetracerjs@1.2.6/imagetracer_v1.2.6.js"></script>
+<script>
+(() => {
+const $ = id => document.getElementById(id);
+const downloadsP = (window.claude && window.claude.use) ? window.claude.use('downloads').catch(() => null) : Promise.resolve(null);
+const MAX = 4096;
+let W = 0, H = 0, orig = null, cut = null, pngBlob = null, svgText = '', svgUrl = null, srcName = 'cutout', svgMode = 'trace', view = 'svg';
+let traceTimer = 0, cutTimer = 0, traceJob = 0, inkNote = '';
+
+// ---------- sliders ----------
+const fmt = {
+  tol: v => v + '%', soft: v => v + '%', cols: v => v, speck: v => v == 0 ? 'Off' : v + ' px', res: v => v + ' px',
+  inkFine: v => v + ' px', inkMid: v => v + ' px', inkBold: v => v + ' px', inkOne: v => v + ' px',
+  detail: v => ['', 'Very smooth', 'Smooth', 'Smooth', 'Balanced', 'Balanced', 'Balanced', 'Fine', 'Fine', 'Very fine', 'Exact'][v]
+};
+function paint(el){ el.style.setProperty('--p', ((el.value - el.min) / (el.max - el.min) * 100) + '%'); $(el.id + 'V').textContent = fmt[el.id](+el.value); }
+Object.keys(fmt).forEach(id => { const el = $(id); paint(el); el.addEventListener('input', () => { paint(el); if (id === 'tol' || id === 'soft' || id.startsWith('ink')) { if (id.startsWith('ink')) weightBars(); queueCut(); } else queueTrace(); }); });
+['edgeOnly', 'despill'].forEach(id => $(id).addEventListener('change', queueCut));
+$('seal').addEventListener('change', queueTrace);
+function press(group, attr, val){ group.querySelectorAll('[' + attr + ']').forEach(b => b.setAttribute('aria-pressed', String(b.getAttribute(attr) === val))); }
+$('svgMode').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; svgMode = b.dataset.m; press($('svgMode'), 'data-m', svgMode); $('traceOpts').hidden = svgMode !== 'trace'; $('sealWrap').hidden = svgMode !== 'trace'; queueTrace(true); });
+$('viewTabs').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; view = b.dataset.v; press($('viewTabs'), 'data-v', view); showView(); });
+$('bgs').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; press($('bgs'), 'data-bg', b.dataset.bg); $('stage').dataset.bg = b.dataset.bg; });
+function showView(){ $('svgView').hidden = view !== 'svg' || !svgUrl; $('pngView').hidden = view !== 'png'; $('origView').hidden = view !== 'orig'; if (typeof renderMarks === 'function') requestAnimationFrame(renderMarks); }
+function status(kind, t){ const s = $('status'); s.className = 'status ' + (kind || ''); s.textContent = t; }
+const fmtB = b => b >= 1048576 ? (b / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(b / 1024)) + ' KB';
+
+// ---------- loading ----------
+function loadImage(img, name, opts = {}){
+  let w = img.naturalWidth || img.width, h = img.naturalHeight || img.height, note = '';
+  if (Math.max(w, h) > MAX) { const s = MAX / Math.max(w, h); w = Math.round(w * s); h = Math.round(h * s); note = ` Scaled to ${w}×${h}.`; }
+  W = w; H = h; const c = $('origView'); c.width = W; c.height = H; const g = c.getContext('2d', { willReadFrequently: true }); g.clearRect(0, 0, W, H); g.drawImage(img, 0, 0, W, H);
+  orig = g.getImageData(0, 0, W, H).data; srcName = name.replace(/\.[^.]+$/, '').replace(/[^\w\-]+/g, '_') || 'cutout';
+  $('srcName').textContent = `${name} · ${W}×${H}`; $('fname').value = srcName; $('stDims').textContent = `${W}×${H}`;
+  keepRects = opts.keep || []; if (opts.ink) { setInk(opts.ink); press($('bgs'), 'data-bg', 'white'); $('stage').dataset.bg = 'white'; } if (opts.cols) { $('cols').value = opts.cols; paint($('cols')); }
+  status('', 'Removing white…' + note); doCut(); queueTrace(true); renderMarks();
+}
+function loadFile(file){
+  if (!file || !/^image\//.test(file.type)) { status('err', 'That file isn’t an image. Use a PNG, WebP or JPG.'); return; }
+  const url = URL.createObjectURL(file), img = new Image();
+  img.onload = () => { loadImage(img, file.name || 'pasted.png'); URL.revokeObjectURL(url); };
+  img.onerror = () => status('err', 'The image couldn’t be opened. Try saving it as PNG first.');
+  img.src = url;
+}
+$('drop').addEventListener('click', () => $('file').click());
+$('drop').addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('file').click(); } });
+$('file').addEventListener('change', () => { if ($('file').files[0]) loadFile($('file').files[0]); $('file').value = ''; });
+for (const el of [$('drop'), $('stage')]) {
+  el.addEventListener('dragover', e => { e.preventDefault(); el.classList.add('drag'); });
+  el.addEventListener('dragleave', e => { if (!el.contains(e.relatedTarget)) el.classList.remove('drag'); });
+  el.addEventListener('drop', e => { e.preventDefault(); el.classList.remove('drag'); if (e.dataTransfer.files[0]) loadFile(e.dataTransfer.files[0]); });
+}
+window.addEventListener('paste', e => { const it = [...(e.clipboardData?.items || [])].find(i => i.type.startsWith('image/')); if (it) loadFile(it.getAsFile()); });
+
+// ---------- Colouring Page – Image Cleaner (line enhancement): redraw every line of a colouring page at a set weight ----------
+let inkMode = 'off', keepRects = [], marking = false;
+const INF = 1e20, NB8 = w => [-w - 1, -w, -w + 1, -1, 1, w - 1, w, w + 1];
+function edt(fg, w, h){ // distance from each fg pixel to the nearest non-fg pixel (exact, Felzenszwalb)
+  const n = Math.max(w, h), f = new Float64Array(n), d = new Float64Array(n), v = new Int32Array(n), z = new Float64Array(n + 1), out = new Float64Array(w * h);
+  for (let p = 0; p < w * h; p++) out[p] = fg[p] ? INF : 0;
+  const dt = len => { let k = 0; v[0] = 0; z[0] = -INF; z[1] = INF;
+    for (let q = 1; q < len; q++) { let s = ((f[q] + q * q) - (f[v[k]] + v[k] * v[k])) / (2 * q - 2 * v[k]);
+      while (s <= z[k]) { k--; s = ((f[q] + q * q) - (f[v[k]] + v[k] * v[k])) / (2 * q - 2 * v[k]); }
+      k++; v[k] = q; z[k] = s; z[k + 1] = INF; }
+    k = 0; for (let q = 0; q < len; q++) { while (z[k + 1] < q) k++; const r = v[k]; d[q] = (q - r) * (q - r) + f[r]; } };
+  for (let x = 0; x < w; x++) { for (let y = 0; y < h; y++) f[y] = out[y * w + x]; dt(h); for (let y = 0; y < h; y++) out[y * w + x] = d[y]; }
+  for (let y = 0; y < h; y++) { const o = y * w; for (let x = 0; x < w; x++) f[x] = out[o + x]; dt(w); for (let x = 0; x < w; x++) out[o + x] = Math.sqrt(d[x]); }
+  return out;
+}
+function thin(S, w){ // Zhang-Suen thinning to 1-px centre lines (S must have an empty 1-px border)
+  let list = []; for (let p = 0; p < S.length; p++) if (S[p]) list.push(p);
+  const P = new Uint8Array(8); let changed = true;
+  while (changed) { changed = false;
+    for (let step = 0; step < 2; step++) { const del = [];
+      for (const p of list) { if (!S[p]) continue;
+        P[0] = S[p - w]; P[1] = S[p - w + 1]; P[2] = S[p + 1]; P[3] = S[p + w + 1]; P[4] = S[p + w]; P[5] = S[p + w - 1]; P[6] = S[p - 1]; P[7] = S[p - w - 1];
+        let B = 0, A = 0; for (let i = 0; i < 8; i++) { B += P[i]; if (!P[i] && P[(i + 1) & 7]) A++; }
+        if (B < 2 || B > 6 || A !== 1) continue;
+        if (step === 0 ? (P[0] && P[2] && P[4]) || (P[2] && P[4] && P[6]) : (P[0] && P[2] && P[6]) || (P[0] && P[4] && P[6])) continue;
+        del.push(p); }
+      if (del.length) { changed = true; for (const p of del) S[p] = 0; } }
+    list = list.filter(p => S[p]); }
+  return S;
+}
+function evenInk(src){
+  const N = W * H, A = new Float32Array(N), nb = NB8(W); for (let p = 0; p < N; p++) A[p] = src[p * 4 + 3] / 255;
+  const inb = p => { const x = p % W, y = (p / W) | 0; return x > 0 && y > 0 && x < W - 1 && y < H - 1; };
+  // 1. lines: faint pixels count when they touch a real stroke, so thin strokes stay joined
+  const M = new Uint8Array(N), q = new Int32Array(N); let qt = 0;
+  for (let p = 0; p < N; p++) if (A[p] > 0.35 && inb(p)) { M[p] = 1; q[qt++] = p; }
+  for (let qh = 0; qh < qt; qh++) { const p = q[qh]; for (const o of nb) { const n = p + o; if (!M[n] && A[n] > 0.05 && inb(n)) { M[n] = 1; q[qt++] = n; } } }
+  const M0 = new Uint8Array(N); for (let p = 0; p < N; p++) M0[p] = A[p] > 0.4 ? 1 : 0;
+  const d = edt(M0, W, H);
+  // 2. centre lines
+  const S = thin(M.slice(), W);
+  // 3. join small breaks: line ends that point at each other across up to 7 px
+  let joined = 0;
+  if ($('bridge').checked) {
+    const ends = []; for (let p = 0; p < N; p++) if (S[p] && inb(p)) { let c = 0; for (const o of nb) c += S[p + o]; if (c === 1) ends.push(p); }
+    const dir = p => { const x0 = p % W, y0 = (p / W) | 0; let sx = 0, sy = 0, c = 0;
+      for (let y = Math.max(0, y0 - 4); y <= Math.min(H - 1, y0 + 4); y++) for (let x = Math.max(0, x0 - 4); x <= Math.min(W - 1, x0 + 4); x++) if (S[y * W + x]) { sx += x; sy += y; c++; }
+      const vx = x0 - sx / c, vy = y0 - sy / c, l = Math.hypot(vx, vy) || 1; return [vx / l, vy / l]; };
+    const grid = new Map(), key = (gx, gy) => gx * 100003 + gy;
+    ends.forEach((p, i) => { const k = key(((p % W) / 8) | 0, ((p / W) / 8) | 0); if (!grid.has(k)) grid.set(k, []); grid.get(k).push(i); });
+    const pairs = [];
+    ends.forEach((p, i) => { const x = p % W, y = (p / W) | 0, gx = (x / 8) | 0, gy = (y / 8) | 0;
+      for (let a = gx - 1; a <= gx + 1; a++) for (let b = gy - 1; b <= gy + 1; b++) for (const j of grid.get(key(a, b)) || []) {
+        if (j <= i) continue; const p2 = ends[j], dx = p2 % W - x, dy = ((p2 / W) | 0) - y, dd = Math.hypot(dx, dy);
+        if (dd <= 7.5 && Math.abs(dx) + Math.abs(dy) >= 4) pairs.push([dd, i, j, dx, dy]); } });
+    pairs.sort((a, b) => a[0] - b[0]); const used = new Uint8Array(ends.length);
+    for (const [dd, i, j, dx, dy] of pairs) { if (used[i] || used[j]) continue; const di = dir(ends[i]), dj = dir(ends[j]);
+      if (di[0] * dx / dd + di[1] * dy / dd < 0.55 || -(dj[0] * dx / dd + dj[1] * dy / dd) < 0.55) continue;
+      const x0 = ends[i] % W, y0 = (ends[i] / W) | 0, steps = Math.ceil(Math.max(Math.abs(dx), Math.abs(dy)));
+      for (let s = 0; s <= steps; s++) S[Math.round(y0 + dy * s / steps) * W + Math.round(x0 + dx * s / steps)] = 1;
+      used[i] = used[j] = 1; joined++; }
+  }
+  // 4. stroke width along each centre line, averaged over a 7x7 window so one stroke keeps one weight
+  const sat = val => { const T = new Float64Array((W + 1) * (H + 1)); for (let y = 0; y < H; y++) { let row = 0; for (let x = 0; x < W; x++) { row += val(y * W + x); T[(y + 1) * (W + 1) + x + 1] = T[y * (W + 1) + x + 1] + row; } } return T; };
+  const Tw = sat(p => S[p] ? Math.max(2 * d[p] - 1, 0.5) : 0), Tc = sat(p => S[p]);
+  const box = (T, x, y, r) => { const x0 = Math.max(0, x - r), y0 = Math.max(0, y - r), x1 = Math.min(W, x + r + 1), y1 = Math.min(H, y + r + 1); return T[y1 * (W + 1) + x1] - T[y0 * (W + 1) + x1] - T[y1 * (W + 1) + x0] + T[y0 * (W + 1) + x0]; };
+  // 5. solid black areas (pupils, dots, filled shapes) stay as drawn
+  const keepFill = new Uint8Array(N), fillCore = new Uint8Array(N);
+  if ($('keepFills').checked) {
+    const notBig = new Uint8Array(N); for (let p = 0; p < N; p++) notBig[p] = d[p] >= 3.6 ? 0 : 1;
+    const dn = edt(notBig, W, H); for (let p = 0; p < N; p++) keepFill[p] = dn[p] <= 3 && M0[p] ? 1 : 0;
+    const di = edt(keepFill, W, H); for (let p = 0; p < N; p++) fillCore[p] = di[p] > 2 ? 1 : 0;
+  }
+  // 6. redraw each weight class with round, anti-aliased strokes
+  const classes = inkMode === 'single' ? [[0, 99, +$('inkOne').value]] : [[0, 1.6, +$('inkFine').value], [1.6, 2.6, +$('inkMid').value], [2.6, 99, +$('inkBold').value]];
+  const line = new Float32Array(N); let strokes = 0;
+  for (const [lo, hi, t] of classes) { const notSk = new Uint8Array(N).fill(1); let any = false;
+    for (let p = 0; p < N; p++) { if (!S[p] || fillCore[p]) continue; const x = p % W, y = (p / W) | 0, c = box(Tc, x, y, 3), wm = c ? box(Tw, x, y, 3) / c : 0;
+      if (wm > lo && wm <= hi) { notSk[p] = 0; any = true; strokes++; } }
+    if (!any) continue; const D = edt(notSk, W, H);
+    for (let p = 0; p < N; p++) { const a = t / 2 + 0.5 - D[p]; if (a > line[p]) line[p] = a > 1 ? 1 : a; } }
+  // 7. ink colour = the page's own line colour; marked lettering and solid areas keep their original pixels
+  let r = 0, g = 0, b = 0, c = 0; for (let p = 0; p < N; p += 7) if (A[p] > 0.9) { r += src[p * 4]; g += src[p * 4 + 1]; b += src[p * 4 + 2]; c++; }
+  const ink = c ? [r / c, g / c, b / c] : [0, 0, 0];
+  const inRect = new Uint8Array(N);
+  for (const k of keepRects) for (let y = Math.max(0, k.y0); y < Math.min(H, k.y1); y++) inRect.fill(1, y * W + Math.max(0, k.x0), y * W + Math.min(W, k.x1));
+  const out = new Uint8ClampedArray(src.length);
+  for (let p = 0, i = 0; p < N; p++, i += 4) {
+    if (inRect[p] || (keepFill[p] && A[p] >= line[p])) { out[i] = src[i]; out[i + 1] = src[i + 1]; out[i + 2] = src[i + 2]; out[i + 3] = src[i + 3]; continue; }
+    out[i] = ink[0]; out[i + 1] = ink[1]; out[i + 2] = ink[2]; out[i + 3] = line[p] * 255;
+  }
+  out.info = { joined, strokes };
+  return out;
+}
+
+function weightBars(){ const v = [+$('inkFine').value, +$('inkMid').value, +$('inkBold').value]; [...$('weightBars').children].forEach((el, i) => { el.style.height = Math.min(30, v[i] * 2) + 'px'; }); }
+function setInk(m){ inkMode = m; press($('inkMode'), 'data-k', m); $('inkBox').hidden = m === 'off'; $('mixedOpts').hidden = m !== 'mixed'; $('singleOpts').hidden = m !== 'single';
+  $('inkTag').textContent = m === 'off' ? 'Off' : m === 'mixed' ? `${$('inkFine').value} · ${$('inkMid').value} · ${$('inkBold').value} px` : `${$('inkOne').value} px`; $('inkTag').classList.toggle('on', m !== 'off'); if (m === 'off') setMarking(false); }
+$('inkMode').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; setInk(b.dataset.k); queueCut(); });
+['keepFills', 'bridge'].forEach(id => $(id).addEventListener('change', queueCut));
+// marking lettering boxes on the preview
+const visibleEl = () => [$('svgView'), $('pngView'), $('origView')].find(el => !el.hidden);
+function imgRect(){ const el = visibleEl(); if (!el || !W) return null; const r = el.getBoundingClientRect(), st = $('stage').getBoundingClientRect(); return { x: r.left - st.left, y: r.top - st.top, s: r.width / W }; }
+function renderMarks(){ const box = $('marks'); box.querySelectorAll('b').forEach(b => b.remove()); const r = imgRect(); if (!r) return;
+  keepRects.forEach((k, i) => { const b = document.createElement('b'); Object.assign(b.style, { left: r.x + k.x0 * r.s + 'px', top: r.y + k.y0 * r.s + 'px', width: (k.x1 - k.x0) * r.s + 'px', height: (k.y1 - k.y0) * r.s + 'px' }); b.innerHTML = `<span>KEEP ${i + 1}</span>`; box.appendChild(b); });
+  $('keepInfo').textContent = keepRects.length ? `${keepRects.length} area${keepRects.length === 1 ? '' : 's'} kept as drawn` : 'No areas marked'; $('clearKeep').disabled = !keepRects.length; }
+function setMarking(on){ marking = on; $('markText').setAttribute('aria-pressed', String(on)); $('markText').textContent = on ? 'Done marking' : 'Mark lettering to keep'; $('marks').classList.toggle('on', on);
+  if (on) { if (view === 'svg') { view = 'png'; press($('viewTabs'), 'data-v', 'png'); showView(); } status('', 'Drag a box around each piece of text you want to keep exactly as drawn.'); } renderMarks(); }
+$('markText').addEventListener('click', () => setMarking(!marking));
+$('clearKeep').addEventListener('click', () => { keepRects = []; renderMarks(); queueCut(); });
+let mdrag = null;
+$('marks').addEventListener('pointerdown', e => { if (!marking) return; const r = imgRect(), st = $('stage').getBoundingClientRect(); if (!r) return; $('marks').setPointerCapture(e.pointerId);
+  const x = (e.clientX - st.left - r.x) / r.s, y = (e.clientY - st.top - r.y) / r.s; const el = document.createElement('b'); $('marks').appendChild(el); mdrag = { x, y, el, r }; });
+$('marks').addEventListener('pointermove', e => { if (!mdrag) return; const st = $('stage').getBoundingClientRect(), r = mdrag.r, x = (e.clientX - st.left - r.x) / r.s, y = (e.clientY - st.top - r.y) / r.s;
+  mdrag.x2 = x; mdrag.y2 = y; Object.assign(mdrag.el.style, { left: r.x + Math.min(x, mdrag.x) * r.s + 'px', top: r.y + Math.min(y, mdrag.y) * r.s + 'px', width: Math.abs(x - mdrag.x) * r.s + 'px', height: Math.abs(y - mdrag.y) * r.s + 'px' }); });
+$('marks').addEventListener('pointerup', () => { if (!mdrag) return; const m = mdrag; mdrag = null; if (m.x2 === undefined) { m.el.remove(); return; }
+  const k = { x0: Math.max(0, Math.round(Math.min(m.x, m.x2))), y0: Math.max(0, Math.round(Math.min(m.y, m.y2))), x1: Math.min(W, Math.round(Math.max(m.x, m.x2))), y1: Math.min(H, Math.round(Math.max(m.y, m.y2))) };
+  if (k.x1 - k.x0 > 3 && k.y1 - k.y0 > 3) keepRects.push(k); renderMarks(); queueCut(); });
+new ResizeObserver(() => renderMarks()).observe($('stage'));
+$('svgView').addEventListener('load', renderMarks);
+weightBars();
+
+// ---------- white removal ----------
+function queueCut(){ clearTimeout(cutTimer); if (inkMode !== 'off') { $('busy').hidden = false; $('busy').textContent = 'CLEANING LINES'; } cutTimer = setTimeout(() => { doCut(); queueTrace(); }, inkMode !== 'off' ? 250 : 60); }
+function doCut(){
+  if (!orig) return;
+  const N = W * H, tol = $('tol').value / 100, soft = Math.max(0.01, $('soft').value / 100), out = new Uint8ClampedArray(orig.length);
+  // distance from white: the darkest channel decides (0 = pure white)
+  const dist = new Float32Array(N); for (let p = 0, i = 0; p < N; p++, i += 4) dist[p] = (255 - Math.min(orig[i], orig[i + 1], orig[i + 2])) / 255;
+  let reach = null;
+  // colouring pages need every bit of white gone, including inside closed shapes and frames
+  if ($('edgeOnly').checked && inkMode === 'off') { // flood from the border through whitish pixels
+    reach = new Uint8Array(N); const q = new Int32Array(N); let qh = 0, qt = 0, lim = tol + soft;
+    const push = p => { if (!reach[p] && (dist[p] <= lim || orig[p * 4 + 3] < 16)) { reach[p] = 1; q[qt++] = p; } };
+    for (let x = 0; x < W; x++) { push(x); push((H - 1) * W + x); } for (let y = 0; y < H; y++) { push(y * W); push(y * W + W - 1); }
+    while (qh < qt) { const p = q[qh++], x = p % W; if (x > 0) push(p - 1); if (x < W - 1) push(p + 1); if (p >= W) push(p - W); if (p < N - W) push(p + W); }
+    // tiny enclosed white pockets (gaps in outlines, corners) count as background too; real white areas are bigger
+    const pocket = Math.max(24, Math.round(N * 0.00015)), seen = new Uint8Array(N), mem = new Int32Array(pocket + 1);
+    for (let s0 = 0; s0 < N; s0++) { if (reach[s0] || seen[s0] || dist[s0] > lim) continue;
+      let sp = 0, m = 0, big = false; q[sp++] = s0; seen[s0] = 1;
+      while (sp) { const p = q[--sp]; if (m <= pocket) mem[m] = p; m++; if (m > pocket) big = true; const x = p % W;
+        const t = n => { if (!seen[n] && !reach[n] && dist[n] <= lim) { seen[n] = 1; q[sp++] = n; } };
+        if (x > 0) t(p - 1); if (x < W - 1) t(p + 1); if (p >= W) t(p - W); if (p < N - W) t(p + W); }
+      if (!big) for (let k = 0; k < m; k++) reach[mem[k]] = 1; }
+  }
+  const despill = $('despill').checked;
+  for (let p = 0, i = 0; p < N; p++, i += 4) {
+    const oa = orig[i + 3]; out[i] = orig[i]; out[i + 1] = orig[i + 1]; out[i + 2] = orig[i + 2];
+    if (reach && !reach[p]) { out[i + 3] = oa; continue; }
+    let a = (dist[p] - tol) / soft; a = a < 0 ? 0 : a > 1 ? 1 : a;
+    if (a < 1 && a > 0 && despill) for (let k = 0; k < 3; k++) out[i + k] = (orig[i + k] - (1 - a) * 255) / a;
+    out[i + 3] = a * oa;
+  }
+  // anti-aliased rim: pixels just inside the cut are a blend of the artwork and white.
+  // estimate how much white each one holds from its most solid neighbour, then un-mix it
+  if (despill) {
+    const bg = reach || (() => { const m = new Uint8Array(N); const lim = tol + soft; for (let p = 0; p < N; p++) m[p] = dist[p] <= lim ? 1 : 0; return m; })();
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+      const p = y * W + x; if (bg[p]) continue;
+      let touches = false, inner = 0;
+      for (let dy = -1; dy <= 1; dy++) { const yy = y + dy; if (yy < 0 || yy >= H) continue;
+        for (let dx = -1; dx <= 1; dx++) { const xx = x + dx; if (xx < 0 || xx >= W || (!dx && !dy)) continue; const n = yy * W + xx;
+          if (bg[n]) touches = true; else if (dist[n] > inner) inner = dist[n]; } }
+      if (!touches || inner <= dist[p] + 0.04) continue;
+      const a = Math.max(0.05, dist[p] / inner), i = p * 4;
+      for (let k = 0; k < 3; k++) out[i + k] = (orig[i + k] - (1 - a) * 255) / a;
+      out[i + 3] = a * orig[i + 3];
+    }
+  }
+  cut = out;
+  if (inkMode !== 'off') { const t0 = performance.now(); cut = evenInk(out); inkNote = `Line enhancement redrew the lines${cut.info.joined ? ` and joined ${cut.info.joined} small breaks` : ''} in ${Math.round(performance.now() - t0)} ms.`; } else inkNote = '';
+  renderPng();
+}
+function renderPng(){
+  if (!cut) return;
+  const c = $('pngView'); c.width = W; c.height = H; const g = c.getContext('2d');
+  const tmp = document.createElement('canvas'); tmp.width = W; tmp.height = H; tmp.getContext('2d').putImageData(new ImageData(cut, W, H), 0, 0);
+  g.clearRect(0, 0, W, H); if (outBg) { g.fillStyle = outBg; g.fillRect(0, 0, W, H); } g.drawImage(tmp, 0, 0);
+  pngBlob = null; c.toBlob(b => { pngBlob = b; $('stPng').textContent = b ? fmtB(b.size) : '–'; $('dlPng').disabled = !b; refreshButtons(); }, 'image/png');
+}
+
+// ---------- SVG ----------
+function queueTrace(now){ clearTimeout(traceTimer); traceTimer = setTimeout(doTrace, now ? 20 : 350); }
+function svgHeader(inner){ const bgRect = outBg && svgMode === 'trace' ? `  <rect width="${W}" height="${H}" fill="${outBg}"/>\n` : ''; return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">\n${bgRect}${inner}\n</svg>\n`; }
+let outBg = null;
+function setOutBg(b){ press($('outBg'), 'data-b', b); outBg = b === 'none' ? null : b === 'custom' ? $('bgColor').value.toUpperCase() : b; $('bgHex').textContent = outBg || ''; $('customSw').style.background = $('bgColor').value; renderPng(); queueTrace(true); }
+$('outBg').addEventListener('click', e => { const b = e.target.closest('button'); if (b) setOutBg(b.dataset.b); });
+$('bgColor').addEventListener('input', () => setOutBg('custom'));
+async function doTrace(){
+  if (!cut) return;
+  const job = ++traceJob; $('busy').hidden = false; $('busy').textContent = svgMode === 'trace' ? 'TRACING' : 'WRAPPING';
+  await new Promise(r => setTimeout(r, 30));
+  try {
+    let paths = 0;
+    if (svgMode === 'embed') {
+      const blob = pngBlob || await new Promise(r => $('pngView').toBlob(r, 'image/png'));
+      const b64 = await new Promise(r => { const fr = new FileReader(); fr.onload = () => r(fr.result); fr.readAsDataURL(blob); });
+      svgText = svgHeader(`  <image width="${W}" height="${H}" href="${b64}"/>`); paths = 1;
+    } else {
+      if (!window.ImageTracer) throw new Error('The tracing library didn’t load. Check your connection and reload.');
+      const s = Math.min(1, +$('res').value / Math.max(W, H)), tw = Math.max(1, Math.round(W * s)), th = Math.max(1, Math.round(H * s));
+      const c = document.createElement('canvas'); c.width = tw; c.height = th; const g = c.getContext('2d', { willReadFrequently: true });
+      const full = document.createElement('canvas'); full.width = W; full.height = H; full.getContext('2d').putImageData(new ImageData(cut, W, H), 0, 0);
+      g.imageSmoothingQuality = 'high'; g.drawImage(full, 0, 0, tw, th);
+      const id = g.getImageData(0, 0, tw, th), d = id.data;
+      // vectors have hard edges: mostly-solid pixels become solid, faint ones (soft shadows, glow) are left out
+      for (let i = 0; i < d.length; i += 4) { if (d[i + 3] < 176) { d[i] = d[i + 1] = d[i + 2] = 0; d[i + 3] = 0; } else d[i + 3] = 255; }
+      const det = +$('detail').value, lt = [0, 4, 3, 2.4, 1.8, 1.4, 1, .75, .55, .4, .25][det];
+      const opts = { ltres: lt, qtres: lt, pathomit: +$('speck').value, rightangleenhance: true, colorsampling: 2, numberofcolors: +$('cols').value + 1, mincolorratio: 0, colorquantcycles: 3, blurradius: 0, layering: 0,
+        strokewidth: $('seal').checked ? 1 : 0, linefilter: false, scale: 1 / s, roundcoords: 1, viewbox: false, desc: false, lcpr: 0, qcpr: 0 };
+      const td = ImageTracer.imagedataToTracedata(id, opts);
+      if (job !== traceJob) return;
+      let body = '';
+      td.layers.forEach((layer, k) => { const col = td.palette[k]; if (col.a < 128) return;
+        layer.forEach((pth, n) => { if (pth.isholepath) return; let str = ImageTracer.svgpathstring(td, k, n, opts); if (!str) return;
+          str = str.replace(/ opacity="[^"]*"/, '').replace(/stroke="[^"]*" stroke-width="0" /, '').replace(/stroke-width="1"/, `stroke-width="${(1 / s * .9).toFixed(2)}" stroke-linejoin="round"`);
+          body += '  ' + str + '\n'; paths++; }); });
+      svgText = svgHeader(body.trimEnd());
+    }
+    if (job !== traceJob) return;
+    if (svgUrl) URL.revokeObjectURL(svgUrl);
+    svgUrl = URL.createObjectURL(new Blob([svgText], { type: 'image/svg+xml' })); $('svgView').src = svgUrl;
+    $('stSvg').textContent = fmtB(new Blob([svgText]).size); $('stPaths').textContent = svgMode === 'embed' ? 'image' : paths.toLocaleString('en-GB');
+    $('dlSvg').disabled = false; refreshButtons(); showView();
+    status('ok', (svgMode === 'embed' ? 'Ready. The SVG holds an exact copy of the cut-out PNG.' : `Ready. Traced ${paths.toLocaleString('en-GB')} shapes in ${+$('cols').value} colours. Compare against the PNG tab to check detail.`) + (inkNote ? ' ' + inkNote : ''));
+  } catch (err) { console.error(err); status('err', err.message); }
+  finally { if (job === traceJob) $('busy').hidden = true; }
+}
+function refreshButtons(){ $('dlBoth').disabled = !(pngBlob && svgText); }
+
+// ---------- export ----------
+const CRC = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+const crc32 = u => { let c = 0xFFFFFFFF; for (let i = 0; i < u.length; i++) c = CRC[(c ^ u[i]) & 255] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; };
+function zipStore(entries){
+  const enc = new TextEncoder(), parts = [], cen = []; let off = 0;
+  for (const e of entries) {
+    const nm = enc.encode(e.name), d = e.data, crc = crc32(d);
+    const h = new DataView(new ArrayBuffer(30)); h.setUint32(0, 0x04034b50, true); h.setUint16(4, 20, true); h.setUint16(6, 0x0800, true); h.setUint16(12, 0x21, true); h.setUint32(14, crc, true); h.setUint32(18, d.length, true); h.setUint32(22, d.length, true); h.setUint16(26, nm.length, true);
+    parts.push(new Uint8Array(h.buffer), nm, d);
+    const c = new DataView(new ArrayBuffer(46)); c.setUint32(0, 0x02014b50, true); c.setUint16(4, 20, true); c.setUint16(6, 20, true); c.setUint16(8, 0x0800, true); c.setUint16(14, 0x21, true); c.setUint32(16, crc, true); c.setUint32(20, d.length, true); c.setUint32(24, d.length, true); c.setUint16(28, nm.length, true); c.setUint32(42, off, true);
+    cen.push(new Uint8Array(c.buffer), nm); off += 30 + nm.length + d.length;
+  }
+  const size = cen.reduce((a, b) => a + b.length, 0), end = new DataView(new ArrayBuffer(22));
+  end.setUint32(0, 0x06054b50, true); end.setUint16(8, entries.length, true); end.setUint16(10, entries.length, true); end.setUint32(12, size, true); end.setUint32(16, off, true);
+  return new Blob([...parts, ...cen, new Uint8Array(end.buffer)], { type: 'application/zip' });
+}
+const baseName = () => ($('fname').value.trim().replace(/[^\w\-]+/g, '_') || 'cutout');
+async function offer(name, blob){
+  const dl = await downloadsP, label = `${name} (${fmtB(blob.size)})`;
+  if (dl) { try { await dl.save({ filename: name, data: blob }); status('ok', `Saved ${label}.`); } catch (e) { const c = e && e.code; status(c === 'declined' ? '' : 'err', c === 'declined' ? 'Download cancelled.' : c === 'rate_limited' ? 'A save prompt is already open.' : 'Saving isn’t available in this view.'); } }
+  else { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); a.remove(); status('ok', `Prepared ${label}.`); }
+}
+$('dlPng').addEventListener('click', () => pngBlob && offer(baseName() + '.png', pngBlob));
+$('dlSvg').addEventListener('click', () => svgText && offer(baseName() + '.svg', new Blob([svgText], { type: 'image/svg+xml' })));
+$('dlBoth').addEventListener('click', async () => { if (!pngBlob || !svgText) return; const b = baseName();
+  offer(b + '.zip', zipStore([{ name: b + '.png', data: new Uint8Array(await pngBlob.arrayBuffer()) }, { name: b + '.svg', data: new TextEncoder().encode(svgText) }])); });
+
+// ---------- sample: a game badge on white ----------
+function sample(){
+  const c = document.createElement('canvas'); c.width = 900; c.height = 640; const g = c.getContext('2d');
+  g.fillStyle = '#fff'; g.fillRect(0, 0, 900, 640);
+  g.save(); g.translate(300, 320); g.lineJoin = 'round';
+  const shield = () => { g.beginPath(); g.moveTo(0, -230); g.bezierCurveTo(90, -190, 150, -195, 190, -200); g.bezierCurveTo(200, -40, 160, 120, 0, 240); g.bezierCurveTo(-160, 120, -200, -40, -190, -200); g.bezierCurveTo(-150, -195, -90, -190, 0, -230); g.closePath(); };
+  shield(); g.lineWidth = 22; g.strokeStyle = '#151a24'; g.stroke();
+  const gr = g.createLinearGradient(0, -230, 0, 240); gr.addColorStop(0, '#2f7bf5'); gr.addColorStop(1, '#123c8c'); g.fillStyle = gr; shield(); g.fill();
+  g.save(); shield(); g.clip(); g.fillStyle = 'rgba(255,255,255,.12)'; g.fillRect(-200, -240, 200, 480); g.restore();
+  // white star inside: kept by "only remove white touching the outside"
+  g.beginPath(); for (let i = 0; i < 10; i++) { const r = i % 2 ? 48 : 112, a = -Math.PI / 2 + i * Math.PI / 5; g.lineTo(Math.cos(a) * r, Math.sin(a) * r - 10); } g.closePath();
+  g.fillStyle = '#ffffff'; g.fill(); g.lineWidth = 10; g.strokeStyle = '#151a24'; g.stroke();
+  g.restore();
+  // gold coin
+  g.save(); g.translate(690, 250);
+  g.beginPath(); g.arc(0, 0, 120, 0, 7); g.fillStyle = '#e8a413'; g.fill(); g.lineWidth = 14; g.strokeStyle = '#3b2606'; g.stroke();
+  g.beginPath(); g.arc(0, 0, 84, 0, 7); g.lineWidth = 8; g.strokeStyle = '#ffd25e'; g.stroke();
+  g.fillStyle = '#ffe9a8'; g.beginPath(); g.ellipse(-40, -50, 26, 14, -0.7, 0, 7); g.fill();
+  g.font = '800 92px Outfit, Inter, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillStyle = '#7a4a05'; g.fillText('A', 0, 6);
+  g.restore();
+  // soft drop shadows under each piece (tests soft edges)
+  const sh = (x, y, rx) => { const r = g.createRadialGradient(x, y, 4, x, y, rx); r.addColorStop(0, 'rgba(0,0,0,.18)'); r.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = r; g.beginPath(); g.ellipse(x, y, rx, rx * .18, 0, 0, 7); g.fill(); };
+  sh(690, 410, 110);
+  const img = new Image(); img.onload = () => loadImage(img, 'sample_badge.png'); img.src = c.toDataURL('image/png');
+}
+$('sampleBtn').addEventListener('click', sample);
+// ---------- sample: a colouring page with uneven, AI-style line weights ----------
+function sample2(){
+  const W2 = 900, H2 = 640, c = document.createElement('canvas'); c.width = W2; c.height = H2; const g = c.getContext('2d');
+  g.fillStyle = '#fff'; g.fillRect(0, 0, W2, H2); g.strokeStyle = '#111'; g.fillStyle = '#111'; g.lineCap = 'round'; g.lineJoin = 'round';
+  let seed = 5; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const st = (w, fn) => { g.lineWidth = w; g.beginPath(); fn(); g.stroke(); };
+  st(7, () => g.roundRect(14, 14, W2 - 28, H2 - 28, 18));                                   // heavy frame
+  // sun with very thin, faint rays
+  st(2.2, () => g.arc(150, 140, 52, 0, 7)); g.globalAlpha = .55;
+  for (let i = 0; i < 14; i++) { const a = i / 14 * Math.PI * 2; st(1, () => { g.moveTo(150 + Math.cos(a) * 66, 140 + Math.sin(a) * 66); g.lineTo(150 + Math.cos(a) * 92, 140 + Math.sin(a) * 92); }); } g.globalAlpha = 1;
+  // flowers with chunky outlines and thin petal veins
+  const flower = (x, y, r) => { for (let i = 0; i < 6; i++) { const a = i / 6 * Math.PI * 2; st(4.5, () => g.ellipse(x + Math.cos(a) * r, y + Math.sin(a) * r, r * .62, r * .36, a, 0, 7));
+      g.globalAlpha = .6; st(1.1, () => { g.moveTo(x + Math.cos(a) * r * .5, y + Math.sin(a) * r * .5); g.lineTo(x + Math.cos(a) * r * 1.35, y + Math.sin(a) * r * 1.35); }); g.globalAlpha = 1; }
+    st(3, () => g.arc(x, y, r * .42, 0, 7)); for (let k = 0; k < 7; k++) { g.beginPath(); g.arc(x + (rnd() - .5) * r * .4, y + (rnd() - .5) * r * .4, 2.6, 0, 7); g.fill(); }
+    st(3.5, () => { g.moveTo(x, y + r * 1.1); g.quadraticCurveTo(x + 18, y + r * 2.4, x - 6, H2 - 40); }); };
+  flower(360, 300, 46); flower(560, 360, 38); flower(760, 290, 50);
+  // leaves drawn in a sketchy 1.5 px line
+  for (const [x, y, a] of [[320, 470, -.6], [600, 500, .5], [790, 470, -.4]]) { st(1.6, () => g.ellipse(x, y, 42, 16, a, 0, 7)); st(1, () => { g.moveTo(x - 36 * Math.cos(a), y - 36 * Math.sin(a)); g.lineTo(x + 36 * Math.cos(a), y + 36 * Math.sin(a)); }); }
+  // butterfly with a solid black body (kept as drawn)
+  g.beginPath(); g.ellipse(250, 300, 7, 26, 0, 0, 7); g.fill();
+  st(2.4, () => { g.ellipse(226, 288, 22, 15, -.5, 0, 7); }); st(2.4, () => { g.ellipse(274, 288, 22, 15, .5, 0, 7); });
+  st(1.4, () => { g.ellipse(230, 318, 15, 11, .4, 0, 7); }); st(1.4, () => { g.ellipse(270, 318, 15, 11, -.4, 0, 7); });
+  // title lettering
+  g.font = '600 46px "Comic Sans MS", "Chalkboard SE", Inter, sans-serif'; g.textAlign = 'center'; g.fillText('My Happy Garden', 600, 120);
+  const img = new Image(); img.onload = () => loadImage(img, 'sample_colouring_page.png', { ink: 'mixed', cols: 2, keep: [{ x0: 400, y0: 74, x1: 800, y1: 138 }] }); img.src = c.toDataURL('image/png');
+}
+$('sample2Btn').addEventListener('click', sample2);
+sample2();
+})();
+</script>
+
+</body>
+</html>

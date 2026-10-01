@@ -40,6 +40,8 @@ export function initCursorSpotlight(root) {
 
   function apply() {
     raf = null;
+    // Grids can re-render their cards (e.g. re-ranking by usage), so re-collect stale ones.
+    if (cards.length && !cards[0].isConnected) refreshCards();
     layer.style.setProperty('--mouse-x', `${pendingX}px`);
     layer.style.setProperty('--mouse-y', `${pendingY}px`);
     layer.classList.add('is-active');

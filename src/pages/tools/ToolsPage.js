@@ -1,15 +1,20 @@
 import { TOOLS } from '../../shared/config/tools.js';
 import { ToolCard } from '../../shared/components/ToolCard.js';
+import { cachedUsageCounts, fetchUsageCounts, placeAtRowStart, rankByUsage } from '../../services/UsageService.js';
 
 /** Double-width card at the top of the grid. */
 const FEATURED_ID = 'glb-builder';
+
+/** Held at the start of the grid's second row regardless of usage. */
+const ROW_TWO_ID = 'line-studio';
 
 /**
  * The rest, ordered by what the job costs to get done elsewhere — dedicated
  * commercial software or plug-ins first (LOD/decimation suites, format
  * converters, texture/material packages), free utilities last. Tools not
  * listed here (e.g. newly added ones) fall in after these; coming-soon
- * tools always sit at the end.
+ * tools always sit at the end. The grid itself is ranked by usage; this
+ * order only breaks ties (and is the whole order before any usage exists).
  */
 const VALUE_ORDER = [
   'generate-lods',
@@ -47,7 +52,7 @@ export function render(container) {
     <div class="tool-page__header">
       <div>
         <h1 class="tool-page__title">All Tools</h1>
-        <p class="tool-page__description">Every tool on the bench, in one place.</p>
+        <p class="tool-page__description">Every tool on the bench, in one place — most used first.</p>
       </div>
     </div>
   `;
@@ -55,8 +60,17 @@ export function render(container) {
   const grid = document.createElement('div');
   grid.className = 'tool-grid';
   const featured = TOOLS.find((tool) => tool.id === FEATURED_ID);
-  const list = featured ? [featured, ...orderedTools()] : orderedTools();
-  list.forEach((tool, i) => grid.appendChild(ToolCard(tool, { index: i + 1, featured: tool === featured })));
+  const fill = (counts) => {
+    // Featured banner, then most-used first (VALUE_ORDER breaks ties), with
+    // Line Studio held at the start of the second row.
+    const ranked = rankByUsage(orderedTools(), counts);
+    const list = placeAtRowStart(featured ? [featured, ...ranked] : ranked, ROW_TWO_ID, {
+      span: (tool) => (tool === featured ? 2 : 1),
+    });
+    grid.replaceChildren(...list.map((tool, i) => ToolCard(tool, { index: i + 1, featured: tool === featured })));
+  };
+  fill(cachedUsageCounts());
+  fetchUsageCounts().then((counts) => grid.isConnected && fill(counts));
   section.appendChild(grid);
 
   container.appendChild(section);

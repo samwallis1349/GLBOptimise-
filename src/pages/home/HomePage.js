@@ -1,6 +1,7 @@
 import { APP_DESCRIPTION } from '../../shared/config/app.js';
 import { TOOLS } from '../../shared/config/tools.js';
 import { ToolCard } from '../../shared/components/ToolCard.js';
+import { cachedUsageCounts, fetchUsageCounts, placeAtRowStart, rankByUsage } from '../../services/UsageService.js';
 import { initCursorSpotlight } from '../../shared/effects/CursorSpotlight.js';
 import { iconSvg } from '../../shared/utils/icons.js';
 import { openCommandPalette } from '../../shared/effects/CommandPalette.js';
@@ -108,8 +109,17 @@ function ToolsBlock() {
 
   const grid = document.createElement('div');
   grid.className = 'tool-grid';
-  const tools = [...TOOLS].sort((a, b) => Number(b.id === 'thumbnail-maker') - Number(a.id === 'thumbnail-maker'));
-  tools.forEach((tool, index) => grid.appendChild(ToolCard(tool, { index: index + 1, featured: Boolean(tool.banner) })));
+  // Most-used first, registry order (Thumbnail Maker leading) breaking ties,
+  // with Line Studio held at the start of the second row.
+  const byDefault = [...TOOLS].sort((a, b) => Number(b.id === 'thumbnail-maker') - Number(a.id === 'thumbnail-maker'));
+  const fill = (counts) => {
+    const tools = placeAtRowStart(rankByUsage(byDefault, counts), 'line-studio', {
+      span: (tool) => (tool.banner ? 2 : 1),
+    });
+    grid.replaceChildren(...tools.map((tool, index) => ToolCard(tool, { index: index + 1, featured: Boolean(tool.banner) })));
+  };
+  fill(cachedUsageCounts());
+  fetchUsageCounts().then((counts) => grid.isConnected && fill(counts));
   section.appendChild(grid);
 
   return section;
