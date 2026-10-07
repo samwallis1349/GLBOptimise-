@@ -3,10 +3,11 @@ import { activateLicense } from '../../services/LicenseService.js';
 /**
  * A license-key input + Activate button, wired to LicenseService. Shared by
  * the Paywall (locked tool screen) and the Pricing page so there is one
- * activation flow, not two.
- * @param {{ onActivated?: () => void }} [options]
+ * activation flow, not two. onActivated gets { ok, toolId? } and may return
+ * a message to show instead of the default success text.
+ * @param {{ onActivated?: (result: { ok: true, toolId?: string }) => string | null | void }} [options]
  */
-export function LicenseActivationForm({ onActivated } = {}) {
+export function LicenseActivationForm({ onActivated, toolId } = {}) {
   const wrap = document.createElement('div');
   wrap.className = 'license-form';
   wrap.innerHTML = `
@@ -35,12 +36,16 @@ export function LicenseActivationForm({ onActivated } = {}) {
     status.className = 'license-form__status';
     status.textContent = 'Checking...';
 
-    const result = await activateLicense(input.value);
+    const result = await activateLicense(input.value, toolId);
 
     if (result.ok) {
       status.classList.add('license-form__status--ok');
-      status.textContent = 'License activated.';
-      onActivated?.();
+      status.textContent = result.toolId ? 'Tool key activated.' : 'License activated.';
+      const message = onActivated?.(result);
+      if (message) {
+        submitBtn.disabled = false;
+        status.textContent = message;
+      }
     } else {
       submitBtn.disabled = false;
       status.classList.add('license-form__status--error');

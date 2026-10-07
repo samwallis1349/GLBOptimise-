@@ -145,6 +145,29 @@ export const TOOLS = [
     category: 'optimise',
   },
   {
+    id: 'ktx2-texture-encoder',
+    name: 'KTX2 Texture Encoder',
+    route: '/ktx2-texture-encoder',
+    description: 'KTX2 Texture Encoder fixes heavy game textures that crash or slow mobiles. It shrinks graphics memory up to 80%, free, right in your browser.',
+    keywords: ['ktx2', 'basis', 'basis universal', 'gpu memory', 'vram', 'texture compression', 'mobile', 'phone', 'vr', 'quest', 'glb', 'png', 'jpg', 'webp', 'uastc', 'etc1s'],
+    icon: 'shrink',
+    thumbnail: '/thumbnails/ktx2-texture-encoder.webp',
+    seo: {
+      title: 'KTX2 Texture Encoder — Free Online KTX2 / Basis Converter | Asset Bench',
+      description:
+        'KTX2 Texture Encoder fixes heavy game textures that crash or slow mobiles. It shrinks graphics memory up to 80%, free, right in your browser.',
+    },
+    // Card-only re-tint: this card swaps the site's gold for silver.
+    cardTheme: 'silver',
+    features: [
+      { icon: 'shrink', label: 'GPU memory' },
+      { icon: 'smartphone', label: 'Phone & VR' },
+      { icon: 'package-open', label: 'GLB + images' },
+    ],
+    status: 'available',
+    category: 'optimise',
+  },
+  {
     id: 'generate-lods',
     name: 'Generate LODs',
     route: '/generate-lods',
@@ -292,6 +315,22 @@ export const TOOLS = [
       { icon: 'search', label: 'Structure' },
       { icon: 'file-text', label: 'Report' },
       { icon: 'shield', label: 'Validate' },
+    ],
+    status: 'available',
+    category: 'inspect',
+  },
+  {
+    id: 'mobile-ready-checker',
+    name: 'Mobile Ready Checker',
+    route: '/mobile-ready-checker',
+    description: 'Check whether your GLB is phone-ready, and see which tool fixes each problem.',
+    keywords: ['mobile', 'phone', 'performance', 'budget', 'vr', 'quest', 'draw calls', 'triangles', 'texture memory', 'check', 'game ready'],
+    icon: 'smartphone',
+    thumbnail: '/thumbnails/mobile-ready-checker.webp',
+    features: [
+      { icon: 'smartphone', label: 'Phone & VR' },
+      { icon: 'gauge', label: 'Budgets' },
+      { icon: 'wand-2', label: 'Fix links' },
     ],
     status: 'available',
     category: 'inspect',

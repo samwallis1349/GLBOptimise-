@@ -8,7 +8,12 @@
  * This browser also keeps its own counts. They stand in when the Worker
  * can't be reached (offline, or `vite dev`, which has no Worker), so the
  * ranking still works locally — it just reflects this browser only.
+ *
+ * Counting is analytics, so it runs by default unless the visitor opts out
+ * (services/ConsentService.js). Reading the site-wide counts doesn't need it.
  */
+
+import { hasConsent } from './ConsentService.js';
 
 const USAGE_API = '/api/usage';
 const LOCAL_KEY = 'assetbench_usage_v1';
@@ -37,6 +42,7 @@ function today() {
 
 /** Records that a tool was opened. Fire-and-forget. */
 export function recordToolOpen(toolId) {
+  if (!hasConsent('analytics')) return;
   const local = read(LOCAL_KEY);
   local[toolId] = (local[toolId] ?? 0) + 1;
   write(LOCAL_KEY, local);
@@ -94,6 +100,44 @@ export function placeAtRowStart(tools, id, { row = 2, columns = 4, span = () => 
     used += width > left ? left + width : width;
   }
   return [...rest, target];
+}
+
+/**
+ * Keeps two tools side by side on one row: `second` follows `first`, and the
+ * pair starts on an even column so it stays together on the 4-column desktop
+ * grid and the 2-column tablet grid alike. The pair moves the fewest slots
+ * from where the higher ranked of the two was. `arrange` applies the grid's other fixed
+ * placements (e.g. placeAtRowStart) to each try, so they can't split it.
+ */
+export function placePairTogether(tools, [firstId, secondId], { columns = 4, span = () => 1, arrange = (list) => list } = {}) {
+  const first = tools.find((tool) => tool.id === firstId);
+  const second = tools.find((tool) => tool.id === secondId);
+  if (!first || !second) return arrange(tools);
+  const rest = tools.filter((tool) => tool !== first && tool !== second);
+  // The pair sits where the higher ranked of the two was.
+  const start = Math.min(tools.indexOf(first), tools.indexOf(second));
+
+  for (let d = 0; d <= rest.length; d++) {
+    for (const i of d ? [start - d, start + d] : [start]) {
+      if (i < 0 || i > rest.length) continue;
+      const list = arrange([...rest.slice(0, i), first, second, ...rest.slice(i)]);
+      const at = list.indexOf(first);
+      if (list[at + 1] === second && columnOf(list, at, columns, span) % 2 === 0) return list;
+    }
+  }
+  return arrange(tools);
+}
+
+/** Grid column of list[index], wrapping cards too wide for what's left of a row. */
+function columnOf(list, index, columns, span) {
+  let used = 0;
+  for (let i = 0; ; i++) {
+    const width = Math.min(span(list[i]), columns);
+    const left = columns - (used % columns);
+    if (width > left) used += left;
+    if (i === index) return used % columns;
+    used += width;
+  }
 }
 
 /**

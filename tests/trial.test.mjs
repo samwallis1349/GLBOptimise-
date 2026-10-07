@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { TRIAL_DAYS, freeDaysRemaining, hasAccess, isFreePeriodActive, trialEndsAt } from '../src/shared/config/billing.js';
+import { ALL_TOOLS_FREE, TRIAL_DAYS, freeDaysRemaining, hasAccess, isFreePeriodActive, trialEndsAt } from '../src/shared/config/billing.js';
 import { initTrial } from '../src/services/TrialService.js';
 import worker from '../worker/index.js';
 
@@ -30,7 +30,7 @@ test('trial ends at exactly 72 hours and blocks unlicensed access', async () => 
     assert.equal(freeDaysRemaining(), 1);
     now = trialEndsAt();
     assert.equal(isFreePeriodActive(), false);
-    assert.equal(hasAccess(), false);
+    assert.equal(hasAccess(), ALL_TOOLS_FREE);
     assert.equal(freeDaysRemaining(), 0);
   } finally {
     Date.now = originalNow;
@@ -64,6 +64,40 @@ test('worker preserves the earliest trial start for an IP', async () => {
     const second = await worker.fetch(request(now), env);
     assert.equal((await second.json()).startedAt, start);
     assert.equal(records.size, 1);
+  } finally {
+    Date.now = originalNow;
+  }
+});
+
+test('owner stats count trials per day without exposing visitors', async () => {
+  const day = 86_400_000;
+  const now = Date.UTC(2026, 9, 2, 12);
+  const originalNow = Date.now;
+  Date.now = () => now;
+  const records = new Map([
+    ['trial:a', { value: String(now - 1000), metadata: { startedAt: now - 1000 } }],
+    ['trial:b', { value: String(now - 2 * day), metadata: null }], // older record: backfilled
+    ['trial:c', { value: String(now - 20 * day), metadata: { startedAt: now - 20 * day } }],
+    ['usage:inspect-glb', { value: '', metadata: { count: 5 } }],
+  ]);
+  const env = {
+    STATS_KEY: 'secret',
+    TRIALS: {
+      get: async (key) => records.get(key)?.value ?? null,
+      put: async (key, value, opts) => records.set(key, { value, metadata: opts?.metadata ?? null }),
+      list: async ({ prefix }) => ({ keys: [...records].filter(([k]) => k.startsWith(prefix)).map(([name, r]) => ({ name, metadata: r.metadata })), list_complete: true }),
+    },
+  };
+  const ask = (auth) => worker.fetch(new Request('https://example.test/api/stats', { headers: auth ? { Authorization: auth } : {} }), env);
+  try {
+    assert.equal((await ask()).status, 401);
+    assert.equal((await ask('Bearer wrong')).status, 401);
+    const body = await (await ask('Bearer secret')).json();
+    assert.deepEqual([body.total, body.today, body.active, body.last7, body.last30], [3, 1, 2, 2, 3]);
+    assert.equal(body.days.length, 30);
+    assert.equal(records.get('trial:b').metadata.startedAt, now - 2 * day);
+    assert.ok(!JSON.stringify(body).includes('trial:'));
+    assert.equal((await worker.fetch(new Request('https://example.test/api/stats'), { TRIALS: env.TRIALS })).status, 404);
   } finally {
     Date.now = originalNow;
   }

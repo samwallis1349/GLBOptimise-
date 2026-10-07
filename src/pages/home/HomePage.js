@@ -1,11 +1,13 @@
 import { APP_DESCRIPTION } from '../../shared/config/app.js';
 import { TOOLS } from '../../shared/config/tools.js';
 import { ToolCard } from '../../shared/components/ToolCard.js';
-import { cachedUsageCounts, fetchUsageCounts, placeAtRowStart, rankByUsage } from '../../services/UsageService.js';
+import { cachedUsageCounts, fetchUsageCounts, rankByUsage } from '../../services/UsageService.js';
 import { initCursorSpotlight } from '../../shared/effects/CursorSpotlight.js';
 import { iconSvg } from '../../shared/utils/icons.js';
 import { openCommandPalette } from '../../shared/effects/CommandPalette.js';
-import { WizardHero } from './wizard-hero/WizardHero.js';
+import { SunnyGeckoHero } from './wizard-hero/SunnyGeckoHero.js';
+import { DONATE_URL } from '../../shared/config/billing.js';
+import { AdSenseAd } from '../../shared/components/AdSenseAd.js';
 
 const BENEFITS = [
   { icon: 'zap', title: 'Works in browser', desc: 'Your files stay on your device' },
@@ -19,11 +21,14 @@ const LIVE_STATUSES = new Set(['available', 'beta']);
 export function render(container) {
   container.innerHTML = '';
 
-  const wizard = WizardHero();
-  container.append(HeroSection(wizard.element), WorkbenchIntro(), ToolsBlock(), CTAPanel());
+  const heroVisual = SunnyGeckoHero();
+  // The one homepage ad sits after the tool grid, well clear of the hero and
+  // its buttons. AdSenseAd() returns null when ads are off, so nothing renders.
+  const ad = AdSenseAd({ placement: 'homepage' });
+  container.append(HeroSection(heroVisual.element), WorkbenchIntro(), ToolsBlock(), ...(ad ? [ad] : []), SupportPanel(), CTAPanel());
 
   const disposeSpotlight = initCursorSpotlight(container);
-  const disposeHero = wizard.mount();
+  const disposeHero = heroVisual.mount();
 
   return () => {
     disposeSpotlight();
@@ -109,13 +114,10 @@ function ToolsBlock() {
 
   const grid = document.createElement('div');
   grid.className = 'tool-grid';
-  // Most-used first, registry order (Thumbnail Maker leading) breaking ties,
-  // with Line Studio held at the start of the second row.
+  // Most-used first, registry order (Thumbnail Maker leading) breaking ties.
   const byDefault = [...TOOLS].sort((a, b) => Number(b.id === 'thumbnail-maker') - Number(a.id === 'thumbnail-maker'));
   const fill = (counts) => {
-    const tools = placeAtRowStart(rankByUsage(byDefault, counts), 'line-studio', {
-      span: (tool) => (tool.banner ? 2 : 1),
-    });
+    const tools = rankByUsage(byDefault, counts);
     grid.replaceChildren(...tools.map((tool, index) => ToolCard(tool, { index: index + 1, featured: Boolean(tool.banner) })));
   };
   fill(cachedUsageCounts());
@@ -125,9 +127,34 @@ function ToolsBlock() {
   return section;
 }
 
+/** Generic donate ask between the tools and the closing CTA. */
+function SupportPanel() {
+  const panel = document.createElement('section');
+  panel.className = 'cta-panel support-panel container';
+  panel.dataset.layoutEditable = '';
+  panel.dataset.layoutId = 'home-support';
+  panel.dataset.layoutName = 'Support Panel';
+  panel.setAttribute('data-layout-lock-children', '');
+
+  panel.innerHTML = `
+    <div class="cta-panel__intro">
+      <div class="cta-panel__icon support-panel__icon" aria-hidden="true">${iconSvg('heart')}</div>
+      <div>
+        <div class="cta-panel__title">Support the tools</div>
+        <div class="cta-panel__desc">Asset Bench is built and run independently. A small donation keeps the tools free, fast and growing.</div>
+      </div>
+    </div>
+    <div class="cta-panel__action">
+      <a class="btn btn--secondary support-panel__button" href="${DONATE_URL}" target="_blank" rel="noopener">${iconSvg('heart')} Support the tools <span aria-hidden="true">→</span></a>
+    </div>
+  `;
+
+  return panel;
+}
+
 function CTAPanel() {
   const panel = document.createElement('section');
-  panel.className = 'cta-panel container';
+  panel.className = 'cta-panel cta-panel--start container';
   panel.dataset.layoutEditable = '';
   panel.dataset.layoutId = 'home-cta';
   panel.dataset.layoutName = 'CTA Panel';
@@ -135,7 +162,7 @@ function CTAPanel() {
 
   panel.innerHTML = `
     <div class="cta-panel__intro">
-      <div class="cta-panel__icon">${iconSvg('package-open')}</div>
+      <div class="cta-panel__icon" aria-hidden="true">${iconSvg('package-open')}</div>
       <div>
         <div class="cta-panel__title">Ready to get started?</div>
         <div class="cta-panel__desc">Drop a model on the bench and see what you can do.</div>
@@ -143,14 +170,18 @@ function CTAPanel() {
     </div>
     <div class="cta-panel__action">
       <a class="btn btn--primary" href="/optimise-glb">${iconSvg('package-open')} Optimise a GLB →</a>
-      <div class="format-pills">
-        <span class="format-pill">GLB</span>
-        <span class="format-pill">FBX</span>
-        <span class="format-pill">GLTF</span>
-        <span class="format-pill">OBJ</span>
-      </div>
+      <div class="cta-panel__formats">GLB <span>·</span> glTF <span>·</span> FBX <span>·</span> OBJ</div>
     </div>
   `;
+
+  const formats = panel.querySelector('.cta-panel__formats');
+  formats.classList.add('format-pills');
+  formats.replaceChildren(...['GLB', 'FBX', 'GLTF', 'OBJ'].map((format) => {
+    const pill = document.createElement('span');
+    pill.className = 'format-pill';
+    pill.textContent = format;
+    return pill;
+  }));
 
   return panel;
 }

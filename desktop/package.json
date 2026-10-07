@@ -1,0 +1,13 @@
+{
+  "name": "assetbench-desktop",
+  "private": true,
+  "description": "Builds each Asset Bench tool as a licence-locked Windows app.",
+  "scripts": {
+    "build": "node build.mjs",
+    "test": "node --test test/*.test.cjs"
+  },
+  "devDependencies": {
+    "electron": "^38.0.0",
+    "electron-builder": "^26.0.0"
+  }
+}

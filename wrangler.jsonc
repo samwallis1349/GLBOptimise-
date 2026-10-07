@@ -14,6 +14,7 @@
     // straight from the static assets.
     "run_worker_first": ["/api/*"]
   },
+  "vars": { "TRIAL_GENERATION": "2026-10-reset-1" },
   // Trial start times keyed by a salted hash of the visitor's IP.
   // Create once with: npx wrangler kv namespace create TRIALS
   // then paste the printed id below.

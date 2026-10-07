@@ -2,21 +2,29 @@
  * localStorage-backed persistence for layout overrides, keyed by stable
  * data-layout-id. Never serialises application HTML — only position/size
  * (and, for editor-created assets, enough to recreate them).
+ *
+ * layout.json is the site's own layout, shipped to every visitor. A browser
+ * with no edits of its own uses it; the editor's "Save to Site" writes the
+ * working copy back into it (see scripts/layout-save.mjs).
  */
 
+import SITE_LAYOUT from './layout.json';
+
 const STORAGE_KEY = 'assetbench:layout-editor:v1';
+
+const siteLayout = () => ({ version: 1, elements: structuredClone(SITE_LAYOUT.elements || {}) });
 
 function readRaw() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return { version: 1, elements: {} };
+    if (!raw) return siteLayout();
     const parsed = JSON.parse(raw);
     if (!parsed || typeof parsed !== 'object' || typeof parsed.elements !== 'object') {
-      return { version: 1, elements: {} };
+      return siteLayout();
     }
     return parsed;
   } catch {
-    return { version: 1, elements: {} };
+    return siteLayout();
   }
 }
 
@@ -56,4 +64,9 @@ export function getAllEntries() {
 
 export function clearAll() {
   writeRaw({ version: 1, elements: {} });
+}
+
+/** The full working layout, as layout.json stores it. */
+export function exportLayout() {
+  return { version: 1, elements: readRaw().elements };
 }

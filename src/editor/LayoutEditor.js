@@ -51,6 +51,7 @@ export function initLayoutEditor() {
       refreshToolbar();
     },
     onSave: saveLayout,
+    onSaveToSite: saveToSite,
     onReset: resetLayout,
     onInspectorChange: handleInspectorChange,
     onTextStyleChange: handleTextStyleChange,
@@ -525,6 +526,38 @@ export function initLayoutEditor() {
       if (id) TransformManager.persist(el, id);
     }
     toolbar.flashSaved();
+  }
+
+  /**
+   * Saves, then makes this layout the site's own: under `npm run dev` it is
+   * written straight into src/editor/layout.json; on a built site (no dev
+   * server to write files) layout.json is downloaded instead.
+   */
+  async function saveToSite() {
+    saveLayout();
+    const layout = LayoutStorage.exportLayout();
+    const json = `${JSON.stringify(layout, null, 2)}
+`;
+
+    if (import.meta.env.DEV) {
+      try {
+        const res = await fetch('/__layout/save', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: json });
+        const result = await res.json().catch(() => ({}));
+        if (!res.ok || !result.ok) throw new Error(result.error || `HTTP ${res.status}`);
+        toolbar.flashSite(true, 'Saved to layout.json ✓');
+      } catch (error) {
+        console.error('[layout editor] Save to Site failed', error);
+        toolbar.flashSite(false, `Save failed: ${error.message || error}`);
+      }
+      return;
+    }
+
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([json], { type: 'application/json' }));
+    a.download = 'layout.json';
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    toolbar.flashSite(true, 'layout.json downloaded ✓');
   }
 
   function resetLayout() {

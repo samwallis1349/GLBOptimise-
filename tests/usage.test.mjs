@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import worker from '../worker/index.js';
-import { placeAtRowStart, rankByUsage } from '../src/services/UsageService.js';
+import { placeAtRowStart, placePairTogether, rankByUsage } from '../src/services/UsageService.js';
 
 function memoryKv() {
   const store = new Map();
@@ -42,4 +42,17 @@ test('placeAtRowStart puts a tool first in row two, counting wide cards and wrap
   // A 2-wide first card fills half of row one.
   const wide = placeAtRowStart(tools, 'x', { span: (t) => (t.id === 'a' ? 2 : 1) });
   assert.deepEqual(ids(wide), ['a', 'b', 'c', 'x', 'd', 'e']);
+});
+
+test('placePairTogether keeps a pair side by side, starting on an even column', () => {
+  const ids = (list) => list.map((t) => t.id);
+  const tools = ['a', 'p', 'b', 'c', 'd', 'q', 'e'].map((id) => ({ id }));
+  // p ranked at column 1: the pair moves one slot to start on column 0.
+  assert.deepEqual(ids(placePairTogether(tools, ['p', 'q'])), ['p', 'q', 'a', 'b', 'c', 'd', 'e']);
+  // Other placements (here: 'a' pinned first) are applied to every try, so the pair goes the other way.
+  const pinA = (list) => [list.find((t) => t.id === 'a'), ...list.filter((t) => t.id !== 'a')];
+  assert.deepEqual(ids(placePairTogether(tools, ['p', 'q'], { arrange: pinA })), ['a', 'b', 'p', 'q', 'c', 'd', 'e']);
+  // Already on an even column: just pulls the partner alongside.
+  const even = ['a', 'b', 'p', 'c', 'q'].map((id) => ({ id }));
+  assert.deepEqual(ids(placePairTogether(even, ['p', 'q'])), ['a', 'b', 'p', 'q', 'c']);
 });

@@ -4,7 +4,7 @@ import {createDemoBuilding} from '/src/tools/model-to-isometric/demo.js';
 import {makeMetadata} from '/src/tools/model-to-isometric/framing.js';
 import {makeDownload} from '/src/tools/model-to-isometric/downloads.js';
 import {loadModel} from '/src/tools/model-to-isometric/loadModel.js';
-import JSZip from 'jszip';
+import JSZip from 'jszip';import * as THREE from 'three';
 import {mountRotation} from '/src/tools/model-to-isometric/rotation.js';
 import {mount} from '/src/tools/model-to-isometric/index.js';
 const status=document.querySelector('#status');const assert=(v,m)=>{if(!v)throw Error(m)};
@@ -58,8 +58,67 @@ try{
  find('[data-size]').value='256';find('[data-generate]').click();
  for(let i=0;i<200&&!find('.iso-results article');i++)await new Promise(resolve=>setTimeout(resolve,50));
  assert(appRoot.querySelectorAll('.iso-results article').length===8,'Actual tool generates all eight rotated sprite previews');
+ // Animated sample through the real UI: 4 frames × 8 directions.
+ const waitFor=async(test,label,ms=20000)=>{for(let t=0;t<ms/50;t++){if(test())return;await new Promise(r=>setTimeout(r,50));}throw Error('Timed out: '+label);};
+ find('[data-demo]').click();
+ const animSelect=find('[data-animation]');assert(!animSelect.disabled&&animSelect.options.length===2&&animSelect.options[1].textContent==='Weathervane spin','Sample lists its animation');
+ animSelect.value='0';animSelect.dispatchEvent(new Event('change',{bubbles:true}));
+ find('[data-frames]').value='4';find('[data-frames]').dispatchEvent(new Event('change',{bubbles:true}));
+ assert(find('[data-generate]').textContent==='Generate 32 Sprites','Generate button counts animated sprites: '+find('[data-generate]').textContent);
+ assert([...find('[data-size]').options].find(o=>o.textContent==='2048').disabled,'2048 px disabled for animations');
+ find('[data-size]').value='256';find('[data-size]').dispatchEvent(new Event('input',{bubbles:true}));
+ find('[data-generate]').click();
+ await waitFor(()=>!find('.iso-results').hidden,'animated results');
+ assert(appRoot.querySelectorAll('.iso-results article').length===8,'Eight animated direction cards');
+ const animZip=await new Promise((resolve,reject)=>{const original=URL.createObjectURL;URL.createObjectURL=blob=>{if(blob.type!=='image/png'&&blob.size>0&&!resolve.done){resolve.done=true;URL.createObjectURL=original;resolve(blob);}return original.call(URL,blob);};find('[data-zip]').click();setTimeout(()=>reject(Error('ZIP not produced')),20000);});
+ const animFiles=await JSZip.loadAsync(await animZip.arrayBuffer());
+ assert(Object.keys(animFiles.files).length===33,'Animated ZIP holds 32 PNGs and metadata: '+Object.keys(animFiles.files).length);
+ const animMeta=JSON.parse(await animFiles.file('sample-workshop-isometric.json').async('string'));
+ assert(animMeta.animation.frameCount===4&&animMeta.width===1024&&animMeta.height===2048&&animMeta.frames.length===32,'Animated metadata layout');
+ const frameSigs=new Set();for(let f=0;f<4;f++){const bytes=await animFiles.file(`sample-workshop-N-0${f}.png`).async('uint8array');let h=0;for(let i=0;i<bytes.length;i+=7)h=(h*31+bytes[i])>>>0;frameSigs.add(h);}
+ assert(frameSigs.size===4,'Four distinct animation frames');
+ await waitFor(()=>!find('[data-zip]').disabled,'unlock after zip');
+ const sheetBlob=await new Promise((resolve,reject)=>{const original=URL.createObjectURL;URL.createObjectURL=blob=>{if(blob.size>0&&blob.type!=='image/png'){URL.createObjectURL=original;resolve(blob);}return original.call(URL,blob);};find('[data-sheet]').click();setTimeout(()=>reject(Error('Sheet not produced')),20000);});
+ const sheetZip=await JSZip.loadAsync(await sheetBlob.arrayBuffer());const sheetBitmap=await createImageBitmap(new Blob([await sheetZip.file('sample-workshop-isometric-sheet.png').async('uint8array')],{type:'image/png'}));
+ assert(sheetBitmap.width===1024&&sheetBitmap.height===2048,'Animated sheet is frames × directions');sheetBitmap.close();
+ await waitFor(()=>!find('[data-generate]').disabled,'unlock after sheet');
+
+ // Locked world scale: warning and blocked generation when the model is too big.
+ const scale=find('[data-scale]');scale.value='locked';scale.dispatchEvent(new Event('input',{bubbles:true}));
+ assert(!find('[data-ppu-field]').hidden,'Pixels per metre field appears');
+ find('[data-ppu]').value='4000';find('[data-ppu]').dispatchEvent(new Event('input',{bubbles:true}));
+ assert(find('[data-scale-note]').classList.contains('is-error')&&/fits up to \d+ px per metre/.test(find('[data-scale-note]').textContent),'Too-big warning: '+find('[data-scale-note]').textContent);
+ find('[data-generate]').click();await waitFor(()=>!find('[data-generate]').disabled,'blocked generate');
+ assert(/too big for the frame/.test(find('.iso-status').textContent)&&find('.iso-results').hidden,'Generation blocked when clipped');
+ find('[data-ppu]').value='20';find('[data-ppu]').dispatchEvent(new Event('input',{bubbles:true}));
+ assert(!find('[data-scale-note]').classList.contains('is-error')&&find('[data-scale-note]').textContent.startsWith('1 m = 20 px'),'Fits at a smaller scale');
+ scale.value='fit';scale.dispatchEvent(new Event('input',{bubbles:true}));
+
+ // A real skinned walk cycle with forward root motion, round-tripped through GLB and the upload loader.
+ const {GLTFExporter}=await import('three/examples/jsm/exporters/GLTFExporter.js');
+ const geometry=new THREE.CylinderGeometry(.25,.25,2,8,8).translate(0,1,0);const position=geometry.attributes.position,skinIndex=[],skinWeight=[];
+ for(let i=0;i<position.count;i++){skinIndex.push(position.getY(i)<1?0:1,0,0,0);skinWeight.push(1,0,0,0);}
+ geometry.setAttribute('skinIndex',new THREE.Uint16BufferAttribute(skinIndex,4));geometry.setAttribute('skinWeight',new THREE.Float32BufferAttribute(skinWeight,4));
+ const hips=new THREE.Bone(),spine=new THREE.Bone();hips.name='Hips';spine.name='Spine';spine.position.y=1;hips.add(spine);
+ const walker=new THREE.SkinnedMesh(geometry,new THREE.MeshStandardMaterial({color:0xd08040}));walker.name='Walker';walker.add(hips);walker.bind(new THREE.Skeleton([hips,spine]));
+ const walkScene=new THREE.Scene();walkScene.add(walker);
+ const walk=new THREE.AnimationClip('Walk',1,[new THREE.VectorKeyframeTrack('Hips.position',[0,.5,1],[0,0,0, .1,.1,1.5, 0,0,3]),new THREE.QuaternionKeyframeTrack('Spine.quaternion',[0,.5,1],[...new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1,0,0),-.3).toArray(),...new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1,0,0),.3).toArray(),...new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1,0,0),-.3).toArray()])]);
+ const glb=await new GLTFExporter().parseAsync(walkScene,{binary:true,animations:[walk]});
+ const walkerModel=await loadModel(new File([glb],'walker.glb'));assert(walkerModel.animations.length===1&&walkerModel.animations[0].name==='Walk','GLB animations survive loading');
+ const v2=new IsometricViewer(document.querySelector('#viewer'));v2.setModel(walkerModel);v2.configure({...settings,size:128});
+ const centres=async inPlace=>{
+  v2.setAnimation(0,{frames:4,inPlace});v2.playing=false;v2.setDirection(2);const xs=[];
+  for(const time of v2.animation.times){v2.showFrame(time);const bmp=await createImageBitmap(await v2.capture(128));const c=document.createElement('canvas');c.width=c.height=128;const g=c.getContext('2d');g.drawImage(bmp,0,0);bmp.close();const d=g.getImageData(0,0,128,128).data;
+   let sum=0,n=0;for(let y=0;y<128;y++)for(let x=0;x<128;x++)if(d[(y*128+x)*4+3]){sum+=x;n++;if(x===0||x===127||y===0||y===127)throw Error('Animated frame touches the edge (clipped)');}
+   assert(n>50,'Walker visible in every frame');xs.push(sum/n);}
+  return Math.max(...xs)-Math.min(...xs);
+ };
+ const stayed=await centres(true),travelled=await centres(false);
+ assert(travelled>stayed*4,`Keep in place removes travel (in place spread ${stayed.toFixed(1)} px, with travel ${travelled.toFixed(1)} px)`);
+ v2.setAnimation(-1);assert(!v2.animation&&Math.abs(walkerModel.getObjectByName('Hips').position.z)<1e-9,'Rest pose restored');
+ v2.dispose();
  cleanup();appRoot.remove();
- status.textContent='PASS: complete tool mount, sample model, degree inputs, horizontal and vertical drag, 45-degree snap, reset, eight generated views, transparent/solid PNGs, ZIPs and metadata.';
+ status.textContent='PASS: complete tool mount, sample model, degree inputs, horizontal and vertical drag, 45-degree snap, reset, eight generated views, transparent/solid PNGs, ZIPs and metadata, animated sample (32 sprites, ZIP, sheet), locked world scale warning and block, skinned GLB walk cycle kept in place without clipping.';
 }catch(e){status.textContent='FAIL: '+e.stack;}
 fetch('http://127.0.0.1:5191/report',{method:'POST',body:status.textContent}).catch(()=>{});
 </script></body></html>

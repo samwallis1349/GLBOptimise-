@@ -1,0 +1,494 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>KTX2 Texture Encoder</title>
+</head>
+<body>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap">
+<style>
+/* Layout: AssetBench tool shell in the silver finish shared with Mobile Ready Checker. Left: input + settings. Right: the memory saving headline, before/after compare, and the per-texture results. */
+:root{
+  color-scheme:dark;
+  --bg:#000; --panel:#111214; --tile:#0B0C0E; --field:#08090A; --line:#24262B; --line2:#2E3138;
+  --ink:#F3EFE6; --text:#D7D4CE; --muted:#8C8A86; --dim:#5E5C59;
+  --accent:#C9CED6; --accent-hi:#EEF1F5; --accent-deep:#24272D; --accent-ink:#0B0C0E;
+  --silver:linear-gradient(180deg,#F6F7F9 0%,#C9CED6 45%,#9AA0A9 100%);
+  --ok:#3DDC84; --warn:#FFC861; --bad:#FF6B5E;
+  --display:"Outfit","Segoe UI",system-ui,sans-serif; --body:"Inter","Segoe UI",system-ui,sans-serif; --mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--text);font:13px/1.5 var(--body);padding-inline:16px;padding-block:28px 56px}
+.wrap{max-width:1300px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+.hero{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px 24px}
+.eyebrow{font:700 10.5px var(--body);letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin:0 0 10px}
+h1{font:800 clamp(36px,6.5vw,58px)/.95 var(--display);letter-spacing:-.03em;margin:0;color:var(--ink);text-wrap:balance}
+h1 em{font-style:normal;background:var(--silver);-webkit-background-clip:text;background-clip:text;color:transparent}
+.lede{margin:12px 0 0;font-size:14.5px;color:var(--muted);max-width:68ch}
+.pill{display:inline-flex;align-items:center;gap:8px;font-size:11px;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:8px 14px;background:var(--tile);white-space:nowrap}
+.pill::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--ok);box-shadow:0 0 8px rgba(61,220,132,.6)}
+.howto{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+@media (max-width:700px){.howto{grid-template-columns:1fr}}
+.howto li{display:flex;gap:12px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px;min-width:0}
+.howto b{flex:none;width:32px;height:32px;border-radius:50%;display:grid;place-items:center;background:var(--silver);color:var(--accent-ink);font:800 15px var(--display)}
+.howto strong{display:block;font:700 13px var(--body);color:#fff}
+.howto span{font-size:11px;color:var(--muted);min-width:0}
+.grid{display:grid;grid-template-columns:minmax(0,370px) minmax(0,1fr);gap:18px;align-items:start}
+@media (max-width:980px){.grid{grid-template-columns:1fr}}
+.col{display:flex;flex-direction:column;gap:18px;min-width:0}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;min-width:0}
+.card-h{display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.num{flex:none;min-width:26px;height:26px;display:grid;place-items:center;border:1px solid rgba(201,206,214,.45);border-radius:6px;background:var(--accent-deep);color:var(--accent);font:700 10px var(--body)}
+.card-h h2{margin:0;font:700 14.5px var(--body);color:#fff}
+.card-h p{margin:2px 0 0;font-size:11px;color:var(--muted)}
+.sp{flex:1}
+.card-b{padding:16px;display:flex;flex-direction:column;gap:14px}
+.btn{font:600 11.5px var(--body);color:var(--text);background:var(--field);border:1px solid var(--line2);border-radius:8px;padding:8px 12px;cursor:pointer}
+.btn:hover{border-color:var(--accent);color:#fff}
+.btn.primary{background:var(--silver);color:var(--accent-ink);border-color:transparent;font-weight:700}
+.btn.big{font-size:14px;padding:13px 16px;width:100%}
+.btn:disabled{opacity:.4;cursor:default;filter:none}
+.seg{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.seg.three{grid-template-columns:repeat(3,minmax(0,1fr))}
+@media (max-width:420px){.seg.three{grid-template-columns:1fr}}
+.seg button{font:600 11.5px var(--body);color:var(--text);background:var(--tile);border:1px solid var(--line);border-radius:9px;padding:10px 8px;cursor:pointer;line-height:1.3;text-align:center}
+.seg button small{display:block;font-weight:500;font-size:9.5px;color:var(--dim);margin-top:2px}
+.seg button[aria-pressed="true"]{border-color:var(--accent);color:#fff;background:linear-gradient(180deg,#2B2E34,#1B1D21)}
+.seg button[aria-pressed="true"] small{color:var(--muted)}
+.drop{border:1px dashed #3A3D44;border-radius:10px;padding:18px 16px;cursor:pointer;display:flex;align-items:center;gap:14px;background:radial-gradient(ellipse at 30% 50%,rgba(201,206,214,.07),transparent 70%),var(--tile)}
+.drop:hover,.drop.drag{border-color:var(--accent)}
+.plus{flex:none;width:44px;height:44px;border:1px solid rgba(201,206,214,.5);border-radius:8px;display:grid;place-items:center;color:var(--accent);font:400 22px/1 var(--body);background:var(--accent-deep)}
+.drop strong{display:block;font:700 13px var(--body);color:#fff}
+.drop small{color:var(--muted);font-size:10.5px}
+.lbl{font:700 9.5px var(--body);color:var(--muted);text-transform:uppercase;letter-spacing:.14em}
+.field{display:flex;flex-direction:column;gap:7px;min-width:0}
+.sl-top{display:flex;justify-content:space-between;font:600 11px var(--body);color:var(--text)}
+.sl-top output{font:700 11px var(--mono);color:var(--accent-hi)}
+.hint{font-size:10.5px;color:var(--dim);margin:0}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:18px;background:transparent;cursor:pointer;--p:50%}
+input[type=range]::-webkit-slider-runnable-track{height:6px;border-radius:99px;background:linear-gradient(90deg,#C9CED6 0 var(--p),#2e2e2e var(--p) 100%)}
+input[type=range]::-moz-range-track{height:6px;border-radius:99px;background:#2e2e2e}
+input[type=range]::-moz-range-progress{height:6px;border-radius:99px;background:#C9CED6}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--silver);margin-top:-5px;box-shadow:0 0 0 3px rgba(201,206,214,.18)}
+input[type=range]::-moz-range-thumb{width:16px;height:16px;border:0;border-radius:50%;background:#C9CED6}
+select{font:500 12px var(--body);color:var(--text);background:var(--field);border:1px solid var(--line2);border-radius:7px;padding:8px 10px;width:100%}
+.check{display:flex;gap:10px;align-items:flex-start;font-size:12px;color:var(--text);cursor:pointer}
+.check input{accent-color:#C9CED6;width:15px;height:15px;margin-top:1px;flex:none}
+.check small{display:block;color:var(--dim);font-size:10px}
+.queue{display:flex;flex-direction:column;gap:6px;max-height:300px;overflow:auto}
+.qi{display:grid;grid-template-columns:40px minmax(0,1fr) 112px;gap:10px;align-items:center;background:var(--tile);border:1px solid var(--line);border-radius:9px;padding:6px 8px}
+.qi img{width:40px;height:40px;object-fit:cover;border-radius:5px;background:repeating-conic-gradient(#2a2a2a 0 25%,#1a1a1a 0 50%) 0 0/8px 8px}
+.qi b{display:block;font:600 11.5px var(--body);color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.qi small{font:500 10px var(--mono);color:var(--muted)}
+.qi select{padding:5px 6px;font-size:11px}
+.status{font-size:11.5px;color:var(--muted);min-height:16px}
+.status.err{color:var(--bad)} .status.ok{color:var(--ok)}
+.progress{height:6px;border-radius:99px;background:var(--field);border:1px solid var(--line);overflow:hidden}
+.progress i{display:block;height:100%;width:0;background:var(--silver);transition:width .2s}
+/* results */
+.big3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+@media (max-width:640px){.big3{grid-template-columns:1fr}}
+.stat{background:var(--tile);border:1px solid var(--line);border-radius:10px;padding:12px 14px;min-width:0}
+.stat dt{font:700 9.5px var(--body);color:var(--muted);text-transform:uppercase;letter-spacing:.14em}
+.stat dd{margin:6px 0 0;font:700 22px/1.1 var(--display);color:var(--ink);font-variant-numeric:tabular-nums}
+.stat dd s{color:var(--dim);font-weight:600;font-size:15px;text-decoration-thickness:1px}
+.stat dd .arr{color:var(--muted);font-size:15px;margin:0 4px}
+.stat small{display:block;font-size:11px;margin-top:4px;color:var(--ok);font-weight:600}
+.stat.hero{border-color:rgba(61,220,132,.5);background:linear-gradient(135deg,rgba(61,220,132,.10),var(--tile) 60%)}
+.stat.hero dd{font-size:26px}
+.cmp{position:relative;aspect-ratio:16/10;max-width:100%;border-radius:10px;overflow:hidden;border:1px solid var(--line);background:repeating-conic-gradient(#202020 0 25%,#151515 0 50%) 0 0/16px 16px}
+.cmp canvas{display:block;width:100%;height:100%;touch-action:none;cursor:ew-resize}
+.cmp .lab{position:absolute;top:10px;font:800 10px var(--body);letter-spacing:.14em;padding:5px 9px;border-radius:6px;background:rgba(0,0,0,.75);color:#ddd;pointer-events:none}
+.cmp .lab.r{right:10px;background:var(--silver);color:var(--accent-ink)} .cmp .lab.l{left:10px}
+.cmp .msg{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:20px;color:var(--muted);font-size:12px}
+.cmp[data-bg=white]{background:#fff}.cmp[data-bg=black]{background:#000}
+.cmpbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.cmpbar .btn[aria-pressed="true"]{border-color:var(--accent);color:#fff;background:var(--accent-deep)}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{font:700 9.5px var(--body);letter-spacing:.1em;text-transform:uppercase;color:var(--dim);text-align:left;padding:5px 6px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:7px 6px;border-bottom:1px solid var(--line);color:var(--text);font-variant-numeric:tabular-nums}
+td.n,th.n{text-align:right} td.n{font:500 11.5px var(--mono);white-space:nowrap}
+td.nm{max-width:14em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+tr.sel td{background:rgba(201,206,214,.07)} tbody tr{cursor:pointer}
+.tbl{overflow-x:auto}
+.tag{font:700 9px var(--body);letter-spacing:.1em;border:1px solid var(--line2);border-radius:99px;padding:2px 7px;color:var(--muted);white-space:nowrap}
+.tag.u{color:var(--accent-hi);border-color:rgba(201,206,214,.45)}
+.good{color:var(--ok)}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+.next{display:flex;gap:10px;align-items:center;background:var(--tile);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:12px;color:var(--muted)}
+.next a{color:var(--accent-hi);font-weight:600;text-decoration:none;margin-left:auto;white-space:nowrap}
+.next a:hover{text-decoration:underline}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+  <header class="hero">
+    <div>
+      <p class="eyebrow">AssetBench · Mobile texture compression</p>
+      <h1>KTX2 Texture <em>Encoder</em></h1>
+      <p class="lede">Turn PNG and JPG textures, or every texture inside a GLB, into KTX2. KTX2 textures stay compressed on the graphics chip, so they use up to 8× less GPU memory on phones and headsets.</p>
+    </div>
+    <span class="pill">Private · encoded in your browser</span>
+  </header>
+  <ol class="howto" aria-label="How it works">
+    <li><b>1</b><span><strong>Drop textures or a GLB</strong>PNG, JPG, WebP or .glb</span></li>
+    <li><b>2</b><span><strong>Pick a preset</strong>Recommended suits most games</span></li>
+    <li><b>3</b><span><strong>Encode and download</strong>Compare before and after first</span></li>
+  </ol>
+
+  <div class="grid">
+    <div class="col">
+      <section class="card">
+        <div class="card-h"><span class="num">01</span><div><h2>Input</h2><p>Textures, or a whole model</p></div><span class="sp"></span><button class="btn" id="sampleBtn">Sample</button></div>
+        <div class="card-b">
+          <div class="seg" id="mode"><button data-m="tex" aria-pressed="true">Textures<small>Images → .ktx2</small></button><button data-m="glb" aria-pressed="false">GLB model<small>Every texture inside</small></button></div>
+          <div class="drop" id="drop" tabindex="0" role="button" aria-label="Choose files"><span class="plus" aria-hidden="true">+</span><div><strong id="dropT">Add textures</strong><small id="dropS">Drop PNG, JPG or WebP files. Several at once is fine.</small></div></div>
+          <input type="file" id="file" multiple hidden>
+          <div class="queue" id="queue"></div>
+          <div class="status" id="status" role="status"></div>
+        </div>
+      </section>
+      <section class="card">
+        <div class="card-h"><span class="num">02</span><div><h2>Settings</h2><p>Each texture type gets the codec that suits it</p></div></div>
+        <div class="card-b">
+          <div class="field"><span class="lbl">Preset</span>
+            <div class="seg three" id="preset">
+              <button data-p="small" aria-pressed="false">Smallest<small>All ETC1S</small></button>
+              <button data-p="rec" aria-pressed="true">Recommended<small>Mixed</small></button>
+              <button data-p="best" aria-pressed="false">Best quality<small>All UASTC</small></button>
+            </div>
+            <p class="hint" id="presetHint"></p>
+          </div>
+          <div class="field"><div class="sl-top"><label for="q">ETC1S quality</label><output id="qV"></output></div><input type="range" id="q" min="16" max="255" value="128"><p class="hint">Higher keeps more detail and makes larger files</p></div>
+          <div class="field"><div class="sl-top"><label for="uq">UASTC quality</label><output id="uqV"></output></div><input type="range" id="uq" min="0" max="3" value="1"><p class="hint">Higher is sharper but much slower to encode</p></div>
+          <div class="field"><label class="lbl" for="maxSize">Largest size</label>
+            <select id="maxSize"><option value="0">Keep original size</option><option value="512">512 px</option><option value="1024">1024 px</option><option value="2048" selected>2048 px</option><option value="4096">4096 px (slow)</option></select></div>
+          <label class="check"><input type="checkbox" id="pot" checked><span>Round to power-of-two sizes<small>Rounds down to 256, 512, 1024… for best mipmaps. UI images keep their shape.</small></span></label>
+          <button class="btn primary big" id="goBtn" disabled>Encode to KTX2</button>
+          <div class="progress" id="prog" hidden><i id="progBar"></i></div>
+        </div>
+      </section>
+    </div>
+
+    <div class="col">
+      <section class="card">
+        <div class="card-h"><span class="num">03</span><div><h2>Result</h2><p id="resFor">Encode to see the saving</p></div><span class="sp"></span>
+          <div class="actions"><button class="btn primary" id="dlBtn" disabled>Download</button></div></div>
+        <div class="card-b">
+          <dl class="big3">
+            <div class="stat hero"><dt>GPU memory</dt><dd id="sGpu">–</dd><small id="sGpuS"></small></div>
+            <div class="stat"><dt>Download size</dt><dd id="sFile">–</dd><small id="sFileS"></small></div>
+            <div class="stat"><dt>Textures</dt><dd id="sCount">–</dd><small id="sCountS" style="color:var(--muted)"></small></div>
+          </dl>
+          <div class="cmpbar"><span class="lbl">Compare</span><span class="sp"></span><span class="hint">Zoom</span>
+            <button class="btn" data-z="1" aria-pressed="true">1×</button><button class="btn" data-z="2" aria-pressed="false">2×</button><button class="btn" data-z="4" aria-pressed="false">4×</button><span class="hint" style="margin-left:6px">Background</span><button class="btn" data-bg="checker" aria-pressed="true">Checker</button><button class="btn" data-bg="white" aria-pressed="false">White</button><button class="btn" data-bg="black" aria-pressed="false">Black</button></div>
+          <div class="cmp" id="cmp"><canvas id="cv" aria-label="Before and after comparison, drag to move the divider"></canvas><span class="lab l">ORIGINAL</span><span class="lab r">KTX2</span><div class="msg" id="cmpMsg">Encode a texture, then drag across this panel to compare</div></div>
+          <div class="tbl"><table><thead><tr><th>Texture</th><th>Type</th><th>Codec</th><th class="n">Size</th><th class="n">File</th><th class="n">GPU memory</th></tr></thead><tbody id="rows"><tr><td colspan="6" style="color:var(--dim)">Nothing encoded yet</td></tr></tbody></table></div>
+          <div class="next">Check the whole model against phone budgets next.<a id="nextLink" href="https://www.assetbench.co.uk/mobile-ready-checker" target="_blank" rel="noopener">Mobile Ready Checker →</a></div>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
+
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"}}</script>
+<script type="module">
+import * as THREE from 'three';
+import { KTX2Loader } from 'three/addons/loaders/KTX2Loader.js';
+
+const $ = id => document.getElementById(id);
+const downloadsP = (window.claude && window.claude.use) ? window.claude.use('downloads').catch(() => null) : Promise.resolve(null);
+const ENC_JS = 'https://cdn.jsdelivr.net/npm/ktx2-encoder@0.6.0/dist/basis/basis_encoder.js';
+const WASM_URL = new URL('basis_encoder.wasm', location.href).href;           // published next to this page
+const TRANSCODER = new URL('basis/', location.href).href;                      // three.js transcoder, published next to this page
+const fmtB = b => b >= 1048576 ? (b / 1048576).toFixed(b >= 10485760 ? 0 : 1) + ' MB' : Math.max(1, Math.round(b / 1024)) + ' KB';
+function status(k, t){ const s = $('status'); s.className = 'status ' + (k || ''); s.textContent = t; }
+const press = (box, attr, v) => box.querySelectorAll(`[${attr}]`).forEach(b => b.setAttribute('aria-pressed', String(b.getAttribute(attr) === v)));
+
+// ---------- texture types and presets ----------
+const TYPES = { colour: 'Colour', normal: 'Normal map', data: 'Data (ORM, rough, metal, AO)', ui: 'UI / sprite' };
+function guessType(name, slot){
+  if (slot) return slot === 'normal' ? 'normal' : (slot === 'colour' || slot === 'emissive') ? 'colour' : 'data';
+  const n = name.toLowerCase();
+  if (/(normal|_nrm|_nor\b|_n\.|nrml)/.test(n)) return 'normal';
+  if (/(rough|metal|_orm|occlusion|_ao\b|_ao\.|_arm|mask|height|disp|spec)/.test(n)) return 'data';
+  if (/(ui|icon|button|hud|sprite|logo)/.test(n)) return 'ui';
+  return 'colour';
+}
+let preset = 'rec';
+const HINTS = { small: 'ETC1S everywhere: the smallest downloads, softer normal maps.', rec: 'ETC1S for colour and UI, UASTC for normal and data maps. What most mobile games ship.', best: 'UASTC everywhere: near-original quality, larger downloads, slower to encode.' };
+const codecFor = type => preset === 'small' ? 'etc1s' : preset === 'best' ? 'uastc' : (type === 'normal' || type === 'data') ? 'uastc' : 'etc1s';
+$('preset').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; preset = b.dataset.p; press($('preset'), 'data-p', preset); $('presetHint').textContent = HINTS[preset]; renderQueue(); });
+$('presetHint').textContent = HINTS[preset];
+for (const id of ['q', 'uq']) { const el = $(id), paint = () => { el.style.setProperty('--p', ((el.value - el.min) / (el.max - el.min) * 100) + '%'); $(id + 'V').textContent = id === 'uq' ? ['Fastest', 'Default', 'Slow', 'Slowest'][el.value] : el.value; }; paint(); el.addEventListener('input', paint); }
+
+// ---------- encoder in a worker (keeps the page responsive) ----------
+const WORKER_SRC = `
+let modP = null;
+async function mod(js, wasmUrl){ if (!modP) modP = (async () => { const BASIS = (await import(js)).default; const r = await fetch(wasmUrl); if (!r.ok) throw new Error('Encoder file missing (' + r.status + ')'); const m = await BASIS({ wasmBinary: new Uint8Array(await r.arrayBuffer()) }); m.initializeBasis(); return m; })(); return modP; }
+onmessage = async e => { const { id, js, wasmUrl, rgba, w, h, o } = e.data;
+  try { const m = await mod(js, wasmUrl); const enc = new m.BasisEncoder();
+    try {
+      enc.setDebug(false); enc.setUASTC(o.uastc); enc.setCreateKTX2File(true);
+      if (enc.setKTX2AndBasisSRGBTransferFunc) enc.setKTX2AndBasisSRGBTransferFunc(o.srgb); else enc.setKTX2SRGBTransferFunc(o.srgb);
+      enc.setMipGen(o.mips !== false); enc.setYFlip(false);
+      if (o.normal) { if (enc.setNormalMapPreset) enc.setNormalMapPreset(); else enc.setNormalMap(); }
+      if (o.uastc) { enc.setKTX2UASTCSupercompression(true); enc.setPackUASTCFlags(o.uastcLevel); }
+      else { enc.setQualityLevel(o.quality); if (enc.setETC1SCompressionLevel) enc.setETC1SCompressionLevel(2); else enc.setCompressionLevel(2); }
+      enc.setPerceptual(o.srgb); enc.setTexType(0);
+      if (enc.setSliceSourceImage(0, rgba, w, h, 0) === false) throw new Error('The encoder rejected this image');
+      let cap = Math.ceil(w * h * 4 * 4 / 3) + 65536, out = null;
+      for (let a = 0; a < 2 && !out; a++) { const buf = new Uint8Array(cap), n = enc.encode(buf); if (n > 0) out = buf.slice(0, n); cap *= 2; }
+      if (!out) throw new Error('Encoding failed. Try a smaller size.');
+      postMessage({ id, ok: true, data: out }, [out.buffer]);
+    } finally { enc.delete(); }
+  } catch (err) { postMessage({ id, ok: false, error: String(err && err.message || err) }); } };`;
+let worker = null, jobs = new Map(), jobId = 0;
+function getWorker(){ if (!worker) { worker = new Worker(URL.createObjectURL(new Blob([WORKER_SRC], { type: 'text/javascript' })), { type: 'module' }); worker.onmessage = e => { const j = jobs.get(e.data.id); jobs.delete(e.data.id); e.data.ok ? j.res(e.data.data) : j.rej(new Error(e.data.error)); }; worker.onerror = e => { for (const j of jobs.values()) j.rej(new Error('The encoder couldn’t start in this view: ' + (e.message || 'blocked'))); jobs.clear(); worker = null; }; } return worker; }
+const encodeRGBA = (rgba, w, h, o) => new Promise((res, rej) => { const id = ++jobId; jobs.set(id, { res, rej }); getWorker().postMessage({ id, js: ENC_JS, wasmUrl: WASM_URL, rgba, w, h, o }, [rgba.buffer]); });
+
+// ---------- image prep: decode, resize to the chosen size ----------
+const pow2 = v => { const p = Math.pow(2, Math.round(Math.log2(Math.max(1, v)))); return p > v ? p / 2 : p; };   // never upscales
+async function prepImage(bytes, mime, linear, keepShape){
+  const bmp = await createImageBitmap(new Blob([bytes], { type: mime || 'image/png' }), { colorSpaceConversion: linear ? 'none' : 'default', premultiplyAlpha: 'none' });
+  let w = bmp.width, h = bmp.height; const max = +$('maxSize').value;
+  if (max && Math.max(w, h) > max) { const s = max / Math.max(w, h); w = Math.round(w * s); h = Math.round(h * s); }
+  if ($('pot').checked && !keepShape) { w = Math.min(pow2(w), max || 8192); h = Math.min(pow2(h), max || 8192); }
+  if (keepShape) { w -= w % 4; h -= h % 4; }   // GPU blocks are 4×4
+  w = Math.max(4, w); h = Math.max(4, h);
+  if (w * h > 12 * 1024 * 1024) throw new Error(`${w}×${h} is over the encoder’s 12 megapixel limit. Pick 2048 px.`);
+  const c = new OffscreenCanvas(w, h), g = c.getContext('2d', { willReadFrequently: true }); g.imageSmoothingQuality = 'high'; g.drawImage(bmp, 0, 0, w, h);
+  const srcW = bmp.width, srcH = bmp.height; bmp.close && bmp.close();
+  const id = g.getImageData(0, 0, w, h);
+  let alpha = false; for (let i = 3; i < id.data.length; i += 4) if (id.data[i] < 250) { alpha = true; break; }
+  return { rgba: new Uint8Array(id.data.buffer), w, h, srcW, srcH, alpha, canvas: c };
+}
+const gpuBefore = (w, h) => w * h * 4 * 4 / 3;
+const gpuAfter = (w, h, codec, alpha) => w * h * (codec === 'uastc' || alpha ? 1 : 0.5) * 4 / 3;   // ASTC 4x4 / BC7 = 1 byte per pixel, ETC1 / BC1 = half
+
+// ---------- state ----------
+let mode = 'tex', items = [], glb = null, output = null, selected = 0;
+$('mode').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; mode = b.dataset.m; press($('mode'), 'data-m', mode);
+  $('dropT').textContent = mode === 'tex' ? 'Add textures' : 'Add a GLB model'; $('dropS').textContent = mode === 'tex' ? 'Drop PNG, JPG or WebP files. Several at once is fine.' : 'Drop one .glb. Every texture inside is converted.';
+  items = []; glb = null; output = null; renderQueue(); resetResult(); });
+function renderQueue(){
+  const q = $('queue'); q.textContent = '';
+  for (const it of items) {
+    const d = document.createElement('div'); d.className = 'qi';
+    d.innerHTML = `<img alt=""><div style="min-width:0"><b></b><small></small></div><select aria-label="Texture type">${Object.entries(TYPES).map(([k, v]) => `<option value="${k}">${v}</option>`).join('')}</select>`;
+    d.querySelector('img').src = it.thumb; d.querySelector('b').textContent = it.name; d.querySelector('b').title = it.name;
+    d.querySelector('small').textContent = `${it.w}×${it.h} · ${fmtB(it.bytes.length)} · ${codecFor(it.type).toUpperCase()}`;
+    const sel = d.querySelector('select'); sel.value = it.type; sel.disabled = !!it.slot && mode === 'glb' && false;
+    sel.addEventListener('change', () => { it.type = sel.value; renderQueue(); });
+    q.appendChild(d);
+  }
+  $('goBtn').disabled = !items.length;
+  $('goBtn').textContent = items.length ? `Encode ${items.length} texture${items.length === 1 ? '' : 's'} to KTX2` : 'Encode to KTX2';
+}
+async function thumbOf(bytes, mime){ try { const b = await createImageBitmap(new Blob([bytes], { type: mime })), c = document.createElement('canvas'); c.width = c.height = 80; const g = c.getContext('2d'); const s = Math.max(80 / b.width, 80 / b.height); g.drawImage(b, (80 - b.width * s) / 2, (80 - b.height * s) / 2, b.width * s, b.height * s); const r = { url: c.toDataURL('image/jpeg', .8), w: b.width, h: b.height }; b.close && b.close(); return r; } catch (e) { return { url: '', w: 0, h: 0 }; } }
+
+// ---------- loading ----------
+async function addImageFile(name, bytes, mime, slot){
+  const t = await thumbOf(bytes, mime); if (!t.w) { status('err', `${name} couldn’t be read as an image.`); return; }
+  items.push({ name, bytes, mime, thumb: t.url, w: t.w, h: t.h, type: guessType(name, slot), slot });
+}
+async function loadFiles(files){
+  files = [...files]; if (!files.length) return;
+  output = null; resetResult();
+  if (mode === 'glb' || files.some(f => /\.glb$/i.test(f.name))) {
+    if (mode !== 'glb') { mode = 'glb'; press($('mode'), 'data-m', 'glb'); }
+    const f = files.find(f => /\.glb$/i.test(f.name)); if (!f) { status('err', 'Drop a .glb file in GLB mode.'); return; }
+    try { await loadGLB(new Uint8Array(await f.arrayBuffer()), f.name); } catch (e) { items = []; glb = null; status('err', e.message || 'That GLB couldn’t be read.'); }
+  } else {
+    items = [];
+    for (const f of files) { if (!/^image\//.test(f.type) && !/\.(png|jpe?g|webp)$/i.test(f.name)) continue; await addImageFile(f.name, new Uint8Array(await f.arrayBuffer()), f.type || 'image/png'); }
+    status(items.length ? '' : 'err', items.length ? `${items.length} texture${items.length === 1 ? '' : 's'} ready. Check each type, then encode.` : 'Use PNG, JPG or WebP images.');
+  }
+  renderQueue();
+}
+$('drop').addEventListener('click', () => { $('file').accept = mode === 'tex' ? 'image/png,image/jpeg,image/webp' : '.glb,model/gltf-binary'; $('file').multiple = mode === 'tex'; $('file').click(); });
+$('drop').addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('drop').click(); } });
+$('file').addEventListener('change', () => { loadFiles($('file').files); $('file').value = ''; });
+$('drop').addEventListener('dragover', e => { e.preventDefault(); $('drop').classList.add('drag'); });
+$('drop').addEventListener('dragleave', () => $('drop').classList.remove('drag'));
+$('drop').addEventListener('drop', e => { e.preventDefault(); $('drop').classList.remove('drag'); loadFiles(e.dataTransfer.files); });
+
+// ---------- GLB parse and rebuild ----------
+function splitGLB(u8){
+  const dv = new DataView(u8.buffer, u8.byteOffset, u8.byteLength);
+  if (dv.getUint32(0, true) !== 0x46546C67) throw new Error('Not a .glb file.');
+  let off = 12, json = null, bin = null;
+  while (off + 8 <= u8.byteLength) { const len = dv.getUint32(off, true), type = dv.getUint32(off + 4, true), chunk = u8.subarray(off + 8, off + 8 + len);
+    if (type === 0x4E4F534A) json = JSON.parse(new TextDecoder().decode(chunk)); else if (type === 0x004E4942) bin = chunk; off += 8 + len; }
+  return { json, bin };
+}
+async function loadGLB(u8, name){
+  items = []; glb = null; renderQueue();
+  const { json, bin } = splitGLB(u8);
+  const used = new Set(json.extensionsUsed || []);
+  if (used.has('EXT_meshopt_compression') || used.has('KHR_meshopt_compression')) { status('err', 'This GLB uses Meshopt compression. Convert its textures before applying Meshopt, or start from the uncompressed model.'); return; }
+  if ((json.buffers || []).length > 1 || (json.buffers || []).some(b => b.uri)) { status('err', 'This GLB keeps its data in separate files. Re-export it as a single .glb.'); return; }
+  if (used.has('KHR_texture_basisu')) { status('ok', 'This GLB already uses KTX2 textures.'); }
+  // which image each material slot uses
+  const slotOf = new Map(), texs = json.textures || [];
+  const srcOf = t => { const e = (t && t.extensions) || {}; return e.EXT_texture_webp ? e.EXT_texture_webp.source : e.EXT_texture_avif ? e.EXT_texture_avif.source : t && t.source; };
+  const note = (info, slot) => { if (!info || info.index == null || !texs[info.index]) return; if (texs[info.index].extensions && texs[info.index].extensions.KHR_texture_basisu) return; const s = srcOf(texs[info.index]); if (s != null && !slotOf.has(s)) slotOf.set(s, slot); };
+  for (const m of json.materials || []) { const p = m.pbrMetallicRoughness || {}; note(m.normalTexture, 'normal'); note(p.baseColorTexture, 'colour'); note(m.emissiveTexture, 'emissive'); note(p.metallicRoughnessTexture, 'data'); note(m.occlusionTexture, 'data');
+    for (const ext of Object.values(m.extensions || {})) for (const [k, v] of Object.entries(ext || {})) if (v && typeof v === 'object' && v.index != null) note(v, /normal/i.test(k) ? 'normal' : /color|colour|sheen|specularColor/i.test(k) ? 'colour' : 'data'); }
+  items = [];
+  for (const [src, slot] of slotOf) { const im = json.images[src]; if (!im || im.bufferView == null) continue; const bv = json.bufferViews[im.bufferView];
+    const bytes = bin.slice(bv.byteOffset || 0, (bv.byteOffset || 0) + bv.byteLength); await addImageFile(im.name || `Image ${src} (${slot})`, bytes, im.mimeType || 'image/png', slot); items[items.length - 1].src = src; }
+  glb = { json, bin, name, size: u8.byteLength };
+  status(items.length ? '' : 'err', items.length ? `${name}: ${items.length} texture${items.length === 1 ? '' : 's'} found. Types are set from the material slots.` : 'No PNG, JPG or WebP textures found in this GLB.');
+}
+function rebuildGLB(results){
+  const json = structuredClone(glb.json), bin = glb.bin, bvs = json.bufferViews || [];
+  const replaced = new Map(results.map(r => [r.src, r]));
+  // views still needed after the swap
+  const keep = new Set();
+  (json.accessors || []).forEach(a => { if (a.bufferView != null) keep.add(a.bufferView); if (a.sparse) { keep.add(a.sparse.indices.bufferView); keep.add(a.sparse.values.bufferView); } });
+  (json.images || []).forEach((im, i) => { if (im.bufferView != null && !replaced.has(i)) keep.add(im.bufferView); });
+  (json.meshes || []).forEach(m => (m.primitives || []).forEach(p => { const d = p.extensions && p.extensions.KHR_draco_mesh_compression; if (d) keep.add(d.bufferView); }));
+  const dropped = new Set(); (json.images || []).forEach((im, i) => { if (replaced.has(i) && im.bufferView != null && !keep.has(im.bufferView)) dropped.add(im.bufferView); });
+  const parts = [], remap = new Map(), newViews = []; let off = 0;
+  const push = (bytes, extra = {}) => { const pad = (4 - off % 4) % 4; if (pad) { parts.push(new Uint8Array(pad)); off += pad; } parts.push(bytes); newViews.push({ buffer: 0, byteOffset: off, byteLength: bytes.length, ...extra }); off += bytes.length; return newViews.length - 1; };
+  bvs.forEach((bv, i) => { if (dropped.has(i)) return; const b = bin.subarray(bv.byteOffset || 0, (bv.byteOffset || 0) + bv.byteLength); const extra = {}; if (bv.byteStride) extra.byteStride = bv.byteStride; if (bv.target) extra.target = bv.target; if (bv.name) extra.name = bv.name; remap.set(i, push(b, extra)); });
+  (json.accessors || []).forEach(a => { if (a.bufferView != null) a.bufferView = remap.get(a.bufferView); if (a.sparse) { a.sparse.indices.bufferView = remap.get(a.sparse.indices.bufferView); a.sparse.values.bufferView = remap.get(a.sparse.values.bufferView); } });
+  (json.meshes || []).forEach(m => (m.primitives || []).forEach(p => { const d = p.extensions && p.extensions.KHR_draco_mesh_compression; if (d) d.bufferView = remap.get(d.bufferView); }));
+  (json.images || []).forEach((im, i) => { if (replaced.has(i)) { im.bufferView = push(replaced.get(i).data); im.mimeType = 'image/ktx2'; delete im.uri; } else if (im.bufferView != null) im.bufferView = remap.get(im.bufferView); });
+  for (const t of json.textures || []) { const e = t.extensions || {}; const s = e.EXT_texture_webp ? e.EXT_texture_webp.source : e.EXT_texture_avif ? e.EXT_texture_avif.source : t.source;
+    if (s != null && replaced.has(s)) { t.extensions = { ...e, KHR_texture_basisu: { source: s } }; delete t.extensions.EXT_texture_webp; delete t.extensions.EXT_texture_avif; delete t.source; } }
+  json.bufferViews = newViews; json.buffers = [{ byteLength: off }];
+  const addExt = (k, v) => { json[k] = [...new Set([...(json[k] || []), v])]; };
+  addExt('extensionsUsed', 'KHR_texture_basisu'); addExt('extensionsRequired', 'KHR_texture_basisu');
+  for (const k of ['extensionsUsed', 'extensionsRequired']) if (json[k]) { json[k] = json[k].filter(x => !(['EXT_texture_webp', 'EXT_texture_avif'].includes(x) && !(json.textures || []).some(t => t.extensions && t.extensions[x]))); if (!json[k].length) delete json[k]; }
+  json.asset = { ...(json.asset || {}), generator: 'AssetBench KTX2 Texture Encoder' };
+  // write the GLB
+  let jb = new TextEncoder().encode(JSON.stringify(json)); const jpad = (4 - jb.length % 4) % 4; if (jpad) { const t = new Uint8Array(jb.length + jpad); t.set(jb); t.fill(0x20, jb.length); jb = t; }
+  const binLen = off + ((4 - off % 4) % 4), total = 12 + 8 + jb.length + 8 + binLen, out = new Uint8Array(total), dv = new DataView(out.buffer);
+  dv.setUint32(0, 0x46546C67, true); dv.setUint32(4, 2, true); dv.setUint32(8, total, true);
+  dv.setUint32(12, jb.length, true); dv.setUint32(16, 0x4E4F534A, true); out.set(jb, 20);
+  let p = 20 + jb.length; dv.setUint32(p, binLen, true); dv.setUint32(p + 4, 0x004E4942, true); p += 8; for (const part of parts) { out.set(part, p); p += part.length; }
+  return out;
+}
+
+// ---------- encode ----------
+$('goBtn').addEventListener('click', async () => {
+  if (!items.length) return; $('goBtn').disabled = true; $('prog').hidden = false; $('progBar').style.width = '0';
+  const results = []; let n = 0;
+  try {
+    for (const it of items) {
+      const codec = codecFor(it.type), linear = it.type === 'normal' || it.type === 'data';
+      status('', `Encoding ${it.name} (${n + 1} of ${items.length}) as ${codec.toUpperCase()}…`);
+      const prep = await prepImage(it.bytes, it.mime, linear, it.type === 'ui');
+      const t0 = performance.now();
+      const data = await encodeRGBA(prep.rgba, prep.w, prep.h, { uastc: codec === 'uastc', srgb: !linear, normal: it.type === 'normal', mips: it.type !== 'ui', quality: +$('q').value, uastcLevel: +$('uq').value });
+      results.push({ ...it, codec, data, w: prep.w, h: prep.h, alpha: prep.alpha, before: it.bytes.length, after: data.length, gpu0: gpuBefore(prep.srcW, prep.srcH), gpu1: gpuAfter(prep.w, prep.h, codec, prep.alpha), ms: performance.now() - t0, preview: prep.canvas, linear });
+      n++; $('progBar').style.width = (n / items.length * 100) + '%';
+    }
+    output = { results, glb: mode === 'glb' ? rebuildGLB(results) : null };
+    showResult(); status('ok', `Done. ${results.length} texture${results.length === 1 ? '' : 's'} encoded.`);
+  } catch (e) { console.error(e); status('err', e.message || 'Encoding failed.'); }
+  finally { $('goBtn').disabled = false; setTimeout(() => { $('prog').hidden = true; }, 800); }
+});
+
+// ---------- results ----------
+function resetResult(){ $('sGpu').textContent = $('sFile').textContent = $('sCount').textContent = '–'; $('sGpuS').textContent = $('sFileS').textContent = $('sCountS').textContent = ''; $('rows').innerHTML = '<tr><td colspan="6" style="color:var(--dim)">Nothing encoded yet</td></tr>'; $('dlBtn').disabled = true; $('resFor').textContent = 'Encode to see the saving'; showCompare(null); }
+function showResult(){
+  const R = output.results, g0 = R.reduce((a, r) => a + r.gpu0, 0), g1 = R.reduce((a, r) => a + r.gpu1, 0);
+  const f0 = output.glb ? glb.size : R.reduce((a, r) => a + r.before, 0), f1 = output.glb ? output.glb.length : R.reduce((a, r) => a + r.after, 0);
+  $('sGpu').innerHTML = `<s>${fmtB(g0)}</s><span class="arr">→</span>${fmtB(g1)}`; $('sGpuS').textContent = `${(g0 / Math.max(1, g1)).toFixed(1)}× less on the graphics chip`;
+  $('sFile').innerHTML = `<s>${fmtB(f0)}</s><span class="arr">→</span>${fmtB(f1)}`; const fd = (1 - f1 / f0) * 100;
+  $('sFileS').textContent = fd >= 0 ? `${fd.toFixed(0)}% smaller` : `${(-fd).toFixed(0)}% larger (UASTC trades size for quality)`; $('sFileS').style.color = fd >= 0 ? 'var(--ok)' : 'var(--warn)';
+  $('sCount').textContent = R.length; $('sCountS').textContent = `${R.filter(r => r.codec === 'etc1s').length} ETC1S · ${R.filter(r => r.codec === 'uastc').length} UASTC`;
+  $('resFor').textContent = output.glb ? `${glb.name} with KTX2 textures` : `${R.length} .ktx2 file${R.length === 1 ? '' : 's'}`;
+  $('dlBtn').disabled = false; $('dlBtn').textContent = output.glb ? 'Download GLB' : R.length > 1 ? 'Download .zip' : 'Download .ktx2';
+  const tb = $('rows'); tb.textContent = '';
+  R.forEach((r, i) => { const tr = document.createElement('tr'); tr.innerHTML = `<td class="nm"></td><td>${TYPES[r.type].split(' (')[0]}</td><td><span class="tag${r.codec === 'uastc' ? ' u' : ''}">${r.codec.toUpperCase()}</span></td><td class="n">${r.w}×${r.h}</td><td class="n">${fmtB(r.before)} → ${fmtB(r.after)}</td><td class="n"><span class="good">${fmtB(r.gpu0)} → ${fmtB(r.gpu1)}</span></td>`;
+    tr.firstChild.textContent = r.name; tr.firstChild.title = r.name; tr.addEventListener('click', () => { selected = i; showCompare(r); tb.querySelectorAll('tr').forEach((x, j) => x.classList.toggle('sel', j === i)); }); tb.appendChild(tr); });
+  selected = 0; tb.firstChild && tb.firstChild.classList.add('sel'); showCompare(R[0]);
+}
+
+// ---------- before / after compare: the KTX2 side is decoded by the GPU, exactly as a game would ----------
+const cv = $('cv'), renderer = new THREE.WebGLRenderer({ canvas: cv, antialias: false, alpha: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2)); renderer.outputColorSpace = THREE.SRGBColorSpace;
+const scene = new THREE.Scene(), cam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 2); cam.position.z = 1;
+const ktx2 = new KTX2Loader().setTranscoderPath(TRANSCODER).detectSupport(renderer);
+const matL = new THREE.MeshBasicMaterial({ transparent: true }), matR = new THREE.MeshBasicMaterial({ transparent: true, side: THREE.DoubleSide });
+const quad = new THREE.PlaneGeometry(2, 2), meshL = new THREE.Mesh(quad, matL), meshR = new THREE.Mesh(quad, matR); scene.add(meshL); scene.add(meshR);
+let split = 0.5, zoom = 1, cur = null;
+function resize(){ const r = cv.parentElement.getBoundingClientRect(); renderer.setSize(r.width, r.height, false); draw(); }
+new ResizeObserver(resize).observe(cv.parentElement);
+function fitQuad(tex){ if (!tex || !tex.image) return; const r = cv.parentElement.getBoundingClientRect(), ia = (tex.image.width || 1) / (tex.image.height || 1), ca = r.width / Math.max(1, r.height); const sx = ia > ca ? 1 : ia / ca, sy = ia > ca ? ca / ia : 1; meshL.scale.set(sx * zoom, sy * zoom, 1); meshR.scale.set(sx * zoom, -sy * zoom, 1); }   // GPU-compressed textures are not flipped on upload, so the KTX2 quad is mirrored back
+function draw(){ const W = renderer.domElement.width, H = renderer.domElement.height; renderer.setScissorTest(true); renderer.setClearColor(0, 0);
+  const x = Math.round(W * split); renderer.setViewport(0, 0, W, H);
+  meshR.visible = false; meshL.visible = true; renderer.setScissor(0, 0, x, H); renderer.clear(); renderer.render(scene, cam);
+  meshL.visible = false; meshR.visible = true; renderer.setScissor(x, 0, W - x, H); renderer.clear(); renderer.render(scene, cam);
+  renderer.setScissorTest(false);
+  const ctx = null; }
+async function showCompare(r){
+  cur = r; if (!r) { matL.map = matR.map = null; $('cmpMsg').hidden = false; $('cmpMsg').textContent = 'Encode a texture, then drag across this panel to compare'; draw(); return; }
+  $('cmpMsg').hidden = true;
+  const tl = new THREE.CanvasTexture(r.preview); tl.colorSpace = r.linear ? THREE.NoColorSpace : THREE.SRGBColorSpace; tl.magFilter = THREE.NearestFilter; matL.map = tl; matL.needsUpdate = true;
+  try {
+    const url = URL.createObjectURL(new Blob([r.data], { type: 'image/ktx2' }));
+    const tr = await ktx2.loadAsync(url); URL.revokeObjectURL(url); if (cur !== r) return;
+    tr.magFilter = THREE.NearestFilter; if (r.linear) tr.colorSpace = THREE.NoColorSpace; matR.map = tr; matR.needsUpdate = true; fitQuad(tl);
+  } catch (e) { console.warn(e); matR.map = null; $('cmpMsg').hidden = false; $('cmpMsg').textContent = 'This view can’t decode KTX2 for the preview, but the file was encoded. Open it in your engine to check.'; }
+  fitQuad(tl); draw();
+}
+const setSplit = e => { const r = cv.getBoundingClientRect(); split = Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)); draw(); };
+let dragging = false; cv.addEventListener('pointerdown', e => { dragging = true; cv.setPointerCapture(e.pointerId); setSplit(e); }); cv.addEventListener('pointermove', e => { if (dragging) setSplit(e); }); cv.addEventListener('pointerup', () => dragging = false);
+document.querySelectorAll('.cmpbar [data-bg]').forEach(b => b.addEventListener('click', () => { $('cmp').dataset.bg = b.dataset.bg; document.querySelectorAll('.cmpbar [data-bg]').forEach(x => x.setAttribute('aria-pressed', String(x === b))); }));
+document.querySelectorAll('.cmpbar [data-z]').forEach(b => b.addEventListener('click', () => { zoom = +b.dataset.z; document.querySelectorAll('.cmpbar [data-z]').forEach(x => x.setAttribute('aria-pressed', String(x === b))); if (matL.map) fitQuad(matL.map); draw(); }));
+
+// ---------- download ----------
+const CRC = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+const crc32 = u => { let c = 0xFFFFFFFF; for (let i = 0; i < u.length; i++) c = CRC[(c ^ u[i]) & 255] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; };
+function zipStore(entries){ const enc = new TextEncoder(), parts = [], cen = []; let off = 0;
+  for (const e of entries) { const nm = enc.encode(e.name), d = e.data, crc = crc32(d);
+    const h = new DataView(new ArrayBuffer(30)); h.setUint32(0, 0x04034b50, true); h.setUint16(4, 20, true); h.setUint16(6, 0x0800, true); h.setUint16(12, 0x21, true); h.setUint32(14, crc, true); h.setUint32(18, d.length, true); h.setUint32(22, d.length, true); h.setUint16(26, nm.length, true); parts.push(new Uint8Array(h.buffer), nm, d);
+    const c = new DataView(new ArrayBuffer(46)); c.setUint32(0, 0x02014b50, true); c.setUint16(4, 20, true); c.setUint16(6, 20, true); c.setUint16(8, 0x0800, true); c.setUint16(14, 0x21, true); c.setUint32(16, crc, true); c.setUint32(20, d.length, true); c.setUint32(24, d.length, true); c.setUint16(28, nm.length, true); c.setUint32(42, off, true); cen.push(new Uint8Array(c.buffer), nm); off += 30 + nm.length + d.length; }
+  const size = cen.reduce((a, b) => a + b.length, 0), end = new DataView(new ArrayBuffer(22)); end.setUint32(0, 0x06054b50, true); end.setUint16(8, entries.length, true); end.setUint16(10, entries.length, true); end.setUint32(12, size, true); end.setUint32(16, off, true);
+  return new Blob([...parts, ...cen, new Uint8Array(end.buffer)], { type: 'application/zip' }); }
+const base = n => n.replace(/\.[^.]+$/, '').replace(/[^\w\-]+/g, '_') || 'texture';
+$('dlBtn').addEventListener('click', async () => {
+  if (!output) return; let name, blob; const R = output.results;
+  if (output.glb) { name = base(glb.name) + '_ktx2.glb'; blob = new Blob([output.glb], { type: 'model/gltf-binary' }); }
+  else if (R.length === 1) { name = base(R[0].name) + '.ktx2'; blob = new Blob([R[0].data], { type: 'image/ktx2' }); }
+  else { name = 'textures_ktx2.zip'; const seen = new Set(); blob = zipStore(R.map(r => { let n = base(r.name), k = n, i = 2; while (seen.has(k)) k = `${n}_${i++}`; seen.add(k); return { name: k + '.ktx2', data: r.data }; })); }
+  const dl = await downloadsP;
+  if (dl) { try { await dl.save({ filename: name, data: blob }); status('ok', `Saved ${name} (${fmtB(blob.size)}).`); } catch (e) { status(e && e.code === 'declined' ? '' : 'err', e && e.code === 'declined' ? 'Download cancelled.' : 'Saving isn’t available in this view.'); } }
+  else { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); a.remove(); status('ok', `Prepared ${name} (${fmtB(blob.size)}).`); }
+});
+
+// ---------- sample: a colour texture and a normal map ----------
+async function sample(){
+  mode = 'tex'; press($('mode'), 'data-m', 'tex'); items = []; output = null; resetResult();
+  const make = async (name, draw) => { const c = new OffscreenCanvas(1024, 1024), g = c.getContext('2d'); draw(g, 1024); const b = await c.convertToBlob({ type: 'image/png' }); await addImageFile(name, new Uint8Array(await b.arrayBuffer()), 'image/png'); };
+  await make('crate_basecolor.png', (g, s) => { g.fillStyle = '#8a5a36'; g.fillRect(0, 0, s, s); for (let i = 0; i < 8; i++) { g.fillStyle = i % 2 ? '#7a4c2c' : '#95643c'; g.fillRect(0, i * s / 8, s, s / 8 - 6); }
+    g.strokeStyle = '#3b2412'; g.lineWidth = 46; g.strokeRect(23, 23, s - 46, s - 46); g.beginPath(); g.moveTo(40, 40); g.lineTo(s - 40, s - 40); g.moveTo(s - 40, 40); g.lineTo(40, s - 40); g.stroke();
+    g.fillStyle = '#e8d6a8'; g.font = '800 120px Outfit, Inter, sans-serif'; g.textAlign = 'center'; g.fillText('FRAGILE', s / 2, s / 2 + 40);
+    for (let i = 0; i < 4000; i++) { g.fillStyle = `rgba(0,0,0,${Math.random() * .12})`; g.fillRect(Math.random() * s, Math.random() * s, 2, 6); } });
+  await make('crate_normal.png', (g, s) => { const id = g.createImageData(s, s); for (let y = 0; y < s; y++) for (let x = 0; x < s; x++) { const i = (y * s + x) * 4, plank = (y % 128) < 6 ? -0.8 : 0, edge = Math.min(x, y, s - x, s - y) < 46 ? 0.3 : 0;
+      const nx = Math.sin(x * .05) * .08 + edge * Math.sign(s / 2 - x) * .4, ny = plank + Math.cos(y * .07) * .05, nz = Math.sqrt(Math.max(0, 1 - nx * nx - ny * ny)); id.data[i] = (nx * .5 + .5) * 255; id.data[i + 1] = (ny * .5 + .5) * 255; id.data[i + 2] = (nz * .5 + .5) * 255; id.data[i + 3] = 255; } g.putImageData(id, 0, 0); });
+  renderQueue(); status('', 'Sample loaded: a crate colour map and normal map. Press Encode.');
+}
+$('sampleBtn').addEventListener('click', sample);
+resetResult(); sample();
+
+// Embedded on assetbench.co.uk: open the Mobile Ready Checker in the same tab, and tell the page how tall
+// this tool is (content + body margin), so its frame never scrolls on its own.
+if (window.parent !== window) {
+  const next = $('nextLink'); next.href = '/mobile-ready-checker'; next.target = '_top';
+  new ResizeObserver(() => window.parent.postMessage({ type: 'assetbench:height', height: Math.ceil(document.body.getBoundingClientRect().height) + 16 }, '*')).observe(document.body);
+}
+</script>
+
+</body>
+</html>

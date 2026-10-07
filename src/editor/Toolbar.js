@@ -69,9 +69,14 @@ export function createToolbar(handlers) {
   const undoBtn = button('↶', 'Undo (Ctrl/Cmd+Z)', handlers.onUndo);
   const redoBtn = button('↷', 'Redo (Ctrl/Cmd+Shift+Z)', handlers.onRedo);
   const saveBtn = button('Save Layout', 'Save layout to this browser', handlers.onSave);
+  const siteBtn = button(
+    'Save to Site',
+    import.meta.env.DEV ? 'Write this layout into src/editor/layout.json, the layout every visitor gets' : 'Download layout.json to put in src/editor/',
+    handlers.onSaveToSite,
+  );
   const resetBtn = button('Reset Layout', 'Restore the original coded layout', handlers.onReset);
 
-  primaryRow.append(exitBtn, textBtn, imageBtn, dupBtn, delBtn, alignToggleBtn, undoBtn, redoBtn, saveBtn, resetBtn);
+  primaryRow.append(exitBtn, textBtn, imageBtn, dupBtn, delBtn, alignToggleBtn, undoBtn, redoBtn, saveBtn, siteBtn, resetBtn);
 
   const alignPanel = el('div', 'ab-editor-align-panel');
   root.appendChild(alignPanel);
@@ -220,5 +225,16 @@ export function createToolbar(handlers) {
     }, 1100);
   }
 
-  return { el: root, update, flashSaved };
+  /** Brief result on the Save to Site button: ok shows a tick, otherwise the message. */
+  function flashSite(ok, text) {
+    siteBtn.classList.toggle('ab-editor-btn--flash', ok);
+    siteBtn.textContent = text;
+    siteBtn.title = text;
+    setTimeout(() => {
+      siteBtn.classList.remove('ab-editor-btn--flash');
+      siteBtn.textContent = 'Save to Site';
+    }, ok ? 1600 : 4000);
+  }
+
+  return { el: root, update, flashSaved, flashSite };
 }

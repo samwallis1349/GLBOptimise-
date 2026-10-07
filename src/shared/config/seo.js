@@ -37,8 +37,9 @@ export const STATIC_PAGES = [
   {
     path: '/about',
     name: 'About Asset Bench',
-    title: `About | ${SITE_NAME}`,
-    description: 'Asset Bench is a suite of small, private, browser-based tools for preparing game and realtime assets.',
+    title: `About — Browser-based 3D and game asset tools | ${SITE_NAME}`,
+    description:
+      'What Asset Bench is, which tools it offers, how files are processed in your browser, and how the trial and lifetime licence work.',
     changefreq: 'yearly',
     priority: '0.5',
   },
@@ -49,6 +50,38 @@ export const STATIC_PAGES = [
     description: 'One payment unlocks every current and future Asset Bench tool, for life. Try every tool free first.',
     changefreq: 'monthly',
     priority: '0.6',
+  },
+  {
+    path: '/contact',
+    name: 'Contact',
+    title: `Contact | ${SITE_NAME}`,
+    description: 'How to contact Asset Bench about support, bug reports, licence keys, payments and feedback.',
+    changefreq: 'yearly',
+    priority: '0.3',
+  },
+  {
+    path: '/terms',
+    name: 'Terms of Use',
+    title: `Terms of Use | ${SITE_NAME}`,
+    description: 'The terms for using Asset Bench: tools and results, your files, the free trial, lifetime licences, payments and acceptable use.',
+    changefreq: 'yearly',
+    priority: '0.3',
+  },
+  {
+    path: '/refunds',
+    name: 'Refund Policy',
+    title: `Refund Policy | ${SITE_NAME}`,
+    description: 'Asset Bench licences are digital and delivered instantly, so sales are final — with help if a key or tool is faulty. Try every tool before buying.',
+    changefreq: 'yearly',
+    priority: '0.3',
+  },
+  {
+    path: '/privacy',
+    name: 'Privacy Policy',
+    title: `Privacy Policy | ${SITE_NAME}`,
+    description: 'How Asset Bench handles information: your files stay in your browser, what the free trial, licence checks and visitor statistics use, browser storage, and our plans for advertising.',
+    changefreq: 'yearly',
+    priority: '0.3',
   },
 ];
 

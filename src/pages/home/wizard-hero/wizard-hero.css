@@ -561,8 +561,8 @@
   }
 }
 
-/* Inside the homepage split hero the wizard sits in the right column. */
-.hero-split > .wizard-hero {
+/* Inside the homepage split hero, Sunny sits in the right column. */
+.hero-split > .sunny-hero {
   width: 100%;
   max-width: 600px;
   padding: 0;
@@ -570,7 +570,7 @@
 }
 
 @media (max-width: 980px) {
-  .hero-split > .wizard-hero {
+  .hero-split > .sunny-hero {
     justify-self: center;
   }
 }

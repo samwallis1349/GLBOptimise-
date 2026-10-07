@@ -9,9 +9,11 @@ import {
   freeDaysRemaining,
 } from '../../shared/config/billing.js';
 import { initTrial } from '../../services/TrialService.js';
-import { deactivateLicense, getStoredLicense } from '../../services/LicenseService.js';
+import { deactivateLicense, deactivateToolLicense, getStoredLicense, getToolLicenses } from '../../services/LicenseService.js';
+import { TOOLS } from '../../shared/config/tools.js';
 import { LicenseActivationForm } from '../../shared/components/LicenseActivationForm.js';
 import { splashHero } from '../../shared/components/WelcomeOffer.js';
+import { refundNoticeHtml } from '../../shared/components/RefundNotice.js';
 
 function maskKey(key) {
   return key.length > 8 ? `${key.slice(0, 4)}…${key.slice(-4)}` : key;
@@ -54,6 +56,41 @@ function licensedPanel(license, onChange) {
   return panel;
 }
 
+/** Single-tool keys active in this browser, each removable so it can move elsewhere. */
+function toolKeysPanel(licenses, onChange) {
+  const panel = document.createElement('div');
+  panel.className = 'panel pricing-card pricing-tool-keys';
+  panel.innerHTML = '<p><strong>Single-tool keys on this browser</strong></p>';
+
+  for (const { toolId, key } of licenses) {
+    const name = TOOLS.find((tool) => tool.id === toolId)?.name ?? toolId;
+    const row = document.createElement('div');
+    row.className = 'pricing-tool-keys__row';
+    row.innerHTML = `
+      <span>${name} <code>${maskKey(key)}</code></span>
+      <button type="button" class="btn btn--secondary">Remove from this browser</button>
+      <p class="license-form__status" role="status"></p>
+    `;
+    const button = row.querySelector('button');
+    const status = row.querySelector('.license-form__status');
+    button.addEventListener('click', async () => {
+      button.disabled = true;
+      status.className = 'license-form__status';
+      status.textContent = 'Removing...';
+      const result = await deactivateToolLicense(toolId);
+      if (result.ok) {
+        onChange();
+      } else {
+        button.disabled = false;
+        status.classList.add('license-form__status--error');
+        status.textContent = result.error;
+      }
+    });
+    panel.appendChild(row);
+  }
+  return panel;
+}
+
 /** Buy + activate panel for a visitor without a license. */
 function buyPanel(onChange) {
   const free = isFreePeriodActive();
@@ -86,6 +123,7 @@ function buyPanel(onChange) {
     <a class="btn btn--primary" style="margin-top: var(--space-4); width: 100%;" href="${CHECKOUT_URL}" target="_blank" rel="noopener">
       Buy lifetime access — ${LIFETIME_PRICE_LABEL}
     </a>
+    ${refundNoticeHtml()}
     <p class="text-secondary" style="margin-top: var(--space-5);">
       ${free ? 'Already bought?' : 'Bought already?'} Paste the key from your receipt email:
     </p>
@@ -138,5 +176,7 @@ export async function render(container) {
   const card = license ? licensedPanel(license, rerender) : buyPanel(rerender);
   card.prepend(splashHero());
   section.appendChild(card);
+  const toolKeys = getToolLicenses();
+  if (toolKeys.length) section.appendChild(toolKeysPanel(toolKeys, rerender));
   container.appendChild(section);
 }

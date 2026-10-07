@@ -15,3 +15,12 @@ Thumbs.db
 
 # Wrangler local dev state (local KV etc.)
 /.wrangler/
+
+# Desktop app builds (desktop/build.mjs)
+/desktop/release/
+
+# Temporary files and scratch outputs
+.tmp*
+*.zip
+/outputs/
+/Individual Tool Packages/

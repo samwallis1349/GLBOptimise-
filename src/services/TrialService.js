@@ -8,7 +8,7 @@
  * synchronously afterwards.
  */
 
-const STORAGE_KEY = 'assetbench_trial_v1';
+const STORAGE_KEY = 'assetbench_trial_v2';
 const TRIAL_API = '/api/trial';
 
 let startedAt = null;

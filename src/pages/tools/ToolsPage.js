@@ -1,12 +1,6 @@
 import { TOOLS } from '../../shared/config/tools.js';
 import { ToolCard } from '../../shared/components/ToolCard.js';
-import { cachedUsageCounts, fetchUsageCounts, placeAtRowStart, rankByUsage } from '../../services/UsageService.js';
-
-/** Double-width card at the top of the grid. */
-const FEATURED_ID = 'glb-builder';
-
-/** Held at the start of the grid's second row regardless of usage. */
-const ROW_TWO_ID = 'line-studio';
+import { cachedUsageCounts, fetchUsageCounts, rankByUsage } from '../../services/UsageService.js';
 
 /**
  * The rest, ordered by what the job costs to get done elsewhere — dedicated
@@ -18,6 +12,7 @@ const ROW_TWO_ID = 'line-studio';
  */
 const VALUE_ORDER = [
   'generate-lods',
+  'glb-builder',
   'reduce-polys',
   'optimise-glb',
   'thumbnail-maker',
@@ -40,7 +35,7 @@ function orderedTools() {
     const i = VALUE_ORDER.indexOf(tool.id);
     return (tool.status === 'coming-soon' ? 1000 : 0) + (i === -1 ? VALUE_ORDER.length : i);
   };
-  return TOOLS.filter((tool) => tool.id !== FEATURED_ID).sort((a, b) => rank(a) - rank(b));
+  return [...TOOLS].sort((a, b) => rank(a) - rank(b));
 }
 
 export function render(container) {
@@ -59,15 +54,11 @@ export function render(container) {
 
   const grid = document.createElement('div');
   grid.className = 'tool-grid';
-  const featured = TOOLS.find((tool) => tool.id === FEATURED_ID);
   const fill = (counts) => {
-    // Featured banner, then most-used first (VALUE_ORDER breaks ties), with
-    // Line Studio held at the start of the second row.
+    // Most-used first (VALUE_ORDER breaks ties). The GLB Builder keeps its
+    // wide featured card style without being fixed to the top rank.
     const ranked = rankByUsage(orderedTools(), counts);
-    const list = placeAtRowStart(featured ? [featured, ...ranked] : ranked, ROW_TWO_ID, {
-      span: (tool) => (tool === featured ? 2 : 1),
-    });
-    grid.replaceChildren(...list.map((tool, i) => ToolCard(tool, { index: i + 1, featured: tool === featured })));
+    grid.replaceChildren(...ranked.map((tool, i) => ToolCard(tool, { index: i + 1, featured: tool.id === 'glb-builder' })));
   };
   fill(cachedUsageCounts());
   fetchUsageCounts().then((counts) => grid.isConnected && fill(counts));

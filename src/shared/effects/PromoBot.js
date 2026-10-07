@@ -1,5 +1,5 @@
 import { TOOLS } from '../config/tools.js';
-import { CHECKOUT_URL, LIFETIME_PRICE_LABEL, freeDaysRemaining, hasAccess, isFreePeriodActive } from '../config/billing.js';
+import { ALL_TOOLS_FREE, CHECKOUT_URL, LIFETIME_PRICE_LABEL, freeDaysRemaining, hasAccess, isFreePeriodActive } from '../config/billing.js';
 import { hasStoredLicense } from '../../services/LicenseService.js';
 import { navigate } from '../../app/router.js';
 import { iconSvg } from '../utils/icons.js';
@@ -64,6 +64,7 @@ function isLive(tool) {
 
 function pricePitch() {
   if (hasStoredLicense()) return "You've got a lifetime license — every tool is unlocked for good. Thanks for backing Asset Bench!";
+  if (ALL_TOOLS_FREE) return 'Every tool is free for everyone at the moment — no trial, no key needed.';
   if (isFreePeriodActive()) {
     const days = freeDaysRemaining();
     return `Your free trial has ${days} day${days === 1 ? '' : 's'} left. After that it's ${LIFETIME_PRICE_LABEL} once — no subscription, every tool, forever.`;
@@ -232,7 +233,7 @@ function build() {
   });
 
   addMessage('bot', {
-    text: `Hi, I'm Bench Bot. What are you trying to do with your model? ${isFreePeriodActive() && !hasStoredLicense() ? `(Heads up: your free trial has ${freeDaysRemaining()} day${freeDaysRemaining() === 1 ? '' : 's'} left.)` : ''}`.trim(),
+    text: `Hi, I'm Bench Bot. What are you trying to do with your model? ${!ALL_TOOLS_FREE && isFreePeriodActive() && !hasStoredLicense() ? `(Heads up: your free trial has ${freeDaysRemaining()} day${freeDaysRemaining() === 1 ? '' : 's'} left.)` : ''}`.trim(),
     quick: true,
   });
 }
@@ -277,7 +278,7 @@ function scheduleNudge() {
     nudge.className = 'promo-bot__nudge';
     nudge.innerHTML = `
       <button type="button" class="promo-bot__nudge-text">${escapeHtml(
-        isFreePeriodActive()
+        !ALL_TOOLS_FREE && isFreePeriodActive()
           ? `Free for ${freeDaysRemaining()} more day${freeDaysRemaining() === 1 ? '' : 's'} — want help picking a tool?`
           : 'Not sure which tool you need? Ask me.',
       )}</button>

@@ -1,6 +1,8 @@
 import { Header } from '../shared/components/Header.js';
+import { ShareBanner } from '../shared/components/ShareBanner.js';
 import { Footer } from '../shared/components/Footer.js';
 import { TrialBanner } from '../shared/components/TrialBanner.js';
+import { SITE_NOTICE } from '../shared/config/siteNotice.js';
 import { registerRoutes, setRouteContainer, startRouter } from './router.js';
 import { routes, notFound } from './routes.js';
 import { cleanupStaleSessions } from '../shared/storage/sessionCleanup.js';
@@ -9,7 +11,8 @@ import { initTrial } from '../services/TrialService.js';
 import { initLayoutEditor } from '../editor/LayoutEditor.js';
 import { initCommandPalette } from '../shared/effects/CommandPalette.js';
 import { initPromoBot } from '../shared/effects/PromoBot.js';
-import { initWelcomeOffer } from '../shared/components/WelcomeOffer.js';
+import { initConsentBanner } from '../shared/components/ConsentBanner.js';
+import { initAnalytics } from '../services/AnalyticsService.js';
 import { hasAccess, trialEndsAt } from '../shared/config/billing.js';
 import { TOOLS } from '../shared/config/tools.js';
 import { navigate } from './router.js';
@@ -18,6 +21,7 @@ import { navigate } from './router.js';
 export function App(rootEl) {
   rootEl.innerHTML = '';
   rootEl.appendChild(Header());
+  rootEl.appendChild(ShareBanner());
 
   const main = document.createElement('main');
   main.id = 'page-root';
@@ -28,6 +32,11 @@ export function App(rootEl) {
   setRouteContainer(main);
   registerRoutes(routes, { notFound });
   startRouter();
+
+  // Privacy choices: the notice explains default-on analytics and the simple
+  // opt-out; AnalyticsService respects any saved opt-out.
+  initConsentBanner();
+  initAnalytics();
 
   cleanupStaleSessions().catch(() => {
     /* best-effort cleanup — never block app startup on it */
@@ -47,12 +56,20 @@ export function App(rootEl) {
 
   // The banner and Bench Bot both quote days left, so they wait for the
   // trial clock. initTrial() never rejects — it falls back to local time.
+  if (SITE_NOTICE) {
+    const notice = document.createElement('div');
+    notice.className = 'trial-banner site-notice';
+    notice.setAttribute('role', 'status');
+    notice.textContent = SITE_NOTICE;
+    rootEl.prepend(notice);
+  }
+
   initTrial().then(() => {
-    rootEl.prepend(TrialBanner());
+    const notice = rootEl.querySelector('.site-notice');
+    if (notice) notice.after(TrialBanner());
+    else rootEl.prepend(TrialBanner());
     // Bench Bot tool-finder / promo helper — floating, same mount-once pattern.
     initPromoBot();
-    // One-time pricing popup for first-time, unlicensed visitors.
-    initWelcomeOffer();
 
     // An open tool must lock when the trial expires, not only on the next
     // navigation. Recheck after tab suspension or a system-clock change too.
@@ -64,9 +81,9 @@ export function App(rootEl) {
       }
       if (!hadAccess) return;
       hadAccess = false;
-      if (TOOLS.some((tool) => tool.route === location.pathname && ['available', 'beta'].includes(tool.status))) {
-        navigate(location.pathname);
-      }
+      const open = TOOLS.find((tool) => tool.route === location.pathname && ['available', 'beta'].includes(tool.status));
+      // A single-tool key keeps its own tool open after the trial ends.
+      if (open && !hasAccess(open.id)) navigate(location.pathname);
     };
     setTimeout(lockExpiredTool, Math.max(0, trialEndsAt() - Date.now()) + 1);
     window.addEventListener('focus', lockExpiredTool);

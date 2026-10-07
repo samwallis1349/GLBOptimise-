@@ -1,6 +1,8 @@
 import { TOOLS } from '../shared/config/tools.js';
 import { hasAccess } from '../shared/config/billing.js';
 import { Paywall } from '../shared/components/Paywall.js';
+import { ToolOffer } from '../shared/components/ToolOffer.js';
+import { AdSenseAd } from '../shared/components/AdSenseAd.js';
 import { initTrial } from '../services/TrialService.js';
 import { recordToolOpen } from '../services/UsageService.js';
 import { pageSeo } from '../shared/config/seo.js';
@@ -28,7 +30,13 @@ const page = (path, load) => async (params, container) => {
 async function mountTool(tool, container, params) {
   if (GATED_STATUSES.has(tool.status)) recordToolOpen(tool.id);
   const mod = await import(`../tools/${tool.id}/index.js`);
-  return mod.mount(container, params);
+  const result = await mod.mount(container, params);
+  const offer = ToolOffer(tool);
+  if (offer) container.prepend(offer);
+  // One ad, below the whole tool — never between its controls, preview or downloads.
+  const ad = AdSenseAd({ placement: 'tool', toolId: tool.id });
+  if (ad) container.append(ad);
+  return result;
 }
 
 /**
@@ -56,6 +64,22 @@ export const routes = [
     handler: page('/pricing', () => import('../pages/pricing/PricingPage.js')),
   },
   {
+    path: '/contact',
+    handler: page('/contact', () => import('../pages/contact/ContactPage.js')),
+  },
+  {
+    path: '/terms',
+    handler: page('/terms', () => import('../pages/terms/TermsPage.js')),
+  },
+  {
+    path: '/refunds',
+    handler: page('/refunds', () => import('../pages/refunds/RefundsPage.js')),
+  },
+  {
+    path: '/privacy',
+    handler: page('/privacy', () => import('../pages/privacy/PrivacyPage.js')),
+  },
+  {
     path: '/wizard-compare',
     handler: page('/wizard-compare', () => import('../pages/wizard-compare/WizardComparePage.js')),
   },
@@ -64,11 +88,11 @@ export const routes = [
     handler: async (params, container) => {
       applyHead(tool.route);
       if (GATED_STATUSES.has(tool.status)) await initTrial();
-      if (GATED_STATUSES.has(tool.status) && !hasAccess()) {
+      if (GATED_STATUSES.has(tool.status) && !hasAccess(tool.id)) {
         container.innerHTML = '';
         container.appendChild(
           Paywall({
-            toolName: tool.name,
+            tool,
             onUnlock: () => mountTool(tool, container, params),
           }),
         );

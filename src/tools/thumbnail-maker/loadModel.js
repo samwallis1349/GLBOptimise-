@@ -32,6 +32,6 @@ export async function loadThumbnailModel(file, { selfContained = false } = {}) {
   const loader = await createGltfLoader();
   const payload = extension === 'gltf' ? new TextDecoder().decode(buffer) : buffer;
   try { return await new Promise((resolve, reject) => {
-    loader.parse(payload, '', (gltf) => resolve(gltf.scene), (error) => reject(error));
+    loader.parse(payload, '', (gltf) => resolve(Object.assign(gltf.scene, { animations: gltf.animations })), (error) => reject(error));
   }); } finally { loader.dracoLoader?.dispose(); }
 }
