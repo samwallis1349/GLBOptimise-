@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import worker from '../worker/index.js';
-import { TOOLS, PINNED_MOBILE_TOOLS } from '../src/shared/config/tools.js';
+import { TOOLS, PINNED_MOBILE_TOOLS, getOrderedTools } from '../src/shared/config/tools.js';
 import { placeAtRowStart, placePairTogether, rankByUsage } from '../src/services/UsageService.js';
 
 function memoryKv() {
@@ -68,3 +68,12 @@ test('only mobile app dev tools have blue cardTheme', () => {
   const blueTools = TOOLS.filter((t) => t.cardTheme === 'blue').map((t) => t.id);
   assert.deepEqual(blueTools, PINNED_MOBILE_TOOLS);
 });
+
+test('row 2 contains the top 4 most used tools', () => {
+  const ranked = rankByUsage(getOrderedTools(), {}, PINNED_MOBILE_TOOLS);
+  assert.deepEqual(
+    ranked.slice(4, 8).map((t) => t.id),
+    ['line-studio', 'glb-builder', 'ktx2-texture-encoder', 'generate-lods'],
+  );
+});
+

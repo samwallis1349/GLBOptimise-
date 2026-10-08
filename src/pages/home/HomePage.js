@@ -1,5 +1,5 @@
 import { APP_DESCRIPTION } from '../../shared/config/app.js';
-import { TOOLS, PINNED_MOBILE_TOOLS } from '../../shared/config/tools.js';
+import { TOOLS, PINNED_MOBILE_TOOLS, getOrderedTools } from '../../shared/config/tools.js';
 import { ToolCard } from '../../shared/components/ToolCard.js';
 import { cachedUsageCounts, fetchUsageCounts, rankByUsage } from '../../services/UsageService.js';
 import { initCursorSpotlight } from '../../shared/effects/CursorSpotlight.js';
@@ -114,11 +114,11 @@ function ToolsBlock() {
 
   const grid = document.createElement('div');
   grid.className = 'tool-grid';
-  // Most-used first, registry order (Thumbnail Maker leading) breaking ties.
-  const byDefault = [...TOOLS].sort((a, b) => Number(b.id === 'thumbnail-maker') - Number(a.id === 'thumbnail-maker'));
   const fill = (counts) => {
-    const tools = rankByUsage(byDefault, counts, PINNED_MOBILE_TOOLS);
-    grid.replaceChildren(...tools.map((tool, index) => ToolCard(tool, { index: index + 1, featured: Boolean(tool.banner) })));
+    // Row 1: Pinned blue mobile tools.
+    // Row 2: Top 4 most-used tools on the bench.
+    const tools = rankByUsage(getOrderedTools(), counts, PINNED_MOBILE_TOOLS);
+    grid.replaceChildren(...tools.map((tool, index) => ToolCard(tool, { index: index + 1 })));
   };
   fill(cachedUsageCounts());
   fetchUsageCounts().then((counts) => grid.isConnected && fill(counts));

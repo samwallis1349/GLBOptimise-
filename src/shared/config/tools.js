@@ -505,3 +505,49 @@ export const PINNED_MOBILE_TOOLS = [
   'xcassets-generator',
   'mobile-ready-checker',
 ];
+
+/**
+ * Canonical popularity order for tie-breaking and initial zero-cache state.
+ * - Row 1: Mobile App Dev tools (blue, pinned).
+ * - Row 2: Top 4 most-used tools on the platform (Line Studio, GLB Builder, KTX2, LODs).
+ * - Subsequent rows: Ranked by platform usage counts.
+ */
+export const POPULARITY_ORDER = [
+  // Row 1: Mobile app dev suite (pinned)
+  'app-icon-generator',
+  'app-store-screenshot-generator',
+  'xcassets-generator',
+  'mobile-ready-checker',
+  // Row 2: Top 4 most-used tools
+  'line-studio',
+  'glb-builder',
+  'ktx2-texture-encoder',
+  'generate-lods',
+  // Subsequent rows: ranked by platform usage
+  'convert-files',
+  'thumbnail-maker',
+  'model-to-isometric',
+  'asset-report',
+  'optimise-glb',
+  'reduce-polys',
+  'strip-animations',
+  'inspect-glb',
+  'model-splitter',
+  'alpha-cutout',
+  'animation-optimiser',
+  'compress-textures',
+  'animation-inspector',
+  'pack-pbr',
+  'asset-compare',
+  'rig-inspector',
+  'texture-resizer',
+];
+
+export function getOrderedTools() {
+  const rank = (tool) => {
+    const i = POPULARITY_ORDER.indexOf(tool.id);
+    return (tool.status === 'coming-soon' ? 1000 : 0) + (i === -1 ? POPULARITY_ORDER.length : i);
+  };
+  return [...TOOLS].sort((a, b) => rank(a) - rank(b));
+}
+
