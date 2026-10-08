@@ -8,6 +8,7 @@ import { openCommandPalette } from '../../shared/effects/CommandPalette.js';
 import { SunnyGeckoHero } from './wizard-hero/SunnyGeckoHero.js';
 import { DONATE_URL } from '../../shared/config/billing.js';
 import { AdSenseAd } from '../../shared/components/AdSenseAd.js';
+import { HomeBannerPost } from '../../shared/components/HomeBannerPost.js';
 
 const BENEFITS = [
   { icon: 'zap', title: 'Works in browser', desc: 'Your files stay on your device' },
@@ -25,7 +26,15 @@ export function render(container) {
   // The one homepage ad sits after the tool grid, well clear of the hero and
   // its buttons. AdSenseAd() returns null when ads are off, so nothing renders.
   const ad = AdSenseAd({ placement: 'homepage' });
-  container.append(HeroSection(heroVisual.element), WorkbenchIntro(), ToolsBlock(), ...(ad ? [ad] : []), SupportPanel(), CTAPanel());
+  container.append(
+    HeroSection(heroVisual.element),
+    WorkbenchIntro(),
+    ToolsBlock(),
+    ...(ad ? [ad] : []),
+    HomeBannerPost(),
+    SupportPanel(),
+    CTAPanel()
+  );
 
   const disposeSpotlight = initCursorSpotlight(container);
   const disposeHero = heroVisual.mount();

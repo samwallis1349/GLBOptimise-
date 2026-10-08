@@ -43,6 +43,9 @@ function trialPrefix(env) {
 const JSON_HEADERS = {
   'Content-Type': 'application/json',
   'Cache-Control': 'no-store',
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-api-key, x-banner-key',
 };
 
 /** IPv6 visitors often rotate the low 64 bits, so key on the /64 prefix. */
@@ -273,6 +276,155 @@ async function handleToolBinding(request, env) {
   return json({ ok: true, toolId: null });
 }
 
+const BANNER_PREFIX = 'banner:';
+const BANNER_ACTIVE_KEY = 'banner_active:current';
+
+function isBannerAuthorized(request, env) {
+  const secret = env.BANNER_SECRET || env.STATS_KEY;
+  if (!secret) return true; // Open if no secret is configured yet
+  const authHeader = request.headers.get('Authorization');
+  if (authHeader && (authHeader === `Bearer ${secret}` || authHeader === secret)) return true;
+  const keyHeader = request.headers.get('x-api-key') || request.headers.get('x-banner-key');
+  if (keyHeader && keyHeader === secret) return true;
+  const url = new URL(request.url);
+  if (url.searchParams.get('key') === secret) return true;
+  return false;
+}
+
+function detectMediaType(url) {
+  if (!url) return 'image';
+  const clean = url.toLowerCase().split('?')[0];
+  if (
+    clean.endsWith('.mp4') ||
+    clean.endsWith('.webm') ||
+    clean.endsWith('.mov') ||
+    clean.endsWith('.m4v') ||
+    url.includes('youtube.com') ||
+    url.includes('youtu.be') ||
+    url.includes('vimeo.com')
+  ) {
+    return 'video';
+  }
+  return 'image';
+}
+
+async function handleBanner(request, env) {
+  const url = new URL(request.url);
+  const { pathname } = url;
+
+  if (request.method === 'OPTIONS') {
+    return new Response(null, {
+      status: 204,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-api-key, x-banner-key',
+      },
+    });
+  }
+
+  // GET /api/banners — list all stored named banners
+  if (pathname === '/api/banners' && request.method === 'GET') {
+    if (!env.TRIALS) return json({ ok: true, active: null, count: 0, banners: [] });
+    const activeName = (await env.TRIALS.get(BANNER_ACTIVE_KEY)) || null;
+    const list = await env.TRIALS.list({ prefix: BANNER_PREFIX });
+    const banners = [];
+    for (const key of list.keys) {
+      const data = await env.TRIALS.get(key.name, 'json');
+      if (data) banners.push(data);
+    }
+    return json({ ok: true, active: activeName, count: banners.length, banners });
+  }
+
+  // POST /api/banner/active — switch active banner by name
+  if (pathname === '/api/banner/active' && request.method === 'POST') {
+    if (!isBannerAuthorized(request, env)) return json({ error: 'Unauthorized' }, 401);
+    if (!env.TRIALS) return json({ error: 'KV unavailable' }, 503);
+    const body = await request.json().catch(() => ({}));
+    const targetName = String(body?.name ?? '').trim().toLowerCase();
+    if (!targetName) return json({ error: 'Missing banner name' }, 400);
+
+    const exists = await env.TRIALS.get(`${BANNER_PREFIX}${targetName}`);
+    if (!exists) return json({ error: `Banner '${targetName}' not found` }, 404);
+
+    await env.TRIALS.put(BANNER_ACTIVE_KEY, targetName);
+    return json({ ok: true, message: `Active banner switched to '${targetName}'`, active: targetName });
+  }
+
+  // DELETE /api/banner — delete a named banner
+  if (pathname === '/api/banner' && request.method === 'DELETE') {
+    if (!isBannerAuthorized(request, env)) return json({ error: 'Unauthorized' }, 401);
+    if (!env.TRIALS) return json({ error: 'KV unavailable' }, 503);
+    const body = await request.json().catch(() => ({}));
+    const targetName = String(url.searchParams.get('name') || body?.name || '').trim().toLowerCase();
+    if (!targetName) return json({ error: 'Missing banner name' }, 400);
+
+    await env.TRIALS.delete(`${BANNER_PREFIX}${targetName}`);
+    const active = await env.TRIALS.get(BANNER_ACTIVE_KEY);
+    if (active === targetName) {
+      await env.TRIALS.delete(BANNER_ACTIVE_KEY);
+    }
+    return json({ ok: true, message: `Banner '${targetName}' deleted`, deleted: targetName });
+  }
+
+  // GET /api/banner — retrieve active banner (or specific banner by ?name=...)
+  if (request.method === 'GET') {
+    if (!env.TRIALS) return json({ ok: true, active: null, banner: null });
+    const requested = url.searchParams.get('name');
+    const activeName = (await env.TRIALS.get(BANNER_ACTIVE_KEY)) || null;
+    const targetName = requested ? requested.trim().toLowerCase() : activeName;
+
+    if (!targetName) return json({ ok: true, active: null, banner: null });
+    const banner = await env.TRIALS.get(`${BANNER_PREFIX}${targetName}`, 'json');
+    return json({ ok: true, active: activeName, banner: banner || null });
+  }
+
+  // POST /api/banner — create or update a banner post
+  if (request.method === 'POST') {
+    if (!isBannerAuthorized(request, env)) return json({ error: 'Unauthorized' }, 401);
+    if (!env.TRIALS) return json({ error: 'KV unavailable' }, 503);
+    const body = await request.json().catch(() => ({}));
+
+    const rawName = String(body?.name ?? body?.id ?? 'featured').trim().toLowerCase();
+    const cleanName = rawName.replace(/[^a-z0-9_-]/g, '-') || 'featured';
+
+    const mediaUrl = String(body?.mediaUrl || body?.videoUrl || body?.imageUrl || '').trim();
+    const mediaType = body?.mediaType === 'video' || body?.mediaType === 'image'
+      ? body.mediaType
+      : detectMediaType(mediaUrl);
+
+    const record = {
+      name: cleanName,
+      title: String(body?.title || 'Featured Announcement').trim(),
+      text: String(body?.text || body?.description || '').trim(),
+      badge: String(body?.badge || 'UPDATE').trim(),
+      mediaUrl,
+      mediaType,
+      linkUrl: String(body?.linkUrl || body?.url || '').trim(),
+      linkText: String(body?.linkText || body?.ctaText || 'Learn More →').trim(),
+      updatedAt: Date.now(),
+    };
+
+    await env.TRIALS.put(`${BANNER_PREFIX}${cleanName}`, JSON.stringify(record));
+
+    // Make active if requested or if no active banner currently exists
+    const makeActive = body?.active !== false;
+    const currentActive = await env.TRIALS.get(BANNER_ACTIVE_KEY);
+    if (makeActive || !currentActive) {
+      await env.TRIALS.put(BANNER_ACTIVE_KEY, cleanName);
+    }
+
+    return json({
+      ok: true,
+      message: `Banner '${cleanName}' saved successfully`,
+      active: makeActive || !currentActive,
+      banner: record,
+    });
+  }
+
+  return json({ error: 'Method not allowed' }, 405);
+}
+
 export default {
   async fetch(request, env, ctx) {
     const { pathname } = new URL(request.url);
@@ -281,6 +433,9 @@ export default {
     if (pathname === '/api/tool-binding') return handleToolBinding(request, env);
     if (pathname === '/api/stats') return handleStats(request, env);
     if (pathname === '/api/sales-webhook') return handleSalesWebhook(request, env);
+    if (pathname === '/api/banner' || pathname === '/api/banners' || pathname === '/api/banner/active') {
+      return handleBanner(request, env);
+    }
     if (pathname.startsWith('/api/')) return json({ error: 'Not found' }, 404);
     return env.ASSETS.fetch(request);
   },
