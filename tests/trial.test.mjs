@@ -69,6 +69,40 @@ test('worker preserves the earliest trial start for an IP', async () => {
   }
 });
 
+test('device fingerprint prevents trial reset when IP changes via VPN', async () => {
+  const originalNow = Date.now;
+  const start = Date.UTC(2026, 8, 30, 12);
+  let now = start;
+  Date.now = () => now;
+  const records = new Map();
+  const env = {
+    TRIALS: {
+      get: async (key) => records.get(key) ?? null,
+      put: async (key, value) => records.set(key, value),
+    },
+    ASSETS: { fetch: () => { throw Error('Unexpected asset request'); } },
+  };
+  const deviceId = 'a1b2c3d4e5f67890a1b2c3d4e5f67890a1b2c3d4e5f67890a1b2c3d4e5f67890';
+  const req = (ip, startedAt, devId) => new Request('https://example.test/api/trial', {
+    method: 'POST',
+    headers: { 'CF-Connecting-IP': ip, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ startedAt, deviceId: devId }),
+  });
+  try {
+    // Visitor on original IP (home network) starts trial
+    const first = await worker.fetch(req('198.51.100.7', null, deviceId), env);
+    assert.equal((await first.json()).startedAt, start);
+
+    // 4 days later: visitor switches to a VPN (new IP) and opens Incognito (no startedAt sent)
+    now += 4 * 86_400_000;
+    const vpnVisit = await worker.fetch(req('203.0.113.99', null, deviceId), env);
+    // Worker recognises device fingerprint and returns original start time
+    assert.equal((await vpnVisit.json()).startedAt, start);
+  } finally {
+    Date.now = originalNow;
+  }
+});
+
 test('owner stats count trials per day without exposing visitors', async () => {
   const day = 86_400_000;
   const now = Date.UTC(2026, 9, 2, 12);

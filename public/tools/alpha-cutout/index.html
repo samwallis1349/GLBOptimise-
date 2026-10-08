@@ -4,6 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Alpha Cutout</title>
+<script>
+  if (window.top === window.self && !window.location.search.includes('standalone=true')) {
+    const h = window.location.hostname;
+    if (h.includes('assetbench') || h.includes('workers.dev') || h === 'localhost' || h === '127.0.0.1') {
+      window.location.replace('/alpha-cutout');
+    }
+  }
+</script>
 <style>
 :root{
   color-scheme:dark;

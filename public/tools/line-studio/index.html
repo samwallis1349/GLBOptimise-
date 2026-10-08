@@ -5,6 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <!-- Embedded at /line-studio: index its content as part of that page, not as a page of its own. -->
 <meta name="robots" content="noindex, indexifembedded">
+<script>
+  if (window.top === window.self && !window.location.search.includes('standalone=true')) {
+    const h = window.location.hostname;
+    if (h.includes('assetbench') || h.includes('workers.dev') || h === 'localhost' || h === '127.0.0.1') {
+      window.location.replace('/line-studio');
+    }
+  }
+</script>
 </head>
 <body>
 <title>Line Studio</title>

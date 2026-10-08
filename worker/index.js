@@ -29,6 +29,7 @@ const TOOL_IDS = new Set(TOOLS.map((tool) => tool.id));
 const USAGE_PREFIX = 'usage:';
 const USAGE_CACHE_SECONDS = 300;
 const TRIAL_PREFIX = 'trial:';
+const DEVICE_PREFIX = 'device:';
 const SITE_SALE_PREFIX = 'site-sale:';
 const LICENSE_PRODUCT_ID = 1420844;
 const SINGLE_TOOL_PRODUCT_ID = 1420925;
@@ -58,6 +59,12 @@ async function hashIp(ip, salt) {
   return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 
+async function hashDevice(deviceId, salt) {
+  const bytes = new TextEncoder().encode(`${salt}|${deviceId}`);
+  const digest = await crypto.subtle.digest('SHA-256', bytes);
+  return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
 function json(body, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: JSON_HEADERS });
 }
@@ -70,22 +77,52 @@ async function handleTrial(request, env) {
   const clientStart = Number(body?.startedAt);
   const validClientStart = Number.isFinite(clientStart) && clientStart > 0 && clientStart <= now ? clientStart : null;
 
+  // Validate device fingerprint (64-character hex string)
+  const rawDeviceId = typeof body?.deviceId === 'string' ? body.deviceId.trim().toLowerCase() : null;
+  const validDeviceId = rawDeviceId && /^[a-f0-9]{64}$/.test(rawDeviceId) ? rawDeviceId : null;
+
+  // Read cookie backup if present
+  const cookieHeader = request.headers.get('Cookie') || '';
+  const cookieMatch = cookieHeader.match(/(?:^|;\s*)__ab_trial=([0-9]+)/);
+  const cookieStart = cookieMatch ? Number(cookieMatch[1]) : null;
+  const validCookieStart = Number.isFinite(cookieStart) && cookieStart > 0 && cookieStart <= now ? cookieStart : null;
+
   const ip = request.headers.get('CF-Connecting-IP');
+  const salt = env.TRIAL_SALT || 'assetbench-trial';
+
   if (!ip || !env.TRIALS) {
-    // No IP (local dev) or KV not bound — fall back to the browser's own clock.
-    return json({ startedAt: validClientStart ?? now, now });
+    // No IP (local dev) or KV not bound — fall back to the browser's own clock, cookie, or now.
+    const startedAt = Math.min(...[validClientStart, validCookieStart, now].filter(Boolean));
+    const res = json({ startedAt, now });
+    res.headers.set('Set-Cookie', `__ab_trial=${startedAt}; Path=/; Max-Age=315360000; SameSite=Lax; Secure`);
+    return res;
   }
 
-  const key = `${trialPrefix(env)}${await hashIp(ip, env.TRIAL_SALT || 'assetbench-trial')}`;
-  const storedStart = Number(await env.TRIALS.get(key)) || null;
+  const ipKey = `${trialPrefix(env)}${await hashIp(ip, salt)}`;
+  const storedIpStart = Number(await env.TRIALS.get(ipKey)) || null;
 
-  const startedAt = Math.min(...[storedStart, validClientStart, now].filter(Boolean));
-  if (startedAt !== storedStart) {
+  let storedDevStart = null;
+  let devKey = null;
+  if (validDeviceId) {
+    devKey = `${DEVICE_PREFIX}${await hashDevice(validDeviceId, salt)}`;
+    storedDevStart = Number(await env.TRIALS.get(devKey)) || null;
+  }
+
+  // Earliest anchor wins: IP store, Device store, Cookie, LocalStorage, or Now
+  const startedAt = Math.min(...[storedIpStart, storedDevStart, validCookieStart, validClientStart, now].filter(Boolean));
+
+  if (startedAt !== storedIpStart) {
     // No expiry: one trial per visitor, ever.
-    await env.TRIALS.put(key, String(startedAt), { metadata: { startedAt } });
+    await env.TRIALS.put(ipKey, String(startedAt), { metadata: { startedAt } });
   }
 
-  return json({ startedAt, now });
+  if (devKey && startedAt !== storedDevStart) {
+    await env.TRIALS.put(devKey, String(startedAt), { metadata: { startedAt } });
+  }
+
+  const res = json({ startedAt, now });
+  res.headers.set('Set-Cookie', `__ab_trial=${startedAt}; Path=/; Max-Age=315360000; SameSite=Lax; Secure`);
+  return res;
 }
 
 async function handleUsage(request, env, ctx) {
