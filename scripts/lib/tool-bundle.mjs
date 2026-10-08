@@ -19,7 +19,14 @@ const toolDependencies = {
   'glb-builder': ['convert-files'],
 };
 
-const FRAMED_TOOLS = new Set(['alpha-cutout', 'mobile-ready-checker', 'ktx2-texture-encoder']);
+const FRAMED_TOOLS = new Set([
+  'alpha-cutout',
+  'mobile-ready-checker',
+  'ktx2-texture-encoder',
+  'app-icon-generator',
+  'app-store-screenshot-generator',
+  'xcassets-generator',
+]);
 
 async function copy(from, to) {
   await fs.mkdir(path.dirname(to), { recursive: true });

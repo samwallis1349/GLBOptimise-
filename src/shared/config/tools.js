@@ -41,6 +41,72 @@ export function getCategoryById(id) {
 
 export const TOOLS = [
   {
+    id: 'app-icon-generator',
+    name: 'iOS App Icon Generator',
+    route: '/app-icon-generator',
+    description: 'Craft optimized AI prompts or upload icon → export Xcode AppIcon.appiconset, Android mipmaps, and Game UI sprite sheets.',
+    keywords: ['ios', 'app icon', 'icon generator', 'ai prompt', 'prompt crafter', 'midjourney', 'dalle', 'xcode', 'appiconset', 'contents.json', 'android', 'mipmap', 'play store', 'game ui', 'sprite sheet', 'unity', 'godot', 'squircle'],
+    icon: 'smartphone',
+    thumbnail: '/thumbnails/app-icon-generator.webp',
+    seo: {
+      title: 'iOS App Icon Generator — AI Prompt Crafter & Multi-Platform Export | Asset Bench',
+      description:
+        'Craft optimized Midjourney, DALL-E, and Flux AI prompts or upload an icon. Export Xcode-ready AppIcon.appiconset with Contents.json, Android mipmaps, Play Store assets, and Unity/Godot game sprite sheets free in your browser.',
+    },
+    cardTheme: 'blue',
+    features: [
+      { icon: 'wand-2', label: 'AI Prompt Crafter' },
+      { icon: 'smartphone', label: 'Xcode & Android' },
+      { icon: 'grid', label: 'Game UI & Sprites' },
+    ],
+    status: 'available',
+    category: 'build',
+  },
+  {
+    id: 'app-store-screenshot-generator',
+    name: 'App Store Screenshot Generator',
+    route: '/app-store-screenshot-generator',
+    description: 'Transform device captures into App Store Connect ready screenshots with titanium iPhone frames, gradients, and marketing copy.',
+    keywords: ['ios', 'app store', 'screenshots', 'screenshot generator', 'iphone 16', 'app store connect', 'mockup', 'marketing copy', 'retina'],
+    icon: 'smartphone',
+    thumbnail: '/thumbnails/app-store-screenshot-generator.webp',
+    seo: {
+      title: 'App Store Screenshot Generator — Titanium Mockups & Marketing Slides | Asset Bench',
+      description:
+        'Generate App Store Connect screenshots in browser. Realistic iPhone frames, gradient backgrounds, bold marketing typography, and multi-display export.',
+    },
+    cardTheme: 'blue',
+    features: [
+      { icon: 'smartphone', label: 'iPhone Mockups' },
+      { icon: 'camera', label: 'Marketing Slides' },
+      { icon: 'layers', label: 'Multi-Display ZIP' },
+    ],
+    status: 'available',
+    category: 'build',
+  },
+  {
+    id: 'xcassets-generator',
+    name: 'XCAssets Generator',
+    route: '/xcassets-generator',
+    description: 'Convert SVGs and PNGs into Xcode Assets.xcassets catalogs with @1x, @2x, @3x retina slicing, Dark Mode pairs, and Contents.json.',
+    keywords: ['ios', 'xcassets', 'xcode', 'asset catalog', 'contents.json', 'retina', '1x 2x 3x', 'dark mode', 'swiftui', 'uikit'],
+    icon: 'package-open',
+    thumbnail: '/thumbnails/xcassets-generator.webp',
+    seo: {
+      title: 'XCAssets Generator — Xcode Asset Catalog & Retina Slicer | Asset Bench',
+      description:
+        'Convert SVGs and PNGs into Xcode Assets.xcassets catalogs with @1x, @2x, @3x retina slicing, Dark Mode pairs, and valid Apple Contents.json manifests.',
+    },
+    cardTheme: 'blue',
+    features: [
+      { icon: 'package-open', label: 'Xcode Catalog' },
+      { icon: 'layers', label: 'Retina 1x · 2x · 3x' },
+      { icon: 'file-text', label: 'Contents.json' },
+    ],
+    status: 'available',
+    category: 'build',
+  },
+  {
     id: 'alpha-cutout',
     name: 'Alpha Cutout',
     route: '/alpha-cutout',

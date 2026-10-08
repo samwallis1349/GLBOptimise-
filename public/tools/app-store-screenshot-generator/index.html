@@ -1,0 +1,1324 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>App Store Screenshot Generator — Asset Bench</title>
+<meta name="robots" content="noindex, indexifembedded">
+<script src="./jszip.min.js"></script>
+<style>
+:root {
+  color-scheme: dark;
+  --bg: #000000;
+  --panel: #111114;
+  --tile: #17171c;
+  --field: #0d0d10;
+  --border: #24242c;
+  --border-focus: #3d3d4a;
+  --ink: #f5f5f7;
+  --text: #d2d2d8;
+  --muted: #868692;
+  --dim: #545462;
+  --accent: #4a94ff;
+  --accent-glow: rgba(74, 148, 255, 0.25);
+  --accent-deep: #102642;
+  --gold: #ffb800;
+  --gold-glow: rgba(255, 184, 0, 0.25);
+  --ok: #3ddc84;
+  --err: #ff5c5c;
+  --purple: #a855f7;
+  --display: "Outfit", "SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --body: "Inter", "SF Pro Text", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font: 13px/1.5 var(--body);
+  padding: 20px 16px 64px;
+  min-height: 100vh;
+}
+[hidden] { display: none !important; }
+
+.wrap {
+  max-width: 1380px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.hero {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px 24px;
+  padding-bottom: 4px;
+}
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font: 700 10.5px var(--mono);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 8px;
+}
+
+h1 {
+  font: 800 clamp(30px, 4.2vw, 48px)/1 var(--display);
+  letter-spacing: -0.035em;
+  color: var(--ink);
+}
+h1 em {
+  font-style: normal;
+  background: linear-gradient(135deg, #60a5fa, #a855f7);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.lede {
+  margin-top: 10px;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--muted);
+  max-width: 72ch;
+}
+
+.hero-badges {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 6px 12px;
+  background: var(--panel);
+}
+.pill-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--ok);
+  box-shadow: 0 0 6px rgba(61, 220, 132, 0.6);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: minmax(380px, 1.05fr) minmax(420px, 1.25fr);
+  gap: 20px;
+  align-items: start;
+}
+@media (max-width: 1060px) {
+  .grid { grid-template-columns: 1fr; }
+}
+
+.col {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+.card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+.card-h {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: rgba(255, 255, 255, 0.015);
+  border-bottom: 1px solid var(--border);
+}
+.card-num {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  background: var(--accent-deep);
+  border: 1px solid rgba(74, 148, 255, 0.4);
+  color: var(--accent);
+  display: grid;
+  place-items: center;
+  font: 700 11px var(--mono);
+}
+.card-h h2 {
+  font: 700 14px var(--display);
+  color: var(--ink);
+  letter-spacing: -0.01em;
+}
+.card-h p {
+  font-size: 11px;
+  color: var(--muted);
+}
+.card-b {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.slide-selector {
+  display: flex;
+  background: var(--field);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 3px;
+  gap: 3px;
+}
+.slide-btn {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font: 600 11.5px var(--body);
+  padding: 7px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+.slide-btn:hover { color: var(--ink); }
+.slide-btn.active {
+  background: var(--tile);
+  color: var(--ink);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.dropzone {
+  border: 1.5px dashed #2f3342;
+  border-radius: 12px;
+  padding: 22px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: radial-gradient(circle at 50% 20%, rgba(74, 148, 255, 0.05), transparent 70%), var(--tile);
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.15s;
+}
+.dropzone:hover, .dropzone.dragover {
+  border-color: var(--accent);
+  background-color: rgba(74, 148, 255, 0.08);
+}
+.drop-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: var(--accent-deep);
+  border: 1px solid rgba(74, 148, 255, 0.4);
+  display: grid;
+  place-items: center;
+  color: var(--accent);
+  font-size: 18px;
+}
+.drop-title {
+  font-weight: 600;
+  color: var(--ink);
+  font-size: 12.5px;
+}
+.drop-hint {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.preset-screens {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+.screen-thumb {
+  background: var(--field);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.screen-thumb:hover, .screen-thumb.active {
+  border-color: var(--accent);
+  background: var(--tile);
+}
+.screen-canvas {
+  width: 44px;
+  height: 80px;
+  border-radius: 5px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+}
+.screen-label {
+  font: 600 10px var(--body);
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.ctrl-group {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.ctrl-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font: 600 11.5px var(--body);
+  color: var(--text);
+}
+.ctrl-val {
+  font: 500 11px var(--mono);
+  color: var(--muted);
+}
+
+.slider {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: #202028;
+  outline: none;
+}
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--accent);
+  cursor: pointer;
+  box-shadow: 0 0 8px rgba(74, 148, 255, 0.6);
+  border: 2px solid #fff;
+}
+
+.choice-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+.choice-btn {
+  background: var(--field);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 8px 6px;
+  font: 600 11px var(--body);
+  color: var(--muted);
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.15s;
+}
+.choice-btn:hover { color: var(--ink); }
+.choice-btn.active {
+  border-color: var(--accent);
+  color: var(--ink);
+  background: var(--tile);
+}
+
+.text-input {
+  width: 100%;
+  background: var(--field);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 9px 12px;
+  color: var(--ink);
+  font: 13px var(--body);
+  outline: none;
+}
+.text-input:focus { border-color: var(--accent); }
+
+.color-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+input[type="color"] {
+  width: 36px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: transparent;
+  cursor: pointer;
+}
+.swatches {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.swatch {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+.swatch:hover { transform: scale(1.15); }
+
+/* Sticky Preview */
+.sticky-preview {
+  position: sticky;
+  top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.preview-stage {
+  background: #08080a;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 520px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: inset 0 2px 14px rgba(0, 0, 0, 0.8);
+}
+.preview-canvas-wrapper {
+  max-width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+#livePreviewCanvas {
+  max-width: 100%;
+  max-height: 480px;
+  width: auto;
+  height: auto;
+  border-radius: 12px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.7);
+  object-fit: contain;
+}
+
+.export-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.btn-export-main {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 14px 20px;
+  font: 700 14px var(--display);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.35);
+  transition: all 0.15s;
+}
+.btn-export-main:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.45);
+}
+.btn-export-main:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+.export-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+.btn-export-sub {
+  background: var(--tile);
+  border: 1px solid var(--border);
+  color: var(--ink);
+  font: 600 11.5px var(--body);
+  padding: 10px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.15s;
+}
+.btn-export-sub:hover {
+  border-color: var(--accent);
+  background: rgba(74, 148, 255, 0.08);
+}
+.btn-export-sub:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.status-bar {
+  font: 500 11.5px var(--mono);
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--field);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+.status-bar.ok { color: var(--ok); border-color: rgba(61, 220, 132, 0.3); }
+.status-bar.err { color: var(--err); border-color: rgba(255, 92, 92, 0.3); }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="hero">
+    <div>
+      <div class="eyebrow">
+        <span>Asset Bench Studio</span>
+        <span class="stars">★★★★★</span>
+      </div>
+      <h1>App Store <em>Screenshot Generator</em></h1>
+      <p class="lede">Transform raw mobile screenshots into App Store Connect submission graphics with realistic titanium iPhone frames, gradient backgrounds, and bold marketing headlines.</p>
+    </div>
+    <div class="hero-badges">
+      <span class="pill"><span class="pill-dot"></span>6.9" & 6.7" Displays</span>
+      <span class="pill">App Store Connect Ready</span>
+      <span class="pill">Titanium Frames</span>
+      <span class="pill">Multi-Slide Export</span>
+    </div>
+  </header>
+
+  <main class="grid">
+    <!-- Left Column: Controls -->
+    <div class="col">
+      <!-- 1. Slide & Screenshot Input -->
+      <section class="card">
+        <div class="card-h">
+          <div class="card-num">1</div>
+          <div>
+            <h2>Slide & Screenshot Source</h2>
+            <p>Select which slide you are editing and upload phone screenshots</p>
+          </div>
+        </div>
+        <div class="card-b">
+          <div class="ctrl-group">
+            <label class="ctrl-label">Slide Deck Sequence</label>
+            <div class="slide-selector" id="slideSelector">
+              <button class="slide-btn active" data-slide="0">Slide 1</button>
+              <button class="slide-btn" data-slide="1">Slide 2</button>
+              <button class="slide-btn" data-slide="2">Slide 3</button>
+              <button class="slide-btn" data-slide="3">Slide 4</button>
+              <button class="slide-btn" data-slide="4">Slide 5</button>
+            </div>
+          </div>
+
+          <!-- Drop Zone -->
+          <div class="dropzone" id="dropzone">
+            <div class="drop-icon">📱</div>
+            <div class="drop-title">Upload Screenshot for Current Slide</div>
+            <div class="drop-hint">PNG, JPG, WebP supported • Or press Ctrl+V to paste</div>
+            <input type="file" id="fileInput" accept="image/*" style="display:none">
+          </div>
+
+          <!-- Sample Screen Templates -->
+          <div class="ctrl-group">
+            <label class="ctrl-label">Or Pick a Sample Screen Template:</label>
+            <div class="preset-screens">
+              <div class="screen-thumb active" data-screen="finance">
+                <canvas class="screen-canvas" width="60" height="110" id="cv-finance"></canvas>
+                <span class="screen-label">Fintech</span>
+              </div>
+              <div class="screen-thumb" data-screen="game">
+                <canvas class="screen-canvas" width="60" height="110" id="cv-game"></canvas>
+                <span class="screen-label">Action RPG</span>
+              </div>
+              <div class="screen-thumb" data-screen="fitness">
+                <canvas class="screen-canvas" width="60" height="110" id="cv-fitness"></canvas>
+                <span class="screen-label">Fitness</span>
+              </div>
+              <div class="screen-thumb" data-screen="notes">
+                <canvas class="screen-canvas" width="60" height="110" id="cv-notes"></canvas>
+                <span class="screen-label">Workspace</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2. Marketing Typography & Headlines -->
+      <section class="card">
+        <div class="card-h">
+          <div class="card-num">2</div>
+          <div>
+            <h2>Marketing Headlines & Captions</h2>
+            <p>Customize the headline, subtitle, and layout for this screenshot</p>
+          </div>
+        </div>
+        <div class="card-b">
+          <div class="ctrl-group">
+            <label class="ctrl-label">Main Headline</label>
+            <input type="text" class="text-input" id="headlineInput" value="Track Everything in Real-Time">
+          </div>
+          <div class="ctrl-group">
+            <label class="ctrl-label">Subtitle / Benefit</label>
+            <input type="text" class="text-input" id="subtitleInput" value="Beautiful widgets, smart alerts, and instant sync.">
+          </div>
+
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+            <div class="ctrl-group">
+              <div class="ctrl-label">
+                <span>Headline Size</span>
+                <span class="ctrl-val" id="val-fsize">76px</span>
+              </div>
+              <input type="range" class="slider" id="slider-fsize" min="48" max="110" value="76">
+            </div>
+            <div class="ctrl-group">
+              <div class="ctrl-label">
+                <span>Text Position</span>
+              </div>
+              <div class="choice-grid" style="grid-template-columns:1fr 1fr;">
+                <button class="choice-btn active" data-tpos="top">Top</button>
+                <button class="choice-btn" data-tpos="bottom">Bottom</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 3. Device Mockup & Framing -->
+      <section class="card">
+        <div class="card-h">
+          <div class="card-num">3</div>
+          <div>
+            <h2>Titanium Frame & Perspective</h2>
+            <p>Device chassis, Dynamic Island, drop shadows, and 3D tilts</p>
+          </div>
+        </div>
+        <div class="card-b">
+          <div class="ctrl-group">
+            <label class="ctrl-label">Device Mockup Style</label>
+            <div class="choice-grid" id="frameStyleChoice">
+              <button class="choice-btn active" data-frame="iphone16">iPhone 16 Pro</button>
+              <button class="choice-btn" data-frame="minimal">Minimal Bezel</button>
+              <button class="choice-btn" data-frame="none">No Frame</button>
+            </div>
+          </div>
+
+          <div class="ctrl-group">
+            <label class="ctrl-label">Chassis Material / Finish</label>
+            <div class="choice-grid" id="colorChassis">
+              <button class="choice-btn active" data-chassis="#33343d">Black Titanium</button>
+              <button class="choice-btn" data-chassis="#7d7b78">Natural Titanium</button>
+              <button class="choice-btn" data-chassis="#1e2738">Deep Blue</button>
+            </div>
+          </div>
+
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+            <div class="ctrl-group">
+              <div class="ctrl-label">
+                <span>Device Scale</span>
+                <span class="ctrl-val" id="val-dscale">86%</span>
+              </div>
+              <input type="range" class="slider" id="slider-dscale" min="60" max="110" value="86">
+            </div>
+            <div class="ctrl-group">
+              <div class="ctrl-label">
+                <span>Vertical Offset</span>
+                <span class="ctrl-val" id="val-dy">60px</span>
+              </div>
+              <input type="range" class="slider" id="slider-dy" min="-100" max="250" value="60">
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 4. Background & Gradients -->
+      <section class="card">
+        <div class="card-h">
+          <div class="card-num">4</div>
+          <div>
+            <h2>Background & Ambience</h2>
+            <p>High-contrast gradients and Apple-style chromatic lighting</p>
+          </div>
+        </div>
+        <div class="card-b">
+          <div class="ctrl-group">
+            <label class="ctrl-label">Background Atmosphere</label>
+            <div class="choice-grid" id="bgChoice">
+              <button class="choice-btn active" data-bg="gradient">Linear Gradient</button>
+              <button class="choice-btn" data-bg="mesh">Mesh Aurora</button>
+              <button class="choice-btn" data-bg="dark">Dark Studio</button>
+            </div>
+          </div>
+
+          <div class="ctrl-group">
+            <label class="ctrl-label">Gradient Color Stops</label>
+            <div class="color-row">
+              <input type="color" id="bgColor1" value="#1e3a8a">
+              <input type="color" id="bgColor2" value="#050811">
+              <div class="swatches">
+                <div class="swatch" style="background:#1e3a8a" data-c1="#1e3a8a" data-c2="#050811" title="Royal Navy"></div>
+                <div class="swatch" style="background:#581c87" data-c1="#581c87" data-c2="#0d0417" title="Cyber Violet"></div>
+                <div class="swatch" style="background:#064e3b" data-c1="#064e3b" data-c2="#02150f" title="Emerald Glow"></div>
+                <div class="swatch" style="background:#7c2d12" data-c1="#7c2d12" data-c2="#140401" title="Sunset Amber"></div>
+                <div class="swatch" style="background:#1e1e24" data-c1="#23232b" data-c2="#08080a" title="Obsidian"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- Right Column: Live Preview & App Store Export Engine -->
+    <div class="col">
+      <div class="sticky-preview">
+        <section class="card">
+          <div class="card-h">
+            <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
+              <h2>Live Marketing Preview</h2>
+              <span class="pill" id="displayResolutionBadge">6.9" Display (1320×2868)</span>
+            </div>
+          </div>
+          <div class="preview-stage">
+            <div class="preview-canvas-wrapper">
+              <canvas id="livePreviewCanvas" width="1320" height="2868"></canvas>
+            </div>
+          </div>
+        </section>
+
+        <!-- Export Hub Card -->
+        <section class="export-card">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <h2 style="font:700 14px var(--display); color:#fff;">App Store Export Hub</h2>
+              <p style="font-size:11px; color:var(--muted);">Generates Apple App Store Connect validated PNGs</p>
+            </div>
+            <span class="pill">App Store Validated</span>
+          </div>
+
+          <button class="btn-export-main" id="btnExportAll">
+            <span>📦 Download All 5 Slides (.ZIP)</span>
+          </button>
+
+          <div class="export-grid">
+            <button class="btn-export-sub" id="btnExportSlide">
+              <span>📱 Download Current Slide PNG</span>
+            </button>
+            <button class="btn-export-sub" id="btnExportAllSizes">
+              <span>📐 6.9" + 6.5" Bundle (.ZIP)</span>
+            </button>
+          </div>
+
+          <div class="status-bar" id="statusBar">
+            <span>Ready. Customize headlines or drag screenshots to update.</span>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+// Default slide configurations
+const slidesData = [
+  {
+    headline: 'Track Everything in Real-Time',
+    subtitle: 'Beautiful widgets, smart alerts, and instant sync.',
+    screenType: 'finance',
+    customImage: null,
+    bgColor1: '#1e3a8a',
+    bgColor2: '#050811'
+  },
+  {
+    headline: 'Level Up Your Game Stats',
+    subtitle: 'Compete in live seasons and unlock legendary gear.',
+    screenType: 'game',
+    customImage: null,
+    bgColor1: '#581c87',
+    bgColor2: '#0d0417'
+  },
+  {
+    headline: 'Crush Daily Fitness Goals',
+    subtitle: 'Precision heart rate zones, GPS tracking, and badges.',
+    screenType: 'fitness',
+    customImage: null,
+    bgColor1: '#064e3b',
+    bgColor2: '#02150f'
+  },
+  {
+    headline: 'Organize Your Entire Workspace',
+    subtitle: 'Fast markdown notes, tag filters, and cloud backups.',
+    screenType: 'notes',
+    customImage: null,
+    bgColor1: '#7c2d12',
+    bgColor2: '#140401'
+  },
+  {
+    headline: 'Private, Secure & Cloud Connected',
+    subtitle: 'End-to-end encryption with zero user tracking.',
+    screenType: 'finance',
+    customImage: null,
+    bgColor1: '#181820',
+    bgColor2: '#050508'
+  }
+];
+
+let currentSlideIdx = 0;
+let frameStyle = 'iphone16';
+let chassisColor = '#33343d';
+let deviceScale = 86;
+let deviceOffsetY = 60;
+let headlineSize = 76;
+let textPosition = 'top';
+let bgAtmosphere = 'gradient';
+
+const $ = id => document.getElementById(id);
+
+window.addEventListener('DOMContentLoaded', () => {
+  setupEventListeners();
+  renderScreenTemplates();
+  renderCurrentSlide();
+});
+
+function setupEventListeners() {
+  // Slide Switcher
+  $('slideSelector').addEventListener('click', e => {
+    const btn = e.target.closest('.slide-btn');
+    if (!btn) return;
+    $('slideSelector').querySelectorAll('.slide-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentSlideIdx = parseInt(btn.dataset.slide);
+    loadSlideIntoControls();
+    renderCurrentSlide();
+  });
+
+  // Headline Inputs
+  $('headlineInput').addEventListener('input', e => {
+    slidesData[currentSlideIdx].headline = e.target.value;
+    renderCurrentSlide();
+  });
+  $('subtitleInput').addEventListener('input', e => {
+    slidesData[currentSlideIdx].subtitle = e.target.value;
+    renderCurrentSlide();
+  });
+  $('slider-fsize').addEventListener('input', e => {
+    headlineSize = parseInt(e.target.value);
+    $('val-fsize').textContent = headlineSize + 'px';
+    renderCurrentSlide();
+  });
+
+  // Text Position
+  document.querySelectorAll('.choice-btn[data-tpos]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.choice-btn[data-tpos]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      textPosition = btn.dataset.tpos;
+      renderCurrentSlide();
+    });
+  });
+
+  // Frame Style
+  $('frameStyleChoice').addEventListener('click', e => {
+    const btn = e.target.closest('.choice-btn');
+    if (!btn) return;
+    $('frameStyleChoice').querySelectorAll('.choice-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    frameStyle = btn.dataset.frame;
+    renderCurrentSlide();
+  });
+
+  // Chassis Color
+  $('colorChassis').addEventListener('click', e => {
+    const btn = e.target.closest('.choice-btn');
+    if (!btn) return;
+    $('colorChassis').querySelectorAll('.choice-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    chassisColor = btn.dataset.chassis;
+    renderCurrentSlide();
+  });
+
+  // Sliders
+  $('slider-dscale').addEventListener('input', e => {
+    deviceScale = parseInt(e.target.value);
+    $('val-dscale').textContent = deviceScale + '%';
+    renderCurrentSlide();
+  });
+  $('slider-dy').addEventListener('input', e => {
+    deviceOffsetY = parseInt(e.target.value);
+    $('val-dy').textContent = deviceOffsetY + 'px';
+    renderCurrentSlide();
+  });
+
+  // Background modes
+  $('bgChoice').addEventListener('click', e => {
+    const btn = e.target.closest('.choice-btn');
+    if (!btn) return;
+    $('bgChoice').querySelectorAll('.choice-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    bgAtmosphere = btn.dataset.bg;
+    renderCurrentSlide();
+  });
+
+  // Color Pickers
+  $('bgColor1').addEventListener('input', e => {
+    slidesData[currentSlideIdx].bgColor1 = e.target.value;
+    renderCurrentSlide();
+  });
+  $('bgColor2').addEventListener('input', e => {
+    slidesData[currentSlideIdx].bgColor2 = e.target.value;
+    renderCurrentSlide();
+  });
+
+  // Swatches
+  document.querySelectorAll('.swatch[data-c1]').forEach(sw => {
+    sw.addEventListener('click', () => {
+      slidesData[currentSlideIdx].bgColor1 = sw.dataset.c1;
+      slidesData[currentSlideIdx].bgColor2 = sw.dataset.c2;
+      $('bgColor1').value = sw.dataset.c1;
+      $('bgColor2').value = sw.dataset.c2;
+      renderCurrentSlide();
+    });
+  });
+
+  // Dropzone
+  const fileInput = $('fileInput');
+  $('dropzone').addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', e => {
+    if (e.target.files && e.target.files[0]) handleUploadScreenshot(e.target.files[0]);
+  });
+
+  const drop = $('dropzone');
+  ['dragenter', 'dragover'].forEach(n => drop.addEventListener(n, e => { e.preventDefault(); drop.classList.add('dragover'); }));
+  ['dragleave', 'drop'].forEach(n => drop.addEventListener(n, e => { e.preventDefault(); drop.classList.remove('dragover'); }));
+  drop.addEventListener('drop', e => {
+    if (e.dataTransfer && e.dataTransfer.files[0]) handleUploadScreenshot(e.dataTransfer.files[0]);
+  });
+
+  // Clipboard paste
+  window.addEventListener('paste', e => {
+    const items = (e.clipboardData || e.originalEvent.clipboardData)?.items || [];
+    for (const item of items) {
+      if (item.type.indexOf('image') === 0) {
+        handleUploadScreenshot(item.getAsFile());
+        break;
+      }
+    }
+  });
+
+  // Preset Template Clicks
+  document.querySelectorAll('.screen-thumb').forEach(thumb => {
+    thumb.addEventListener('click', () => {
+      document.querySelectorAll('.screen-thumb').forEach(t => t.classList.remove('active'));
+      thumb.classList.add('active');
+      slidesData[currentSlideIdx].screenType = thumb.dataset.screen;
+      slidesData[currentSlideIdx].customImage = null;
+      renderCurrentSlide();
+      setStatus('ok', `Applied [${thumb.dataset.screen.toUpperCase()}] template to Slide ${currentSlideIdx + 1}.`);
+    });
+  });
+
+  // Export Buttons
+  $('btnExportAll').addEventListener('click', () => exportAllSlidesZIP(1320, 2868));
+  $('btnExportSlide').addEventListener('click', downloadCurrentSlidePNG);
+  $('btnExportAllSizes').addEventListener('click', exportMultiSizeBundle);
+}
+
+function loadSlideIntoControls() {
+  const s = slidesData[currentSlideIdx];
+  $('headlineInput').value = s.headline;
+  $('subtitleInput').value = s.subtitle;
+  $('bgColor1').value = s.bgColor1;
+  $('bgColor2').value = s.bgColor2;
+}
+
+function handleUploadScreenshot(file) {
+  if (!file.type.startsWith('image/')) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const img = new Image();
+    img.onload = () => {
+      slidesData[currentSlideIdx].customImage = img;
+      renderCurrentSlide();
+      setStatus('ok', `Loaded screenshot into Slide ${currentSlideIdx + 1} (${img.width}×${img.height}px).`);
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+// Draw Master 1320 × 2868 Screen (iPhone 16 Pro Max 6.9" Display)
+function renderCurrentSlide() {
+  const canvas = $('livePreviewCanvas');
+  const ctx = canvas.getContext('2d');
+  const w = 1320;
+  const h = 2868;
+  const s = slidesData[currentSlideIdx];
+
+  ctx.clearRect(0, 0, w, h);
+
+  // 1. Background
+  if (bgAtmosphere === 'mesh') {
+    ctx.fillStyle = s.bgColor2;
+    ctx.fillRect(0, 0, w, h);
+    const rad1 = ctx.createRadialGradient(300, 400, 50, 400, 500, 1000);
+    rad1.addColorStop(0, s.bgColor1);
+    rad1.addColorStop(1, 'transparent');
+    ctx.fillStyle = rad1;
+    ctx.fillRect(0, 0, w, h);
+
+    const rad2 = ctx.createRadialGradient(1000, 2400, 100, 900, 2200, 1200);
+    rad2.addColorStop(0, '#3b82f6');
+    rad2.addColorStop(1, 'transparent');
+    ctx.fillStyle = rad2;
+    ctx.fillRect(0, 0, w, h);
+  } else if (bgAtmosphere === 'dark') {
+    const rad = ctx.createRadialGradient(w / 2, 800, 100, w / 2, h / 2, 1600);
+    rad.addColorStop(0, '#1c1f2b');
+    rad.addColorStop(1, '#05070a');
+    ctx.fillStyle = rad;
+    ctx.fillRect(0, 0, w, h);
+  } else {
+    const grad = ctx.createLinearGradient(0, 0, 0, h);
+    grad.addColorStop(0, s.bgColor1);
+    grad.addColorStop(1, s.bgColor2);
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, w, h);
+  }
+
+  // 2. Headlines & Typography
+  ctx.save();
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#ffffff';
+
+  const textY = (textPosition === 'top') ? 290 : 2550;
+
+  // Main Headline
+  ctx.font = `800 ${headlineSize}px "Outfit", "SF Pro Display", sans-serif`;
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.45)';
+  ctx.shadowBlur = 24;
+  ctx.shadowOffsetY = 6;
+  ctx.fillText(s.headline, w / 2, textY);
+
+  // Subtitle
+  ctx.font = `500 ${headlineSize * 0.42}px "SF Pro Text", Inter, sans-serif`;
+  ctx.fillStyle = '#94a3b8';
+  ctx.shadowBlur = 12;
+  ctx.fillText(s.subtitle, w / 2, textY + headlineSize * 0.72);
+  ctx.restore();
+
+  // 3. Titanium Device Frame & Screen
+  ctx.save();
+  const phoneScale = deviceScale / 100;
+  const phoneW = 1040 * phoneScale;
+  const phoneH = 2260 * phoneScale;
+  const phoneX = (w - phoneW) / 2;
+  const phoneY = (textPosition === 'top') ? (650 + deviceOffsetY) : (200 + deviceOffsetY);
+
+  if (frameStyle !== 'none') {
+    // Drop Shadow
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.65)';
+    ctx.shadowBlur = 60;
+    ctx.shadowOffsetY = 40;
+
+    // Outer Chassis
+    ctx.beginPath();
+    ctx.roundRect(phoneX, phoneY, phoneW, phoneH, 110 * phoneScale);
+    ctx.fillStyle = chassisColor;
+    ctx.fill();
+    ctx.shadowColor = 'transparent';
+
+    // Titanium Rim Highlight
+    ctx.lineWidth = 6 * phoneScale;
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.18)';
+    ctx.stroke();
+
+    // Inner Screen Bezel
+    const screenPadding = (frameStyle === 'iphone16') ? (22 * phoneScale) : (10 * phoneScale);
+    const screenX = phoneX + screenPadding;
+    const screenY = phoneY + screenPadding;
+    const screenW = phoneW - screenPadding * 2;
+    const screenH = phoneH - screenPadding * 2;
+    const screenR = 90 * phoneScale;
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.roundRect(screenX, screenY, screenW, screenH, screenR);
+    ctx.clip();
+
+    // Draw Screen Content (Custom Image or Built-in Template)
+    if (s.customImage) {
+      ctx.drawImage(s.customImage, screenX, screenY, screenW, screenH);
+    } else {
+      drawTemplateScreen(ctx, s.screenType, screenX, screenY, screenW, screenH, phoneScale);
+    }
+
+    // Dynamic Island (iPhone 16 Pro)
+    if (frameStyle === 'iphone16') {
+      const islandW = 280 * phoneScale;
+      const islandH = 74 * phoneScale;
+      const islandX = screenX + (screenW - islandW) / 2;
+      const islandY = screenY + 36 * phoneScale;
+      ctx.beginPath();
+      ctx.roundRect(islandX, islandY, islandW, islandH, islandH / 2);
+      ctx.fillStyle = '#000000';
+      ctx.fill();
+
+      // Camera lens reflection
+      ctx.beginPath();
+      ctx.arc(islandX + islandW - 40 * phoneScale, islandY + islandH / 2, 14 * phoneScale, 0, Math.PI * 2);
+      ctx.fillStyle = '#0f172a';
+      ctx.fill();
+    }
+    ctx.restore();
+  } else {
+    // No frame - raw screen with subtle shadow
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+    ctx.shadowBlur = 40;
+    ctx.shadowOffsetY = 20;
+    if (s.customImage) {
+      ctx.drawImage(s.customImage, phoneX, phoneY, phoneW, phoneH);
+    } else {
+      drawTemplateScreen(ctx, s.screenType, phoneX, phoneY, phoneW, phoneH, phoneScale);
+    }
+  }
+  ctx.restore();
+}
+
+// Procedural high-fidelity UI templates
+function drawTemplateScreen(ctx, type, x, y, w, h, s) {
+  ctx.fillStyle = '#090d16';
+  ctx.fillRect(x, y, w, h);
+
+  if (type === 'finance') {
+    // Balance card
+    ctx.beginPath();
+    ctx.roundRect(x + 40 * s, y + 160 * s, w - 80 * s, 360 * s, 36 * s);
+    const cardG = ctx.createLinearGradient(x, y + 160 * s, x, y + 520 * s);
+    cardG.addColorStop(0, '#2563eb');
+    cardG.addColorStop(1, '#1d4ed8');
+    ctx.fillStyle = cardG;
+    ctx.fill();
+
+    ctx.fillStyle = 'rgba(255,255,255,0.7)';
+    ctx.font = `600 ${28 * s}px Inter, sans-serif`;
+    ctx.fillText('Total Portfolio Balance', x + 80 * s, y + 240 * s);
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = `800 ${68 * s}px Outfit, sans-serif`;
+    ctx.fillText('$148,920.45', x + 80 * s, y + 330 * s);
+
+    // Chart graph
+    ctx.beginPath();
+    ctx.moveTo(x + 40 * s, y + 750 * s);
+    ctx.bezierCurveTo(x + 200 * s, y + 680 * s, x + 400 * s, y + 840 * s, x + 600 * s, y + 640 * s);
+    ctx.bezierCurveTo(x + 750 * s, y + 500 * s, x + 850 * s, y + 600 * s, x + w - 40 * s, y + 480 * s);
+    ctx.lineWidth = 8 * s;
+    ctx.strokeStyle = '#38bdf8';
+    ctx.stroke();
+
+    // Transactions list
+    [0, 1, 2, 3].forEach(i => {
+      ctx.beginPath();
+      ctx.roundRect(x + 40 * s, y + (840 + i * 160) * s, w - 80 * s, 120 * s, 24 * s);
+      ctx.fillStyle = '#111827';
+      ctx.fill();
+    });
+  } else if (type === 'game') {
+    // Action RPG battle view
+    const gameBg = ctx.createLinearGradient(x, y, x, y + h);
+    gameBg.addColorStop(0, '#1e1b4b');
+    gameBg.addColorStop(1, '#090514');
+    ctx.fillStyle = gameBg;
+    ctx.fillRect(x, y, w, h);
+
+    // Health / Mana bars
+    ctx.fillStyle = '#ef4444';
+    ctx.roundRect(x + 50 * s, y + 160 * s, (w - 100 * s) * 0.8, 30 * s, 8 * s);
+    ctx.fill();
+
+    ctx.fillStyle = '#3b82f6';
+    ctx.roundRect(x + 50 * s, y + 210 * s, (w - 100 * s) * 0.65, 24 * s, 8 * s);
+    ctx.fill();
+
+    // Center character crest
+    ctx.beginPath();
+    ctx.arc(x + w / 2, y + h * 0.45, 200 * s, 0, Math.PI * 2);
+    ctx.fillStyle = '#312e81';
+    ctx.fill();
+    ctx.lineWidth = 10 * s;
+    ctx.strokeStyle = '#fbbf24';
+    ctx.stroke();
+
+    // Ability buttons
+    [0, 1, 2, 3].forEach(i => {
+      ctx.beginPath();
+      ctx.arc(x + 120 * s + i * 180 * s, y + h - 220 * s, 60 * s, 0, Math.PI * 2);
+      ctx.fillStyle = '#4338ca';
+      ctx.fill();
+      ctx.lineWidth = 6 * s;
+      ctx.strokeStyle = '#a5b4fc';
+      ctx.stroke();
+    });
+  } else if (type === 'fitness') {
+    // Rings
+    const cx = x + w / 2;
+    const cy = y + 480 * s;
+    const drawRing = (r, col, pct) => {
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * pct);
+      ctx.lineWidth = 36 * s;
+      ctx.lineCap = 'round';
+      ctx.strokeStyle = col;
+      ctx.stroke();
+    };
+    drawRing(220 * s, '#ef4444', 0.85);
+    drawRing(170 * s, '#22c55e', 0.7);
+    drawRing(120 * s, '#06b6d4', 0.95);
+
+    // Stats Grid
+    [0, 1, 2].forEach(i => {
+      ctx.beginPath();
+      ctx.roundRect(x + 40 * s, y + (840 + i * 200) * s, w - 80 * s, 160 * s, 28 * s);
+      ctx.fillStyle = '#18181b';
+      ctx.fill();
+    });
+  } else {
+    // Workspace Notes
+    ctx.fillStyle = '#18181b';
+    ctx.roundRect(x + 40 * s, y + 160 * s, w - 80 * s, 100 * s, 20 * s);
+    ctx.fill();
+
+    [0, 1, 2, 3, 4].forEach(i => {
+      ctx.beginPath();
+      ctx.roundRect(x + 40 * s, y + (300 + i * 200) * s, w - 80 * s, 160 * s, 24 * s);
+      ctx.fillStyle = '#111318';
+      ctx.fill();
+    });
+  }
+}
+
+function renderScreenTemplates() {
+  const drawThumb = (id, type) => {
+    const c = $(id);
+    if (!c) return;
+    const ctx = c.getContext('2d');
+    drawTemplateScreen(ctx, type, 0, 0, 60, 110, 60 / 1040);
+  };
+  drawThumb('cv-finance', 'finance');
+  drawThumb('cv-game', 'game');
+  drawThumb('cv-fitness', 'fitness');
+  drawThumb('cv-notes', 'notes');
+}
+
+// Download Current Slide as 1320×2868 PNG
+function downloadCurrentSlidePNG() {
+  const canvas = $('livePreviewCanvas');
+  const a = document.createElement('a');
+  a.href = canvas.toDataURL('image/png');
+  a.download = `app-store-slide-${currentSlideIdx + 1}-1320x2868.png`;
+  a.click();
+  setStatus('ok', `Downloaded Slide ${currentSlideIdx + 1} (1320×2868 PNG).`);
+}
+
+// Export All 5 Slides in a ZIP
+async function exportAllSlidesZIP(targetW, targetH) {
+  if (typeof JSZip === 'undefined') {
+    setStatus('err', 'ZIP library is loading. Please try again.');
+    return;
+  }
+  const zip = new JSZip();
+  const folder = zip.folder(`AppStore_Screenshots_${targetW}x${targetH}`);
+  setStatus('', 'Rendering all 5 marketing slides…');
+
+  const oldIdx = currentSlideIdx;
+
+  for (let i = 0; i < slidesData.length; i++) {
+    currentSlideIdx = i;
+    renderCurrentSlide();
+    const canvas = $('livePreviewCanvas');
+    const blob = await new Promise(res => canvas.toBlob(res, 'image/png'));
+    folder.file(`0${i + 1}_screenshot_${targetW}x${targetH}.png`, blob);
+  }
+
+  currentSlideIdx = oldIdx;
+  renderCurrentSlide();
+
+  const zipBlob = await zip.generateAsync({ type: 'blob' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(zipBlob);
+  a.download = `AppStore_Screenshots_${targetW}x${targetH}.zip`;
+  a.click();
+  setStatus('ok', `Exported AppStore_Screenshots_${targetW}x${targetH}.zip (${(zipBlob.size / 1024 / 1024).toFixed(1)} MB)!`);
+}
+
+// Export Multi-Size Bundle (6.9" and 6.5")
+async function exportMultiSizeBundle() {
+  if (typeof JSZip === 'undefined') return;
+  const zip = new JSZip();
+  setStatus('', 'Generating multi-display App Store bundle…');
+
+  const oldIdx = currentSlideIdx;
+  const f69 = zip.folder("6.9_inch_Display_1320x2868");
+  const f65 = zip.folder("6.5_inch_Display_1242x2688");
+
+  for (let i = 0; i < slidesData.length; i++) {
+    currentSlideIdx = i;
+    renderCurrentSlide();
+    const canvas = $('livePreviewCanvas');
+
+    // 6.9"
+    const b69 = await new Promise(res => canvas.toBlob(res, 'image/png'));
+    f69.file(`screenshot_slide_${i + 1}.png`, b69);
+
+    // 6.5" resize
+    const c65 = document.createElement('canvas');
+    c65.width = 1242;
+    c65.height = 2688;
+    const ctx65 = c65.getContext('2d');
+    ctx65.imageSmoothingQuality = 'high';
+    ctx65.drawImage(canvas, 0, 0, 1242, 2688);
+    const b65 = await new Promise(res => c65.toBlob(res, 'image/png'));
+    f65.file(`screenshot_slide_${i + 1}.png`, b65);
+  }
+
+  currentSlideIdx = oldIdx;
+  renderCurrentSlide();
+
+  const content = await zip.generateAsync({ type: 'blob' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(content);
+  a.download = `AppStore_Connect_Screenshots_Bundle.zip`;
+  a.click();
+  setStatus('ok', `Exported complete AppStore_Connect_Screenshots_Bundle.zip!`);
+}
+
+function setStatus(type, msg) {
+  const bar = $('statusBar');
+  bar.className = 'status-bar ' + (type || '');
+  bar.textContent = msg;
+}
+</script>
+</body>
+</html>

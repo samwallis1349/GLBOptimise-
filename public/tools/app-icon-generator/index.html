@@ -1,0 +1,2751 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>iOS App Icon Generator & AI Prompt Crafter — Asset Bench</title>
+<meta name="robots" content="noindex, indexifembedded">
+<script src="./jszip.min.js"></script>
+<style>
+:root {
+  color-scheme: dark;
+  --bg: #000000;
+  --panel: #111114;
+  --tile: #17171c;
+  --field: #0d0d10;
+  --border: #24242c;
+  --border-focus: #3d3d4a;
+  --ink: #f5f5f7;
+  --text: #d2d2d8;
+  --muted: #868692;
+  --dim: #545462;
+  --accent: #4a94ff;
+  --accent-glow: rgba(74, 148, 255, 0.25);
+  --accent-deep: #102642;
+  --gold: #ffb800;
+  --gold-glow: rgba(255, 184, 0, 0.25);
+  --ok: #3ddc84;
+  --err: #ff5c5c;
+  --purple: #a855f7;
+  --display: "Outfit", "SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --body: "Inter", "SF Pro Text", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font: 13px/1.5 var(--body);
+  padding: 20px 16px 64px;
+  min-height: 100vh;
+}
+[hidden] { display: none !important; }
+
+/* Layout */
+.wrap {
+  max-width: 1380px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.hero {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px 24px;
+  padding-bottom: 4px;
+}
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font: 700 10.5px var(--mono);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 8px;
+}
+
+.stars {
+  color: var(--gold);
+  letter-spacing: 2px;
+  font-size: 13px;
+}
+
+h1 {
+  font: 800 clamp(30px, 4.2vw, 48px)/1 var(--display);
+  letter-spacing: -0.035em;
+  color: var(--ink);
+}
+h1 em {
+  font-style: normal;
+  background: linear-gradient(135deg, #60a5fa, #a855f7);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.lede {
+  margin-top: 10px;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--muted);
+  max-width: 74ch;
+}
+
+.hero-badges {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 6px 12px;
+  background: var(--panel);
+}
+.pill-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--ok);
+  box-shadow: 0 0 6px rgba(61, 220, 132, 0.6);
+}
+
+/* 2-Column Grid */
+.grid {
+  display: grid;
+  grid-template-columns: minmax(380px, 1.1fr) minmax(420px, 1.25fr);
+  gap: 20px;
+  align-items: start;
+}
+@media (max-width: 1060px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.col {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+/* Card Design */
+.card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+.card-h {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: rgba(255, 255, 255, 0.015);
+  border-bottom: 1px solid var(--border);
+}
+.card-num {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  background: var(--accent-deep);
+  border: 1px solid rgba(74, 148, 255, 0.4);
+  color: var(--accent);
+  display: grid;
+  place-items: center;
+  font: 700 11px var(--mono);
+}
+.card-h h2 {
+  font: 700 14px var(--display);
+  color: var(--ink);
+  letter-spacing: -0.01em;
+}
+.card-h p {
+  font-size: 11px;
+  color: var(--muted);
+}
+.card-b {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Tabs */
+.tab-row {
+  display: flex;
+  background: var(--field);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 3px;
+  gap: 3px;
+}
+.tab-btn {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font: 600 11.5px var(--body);
+  padding: 7px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.tab-btn:hover { color: var(--ink); }
+.tab-btn.active {
+  background: var(--tile);
+  color: var(--ink);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* AI Prompt Studio */
+.prompt-box {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.prompt-area {
+  width: 100%;
+  min-height: 68px;
+  background: var(--field);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  color: var(--ink);
+  font: 13px/1.4 var(--body);
+  resize: vertical;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.prompt-area:focus {
+  border-color: var(--accent);
+}
+.prompt-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.prompt-pill {
+  font: 500 11px var(--body);
+  color: var(--muted);
+  background: var(--tile);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 5px 9px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.prompt-pill:hover {
+  color: var(--ink);
+  border-color: var(--accent);
+  background: rgba(74, 148, 255, 0.08);
+}
+
+/* Style Presets Grid */
+.styles-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+}
+@media (max-width: 700px) {
+  .styles-grid { grid-template-columns: repeat(3, 1fr); }
+}
+.style-chip {
+  background: var(--field);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 6px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  text-align: center;
+  transition: all 0.15s;
+}
+.style-chip:hover {
+  border-color: var(--border-focus);
+  background: var(--tile);
+}
+.style-chip.active {
+  border-color: var(--accent);
+  background: linear-gradient(180deg, var(--accent-deep), rgba(16, 38, 66, 0.4));
+  box-shadow: 0 0 12px rgba(74, 148, 255, 0.2);
+}
+.style-icon { font-size: 16px; }
+.style-name {
+  font: 600 10.5px var(--body);
+  color: var(--ink);
+}
+.style-desc {
+  font-size: 9px;
+  color: var(--muted);
+}
+
+/* Generator Action Row */
+.gen-bar {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  padding-top: 4px;
+}
+.engine-select {
+  background: var(--field);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font: 500 11.5px var(--body);
+  padding: 7px 10px;
+  border-radius: 6px;
+  outline: none;
+}
+.btn-prompt-gen {
+  background: linear-gradient(135deg, #2563eb, #7c3aed);
+  border: none;
+  color: #fff;
+  font: 700 12.5px var(--display);
+  padding: 9px 18px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  transition: all 0.15s;
+  box-shadow: 0 2px 10px rgba(124, 58, 237, 0.35);
+}
+.btn-prompt-gen:hover {
+  opacity: 0.94;
+  transform: translateY(-1px);
+}
+
+/* Prompt Result Card */
+.prompt-result {
+  background: #090a0d;
+  border: 1px solid #232736;
+  border-radius: 10px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.prompt-text-display {
+  font: 500 12px/1.55 var(--mono);
+  color: #e2e8f0;
+  background: var(--field);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 12px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  user-select: all;
+}
+.prompt-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.btn-copy {
+  background: var(--tile);
+  border: 1px solid var(--border);
+  color: var(--ink);
+  font: 600 11.5px var(--body);
+  padding: 6px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s;
+}
+.btn-copy:hover {
+  border-color: var(--accent);
+  background: rgba(74, 148, 255, 0.1);
+}
+.btn-copy.copied {
+  background: rgba(61, 220, 132, 0.15);
+  border-color: var(--ok);
+  color: var(--ok);
+}
+.prompt-tip {
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+/* Drop Zone */
+.dropzone {
+  border: 1.5px dashed #2f3342;
+  border-radius: 12px;
+  padding: 22px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: radial-gradient(circle at 50% 20%, rgba(74, 148, 255, 0.05), transparent 70%), var(--tile);
+  cursor: pointer;
+  text-align: center;
+  transition: border-color 0.2s, background-color 0.2s;
+}
+.dropzone:hover, .dropzone.dragover {
+  border-color: var(--accent);
+  background-color: rgba(74, 148, 255, 0.08);
+}
+.drop-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  background: var(--accent-deep);
+  border: 1px solid rgba(74, 148, 255, 0.4);
+  display: grid;
+  place-items: center;
+  color: var(--accent);
+  font-size: 20px;
+}
+.drop-title {
+  font-weight: 600;
+  color: var(--ink);
+  font-size: 13px;
+}
+.drop-hint {
+  font-size: 11px;
+  color: var(--muted);
+}
+.meta-chip {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: var(--field);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font: 500 11px var(--mono);
+  color: var(--muted);
+}
+
+/* Presets Gallery */
+.preset-cards {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 6px;
+}
+@media (max-width: 600px) {
+  .preset-cards { grid-template-columns: repeat(3, 1fr); }
+}
+.preset-thumb {
+  background: var(--field);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.preset-thumb:hover, .preset-thumb.active {
+  border-color: var(--accent);
+  background: var(--tile);
+  transform: translateY(-1px);
+}
+.preset-thumb.active {
+  box-shadow: 0 0 10px rgba(74, 148, 255, 0.25);
+}
+.preset-preview {
+  width: 42px;
+  height: 42px;
+  border-radius: 9px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+}
+.preset-label {
+  font: 600 10px var(--body);
+  color: var(--text);
+  white-space: nowrap;
+}
+
+/* Control Elements */
+.ctrl-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.ctrl-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font: 600 11.5px var(--body);
+  color: var(--text);
+}
+.ctrl-val {
+  font: 500 11px var(--mono);
+  color: var(--muted);
+}
+.shape-row {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+}
+.shape-btn {
+  background: var(--field);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 4px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  color: var(--muted);
+  font: 600 10.5px var(--body);
+  transition: all 0.15s;
+}
+.shape-btn:hover {
+  color: var(--ink);
+  border-color: var(--border-focus);
+}
+.shape-btn.active {
+  border-color: var(--accent);
+  color: var(--ink);
+  background: var(--accent-deep);
+}
+.shape-icon {
+  width: 20px;
+  height: 20px;
+  border: 1.5px solid currentColor;
+}
+.shape-squircle { border-radius: 6px; }
+.shape-roundrect { border-radius: 4px; }
+.shape-circle { border-radius: 50%; }
+.shape-hex { clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%); background: currentColor; width: 18px; height: 18px; border: none; }
+.shape-square { border-radius: 0; }
+
+.slider {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: #202028;
+  outline: none;
+}
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--accent);
+  cursor: pointer;
+  box-shadow: 0 0 8px rgba(74, 148, 255, 0.6);
+  border: 2px solid #fff;
+}
+
+/* Background styles */
+.bg-modes {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+.bg-btn {
+  background: var(--field);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 7px 8px;
+  font: 600 11px var(--body);
+  color: var(--muted);
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.15s;
+}
+.bg-btn:hover { color: var(--ink); }
+.bg-btn.active {
+  border-color: var(--accent);
+  color: var(--ink);
+  background: var(--tile);
+}
+
+.color-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+input[type="color"] {
+  width: 36px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: transparent;
+  cursor: pointer;
+}
+.swatches {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.swatch {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+.swatch:hover { transform: scale(1.15); }
+
+/* Right Column (Preview & Exports) */
+.sticky-preview {
+  position: sticky;
+  top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.sim-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.sim-nav {
+  display: flex;
+  background: var(--field);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 3px;
+  gap: 3px;
+}
+.sim-btn {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font: 600 11px var(--body);
+  padding: 5px 9px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.sim-btn:hover { color: var(--ink); }
+.sim-btn.active {
+  background: var(--tile);
+  color: var(--ink);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Sim Stage */
+.sim-stage {
+  background: #08080a;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  min-height: 440px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: inset 0 2px 14px rgba(0, 0, 0, 0.8);
+}
+
+/* iPhone Mockup */
+.iphone-frame {
+  width: 280px;
+  height: 520px;
+  background: #0c0d12;
+  border-radius: 44px;
+  border: 3.5px solid #33343d;
+  box-shadow: 0 16px 50px rgba(0, 0, 0, 0.8), inset 0 0 0 2px #181920;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(160deg, #182236 0%, #0d121c 50%, #0a0c10 100%);
+}
+.iphone-island {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80px;
+  height: 22px;
+  background: #000;
+  border-radius: 14px;
+  z-index: 10;
+}
+.iphone-status {
+  padding: 12px 18px 0;
+  display: flex;
+  justify-content: space-between;
+  font: 600 11px var(--mono);
+  color: #fff;
+  z-index: 9;
+}
+.iphone-body {
+  flex: 1;
+  padding: 30px 18px 12px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+.app-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px 12px;
+  padding-top: 10px;
+}
+.app-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  text-align: center;
+}
+.mock-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 11px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+.my-app-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 11px;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.5);
+  animation: pulseHighlight 3s infinite alternate;
+}
+@keyframes pulseHighlight {
+  from { box-shadow: 0 4px 12px rgba(74, 148, 255, 0.3); }
+  to { box-shadow: 0 6px 20px rgba(168, 85, 247, 0.5); }
+}
+.app-name {
+  font: 500 10px var(--body);
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 52px;
+}
+.iphone-dock {
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(20px);
+  border-radius: 26px;
+  padding: 8px 14px;
+  display: flex;
+  justify-content: space-around;
+  margin-bottom: 8px;
+}
+
+/* App Store Mockup */
+.appstore-frame {
+  width: 320px;
+  background: #141418;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
+}
+.appstore-top {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+.appstore-icon {
+  width: 84px;
+  height: 84px;
+  border-radius: 19px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+}
+.appstore-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.appstore-title {
+  font: 700 16px var(--display);
+  color: #fff;
+}
+.appstore-sub {
+  font-size: 11px;
+  color: var(--muted);
+}
+.appstore-btn {
+  align-self: flex-start;
+  margin-top: 6px;
+  background: #2563eb;
+  color: #fff;
+  font: 700 12px var(--body);
+  padding: 5px 18px;
+  border-radius: 14px;
+  border: none;
+}
+
+/* Game UI Mockup */
+.gameui-frame {
+  width: 340px;
+  background: #0d0f14;
+  border-radius: 14px;
+  border: 2px solid #232733;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  background-image: radial-gradient(#181d28 1px, transparent 1px);
+  background-size: 14px 14px;
+}
+.gameui-title {
+  font: 700 11px var(--mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--gold);
+  display: flex;
+  justify-content: space-between;
+}
+.inventory-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+.inv-slot {
+  aspect-ratio: 1;
+  background: #131720;
+  border: 1.5px solid #283042;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  position: relative;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.6);
+}
+.inv-slot.slotted {
+  border-color: #3b82f6;
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.15), #131720 70%);
+}
+.inv-slot.rarity-legendary { border-color: #ffb800; box-shadow: 0 0 10px rgba(255, 184, 0, 0.4); }
+.inv-slot.rarity-epic { border-color: #a855f7; box-shadow: 0 0 10px rgba(168, 85, 247, 0.4); }
+.inv-slot.rarity-rare { border-color: #3b82f6; box-shadow: 0 0 10px rgba(59, 130, 246, 0.4); }
+.inv-slot.rarity-uncommon { border-color: #10b981; }
+.inv-slot.rarity-common { border-color: #64748b; }
+.inv-badge {
+  position: absolute;
+  bottom: 3px;
+  right: 5px;
+  font: 700 9px var(--mono);
+  color: #fff;
+  text-shadow: 0 1px 2px #000;
+}
+.hotbar {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  padding-top: 6px;
+  border-top: 1px solid #1e2433;
+}
+
+/* Watch Mockup */
+.watch-frame {
+  width: 220px;
+  height: 260px;
+  background: #1b1c20;
+  border-radius: 54px;
+  border: 6px solid #42444d;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.8), inset 0 0 0 2px #101114;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+.watch-icon {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
+}
+.watch-time {
+  font: 700 24px var(--mono);
+  color: #fff;
+}
+
+/* Asset Grid View */
+.asset-sheet {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(76px, 1fr));
+  gap: 12px;
+  width: 100%;
+  max-height: 400px;
+  overflow-y: auto;
+  padding: 8px;
+}
+.asset-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  background: var(--tile);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 6px;
+}
+.asset-img {
+  max-width: 48px;
+  max-height: 48px;
+  object-fit: contain;
+}
+.asset-dim {
+  font: 600 10px var(--mono);
+  color: var(--muted);
+}
+
+/* Export Cards */
+.export-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.btn-export-main {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 14px 20px;
+  font: 700 14px var(--display);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.35);
+  transition: all 0.15s ease;
+}
+.btn-export-main:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.45);
+}
+.btn-export-main:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+.export-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+.btn-export-sub {
+  background: var(--tile);
+  border: 1px solid var(--border);
+  color: var(--ink);
+  font: 600 11.5px var(--body);
+  padding: 10px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.15s;
+}
+.btn-export-sub:hover {
+  border-color: var(--accent);
+  background: rgba(74, 148, 255, 0.08);
+}
+.btn-export-sub:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Status Bar */
+.status-bar {
+  font: 500 11.5px var(--mono);
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--field);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+.status-bar.ok { color: var(--ok); border-color: rgba(61, 220, 132, 0.3); }
+.status-bar.err { color: var(--err); border-color: rgba(255, 92, 92, 0.3); }
+
+/* Hidden Master Canvas */
+#masterCanvas { display: none; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <!-- Hero Section -->
+  <header class="hero">
+    <div>
+      <div class="eyebrow">
+        <span>Asset Bench Studio</span>
+        <span class="stars">★★★★★</span>
+      </div>
+      <h1>iOS <em>App Icon Generator</em></h1>
+      <p class="lede">Generate optimized AI image prompts or upload artwork → customize squircle framing, borders, badges & layers → export ready-to-use <strong>Xcode AppIcon.appiconset</strong>, <strong>Android mipmaps</strong>, and <strong>Unity/Godot game sprite sheets</strong>.</p>
+    </div>
+    <div class="hero-badges">
+      <span class="pill"><span class="pill-dot"></span>AI Prompt Crafter</span>
+      <span class="pill">Xcode 15/16 Ready</span>
+      <span class="pill">Android Res</span>
+      <span class="pill">Game UI Sprites</span>
+    </div>
+  </header>
+
+  <!-- 2-Column Work Area -->
+  <main class="grid">
+    <!-- Left Column: Source & Customization Controls -->
+    <div class="col">
+      <!-- 1. AI Prompt Crafter & Artwork Card -->
+      <section class="card">
+        <div class="card-h">
+          <div class="card-num">1</div>
+          <div>
+            <h2>AI Prompt Crafter & Artwork Source</h2>
+            <p>Engineer high-converting AI prompts, upload icons, or pick sample vector art</p>
+          </div>
+        </div>
+        <div class="card-b">
+          <!-- Source Tabs -->
+          <div class="tab-row" id="sourceTabs">
+            <button class="tab-btn active" data-tab="ai">✨ AI Prompt Crafter</button>
+            <button class="tab-btn" data-tab="upload">📁 Upload Icon</button>
+            <button class="tab-btn" data-tab="presets">🎨 Sample Art</button>
+          </div>
+
+          <!-- Tab Pane: AI Prompt Crafter -->
+          <div id="pane-ai">
+            <div class="prompt-box">
+              <label class="ctrl-label" style="margin-bottom:-4px;">
+                <span>Describe your app or game concept:</span>
+                <span class="ctrl-val">Free & Zero-Cost</span>
+              </label>
+              <textarea class="prompt-area" id="promptInput" placeholder="e.g., 'RPG sword with glowing blue magic'">RPG sword with glowing blue magic</textarea>
+              
+              <!-- Quick Prompt Pills -->
+              <div class="prompt-pills">
+                <span class="prompt-pill" data-p="RPG sword with glowing blue magic, epic game icon">⚔️ Magic Sword</span>
+                <span class="prompt-pill" data-p="health potion glass vial with glowing crimson elixir">🧪 Health Potion</span>
+                <span class="prompt-pill" data-p="cyberpunk neon kitty mascot with holographic visor">🐱 Cyber Cat</span>
+                <span class="prompt-pill" data-p="golden paladin divine crest shield with celestial wings">🛡️ Paladin Shield</span>
+                <span class="prompt-pill" data-p="fintech crypto lightning coin in deep space neon cyan">⚡ Fintech Coin</span>
+                <span class="prompt-pill" data-p="futuristic quantum crystal power core with floating runes">💎 Energy Core</span>
+              </div>
+
+              <!-- Style Presets (Required: 3D Render, Glassmorphism, Flat Vector, Pixel Art, Gradient) -->
+              <div class="ctrl-group" style="margin-top: 4px;">
+                <label class="ctrl-label">Visual Style Preset</label>
+                <div class="styles-grid" id="stylePresets">
+                  <div class="style-chip active" data-style="3d">
+                    <span class="style-icon">🧊</span>
+                    <span class="style-name">3D Render</span>
+                    <span class="style-desc">Glossy & raytraced</span>
+                  </div>
+                  <div class="style-chip" data-style="glass">
+                    <span class="style-icon">🪟</span>
+                    <span class="style-name">Glassmorphism</span>
+                    <span class="style-desc">Frosted & rim</span>
+                  </div>
+                  <div class="style-chip" data-style="flat">
+                    <span class="style-icon">📐</span>
+                    <span class="style-name">Flat Vector</span>
+                    <span class="style-desc">Crisp minimalism</span>
+                  </div>
+                  <div class="style-chip" data-style="pixel">
+                    <span class="style-icon">👾</span>
+                    <span class="style-name">Pixel Art</span>
+                    <span class="style-desc">16-bit retro</span>
+                  </div>
+                  <div class="style-chip" data-style="gradient">
+                    <span class="style-icon">🌈</span>
+                    <span class="style-name">Gradient</span>
+                    <span class="style-desc">Chromatic mesh</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Target Model / Engine -->
+              <div class="gen-bar">
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <span style="font-size:11px; color:var(--muted);">Target Model:</span>
+                  <select class="engine-select" id="targetEngine">
+                    <option value="midjourney">Midjourney v6</option>
+                    <option value="dalle">DALL-E 3 / ChatGPT</option>
+                    <option value="flux">Flux.1 / Stable Diffusion XL</option>
+                  </select>
+                </div>
+                <button class="btn-prompt-gen" id="btnGenPrompt">
+                  <span>✨ Generate AI Prompt</span>
+                </button>
+              </div>
+
+              <!-- Engineered Prompt Result Card -->
+              <div class="prompt-result" id="promptResultBox">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                  <strong style="color:var(--gold); font-size:11.5px; text-transform:uppercase; letter-spacing:0.1em;" id="resultHeader">
+                    🚀 Generated Prompt (Midjourney v6)
+                  </strong>
+                  <button class="btn-copy" id="btnCopyPrompt">
+                    <span>📋 Copy Prompt</span>
+                  </button>
+                </div>
+                <div class="prompt-text-display" id="displayPromptText"></div>
+                <div class="prompt-tip">
+                  💡 <strong>Workflow:</strong> Copy and paste this prompt into your preferred AI image generator (Midjourney, DALL-E, or Flux). Once generated, switch to <strong>Upload Icon</strong> to customize squircle framing and export for iOS & Android!
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tab Pane: Upload -->
+          <div id="pane-upload" hidden>
+            <div class="dropzone" id="dropzone">
+              <div class="drop-icon">⬆️</div>
+              <div class="drop-title">Drop your generated 1024×1024 icon or click to browse</div>
+              <div class="drop-hint">PNG, JPG, SVG, WebP supported • Or press Ctrl+V to paste</div>
+              <input type="file" id="fileInput" accept="image/*" style="display:none">
+            </div>
+            <div class="meta-chip" id="fileMetaBar" style="margin-top:8px;">
+              <span id="fileNameLabel">Active: RPG Sword</span>
+              <span id="fileDimLabel">1024×1024 px</span>
+            </div>
+          </div>
+
+          <!-- Tab Pane: Presets -->
+          <div id="pane-presets" hidden>
+            <div class="preset-cards">
+              <div class="preset-thumb active" data-preset="sword" title="RPG Magic Sword">
+                <canvas class="preset-preview" width="80" height="80" id="pv-sword"></canvas>
+                <span class="preset-label">⚔️ Sword</span>
+              </div>
+              <div class="preset-thumb" data-preset="potion" title="Health Elixir Flask">
+                <canvas class="preset-preview" width="80" height="80" id="pv-potion"></canvas>
+                <span class="preset-label">🧪 Elixir</span>
+              </div>
+              <div class="preset-thumb" data-preset="cat" title="Cyberpunk Cat">
+                <canvas class="preset-preview" width="80" height="80" id="pv-cat"></canvas>
+                <span class="preset-label">🐱 Cyber Cat</span>
+              </div>
+              <div class="preset-thumb" data-preset="shield" title="Golden Aegis Shield">
+                <canvas class="preset-preview" width="80" height="80" id="pv-shield"></canvas>
+                <span class="preset-label">🛡️ Shield</span>
+              </div>
+              <div class="preset-thumb" data-preset="coin" title="Fintech Lightning Coin">
+                <canvas class="preset-preview" width="80" height="80" id="pv-coin"></canvas>
+                <span class="preset-label">⚡ Coin</span>
+              </div>
+              <div class="preset-thumb" data-preset="core" title="Quantum Core">
+                <canvas class="preset-preview" width="80" height="80" id="pv-core"></canvas>
+                <span class="preset-label">💎 Core</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2. Framing & Masking Card -->
+      <section class="card">
+        <div class="card-h">
+          <div class="card-num">2</div>
+          <div>
+            <h2>Custom Framing & Masks</h2>
+            <p>Apple squircle, adaptive geometry, insets and positioning</p>
+          </div>
+        </div>
+        <div class="card-b">
+          <!-- Shape Selection -->
+          <div class="ctrl-group">
+            <label class="ctrl-label">Icon Mask Shape</label>
+            <div class="shape-row" id="shapeSelector">
+              <button class="shape-btn active" data-shape="squircle">
+                <div class="shape-icon shape-squircle"></div>
+                <span>Squircle</span>
+              </button>
+              <button class="shape-btn" data-shape="roundrect">
+                <div class="shape-icon shape-roundrect"></div>
+                <span>Rounded</span>
+              </button>
+              <button class="shape-btn" data-shape="circle">
+                <div class="shape-icon shape-circle"></div>
+                <span>Circle</span>
+              </button>
+              <button class="shape-btn" data-shape="hex">
+                <div class="shape-icon shape-hex"></div>
+                <span>Shield</span>
+              </button>
+              <button class="shape-btn" data-shape="square">
+                <div class="shape-icon shape-square"></div>
+                <span>Square</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Padding / Inset Slider -->
+          <div class="ctrl-group">
+            <div class="ctrl-label">
+              <span>Padding / Inset Margin</span>
+              <span class="ctrl-val" id="val-inset">10%</span>
+            </div>
+            <input type="range" class="slider" id="slider-inset" min="0" max="35" value="10">
+          </div>
+
+          <!-- Subject Scale Slider -->
+          <div class="ctrl-group">
+            <div class="ctrl-label">
+              <span>Subject Scale</span>
+              <span class="ctrl-val" id="val-scale">100%</span>
+            </div>
+            <input type="range" class="slider" id="slider-scale" min="50" max="150" value="100">
+          </div>
+
+          <!-- Offset X and Offset Y -->
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+            <div class="ctrl-group">
+              <div class="ctrl-label">
+                <span>Pan X</span>
+                <span class="ctrl-val" id="val-panx">0px</span>
+              </div>
+              <input type="range" class="slider" id="slider-panx" min="-120" max="120" value="0">
+            </div>
+            <div class="ctrl-group">
+              <div class="ctrl-label">
+                <span>Pan Y</span>
+                <span class="ctrl-val" id="val-pany">0px</span>
+              </div>
+              <input type="range" class="slider" id="slider-pany" min="-120" max="120" value="0">
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 3. Layering & Backgrounds Card -->
+      <section class="card">
+        <div class="card-h">
+          <div class="card-num">3</div>
+          <div>
+            <h2>Background & Stroke Layers</h2>
+            <p>Gradients, solid backdrops, borders and metallic rims</p>
+          </div>
+        </div>
+        <div class="card-b">
+          <!-- Background Mode -->
+          <div class="ctrl-group">
+            <label class="ctrl-label">Background Style</label>
+            <div class="bg-modes" id="bgModes">
+              <button class="bg-btn active" data-bg="gradient">Linear Grad</button>
+              <button class="bg-btn" data-bg="radial">Radial Grad</button>
+              <button class="bg-btn" data-bg="mesh">Mesh Aurora</button>
+              <button class="bg-btn" data-bg="solid">Solid Color</button>
+              <button class="bg-btn" data-bg="dark">Dark Studio</button>
+              <button class="bg-btn" data-bg="transparent">Transparent</button>
+            </div>
+          </div>
+
+          <!-- Color pickers -->
+          <div id="colorControls">
+            <div class="ctrl-group">
+              <div class="ctrl-label">
+                <span>Gradient Color Stops</span>
+              </div>
+              <div class="color-row">
+                <input type="color" id="bgColor1" value="#1e3a8a">
+                <input type="color" id="bgColor2" value="#090d16">
+                <div class="swatches">
+                  <div class="swatch" style="background:#1e3a8a" data-c1="#1e3a8a" data-c2="#090d16" title="Deep Blue"></div>
+                  <div class="swatch" style="background:#581c87" data-c1="#581c87" data-c2="#0f071a" title="Cyber Violet"></div>
+                  <div class="swatch" style="background:#064e3b" data-c1="#064e3b" data-c2="#021c14" title="Emerald Glow"></div>
+                  <div class="swatch" style="background:#7c2d12" data-c1="#7c2d12" data-c2="#1c0702" title="Crimson Ember"></div>
+                  <div class="swatch" style="background:#18181b" data-c1="#27272a" data-c2="#09090b" title="Obsidian"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Border Stroke -->
+          <div class="ctrl-group">
+            <div class="ctrl-label">
+              <span>Border Stroke Width</span>
+              <span class="ctrl-val" id="val-stroke">4px</span>
+            </div>
+            <input type="range" class="slider" id="slider-stroke" min="0" max="24" value="4">
+          </div>
+
+          <div class="color-row">
+            <span style="font-size:11px; color:var(--muted)">Stroke Color:</span>
+            <input type="color" id="strokeColor" value="#3b82f6">
+            <div class="swatches">
+              <div class="swatch" style="background:#3b82f6" data-sc="#3b82f6" title="Neon Blue"></div>
+              <div class="swatch" style="background:#ffb800" data-sc="#ffb800" title="Gold"></div>
+              <div class="swatch" style="background:#a855f7" data-sc="#a855f7" title="Purple"></div>
+              <div class="swatch" style="background:#ffffff" data-sc="#ffffff" title="White"></div>
+              <div class="swatch" style="background:#10b981" data-sc="#10b981" title="Emerald"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 4. Badges & Polish Card -->
+      <section class="card">
+        <div class="card-h">
+          <div class="card-num">4</div>
+          <div>
+            <h2>Badges & Overlays</h2>
+            <p>Notification counts, status badges, and Apple gloss reflections</p>
+          </div>
+        </div>
+        <div class="card-b">
+          <!-- Badge Enable -->
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-weight:600; font-size:12px;">Notification / Status Badge</span>
+            <label style="display:inline-flex; align-items:center; gap:6px; cursor:pointer;">
+              <input type="checkbox" id="checkBadge">
+              <span style="font-size:11.5px; color:var(--muted);">Enable Badge</span>
+            </label>
+          </div>
+
+          <div id="badgeControls" hidden>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+              <div class="ctrl-group">
+                <label class="ctrl-label">Badge Text / Icon</label>
+                <input type="text" id="badgeText" value="1" style="background:var(--field); border:1px solid var(--border); border-radius:6px; padding:6px 10px; color:#fff; font-family:var(--mono);">
+              </div>
+              <div class="ctrl-group">
+                <label class="ctrl-label">Position</label>
+                <select id="badgePos" style="background:var(--field); border:1px solid var(--border); border-radius:6px; padding:6px; color:#fff;">
+                  <option value="tr">Top-Right</option>
+                  <option value="tl">Top-Left</option>
+                  <option value="br">Bottom-Right</option>
+                  <option value="bl">Bottom-Left</option>
+                </select>
+              </div>
+            </div>
+            <div class="color-row" style="margin-top:8px;">
+              <span style="font-size:11px; color:var(--muted)">Badge Color:</span>
+              <input type="color" id="badgeBgColor" value="#ef4444">
+              <span style="font-size:11px; color:var(--muted); margin-left:8px;">Text Color:</span>
+              <input type="color" id="badgeTextColor" value="#ffffff">
+            </div>
+          </div>
+
+          <!-- Apple Gloss Toggle -->
+          <div style="display:flex; justify-content:space-between; align-items:center; padding-top:6px; border-top:1px solid var(--border);">
+            <div>
+              <div style="font-weight:600; font-size:12px;">Apple Gloss Reflection</div>
+              <div style="font-size:10.5px; color:var(--muted);">Diagonal curved glass shine overlay</div>
+            </div>
+            <label style="cursor:pointer;">
+              <input type="checkbox" id="checkGloss" checked>
+            </label>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- Right Column: Interactive Simulators & Multi-Platform Export -->
+    <div class="col">
+      <div class="sticky-preview">
+        <!-- Simulator Card -->
+        <section class="card">
+          <div class="card-h">
+            <div class="sim-header" style="width:100%;">
+              <div style="display:flex; align-items:center; gap:8px;">
+                <h2 style="font-size:14px; margin:0;">Live Preview Studio</h2>
+                <input type="text" id="appNameInput" value="My App" placeholder="App Title" style="background:var(--field); border:1px solid var(--border); border-radius:6px; padding:3px 8px; color:#fff; font-size:11px; width:100px;">
+              </div>
+              <div class="sim-nav" id="simNav">
+                <button class="sim-btn active" data-sim="iphone">📱 iPhone</button>
+                <button class="sim-btn" data-sim="appstore">🛍️ Store</button>
+                <button class="sim-btn" data-sim="gameui">🎮 Game UI</button>
+                <button class="sim-btn" data-sim="watch">⌚ Watch</button>
+                <button class="sim-btn" data-sim="sheet">🔍 All Assets</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="sim-stage" id="simStage">
+            <!-- 1. iPhone 16 Pro Home Screen -->
+            <div class="iphone-frame" id="sim-iphone">
+              <div class="iphone-island"></div>
+              <div class="iphone-status">
+                <span>9:41</span>
+                <span>5G 􀛨</span>
+              </div>
+              <div class="iphone-body">
+                <div class="app-grid">
+                  <!-- User App Icon -->
+                  <div class="app-item">
+                    <img class="my-app-icon" id="previewIcon-iphone" alt="My App Icon">
+                    <span class="app-name" id="label-appName">My App</span>
+                  </div>
+                  <!-- Mock Apps for realistic home screen -->
+                  <div class="app-item">
+                    <div class="mock-icon" style="background:linear-gradient(135deg,#ff5e62,#ff9966); display:grid; place-items:center; color:#fff; font-weight:700;">🎵</div>
+                    <span class="app-name">Music</span>
+                  </div>
+                  <div class="app-item">
+                    <div class="mock-icon" style="background:linear-gradient(135deg,#36d1dc,#5b86e5); display:grid; place-items:center; color:#fff; font-weight:700;">🧭</div>
+                    <span class="app-name">Safari</span>
+                  </div>
+                  <div class="app-item">
+                    <div class="mock-icon" style="background:linear-gradient(135deg,#11998e,#38ef7d); display:grid; place-items:center; color:#fff; font-weight:700;">💬</div>
+                    <span class="app-name">Messages</span>
+                  </div>
+                  <div class="app-item">
+                    <div class="mock-icon" style="background:linear-gradient(135deg,#8e2de2,#4a00e0); display:grid; place-items:center; color:#fff; font-weight:700;">🎮</div>
+                    <span class="app-name">Arcade</span>
+                  </div>
+                  <div class="app-item">
+                    <div class="mock-icon" style="background:linear-gradient(135deg,#f12711,#f5af19); display:grid; place-items:center; color:#fff; font-weight:700;">⚡</div>
+                    <span class="app-name">Fitness</span>
+                  </div>
+                  <div class="app-item">
+                    <div class="mock-icon" style="background:linear-gradient(135deg,#2c3e50,#3498db); display:grid; place-items:center; color:#fff; font-weight:700;">📁</div>
+                    <span class="app-name">Files</span>
+                  </div>
+                  <div class="app-item">
+                    <div class="mock-icon" style="background:linear-gradient(135deg,#e65c00,#f9d423); display:grid; place-items:center; color:#fff; font-weight:700;">⚙️</div>
+                    <span class="app-name">Settings</span>
+                  </div>
+                </div>
+
+                <div class="iphone-dock">
+                  <div class="mock-icon" style="background:#22c55e; width:44px; height:44px; display:grid; place-items:center; color:#fff; font-size:18px;">📞</div>
+                  <div class="mock-icon" style="background:#0284c7; width:44px; height:44px; display:grid; place-items:center; color:#fff; font-size:18px;">✉️</div>
+                  <div class="mock-icon" style="background:#6366f1; width:44px; height:44px; display:grid; place-items:center; color:#fff; font-size:18px;">🌐</div>
+                  <div class="mock-icon" style="background:#ec4899; width:44px; height:44px; display:grid; place-items:center; color:#fff; font-size:18px;">📷</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 2. App Store Page Mockup -->
+            <div class="appstore-frame" id="sim-appstore" hidden>
+              <div class="appstore-top">
+                <img class="appstore-icon" id="previewIcon-appstore" alt="App Store Icon">
+                <div class="appstore-meta">
+                  <div class="appstore-title" id="label-storeTitle">My App</div>
+                  <div class="appstore-sub">Games • Action & RPG</div>
+                  <div style="color:var(--gold); font-size:11px;">★★★★★ 4.9 (12.4K Ratings)</div>
+                  <button class="appstore-btn">GET</button>
+                </div>
+              </div>
+              <div style="border-top:1px solid var(--border); padding-top:10px; font-size:11.5px; color:var(--muted); line-height:1.4;">
+                <strong style="color:var(--ink); display:block; margin-bottom:4px;">What's New in Version 1.0</strong>
+                Master 1024×1024 icon exported with pristine squircle geometry, full Retina clarity, and unified asset catalog.
+              </div>
+            </div>
+
+            <!-- 3. Game UI Mockup (Unity & Godot) -->
+            <div class="gameui-frame" id="sim-gameui" hidden>
+              <div class="gameui-title">
+                <span>⚔️ Action RPG Inventory</span>
+                <span id="label-rarity" style="color:var(--gold);">LEGENDARY ITEM</span>
+              </div>
+              <div style="display:flex; justify-content:space-between; align-items:center; font-size:11px;">
+                <span style="color:var(--muted);">Engine Rarity Frame:</span>
+                <select id="selectRarity" style="background:var(--field); border:1px solid var(--border); border-radius:5px; color:#fff; padding:3px 6px; font-size:11px;">
+                  <option value="legendary">Legendary (Gold)</option>
+                  <option value="epic">Epic (Purple)</option>
+                  <option value="rare">Rare (Blue)</option>
+                  <option value="uncommon">Uncommon (Green)</option>
+                  <option value="common">Common (Slate)</option>
+                </select>
+              </div>
+              <div class="inventory-grid">
+                <!-- Slotted Item -->
+                <div class="inv-slot slotted rarity-legendary" id="invSlotMain">
+                  <img id="previewIcon-gameui" style="width:52px; height:52px; object-fit:contain;">
+                  <span class="inv-badge">x1</span>
+                </div>
+                <div class="inv-slot"><span style="color:#334155; font-size:18px;">🛡️</span></div>
+                <div class="inv-slot"><span style="color:#334155; font-size:18px;">🧪</span><span class="inv-badge">x5</span></div>
+                <div class="inv-slot"><span style="color:#334155; font-size:18px;">📜</span></div>
+                <div class="inv-slot"><span style="color:#334155; font-size:18px;">💎</span><span class="inv-badge">x32</span></div>
+                <div class="inv-slot"></div>
+                <div class="inv-slot"></div>
+                <div class="inv-slot"></div>
+              </div>
+              <div class="hotbar">
+                <div class="inv-slot slotted rarity-legendary" style="width:48px; height:48px;" id="hotbarSlot">
+                  <img id="previewIcon-hotbar" style="width:36px; height:36px; object-fit:contain;">
+                  <span class="inv-badge" style="left:4px; top:2px; font-size:9px;">[1]</span>
+                </div>
+                <div class="inv-slot" style="width:48px; height:48px;"><span class="inv-badge" style="left:4px; top:2px; font-size:9px;">[2]</span></div>
+                <div class="inv-slot" style="width:48px; height:48px;"><span class="inv-badge" style="left:4px; top:2px; font-size:9px;">[3]</span></div>
+                <div class="inv-slot" style="width:48px; height:48px;"><span class="inv-badge" style="left:4px; top:2px; font-size:9px;">[4]</span></div>
+              </div>
+            </div>
+
+            <!-- 4. Watch Face Mockup -->
+            <div class="watch-frame" id="sim-watch" hidden>
+              <div class="watch-time">09:41</div>
+              <img class="watch-icon" id="previewIcon-watch" alt="Watch Icon">
+              <div style="font:600 11px var(--mono); color:var(--muted);">APPLE WATCH ULTRA</div>
+            </div>
+
+            <!-- 5. All Assets Sheet -->
+            <div class="asset-sheet" id="sim-sheet" hidden>
+              <!-- Filled dynamically by JS -->
+            </div>
+          </div>
+        </section>
+
+        <!-- Export Hub Card -->
+        <section class="export-card">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <h2 style="font:700 14px var(--display); color:#fff;">Multi-Platform Export Engine</h2>
+              <p style="font-size:11px; color:var(--muted);">Produces ready-to-use directory structures & JSON manifests</p>
+            </div>
+            <span class="pill" id="fileCountBadge">34 Assets Ready</span>
+          </div>
+
+          <!-- Master All-in-One Button -->
+          <button class="btn-export-main" id="btnExportAll">
+            <span>📦 Export Complete Package (.ZIP)</span>
+          </button>
+
+          <!-- Granular Export Buttons -->
+          <div class="export-grid">
+            <button class="btn-export-sub" id="btnExportIos">
+              <span>🍏 Xcode AppIcon.appiconset</span>
+            </button>
+            <button class="btn-export-sub" id="btnExportAndroid">
+              <span>🤖 Android mipmaps & Store</span>
+            </button>
+            <button class="btn-export-sub" id="btnExportGame">
+              <span>🎮 Game UI & Sprite Sheet</span>
+            </button>
+            <button class="btn-export-sub" id="btnExportMaster">
+              <span>🖼️ Master 1024×1024 PNG</span>
+            </button>
+          </div>
+
+          <div class="status-bar" id="statusBar">
+            <span>Ready. Generate an AI prompt or adjust artwork framing to export.</span>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Offscreen Rendering Buffer (Full 1024x1024 resolution) -->
+<canvas id="masterCanvas" width="1024" height="1024"></canvas>
+
+<script>
+// --- Global State ---
+const state = {
+  activeTab: 'ai',
+  activeSim: 'iphone',
+  appName: 'My App',
+  shape: 'squircle',
+  inset: 10,
+  scale: 100,
+  panX: 0,
+  panY: 0,
+  bgMode: 'gradient',
+  bgColor1: '#1e3a8a',
+  bgColor2: '#090d16',
+  strokeWidth: 4,
+  strokeColor: '#3b82f6',
+  hasBadge: false,
+  badgeText: '1',
+  badgePos: 'tr',
+  badgeBg: '#ef4444',
+  badgeTextCol: '#ffffff',
+  hasGloss: true,
+  rarity: 'legendary',
+  sourceImage: null, // Image object
+  currentPreset: 'sword',
+  activeStyle: '3d',
+  targetEngine: 'midjourney'
+};
+
+const $ = id => document.getElementById(id);
+
+// --- Initialization ---
+window.addEventListener('DOMContentLoaded', () => {
+  setupTabs();
+  setupEventListeners();
+  renderPresetPreviews();
+  loadSampleArtwork('sword');
+  updatePromptOutput();
+});
+
+// --- Tab Switching ---
+function setupTabs() {
+  $('sourceTabs').addEventListener('click', e => {
+    const btn = e.target.closest('.tab-btn');
+    if (!btn) return;
+    $('sourceTabs').querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const tab = btn.dataset.tab;
+    $('pane-ai').hidden = tab !== 'ai';
+    $('pane-upload').hidden = tab !== 'upload';
+    $('pane-presets').hidden = tab !== 'presets';
+  });
+
+  $('simNav').addEventListener('click', e => {
+    const btn = e.target.closest('.sim-btn');
+    if (!btn) return;
+    $('simNav').querySelectorAll('.sim-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const sim = btn.dataset.sim;
+    ['iphone', 'appstore', 'gameui', 'watch', 'sheet'].forEach(s => {
+      const el = $('sim-' + s);
+      if (el) el.hidden = (s !== sim);
+    });
+    if (sim === 'sheet') renderAssetSheet();
+  });
+}
+
+// --- Event Listeners ---
+function setupEventListeners() {
+  // File upload
+  const fileInput = $('fileInput');
+  $('dropzone').addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', e => {
+    if (e.target.files && e.target.files[0]) handleUploadedFile(e.target.files[0]);
+  });
+
+  // Drag and drop
+  const drop = $('dropzone');
+  ['dragenter', 'dragover'].forEach(n => drop.addEventListener(n, e => { e.preventDefault(); drop.classList.add('dragover'); }));
+  ['dragleave', 'drop'].forEach(n => drop.addEventListener(n, e => { e.preventDefault(); drop.classList.remove('dragover'); }));
+  drop.addEventListener('drop', e => {
+    if (e.dataTransfer && e.dataTransfer.files[0]) handleUploadedFile(e.dataTransfer.files[0]);
+  });
+
+  // Clipboard paste
+  window.addEventListener('paste', e => {
+    const items = (e.clipboardData || e.originalEvent.clipboardData)?.items || [];
+    for (const item of items) {
+      if (item.type.indexOf('image') === 0) {
+        const file = item.getAsFile();
+        handleUploadedFile(file);
+        break;
+      }
+    }
+  });
+
+  // Shape Selector
+  $('shapeSelector').addEventListener('click', e => {
+    const btn = e.target.closest('.shape-btn');
+    if (!btn) return;
+    $('shapeSelector').querySelectorAll('.shape-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    state.shape = btn.dataset.shape;
+    renderAll();
+  });
+
+  // Sliders
+  $('slider-inset').addEventListener('input', e => {
+    state.inset = parseInt(e.target.value);
+    $('val-inset').textContent = state.inset + '%';
+    renderAll();
+  });
+  $('slider-scale').addEventListener('input', e => {
+    state.scale = parseInt(e.target.value);
+    $('val-scale').textContent = state.scale + '%';
+    renderAll();
+  });
+  $('slider-panx').addEventListener('input', e => {
+    state.panX = parseInt(e.target.value);
+    $('val-panx').textContent = state.panX + 'px';
+    renderAll();
+  });
+  $('slider-pany').addEventListener('input', e => {
+    state.panY = parseInt(e.target.value);
+    $('val-pany').textContent = state.panY + 'px';
+    renderAll();
+  });
+  $('slider-stroke').addEventListener('input', e => {
+    state.strokeWidth = parseInt(e.target.value);
+    $('val-stroke').textContent = state.strokeWidth + 'px';
+    renderAll();
+  });
+
+  // Background modes
+  $('bgModes').addEventListener('click', e => {
+    const btn = e.target.closest('.bg-btn');
+    if (!btn) return;
+    $('bgModes').querySelectorAll('.bg-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    state.bgMode = btn.dataset.bg;
+    renderAll();
+  });
+
+  // Color Pickers
+  $('bgColor1').addEventListener('input', e => { state.bgColor1 = e.target.value; renderAll(); });
+  $('bgColor2').addEventListener('input', e => { state.bgColor2 = e.target.value; renderAll(); });
+  $('strokeColor').addEventListener('input', e => { state.strokeColor = e.target.value; renderAll(); });
+
+  // Swatches
+  document.querySelectorAll('.swatch[data-c1]').forEach(sw => {
+    sw.addEventListener('click', () => {
+      state.bgColor1 = sw.dataset.c1;
+      state.bgColor2 = sw.dataset.c2;
+      $('bgColor1').value = state.bgColor1;
+      $('bgColor2').value = state.bgColor2;
+      renderAll();
+    });
+  });
+  document.querySelectorAll('.swatch[data-sc]').forEach(sw => {
+    sw.addEventListener('click', () => {
+      state.strokeColor = sw.dataset.sc;
+      $('strokeColor').value = state.strokeColor;
+      renderAll();
+    });
+  });
+
+  // Badges & Overlays
+  $('checkBadge').addEventListener('change', e => {
+    state.hasBadge = e.target.checked;
+    $('badgeControls').hidden = !state.hasBadge;
+    renderAll();
+  });
+  $('badgeText').addEventListener('input', e => { state.badgeText = e.target.value; renderAll(); });
+  $('badgePos').addEventListener('change', e => { state.badgePos = e.target.value; renderAll(); });
+  $('badgeBgColor').addEventListener('input', e => { state.badgeBg = e.target.value; renderAll(); });
+  $('badgeTextColor').addEventListener('input', e => { state.badgeTextCol = e.target.value; renderAll(); });
+  $('checkGloss').addEventListener('change', e => { state.hasGloss = e.target.checked; renderAll(); });
+
+  // App Name
+  $('appNameInput').addEventListener('input', e => {
+    state.appName = e.target.value || 'App';
+    $('label-appName').textContent = state.appName;
+    $('label-storeTitle').textContent = state.appName;
+  });
+
+  // Game UI Rarity
+  $('selectRarity').addEventListener('change', e => {
+    state.rarity = e.target.value;
+    const slot = $('invSlotMain');
+    const hotbar = $('hotbarSlot');
+    ['legendary', 'epic', 'rare', 'uncommon', 'common'].forEach(r => {
+      slot.classList.remove('rarity-' + r);
+      hotbar.classList.remove('rarity-' + r);
+    });
+    slot.classList.add('rarity-' + state.rarity);
+    hotbar.classList.add('rarity-' + state.rarity);
+    $('label-rarity').textContent = state.rarity.toUpperCase() + ' ITEM';
+    $('label-rarity').style.color = getRarityColor(state.rarity);
+  });
+
+  // Prompt Pills
+  document.querySelectorAll('.prompt-pill').forEach(pill => {
+    pill.addEventListener('click', () => {
+      $('promptInput').value = pill.dataset.p;
+      updatePromptOutput();
+    });
+  });
+
+  // Visual Style Presets Selection
+  $('stylePresets').addEventListener('click', e => {
+    const chip = e.target.closest('.style-chip');
+    if (!chip) return;
+    $('stylePresets').querySelectorAll('.style-chip').forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+    state.activeStyle = chip.dataset.style;
+    updatePromptOutput();
+    renderAll();
+  });
+
+  // Target Engine
+  $('targetEngine').addEventListener('change', e => {
+    state.targetEngine = e.target.value;
+    updatePromptOutput();
+  });
+
+  // Generate Prompt Button
+  $('btnGenPrompt').addEventListener('click', updatePromptOutput);
+
+  // Copy Prompt Button
+  $('btnCopyPrompt').addEventListener('click', () => {
+    const text = $('displayPromptText').textContent;
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = $('btnCopyPrompt');
+      btn.classList.add('copied');
+      btn.innerHTML = '<span>✅ Copied to Clipboard!</span>';
+      setStatus('ok', 'AI prompt copied! Paste into Midjourney, DALL-E, or Flux.');
+      setTimeout(() => {
+        btn.classList.remove('copied');
+        btn.innerHTML = '<span>📋 Copy Prompt</span>';
+      }, 2500);
+    });
+  });
+
+  // Sample Icon Selection
+  document.querySelectorAll('.preset-thumb').forEach(thumb => {
+    thumb.addEventListener('click', () => {
+      document.querySelectorAll('.preset-thumb').forEach(t => t.classList.remove('active'));
+      thumb.classList.add('active');
+      loadSampleArtwork(thumb.dataset.preset);
+    });
+  });
+
+  // Export Buttons
+  $('btnExportAll').addEventListener('click', () => exportBundle('all'));
+  $('btnExportIos').addEventListener('click', () => exportBundle('ios'));
+  $('btnExportAndroid').addEventListener('click', () => exportBundle('android'));
+  $('btnExportGame').addEventListener('click', () => exportBundle('game'));
+  $('btnExportMaster').addEventListener('click', downloadMasterPNG);
+}
+
+function getRarityColor(r) {
+  switch(r) {
+    case 'legendary': return '#ffb800';
+    case 'epic': return '#a855f7';
+    case 'rare': return '#3b82f6';
+    case 'uncommon': return '#10b981';
+    default: return '#94a3b8';
+  }
+}
+
+// --- AI Prompt Engineering Engine (Zero Cost & Instant) ---
+function updatePromptOutput() {
+  const subject = $('promptInput').value.trim() || 'app icon';
+  const style = state.activeStyle;
+  const engine = state.targetEngine;
+
+  const stylesData = {
+    '3d': {
+      stylePhrase: '3D glossy octane render, stylized clay sculpture with subtle subsurface scattering',
+      lighting: 'cinematic studio rim lighting, volumetric soft fill, and subtle ambient occlusion',
+      materials: 'lacquered glossy finish, beveled edges, specular highlights',
+      framing: 'isolated centered app icon composition on smooth dark background',
+      mjParams: '--v 6.0 --ar 1:1 --style raw --c 5 --s 250'
+    },
+    'glass': {
+      stylePhrase: 'modern glassmorphism design, translucent frosted glass panel with optical refraction',
+      lighting: 'luminous neon backlight with iridescent spectral highlights and subtle edge glow',
+      materials: 'semi-transparent frosted acrylic, specular reflection, glossy bevel rim',
+      framing: 'centered modern app icon mockup, clean studio layout, dark aesthetic',
+      mjParams: '--v 6.0 --ar 1:1 --s 200'
+    },
+    'flat': {
+      stylePhrase: 'flat vector graphic, clean minimalist silhouette, crisp geometric shapes, Bauhaus inspired',
+      lighting: 'uniform high-contrast lighting, clean flat colors, subtle material drop shadow',
+      materials: 'sharp matte vector lines, smooth vector curves, SVG asset aesthetic',
+      framing: 'perfect centered emblem, modern mobile app icon, isolated silhouette',
+      mjParams: '--v 6.0 --ar 1:1 --style raw --no realism, 3d, gloss'
+    },
+    'pixel': {
+      stylePhrase: 'authentic 16-bit pixel art, retro video game inventory sprite, nostalgic 90s arcade aesthetic',
+      lighting: 'carefully placed pixel highlights, authentic limited color palette, clean dark outline',
+      materials: 'crisp pixel grid, stepped pixel dithering, no anti-aliasing',
+      framing: 'centered pixel sprite icon, isolated dark background, high contrast',
+      mjParams: '--v 6.0 --ar 1:1 --style raw --no anti-aliasing, vector, blur'
+    },
+    'gradient': {
+      stylePhrase: 'vibrant chromatic mesh gradient, modern Apple Human Interface Guidelines aesthetic, duotone luminescence',
+      lighting: 'soft ambient glow, radiant multi-stop luminous backdrop',
+      materials: 'sleek ultra-smooth color transitions, silky vector flow, subtle bevel',
+      framing: 'centered iOS app icon design, modern tech startup branding',
+      mjParams: '--v 6.0 --ar 1:1 --style raw --s 300'
+    }
+  };
+
+  const s = stylesData[style] || stylesData['3d'];
+  let promptText = '';
+  let engineName = 'Midjourney v6';
+
+  if (engine === 'midjourney') {
+    engineName = 'Midjourney v6';
+    promptText = `/imagine prompt: mobile app icon of ${subject}, ${s.stylePhrase}, ${s.materials}, ${s.lighting}, ${s.framing} ${s.mjParams}`;
+  } else if (engine === 'dalle') {
+    engineName = 'DALL-E 3 / ChatGPT';
+    promptText = `Professional 1024x1024 mobile app icon featuring ${subject}. Visual Style: ${s.stylePhrase}. Materials: ${s.materials}. Lighting: ${s.lighting}. Perfectly centered, isolated on a solid dark backdrop, zero text, zero watermarks, high contrast.`;
+  } else {
+    engineName = 'Flux.1 / Stable Diffusion XL';
+    promptText = `masterpiece app icon of (${subject}:1.2), ${s.stylePhrase}, ${s.materials}, ${s.lighting}, ${s.framing}, crisp 8k, sharp focus, isolated on solid dark background`;
+  }
+
+  $('resultHeader').textContent = `🚀 Generated Prompt (${engineName} • ${style.toUpperCase()})`;
+  $('displayPromptText').textContent = promptText;
+  setStatus('ok', `Crafted optimized ${engineName} prompt for ${style.toUpperCase()} style.`);
+}
+
+// --- Upload Handler ---
+function handleUploadedFile(file) {
+  if (!file.type.startsWith('image/')) {
+    setStatus('err', 'Please upload a valid image file (PNG, JPG, SVG, WebP).');
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = e => {
+    const img = new Image();
+    img.onload = () => {
+      state.sourceImage = img;
+      document.querySelectorAll('.preset-thumb').forEach(t => t.classList.remove('active'));
+      $('fileNameLabel').textContent = file.name;
+      $('fileDimLabel').textContent = `${img.width}×${img.height} px`;
+      renderAll();
+      setStatus('ok', `Loaded ${file.name} (${img.width}×${img.height}px). Ready to customize and export.`);
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+// --- Procedural Artwork Drawers (Built-in Vector Art) ---
+function drawSwordGraphic(ctx) {
+  ctx.clearRect(0, 0, 1024, 1024);
+  ctx.save();
+  ctx.translate(512, 512);
+  ctx.rotate(-Math.PI / 4);
+
+  // Aura glow
+  const gradAura = ctx.createRadialGradient(0, -60, 20, 0, -60, 420);
+  gradAura.addColorStop(0, 'rgba(56, 189, 248, 0.45)');
+  gradAura.addColorStop(0.5, 'rgba(59, 130, 246, 0.2)');
+  gradAura.addColorStop(1, 'rgba(0, 0, 0, 0)');
+  ctx.fillStyle = gradAura;
+  ctx.fillRect(-512, -512, 1024, 1024);
+
+  // Blade
+  ctx.beginPath();
+  ctx.moveTo(0, -380);
+  ctx.lineTo(44, -300);
+  ctx.lineTo(36, 120);
+  ctx.lineTo(-36, 120);
+  ctx.lineTo(-44, -300);
+  ctx.closePath();
+  const bladeGrad = ctx.createLinearGradient(-44, 0, 44, 0);
+  bladeGrad.addColorStop(0, '#94a3b8');
+  bladeGrad.addColorStop(0.48, '#f8fafc');
+  bladeGrad.addColorStop(0.52, '#e2e8f0');
+  bladeGrad.addColorStop(1, '#64748b');
+  ctx.fillStyle = bladeGrad;
+  ctx.shadowColor = '#38bdf8';
+  ctx.shadowBlur = 35;
+  ctx.fill();
+  ctx.shadowBlur = 0;
+
+  // Blade Rune
+  ctx.beginPath();
+  ctx.moveTo(0, -320);
+  ctx.lineTo(0, 110);
+  ctx.lineWidth = 6;
+  ctx.strokeStyle = '#38bdf8';
+  ctx.stroke();
+
+  // Crossguard
+  ctx.beginPath();
+  ctx.roundRect(-140, 115, 280, 36, 10);
+  const guardGrad = ctx.createLinearGradient(0, 115, 0, 151);
+  guardGrad.addColorStop(0, '#f59e0b');
+  guardGrad.addColorStop(1, '#78350f');
+  ctx.fillStyle = guardGrad;
+  ctx.fill();
+
+  // Guard jewel
+  ctx.beginPath();
+  ctx.arc(0, 133, 14, 0, Math.PI * 2);
+  ctx.fillStyle = '#06b6d4';
+  ctx.shadowColor = '#06b6d4';
+  ctx.shadowBlur = 15;
+  ctx.fill();
+  ctx.shadowBlur = 0;
+
+  // Grip
+  ctx.beginPath();
+  ctx.roundRect(-20, 151, 40, 120, 4);
+  ctx.fillStyle = '#1e293b';
+  ctx.fill();
+
+  // Pommel
+  ctx.beginPath();
+  ctx.arc(0, 285, 26, 0, Math.PI * 2);
+  ctx.fillStyle = guardGrad;
+  ctx.fill();
+
+  ctx.restore();
+}
+
+function drawPotionGraphic(ctx) {
+  ctx.clearRect(0, 0, 1024, 1024);
+  ctx.save();
+  ctx.translate(512, 512);
+
+  const aura = ctx.createRadialGradient(0, 40, 20, 0, 40, 360);
+  aura.addColorStop(0, 'rgba(236, 72, 153, 0.45)');
+  aura.addColorStop(1, 'transparent');
+  ctx.fillStyle = aura;
+  ctx.fillRect(-512, -512, 1024, 1024);
+
+  // Cork
+  ctx.beginPath();
+  ctx.roundRect(-60, -280, 120, 50, 8);
+  ctx.fillStyle = '#b45309';
+  ctx.fill();
+
+  // Neck
+  ctx.beginPath();
+  ctx.roundRect(-46, -230, 92, 100, 6);
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
+  ctx.fill();
+
+  // Bulb
+  ctx.beginPath();
+  ctx.arc(0, 80, 220, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.12)';
+  ctx.fill();
+
+  // Liquid
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(0, 80, 204, 0, Math.PI * 2);
+  ctx.clip();
+
+  ctx.beginPath();
+  ctx.rect(-220, -20, 440, 340);
+  const liquid = ctx.createLinearGradient(0, -20, 0, 280);
+  liquid.addColorStop(0, '#f43f5e');
+  liquid.addColorStop(1, '#881337');
+  ctx.fillStyle = liquid;
+  ctx.shadowColor = '#fb7185';
+  ctx.shadowBlur = 30;
+  ctx.fill();
+
+  // Bubbles
+  ctx.fillStyle = '#fecdd3';
+  [[ -60, 120, 14 ], [ 40, 160, 20 ], [ -20, 60, 10 ], [ 80, 80, 12 ]].forEach(([x, y, r]) => {
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fill();
+  });
+  ctx.restore();
+
+  // Specular Highlight
+  ctx.beginPath();
+  ctx.arc(-80, -20, 150, Math.PI * 0.9, Math.PI * 1.4);
+  ctx.lineWidth = 18;
+  ctx.lineCap = 'round';
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+function drawCyberCatGraphic(ctx) {
+  ctx.clearRect(0, 0, 1024, 1024);
+  ctx.save();
+  ctx.translate(512, 512);
+
+  const halo = ctx.createRadialGradient(0, 0, 50, 0, 0, 380);
+  halo.addColorStop(0, 'rgba(168, 85, 247, 0.4)');
+  halo.addColorStop(1, 'transparent');
+  ctx.fillStyle = halo;
+  ctx.fillRect(-512, -512, 1024, 1024);
+
+  // Cat Head
+  ctx.beginPath();
+  ctx.moveTo(-160, 140);
+  ctx.lineTo(-200, -120);
+  ctx.lineTo(-60, -60);
+  ctx.lineTo(60, -60);
+  ctx.lineTo(200, -120);
+  ctx.lineTo(160, 140);
+  ctx.closePath();
+  ctx.fillStyle = '#0f172a';
+  ctx.fill();
+  ctx.lineWidth = 14;
+  ctx.strokeStyle = '#a855f7';
+  ctx.stroke();
+
+  // Visor
+  ctx.beginPath();
+  ctx.roundRect(-150, -10, 300, 60, 12);
+  const visor = ctx.createLinearGradient(-150, 0, 150, 0);
+  visor.addColorStop(0, '#06b6d4');
+  visor.addColorStop(0.5, '#3b82f6');
+  visor.addColorStop(1, '#ec4899');
+  ctx.fillStyle = visor;
+  ctx.shadowColor = '#06b6d4';
+  ctx.shadowBlur = 35;
+  ctx.fill();
+  ctx.shadowBlur = 0;
+
+  ctx.restore();
+}
+
+function drawShieldGraphic(ctx) {
+  ctx.clearRect(0, 0, 1024, 1024);
+  ctx.save();
+  ctx.translate(512, 512);
+
+  ctx.beginPath();
+  ctx.moveTo(0, -260);
+  ctx.lineTo(200, -160);
+  ctx.lineTo(160, 110);
+  ctx.lineTo(0, 280);
+  ctx.lineTo(-160, 110);
+  ctx.lineTo(-200, -160);
+  ctx.closePath();
+
+  const gold = ctx.createLinearGradient(0, -260, 0, 280);
+  gold.addColorStop(0, '#fef08a');
+  gold.addColorStop(0.4, '#eab308');
+  gold.addColorStop(1, '#854d0e');
+  ctx.fillStyle = gold;
+  ctx.shadowColor = '#eab308';
+  ctx.shadowBlur = 35;
+  ctx.fill();
+  ctx.shadowBlur = 0;
+
+  ctx.beginPath();
+  ctx.moveTo(0, -220);
+  ctx.lineTo(160, -130);
+  ctx.lineTo(130, 90);
+  ctx.lineTo(0, 230);
+  ctx.lineTo(-130, 90);
+  ctx.lineTo(-160, -130);
+  ctx.closePath();
+  ctx.fillStyle = '#1e1b4b';
+  ctx.fill();
+
+  ctx.beginPath();
+  ctx.roundRect(-24, -140, 48, 280, 10);
+  ctx.roundRect(-100, -60, 200, 48, 10);
+  ctx.fillStyle = '#60a5fa';
+  ctx.shadowColor = '#3b82f6';
+  ctx.shadowBlur = 25;
+  ctx.fill();
+
+  ctx.restore();
+}
+
+function drawCoinGraphic(ctx) {
+  ctx.clearRect(0, 0, 1024, 1024);
+  ctx.save();
+  ctx.translate(512, 512);
+
+  ctx.beginPath();
+  ctx.arc(0, 0, 260, 0, Math.PI * 2);
+  const coinGrad = ctx.createLinearGradient(-260, -260, 260, 260);
+  coinGrad.addColorStop(0, '#38bdf8');
+  coinGrad.addColorStop(0.5, '#0284c7');
+  coinGrad.addColorStop(1, '#0f172a');
+  ctx.fillStyle = coinGrad;
+  ctx.shadowColor = '#38bdf8';
+  ctx.shadowBlur = 40;
+  ctx.fill();
+  ctx.shadowBlur = 0;
+
+  ctx.beginPath();
+  ctx.arc(0, 0, 215, 0, Math.PI * 2);
+  ctx.fillStyle = '#090d16';
+  ctx.lineWidth = 8;
+  ctx.strokeStyle = '#38bdf8';
+  ctx.stroke();
+  ctx.fill();
+
+  ctx.beginPath();
+  ctx.moveTo(20, -140);
+  ctx.lineTo(-100, 10);
+  ctx.lineTo(-10, 10);
+  ctx.lineTo(-40, 140);
+  ctx.lineTo(100, -30);
+  ctx.lineTo(10, -30);
+  ctx.closePath();
+  ctx.fillStyle = '#facc15';
+  ctx.shadowColor = '#facc15';
+  ctx.shadowBlur = 30;
+  ctx.fill();
+
+  ctx.restore();
+}
+
+function drawCrystalCoreGraphic(ctx) {
+  ctx.clearRect(0, 0, 1024, 1024);
+  ctx.save();
+  ctx.translate(512, 512);
+
+  ctx.beginPath();
+  ctx.moveTo(0, -280);
+  ctx.lineTo(180, -70);
+  ctx.lineTo(120, 240);
+  ctx.lineTo(0, 310);
+  ctx.lineTo(-120, 240);
+  ctx.lineTo(-180, -70);
+  ctx.closePath();
+
+  const crystal = ctx.createLinearGradient(-180, -280, 180, 310);
+  crystal.addColorStop(0, '#c084fc');
+  crystal.addColorStop(0.5, '#6366f1');
+  crystal.addColorStop(1, '#06b6d4');
+  ctx.fillStyle = crystal;
+  ctx.shadowColor = '#c084fc';
+  ctx.shadowBlur = 45;
+  ctx.fill();
+  ctx.shadowBlur = 0;
+
+  ctx.beginPath();
+  ctx.moveTo(0, -280);
+  ctx.lineTo(0, 310);
+  ctx.moveTo(-180, -70);
+  ctx.lineTo(0, 60);
+  ctx.lineTo(180, -70);
+  ctx.lineWidth = 6;
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+function renderPresetPreviews() {
+  const drawThumb = (id, fn) => {
+    const c = $(id);
+    if (!c) return;
+    const ctx = c.getContext('2d');
+    ctx.scale(80/1024, 80/1024);
+    fn(ctx);
+  };
+  drawThumb('pv-sword', drawSwordGraphic);
+  drawThumb('pv-potion', drawPotionGraphic);
+  drawThumb('pv-cat', drawCyberCatGraphic);
+  drawThumb('pv-shield', drawShieldGraphic);
+  drawThumb('pv-coin', drawCoinGraphic);
+  drawThumb('pv-core', drawCrystalCoreGraphic);
+}
+
+function loadSampleArtwork(preset) {
+  state.currentPreset = preset;
+  const canvas = document.createElement('canvas');
+  canvas.width = 1024;
+  canvas.height = 1024;
+  const ctx = canvas.getContext('2d');
+
+  const names = {
+    sword: 'RPG Sword',
+    potion: 'Health Elixir',
+    cat: 'Cyber Cat',
+    shield: 'Aegis Shield',
+    coin: 'Fintech Coin',
+    core: 'Crystal Core'
+  };
+
+  if (preset === 'sword') drawSwordGraphic(ctx);
+  else if (preset === 'potion') drawPotionGraphic(ctx);
+  else if (preset === 'cat') drawCyberCatGraphic(ctx);
+  else if (preset === 'shield') drawShieldGraphic(ctx);
+  else if (preset === 'coin') drawCoinGraphic(ctx);
+  else drawCrystalCoreGraphic(ctx);
+
+  const img = new Image();
+  img.onload = () => {
+    state.sourceImage = img;
+    $('fileNameLabel').textContent = `Active: ${names[preset] || preset}`;
+    $('fileDimLabel').textContent = '1024×1024 px';
+    renderAll();
+    setStatus('ok', `Artwork [${names[preset] || preset}] ready.`);
+  };
+  img.src = canvas.toDataURL('image/png');
+}
+
+// --- Main Master Render Pipeline (1024×1024) ---
+function renderAll() {
+  const canvas = $('masterCanvas');
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, 1024, 1024);
+
+  // 1. Clip Mask Shape
+  ctx.save();
+  applyMaskPath(ctx, 0, 0, 1024, 1024, state.shape);
+  ctx.clip();
+
+  // 2. Background Layer
+  drawBackground(ctx, 0, 0, 1024, 1024);
+
+  // 3. Subject Artwork (Scaled, Padded & Panned)
+  if (state.sourceImage) {
+    ctx.save();
+    const insetPx = (state.inset / 100) * 1024;
+    const innerW = 1024 - insetPx * 2;
+    const innerH = 1024 - insetPx * 2;
+    const scaleFactor = state.scale / 100;
+    const finalW = innerW * scaleFactor;
+    const finalH = innerH * scaleFactor;
+    const centerX = 512 + state.panX;
+    const centerY = 512 + state.panY;
+
+    // Apply Visual Style Filter
+    applyStyleProcessing(ctx, state.sourceImage, centerX - finalW / 2, centerY - finalH / 2, finalW, finalH, state.activeStyle);
+    ctx.restore();
+  }
+
+  // 4. Apple Gloss Reflection
+  if (state.hasGloss) {
+    drawAppleGloss(ctx, 0, 0, 1024, 1024);
+  }
+
+  // 5. Border Stroke
+  if (state.strokeWidth > 0 && state.shape !== 'square') {
+    ctx.lineWidth = state.strokeWidth * 2;
+    ctx.strokeStyle = state.strokeColor;
+    applyMaskPath(ctx, 0, 0, 1024, 1024, state.shape);
+    ctx.stroke();
+  }
+
+  // 6. Badges & Notifications
+  if (state.hasBadge) {
+    drawBadge(ctx, 1024);
+  }
+
+  ctx.restore();
+
+  // Update simulator previews
+  updateSimPreviews(canvas);
+}
+
+// Visual Style Processing
+function applyStyleProcessing(ctx, img, x, y, w, h, style) {
+  if (style === 'pixel') {
+    const temp = document.createElement('canvas');
+    temp.width = 64;
+    temp.height = 64;
+    const tCtx = temp.getContext('2d');
+    tCtx.imageSmoothingEnabled = false;
+    tCtx.drawImage(img, 0, 0, 64, 64);
+
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(temp, x, y, w, h);
+    ctx.imageSmoothingEnabled = true;
+  } else if (style === 'glass') {
+    ctx.shadowColor = 'rgba(255, 255, 255, 0.4)';
+    ctx.shadowBlur = 25;
+    ctx.drawImage(img, x, y, w, h);
+    ctx.shadowBlur = 0;
+  } else if (style === '3d') {
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.55)';
+    ctx.shadowOffsetY = 16;
+    ctx.shadowBlur = 24;
+    ctx.drawImage(img, x, y, w, h);
+    ctx.shadowColor = 'transparent';
+  } else {
+    ctx.drawImage(img, x, y, w, h);
+  }
+}
+
+// Geometry Masking
+function applyMaskPath(ctx, x, y, w, h, shape) {
+  ctx.beginPath();
+  if (shape === 'squircle') {
+    const r = w * 0.225;
+    ctx.roundRect(x, y, w, h, [r, r, r, r]);
+  } else if (shape === 'roundrect') {
+    const r = w * 0.16;
+    ctx.roundRect(x, y, w, h, [r, r, r, r]);
+  } else if (shape === 'circle') {
+    ctx.arc(x + w / 2, y + h / 2, w / 2, 0, Math.PI * 2);
+  } else if (shape === 'hex') {
+    const cx = x + w / 2;
+    const cy = y + h / 2;
+    const s = w / 2;
+    for (let i = 0; i < 6; i++) {
+      const angle = (Math.PI / 3) * i - Math.PI / 6;
+      const px = cx + s * Math.cos(angle);
+      const py = cy + s * Math.sin(angle);
+      if (i === 0) ctx.moveTo(px, py);
+      else ctx.lineTo(px, py);
+    }
+    ctx.closePath();
+  } else {
+    ctx.rect(x, y, w, h);
+  }
+}
+
+// Background Renderer
+function drawBackground(ctx, x, y, w, h) {
+  if (state.bgMode === 'transparent') {
+    return;
+  }
+  if (state.bgMode === 'solid') {
+    ctx.fillStyle = state.bgColor1;
+    ctx.fillRect(x, y, w, h);
+  } else if (state.bgMode === 'gradient') {
+    const grad = ctx.createLinearGradient(x, y, x, y + h);
+    grad.addColorStop(0, state.bgColor1);
+    grad.addColorStop(1, state.bgColor2);
+    ctx.fillStyle = grad;
+    ctx.fillRect(x, y, w, h);
+  } else if (state.bgMode === 'radial') {
+    const rad = ctx.createRadialGradient(x + w / 2, y + h / 2, 10, x + w / 2, y + h / 2, w / 2);
+    rad.addColorStop(0, state.bgColor1);
+    rad.addColorStop(1, state.bgColor2);
+    ctx.fillStyle = rad;
+    ctx.fillRect(x, y, w, h);
+  } else if (state.bgMode === 'mesh') {
+    const g1 = ctx.createRadialGradient(200, 200, 50, 400, 400, 800);
+    g1.addColorStop(0, '#3b82f6');
+    g1.addColorStop(1, '#090d16');
+    ctx.fillStyle = g1;
+    ctx.fillRect(x, y, w, h);
+
+    const g2 = ctx.createRadialGradient(850, 850, 50, 700, 700, 600);
+    g2.addColorStop(0, 'rgba(168, 85, 247, 0.7)');
+    g2.addColorStop(1, 'transparent');
+    ctx.fillStyle = g2;
+    ctx.fillRect(x, y, w, h);
+  } else {
+    const studio = ctx.createRadialGradient(x + w / 2, y + 250, 80, x + w / 2, y + h / 2, 600);
+    studio.addColorStop(0, '#1e2433');
+    studio.addColorStop(1, '#080a0f');
+    ctx.fillStyle = studio;
+    ctx.fillRect(x, y, w, h);
+  }
+}
+
+// Apple Curved Glass Reflection
+function drawAppleGloss(ctx, x, y, w, h) {
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(x, y);
+  ctx.lineTo(x + w, y);
+  ctx.lineTo(x + w, y + h * 0.45);
+  ctx.bezierCurveTo(x + w * 0.7, y + h * 0.55, x + w * 0.3, y + h * 0.45, x, y + h * 0.3);
+  ctx.closePath();
+  const gloss = ctx.createLinearGradient(x, y, x, y + h * 0.5);
+  gloss.addColorStop(0, 'rgba(255, 255, 255, 0.28)');
+  gloss.addColorStop(1, 'rgba(255, 255, 255, 0.02)');
+  ctx.fillStyle = gloss;
+  ctx.fill();
+  ctx.restore();
+}
+
+// Badges Renderer
+function drawBadge(ctx, size) {
+  ctx.save();
+  const badgeSize = size * 0.28;
+  let bx, by;
+
+  if (state.badgePos === 'tr') { bx = size - badgeSize / 2 - 24; by = badgeSize / 2 + 24; }
+  else if (state.badgePos === 'tl') { bx = badgeSize / 2 + 24; by = badgeSize / 2 + 24; }
+  else if (state.badgePos === 'br') { bx = size - badgeSize / 2 - 24; by = size - badgeSize / 2 - 24; }
+  else { bx = badgeSize / 2 + 24; by = size - badgeSize / 2 - 24; }
+
+  ctx.beginPath();
+  ctx.arc(bx, by, badgeSize / 2, 0, Math.PI * 2);
+  ctx.fillStyle = state.badgeBg;
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
+  ctx.shadowBlur = 18;
+  ctx.fill();
+
+  ctx.lineWidth = 10;
+  ctx.strokeStyle = '#ffffff';
+  ctx.stroke();
+
+  ctx.fillStyle = state.badgeTextCol;
+  ctx.font = `bold ${badgeSize * 0.52}px "SF Pro Display", Inter, sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(state.badgeText, bx, by);
+
+  ctx.restore();
+}
+
+// Update Viewport Mockups
+function updateSimPreviews(canvas) {
+  const dataUrl = canvas.toDataURL('image/png');
+  
+  if ($('previewIcon-iphone')) $('previewIcon-iphone').src = dataUrl;
+  if ($('previewIcon-appstore')) $('previewIcon-appstore').src = dataUrl;
+  if ($('previewIcon-gameui')) $('previewIcon-gameui').src = dataUrl;
+  if ($('previewIcon-hotbar')) $('previewIcon-hotbar').src = dataUrl;
+  if ($('previewIcon-watch')) $('previewIcon-watch').src = dataUrl;
+}
+
+// All Assets Visual Sheet
+function renderAssetSheet() {
+  const container = $('sim-sheet');
+  container.innerHTML = '';
+  const canvas = $('masterCanvas');
+
+  const sizes = [
+    { name: 'App Store', dim: 1024 },
+    { name: 'Google Play', dim: 512 },
+    { name: 'iPhone @3x', dim: 180 },
+    { name: 'iPad @2x', dim: 152 },
+    { name: 'iPhone @2x', dim: 120 },
+    { name: 'Watch @2x', dim: 88 },
+    { name: 'Settings', dim: 58 },
+    { name: 'Notification', dim: 40 },
+    { name: 'Unity Sprite', dim: 64 },
+    { name: 'Favicon', dim: 32 }
+  ];
+
+  sizes.forEach(s => {
+    const item = document.createElement('div');
+    item.className = 'asset-item';
+    
+    const c = document.createElement('canvas');
+    c.width = s.dim;
+    c.height = s.dim;
+    const ctx = c.getContext('2d');
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(canvas, 0, 0, s.dim, s.dim);
+
+    const img = document.createElement('img');
+    img.className = 'asset-img';
+    img.src = c.toDataURL('image/png');
+
+    const label = document.createElement('span');
+    label.className = 'asset-dim';
+    label.textContent = `${s.dim}px`;
+
+    item.appendChild(img);
+    item.appendChild(label);
+    container.appendChild(item);
+  });
+}
+
+// --- Multi-Platform Resizing & Export Engine ---
+function generateXcodeContentsJSON() {
+  return JSON.stringify({
+    images: [
+      { size: "20x20", idiom: "iphone", filename: "icon-20@2x.png", scale: "2x" },
+      { size: "20x20", idiom: "iphone", filename: "icon-20@3x.png", scale: "3x" },
+      { size: "29x29", idiom: "iphone", filename: "icon-29@2x.png", scale: "2x" },
+      { size: "29x29", idiom: "iphone", filename: "icon-29@3x.png", scale: "3x" },
+      { size: "40x40", idiom: "iphone", filename: "icon-40@2x.png", scale: "2x" },
+      { size: "40x40", idiom: "iphone", filename: "icon-40@3x.png", scale: "3x" },
+      { size: "60x60", idiom: "iphone", filename: "icon-60@2x.png", scale: "2x" },
+      { size: "60x60", idiom: "iphone", filename: "icon-60@3x.png", scale: "3x" },
+      { size: "20x20", idiom: "ipad", filename: "icon-ipad-20@1x.png", scale: "1x" },
+      { size: "20x20", idiom: "ipad", filename: "icon-ipad-20@2x.png", scale: "2x" },
+      { size: "29x29", idiom: "ipad", filename: "icon-ipad-29@1x.png", scale: "1x" },
+      { size: "29x29", idiom: "ipad", filename: "icon-ipad-29@2x.png", scale: "2x" },
+      { size: "40x40", idiom: "ipad", filename: "icon-ipad-40@1x.png", scale: "1x" },
+      { size: "40x40", idiom: "ipad", filename: "icon-ipad-40@2x.png", scale: "2x" },
+      { size: "76x76", idiom: "ipad", filename: "icon-76@1x.png", scale: "1x" },
+      { size: "76x76", idiom: "ipad", filename: "icon-76@2x.png", scale: "2x" },
+      { size: "83.5x83.5", idiom: "ipad", filename: "icon-83.5@2x.png", scale: "2x" },
+      { size: "1024x1024", idiom: "ios-marketing", filename: "icon-1024.png", scale: "1x" },
+      { size: "24x24", idiom: "watch", role: "notificationCenter", subtype: "38mm", filename: "icon-watch-24@2x.png", scale: "2x" },
+      { size: "27.5x27.5", idiom: "watch", role: "notificationCenter", subtype: "42mm", filename: "icon-watch-27.5@2x.png", scale: "2x" },
+      { size: "29x29", idiom: "watch", role: "companionSettings", filename: "icon-watch-29@2x.png", scale: "2x" },
+      { size: "29x29", idiom: "watch", role: "companionSettings", filename: "icon-watch-29@3x.png", scale: "3x" },
+      { size: "40x40", idiom: "watch", role: "appLauncher", subtype: "38mm", filename: "icon-watch-40@2x.png", scale: "2x" },
+      { size: "44x44", idiom: "watch", role: "appLauncher", subtype: "40mm", filename: "icon-watch-44@2x.png", scale: "2x" },
+      { size: "86x86", idiom: "watch", role: "quickLook", subtype: "38mm", filename: "icon-watch-86@2x.png", scale: "2x" },
+      { size: "98x98", idiom: "watch", role: "quickLook", subtype: "42mm", filename: "icon-watch-98@2x.png", scale: "2x" },
+      { size: "108x108", idiom: "watch", role: "quickLook", subtype: "44mm", filename: "icon-watch-108@2x.png", scale: "2x" },
+      { size: "1024x1024", idiom: "watch-marketing", filename: "icon-watch-1024.png", scale: "1x" }
+    ],
+    info: { author: "xcode", version: 1 }
+  }, null, 2);
+}
+
+function generateGameSpriteSheet(masterCanvas) {
+  const sheetCanvas = document.createElement('canvas');
+  sheetCanvas.width = 1024;
+  sheetCanvas.height = 1024;
+  const ctx = sheetCanvas.getContext('2d');
+  ctx.imageSmoothingQuality = 'high';
+
+  ctx.drawImage(masterCanvas, 0, 0, 512, 512);
+  ctx.drawImage(masterCanvas, 512, 0, 256, 256);
+  ctx.drawImage(masterCanvas, 512, 256, 128, 128);
+  ctx.drawImage(masterCanvas, 640, 256, 64, 64);
+  ctx.drawImage(masterCanvas, 704, 256, 32, 32);
+
+  const meta = {
+    frames: {
+      "icon_512": { frame: { x: 0, y: 0, w: 512, h: 512 }, rotated: false, trimmed: false, pivot: { x: 0.5, y: 0.5 } },
+      "icon_256": { frame: { x: 512, y: 0, w: 256, h: 256 }, rotated: false, trimmed: false, pivot: { x: 0.5, y: 0.5 } },
+      "icon_128": { frame: { x: 512, y: 256, w: 128, h: 128 }, rotated: false, trimmed: false, pivot: { x: 0.5, y: 0.5 } },
+      "icon_64": { frame: { x: 640, y: 256, w: 64, h: 64 }, rotated: false, trimmed: false, pivot: { x: 0.5, y: 0.5 } },
+      "icon_32": { frame: { x: 704, y: 256, w: 32, h: 32 }, rotated: false, trimmed: false, pivot: { x: 0.5, y: 0.5 } }
+    },
+    meta: {
+      app: "Asset Bench App Icon Generator",
+      version: "1.0",
+      image: "spritesheet.png",
+      format: "RGBA8888",
+      size: { w: 1024, h: 1024 },
+      scale: "1"
+    }
+  };
+
+  return { sheetCanvas, metaJson: JSON.stringify(meta, null, 2) };
+}
+
+function resizeToBlob(srcCanvas, targetW, targetH) {
+  return new Promise(resolve => {
+    const c = document.createElement('canvas');
+    c.width = targetW;
+    c.height = targetH;
+    const ctx = c.getContext('2d');
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(srcCanvas, 0, 0, targetW, targetH);
+    c.toBlob(blob => resolve(blob), 'image/png');
+  });
+}
+
+function downloadMasterPNG() {
+  const canvas = $('masterCanvas');
+  const a = document.createElement('a');
+  a.href = canvas.toDataURL('image/png');
+  a.download = `${cleanName()}-1024x1024.png`;
+  a.click();
+  setStatus('ok', 'Downloaded Master 1024×1024 PNG.');
+}
+
+function cleanName() {
+  return state.appName.toLowerCase().replace(/[^a-z0-9_-]+/g, '-') || 'app-icon';
+}
+
+async function exportBundle(type) {
+  if (typeof JSZip === 'undefined') {
+    setStatus('err', 'ZIP compression library is loading. Please try again.');
+    return;
+  }
+
+  const zip = new JSZip();
+  const master = $('masterCanvas');
+  setStatus('', 'Packaging multi-platform assets…');
+
+  const addImage = async (folder, filename, w, h) => {
+    const blob = await resizeToBlob(master, w, h);
+    folder.file(filename, blob);
+  };
+
+  // 1. iOS / Xcode Folder
+  if (type === 'all' || type === 'ios') {
+    const ios = zip.folder("AppIcon.appiconset");
+    ios.file("Contents.json", generateXcodeContentsJSON());
+    await addImage(ios, "icon-1024.png", 1024, 1024);
+    await addImage(ios, "icon-60@3x.png", 180, 180);
+    await addImage(ios, "icon-60@2x.png", 120, 120);
+    await addImage(ios, "icon-76@2x.png", 152, 152);
+    await addImage(ios, "icon-76@1x.png", 76, 76);
+    await addImage(ios, "icon-83.5@2x.png", 167, 167);
+    await addImage(ios, "icon-40@3x.png", 120, 120);
+    await addImage(ios, "icon-40@2x.png", 80, 80);
+    await addImage(ios, "icon-ipad-40@1x.png", 40, 40);
+    await addImage(ios, "icon-29@3x.png", 87, 87);
+    await addImage(ios, "icon-29@2x.png", 58, 58);
+    await addImage(ios, "icon-ipad-29@1x.png", 29, 29);
+    await addImage(ios, "icon-20@3x.png", 60, 60);
+    await addImage(ios, "icon-20@2x.png", 40, 40);
+    await addImage(ios, "icon-ipad-20@1x.png", 20, 20);
+    await addImage(ios, "icon-watch-44@2x.png", 88, 88);
+    await addImage(ios, "icon-watch-40@2x.png", 80, 80);
+    await addImage(ios, "icon-watch-108@2x.png", 108, 108);
+    await addImage(ios, "icon-watch-98@2x.png", 98, 98);
+    await addImage(ios, "icon-watch-86@2x.png", 86, 86);
+    await addImage(ios, "icon-watch-1024.png", 1024, 1024);
+  }
+
+  // 2. Android Folder
+  if (type === 'all' || type === 'android') {
+    const android = zip.folder("android");
+    await addImage(android, "playstore-512x512.png", 512, 512);
+    
+    const res = android.folder("res");
+    await addImage(res.folder("mipmap-mdpi"), "ic_launcher.png", 48, 48);
+    await addImage(res.folder("mipmap-hdpi"), "ic_launcher.png", 72, 72);
+    await addImage(res.folder("mipmap-xhdpi"), "ic_launcher.png", 96, 96);
+    await addImage(res.folder("mipmap-xxhdpi"), "ic_launcher.png", 144, 144);
+    await addImage(res.folder("mipmap-xxxhdpi"), "ic_launcher.png", 192, 192);
+
+    await addImage(res.folder("mipmap-mdpi"), "ic_launcher_round.png", 48, 48);
+    await addImage(res.folder("mipmap-hdpi"), "ic_launcher_round.png", 72, 72);
+    await addImage(res.folder("mipmap-xhdpi"), "ic_launcher_round.png", 96, 96);
+    await addImage(res.folder("mipmap-xxhdpi"), "ic_launcher_round.png", 144, 144);
+    await addImage(res.folder("mipmap-xxxhdpi"), "ic_launcher_round.png", 192, 192);
+  }
+
+  // 3. Game UI (Unity / Godot)
+  if (type === 'all' || type === 'game') {
+    const game = zip.folder("game_ui");
+    const { sheetCanvas, metaJson } = generateGameSpriteSheet(master);
+    const sheetBlob = await resizeToBlob(sheetCanvas, 1024, 1024);
+    game.file("spritesheet.png", sheetBlob);
+    game.file("spritesheet.json", metaJson);
+
+    await addImage(game.folder("inventory"), "icon_512.png", 512, 512);
+    await addImage(game.folder("inventory"), "icon_256.png", 256, 256);
+    await addImage(game.folder("inventory"), "icon_128.png", 128, 128);
+    await addImage(game.folder("inventory"), "icon_64.png", 64, 64);
+    await addImage(game.folder("inventory"), "icon_32.png", 32, 32);
+  }
+
+  // 4. Web Favicons
+  if (type === 'all') {
+    const web = zip.folder("web");
+    await addImage(web, "apple-touch-icon.png", 180, 180);
+    await addImage(web, "favicon-32x32.png", 32, 32);
+    await addImage(web, "favicon-16x16.png", 16, 16);
+    web.file("site.webmanifest", JSON.stringify({
+      name: state.appName,
+      short_name: state.appName,
+      icons: [
+        { src: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+        { src: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }
+      ],
+      theme_color: state.bgColor1,
+      background_color: "#000000",
+      display: "standalone"
+    }, null, 2));
+
+    zip.file("README.txt", `Asset Bench — App Icon Package for ${state.appName}
+Generated on ${new Date().toISOString()}
+
+Contents:
+- AppIcon.appiconset/: Drag and drop directly into Xcode Assets catalog.
+- android/: res/ folder with hdpi, xhdpi, xxhdpi, xxxhdpi mipmaps + Google Play 512x512.
+- game_ui/: spritesheet.png and spritesheet.json for Unity Sprite Editor and Godot AtlasTexture.
+- web/: Apple touch icon, favicons, and web manifest.
+`);
+  }
+
+  const zipBlob = await zip.generateAsync({ type: "blob" });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(zipBlob);
+  a.download = `${cleanName()}-${type}-assets.zip`;
+  a.click();
+  setStatus('ok', `Exported ${cleanName()}-${type}-assets.zip (${(zipBlob.size / 1024).toFixed(0)} KB)!`);
+}
+
+function setStatus(type, msg) {
+  const bar = $('statusBar');
+  bar.className = 'status-bar ' + (type || '');
+  bar.textContent = msg;
+}
+</script>
+</body>
+</html>

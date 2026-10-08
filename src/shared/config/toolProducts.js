@@ -16,6 +16,9 @@ export const TOOL_PRICE_LABEL = '£3';
 export const TOOL_DEVICE_LIMIT = 2;
 
 export const TOOL_PRODUCTS = {
+  'app-icon-generator': { productId: null, checkoutUrl: null },
+  'app-store-screenshot-generator': { productId: null, checkoutUrl: null },
+  'xcassets-generator': { productId: null, checkoutUrl: null },
   'alpha-cutout': { productId: null, checkoutUrl: null },
   'line-studio': { productId: null, checkoutUrl: null },
   'model-to-isometric': { productId: null, checkoutUrl: null },

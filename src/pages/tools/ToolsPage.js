@@ -11,6 +11,11 @@ import { cachedUsageCounts, fetchUsageCounts, rankByUsage } from '../../services
  * order only breaks ties (and is the whole order before any usage exists).
  */
 const VALUE_ORDER = [
+  'app-icon-generator',
+  'app-store-screenshot-generator',
+  'xcassets-generator',
+  'mobile-ready-checker',
+  'ktx2-texture-encoder',
   'generate-lods',
   'glb-builder',
   'reduce-polys',

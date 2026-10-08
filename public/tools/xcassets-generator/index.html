@@ -1,0 +1,1864 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>XCAssets Generator — Asset Bench</title>
+<meta name="robots" content="noindex, indexifembedded">
+<script src="./jszip.min.js"></script>
+<style>
+:root {
+  color-scheme: dark;
+  --bg: #000000;
+  --panel: #111114;
+  --tile: #17171c;
+  --field: #0d0d10;
+  --border: #24242c;
+  --border-focus: #3d3d4a;
+  --ink: #f5f5f7;
+  --text: #d2d2d8;
+  --muted: #868692;
+  --dim: #545462;
+  --accent: #4a94ff;
+  --accent-glow: rgba(74, 148, 255, 0.25);
+  --accent-deep: #102642;
+  --gold: #ffb800;
+  --gold-glow: rgba(255, 184, 0, 0.25);
+  --ok: #3ddc84;
+  --err: #ff5c5c;
+  --purple: #a855f7;
+  --display: "Outfit", "SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --body: "Inter", "SF Pro Text", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font: 13px/1.5 var(--body);
+  padding: 20px 16px 64px;
+  min-height: 100vh;
+}
+[hidden] { display: none !important; }
+
+.wrap {
+  max-width: 1380px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.hero {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px 24px;
+  padding-bottom: 4px;
+}
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font: 700 10.5px var(--mono);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 8px;
+}
+
+h1 {
+  font: 800 clamp(30px, 4.2vw, 48px)/1 var(--display);
+  letter-spacing: -0.035em;
+  color: var(--ink);
+}
+h1 em {
+  font-style: normal;
+  background: linear-gradient(135deg, #60a5fa, #38bdf8);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.lede {
+  margin-top: 10px;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--muted);
+  max-width: 76ch;
+}
+
+.hero-badges {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 6px 12px;
+  background: var(--panel);
+}
+.pill-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--ok);
+  box-shadow: 0 0 6px rgba(61, 220, 132, 0.6);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: minmax(380px, 1.05fr) minmax(420px, 1.25fr);
+  gap: 20px;
+  align-items: start;
+}
+@media (max-width: 1060px) {
+  .grid { grid-template-columns: 1fr; }
+}
+
+.col {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+.card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+.card-h {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: rgba(255, 255, 255, 0.015);
+  border-bottom: 1px solid var(--border);
+}
+.card-h-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: var(--accent-deep);
+  color: var(--accent);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+.card-h-txt { flex: 1; min-width: 0; }
+.card-h-title {
+  font: 700 14px var(--display);
+  color: var(--ink);
+  letter-spacing: -0.01em;
+}
+.card-h-sub {
+  font-size: 11.5px;
+  color: var(--muted);
+}
+.card-b {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Dropzone */
+.dropzone {
+  border: 2px dashed var(--border);
+  border-radius: 12px;
+  padding: 28px 16px;
+  text-align: center;
+  background: var(--field);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+.dropzone:hover, .dropzone.dragover {
+  border-color: var(--accent);
+  background: rgba(74, 148, 255, 0.04);
+}
+.drop-icon {
+  width: 44px;
+  height: 44px;
+  margin: 0 auto 12px;
+  border-radius: 10px;
+  background: rgba(74, 148, 255, 0.12);
+  color: var(--accent);
+  display: grid;
+  place-items: center;
+}
+.drop-title {
+  font: 600 14px var(--display);
+  color: var(--ink);
+  margin-bottom: 4px;
+}
+.drop-hint {
+  font-size: 12px;
+  color: var(--muted);
+}
+.drop-input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+  width: 100%;
+  height: 100%;
+}
+
+/* Sample Bar */
+.sample-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: var(--tile);
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+.sample-bar-lbl {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--dim);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+.sample-chips {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  flex: 1;
+}
+.chip-btn {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 11.5px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+.chip-btn:hover {
+  background: rgba(255,255,255,0.06);
+  border-color: var(--border-focus);
+  color: var(--ink);
+}
+
+/* Form controls */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.field-lbl {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.field-hint {
+  font-weight: 400;
+  font-size: 11px;
+  color: var(--muted);
+}
+.input, .select {
+  background: var(--field);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 9px 12px;
+  color: var(--ink);
+  font: 13px var(--mono);
+  outline: none;
+  transition: border-color 0.15s ease;
+  width: 100%;
+}
+.input:focus, .select:focus {
+  border-color: var(--accent);
+}
+
+/* Row of controls */
+.row-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.row-3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+}
+
+/* Segments */
+.seg {
+  display: flex;
+  background: var(--field);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 3px;
+  gap: 3px;
+}
+.seg-btn {
+  flex: 1;
+  background: transparent;
+  border: 0;
+  color: var(--muted);
+  font-size: 11.5px;
+  font-weight: 500;
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: center;
+  white-space: nowrap;
+}
+.seg-btn:hover {
+  color: var(--ink);
+}
+.seg-btn.active {
+  background: var(--tile);
+  color: var(--ink);
+  font-weight: 600;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.4);
+}
+
+/* Dark Mode Pair Upload Box */
+.pair-box {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.pair-card {
+  background: var(--field);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 8px;
+  position: relative;
+}
+.pair-card.active {
+  border-color: var(--accent);
+}
+.pair-thumb {
+  width: 56px;
+  height: 56px;
+  border-radius: 8px;
+  background: #2a2a32;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+.pair-thumb.light-bg {
+  background: #ffffff;
+}
+.pair-thumb img {
+  max-width: 90%;
+  max-height: 90%;
+  object-fit: contain;
+}
+.pair-title {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.pair-tag {
+  font-size: 10.5px;
+  color: var(--muted);
+}
+.pair-btn {
+  font-size: 11px;
+  padding: 4px 8px;
+  border-radius: 5px;
+  border: 1px solid var(--border);
+  background: var(--tile);
+  color: var(--text);
+  cursor: pointer;
+}
+.pair-btn:hover {
+  border-color: var(--accent);
+  color: var(--ink);
+}
+
+/* Assets Queue in Left Panel */
+.queue-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 240px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+.queue-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  background: var(--tile);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.queue-item:hover {
+  border-color: var(--border-focus);
+}
+.queue-item.selected {
+  border-color: var(--accent);
+  background: rgba(74, 148, 255, 0.08);
+}
+.q-thumb {
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
+  background: #202026;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.q-thumb img {
+  max-width: 90%;
+  max-height: 90%;
+  object-fit: contain;
+}
+.q-info {
+  flex: 1;
+  min-width: 0;
+}
+.q-name {
+  font: 600 12.5px var(--mono);
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.q-meta {
+  font-size: 11px;
+  color: var(--muted);
+}
+.q-del {
+  background: transparent;
+  border: 0;
+  color: var(--dim);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: color 0.15s ease;
+}
+.q-del:hover {
+  color: var(--err);
+}
+
+/* Right Panel Tabs */
+.tab-nav {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid var(--border);
+  padding: 0 16px;
+  background: rgba(255,255,255,0.01);
+}
+.tab-item {
+  padding: 12px 14px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--muted);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  transition: all 0.15s ease;
+}
+.tab-item:hover {
+  color: var(--ink);
+}
+.tab-item.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+/* Xcode Catalog Interactive Visualizer */
+.xcode-sim {
+  background: #18181e;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: inset 0 2px 8px rgba(0,0,0,0.5);
+}
+.xcode-header {
+  background: #212128;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+  font: 600 12px var(--mono);
+  color: #a0a0ab;
+}
+.xcode-dots {
+  display: flex;
+  gap: 6px;
+}
+.xcode-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+.dot-r { background: #ff5f57; }
+.dot-y { background: #febc2e; }
+.dot-g { background: #28c840; }
+
+.xcode-body {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.xcode-slots-title {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.slots-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+@media (max-width: 600px) {
+  .slots-grid { grid-template-columns: 1fr; }
+}
+
+.slot-card {
+  background: #121216;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+  position: relative;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+.slot-card:hover {
+  border-color: var(--accent);
+}
+.slot-badge {
+  font: 700 11px var(--mono);
+  padding: 3px 8px;
+  border-radius: 4px;
+  background: var(--tile);
+  color: var(--accent);
+  border: 1px solid var(--border);
+}
+.slot-canvas-wrap {
+  width: 100px;
+  height: 100px;
+  background: radial-gradient(#262630 1px, transparent 1px) 0 0 / 10px 10px, #1a1a20;
+  border: 1px dashed rgba(255,255,255,0.12);
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  position: relative;
+}
+.slot-canvas-wrap canvas {
+  max-width: 90px;
+  max-height: 90px;
+  image-rendering: auto;
+}
+.slot-dim {
+  font: 600 11.5px var(--mono);
+  color: var(--ink);
+}
+.slot-sub {
+  font-size: 10.5px;
+  color: var(--muted);
+}
+
+/* Device Preview Tab */
+.device-preview-wrap {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  padding: 16px 0;
+  flex-wrap: wrap;
+}
+.phone-mock {
+  width: 250px;
+  height: 480px;
+  border-radius: 36px;
+  border: 6px solid #282830;
+  box-shadow: 0 16px 40px rgba(0,0,0,0.8), inset 0 0 0 1px rgba(255,255,255,0.1);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+}
+.phone-mock.light-mode {
+  background: #f2f2f7;
+  color: #1c1c1e;
+}
+.phone-mock.dark-mode {
+  background: #000000;
+  color: #ffffff;
+}
+.phone-island {
+  width: 80px;
+  height: 22px;
+  background: #000;
+  border-radius: 12px;
+  margin: 8px auto 4px;
+  z-index: 2;
+}
+.phone-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  gap: 16px;
+}
+.phone-icon-center {
+  width: 72px;
+  height: 72px;
+  display: grid;
+  place-items: center;
+}
+.phone-icon-center img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+.phone-label {
+  font-weight: 700;
+  font-size: 15px;
+}
+.phone-tabbar {
+  padding: 10px 16px 16px;
+  display: flex;
+  justify-content: space-around;
+  border-top: 1px solid rgba(128,128,128,0.2);
+  background: rgba(128,128,128,0.06);
+  backdrop-filter: blur(10px);
+}
+.phone-tab-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  font-size: 9.5px;
+  opacity: 0.7;
+}
+.phone-tab-item.active {
+  opacity: 1;
+  color: var(--accent);
+}
+.phone-tab-icon {
+  width: 20px;
+  height: 20px;
+  display: grid;
+  place-items: center;
+}
+.phone-tab-icon img {
+  max-width: 100%;
+  max-height: 100%;
+}
+
+/* Code Viewer */
+.code-box {
+  background: var(--field);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px;
+  font: 12px/1.55 var(--mono);
+  color: #9cdcfe;
+  overflow-x: auto;
+  max-height: 380px;
+  white-space: pre;
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 8px;
+  padding: 10px 16px;
+  font: 600 13px var(--body);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border: 1px solid transparent;
+  text-decoration: none;
+}
+.btn-primary {
+  background: var(--accent);
+  color: #000;
+  font-weight: 700;
+}
+.btn-primary:hover {
+  background: #60a5fa;
+  box-shadow: 0 4px 16px var(--accent-glow);
+}
+.btn-sub {
+  background: var(--tile);
+  border-color: var(--border);
+  color: var(--ink);
+}
+.btn-sub:hover {
+  background: rgba(255,255,255,0.06);
+  border-color: var(--border-focus);
+}
+.btn-sm {
+  padding: 6px 12px;
+  font-size: 12px;
+}
+
+.action-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+.action-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.status-bar {
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  display: none;
+  background: var(--tile);
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+.status-bar.ok {
+  display: block;
+  background: rgba(61, 220, 132, 0.12);
+  border-color: rgba(61, 220, 132, 0.3);
+  color: var(--ok);
+}
+.status-bar.err {
+  display: block;
+  background: rgba(255, 92, 92, 0.12);
+  border-color: rgba(255, 92, 92, 0.3);
+  color: var(--err);
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <!-- Hero -->
+  <header class="hero">
+    <div>
+      <div class="eyebrow">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M16.5 9.4 7.55 4.24a1.78 1.78 0 0 0-2.5 1.55v12.42a1.78 1.78 0 0 0 2.5 1.55L16.5 14.6a1.78 1.78 0 0 0 0-3.2z"/><path d="m21 16-5.5-3.2"/><path d="m21 8-5.5 3.2"/></svg>
+        iOS Developer Toolkit · Xcode Asset Catalog
+      </div>
+      <h1>XCAssets <em>Catalog Generator</em></h1>
+      <p class="lede">
+        Convert SVGs and PNGs into production-grade Xcode <code style="color:var(--accent); font-family:var(--mono);">Assets.xcassets</code> catalogs. Generates crisp @1x, @2x, and @3x retina scale sets, Dark Mode pairs, and valid Apple <code style="color:var(--accent); font-family:var(--mono);">Contents.json</code> manifests in seconds.
+      </p>
+    </div>
+    <div class="hero-badges">
+      <div class="pill"><span class="pill-dot"></span> 100% In-Browser Privacy</div>
+      <div class="pill">Xcode 15 / 16 Ready</div>
+      <div class="pill">Retina @1x · @2x · @3x</div>
+      <div class="pill">Light &amp; Dark Mode</div>
+    </div>
+  </header>
+
+  <!-- Status Bar -->
+  <div id="statusBar" class="status-bar"></div>
+
+  <!-- Main Grid -->
+  <div class="grid">
+    <!-- Left Column: Inputs & Catalog Settings -->
+    <div class="col">
+      <!-- Upload Card -->
+      <div class="card">
+        <div class="card-h">
+          <div class="card-h-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          </div>
+          <div class="card-h-txt">
+            <div class="card-h-title">Asset Source &amp; Samples</div>
+            <div class="card-h-sub">Drop PNG, SVG, WebP, or pick a sample icon</div>
+          </div>
+        </div>
+
+        <div class="card-b">
+          <!-- Dropzone -->
+          <div class="dropzone" id="dropArea">
+            <input type="file" id="fileInput" class="drop-input" accept="image/*,.svg" multiple>
+            <div class="drop-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/><path d="M12 12v9"/><path d="m16 16-4-4-4 4"/></svg>
+            </div>
+            <div class="drop-title">Drop images or click to browse</div>
+            <div class="drop-hint">Accepts SVG vector or high-res PNG (1024×1024 master recommended)</div>
+          </div>
+
+          <!-- Sample Icons Bar -->
+          <div class="sample-bar">
+            <span class="sample-bar-lbl">Samples:</span>
+            <div class="sample-chips">
+              <button type="button" class="chip-btn" onclick="loadSample('compass')">🧭 Compass</button>
+              <button type="button" class="chip-btn" onclick="loadSample('shield')">🛡️ Shield</button>
+              <button type="button" class="chip-btn" onclick="loadSample('bookmark')">⭐ Bookmark</button>
+              <button type="button" class="chip-btn" onclick="loadSample('bolt')">⚡ Lightning</button>
+            </div>
+          </div>
+
+          <!-- Asset Queue / List -->
+          <div class="field" id="queueSection">
+            <div class="field-lbl">
+              <span>Catalog Assets (<span id="assetCount">1</span>)</span>
+              <span class="field-hint">Select to edit settings</span>
+            </div>
+            <div class="queue-list" id="queueList"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Selected Asset Configuration -->
+      <div class="card">
+        <div class="card-h">
+          <div class="card-h-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          </div>
+          <div class="card-h-txt">
+            <div class="card-h-title">Asset Properties</div>
+            <div class="card-h-sub">Image Set naming, sizing, and retina slicing</div>
+          </div>
+        </div>
+
+        <div class="card-b">
+          <div class="row-2">
+            <div class="field">
+              <label class="field-lbl">Asset Name (.imageset)</label>
+              <input type="text" id="assetNameInput" class="input" value="icon_compass">
+            </div>
+            <div class="field">
+              <label class="field-lbl">Target Device Idiom</label>
+              <select id="idiomSelect" class="select">
+                <option value="universal" selected>Universal (iOS / iPadOS / macOS)</option>
+                <option value="iphone">iPhone only</option>
+                <option value="ipad">iPad only</option>
+                <option value="mac">macOS only</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Sizing & Presets -->
+          <div class="row-2">
+            <div class="field">
+              <label class="field-lbl">Size Preset</label>
+              <select id="sizePresetSelect" class="select" onchange="applySizePreset()">
+                <option value="custom">Custom Dimensions</option>
+                <option value="tabbar" selected>Tab Bar Icon (25 × 25 pt)</option>
+                <option value="navbar">Navigation Bar (22 × 22 pt)</option>
+                <option value="toolbar">Toolbar Icon (32 × 32 pt)</option>
+                <option value="button">Action Button (44 × 44 pt)</option>
+                <option value="illustration">Hero Graphic (120 × 120 pt)</option>
+                <option value="source">Match Source Dimensions</option>
+              </select>
+            </div>
+            <div class="field">
+              <label class="field-lbl">Base @1x Size (points)</label>
+              <div style="display:flex; gap:6px; align-items:center;">
+                <input type="number" id="baseWidthInput" class="input" value="25" min="8" max="2048">
+                <span style="color:var(--dim);">×</span>
+                <input type="number" id="baseHeightInput" class="input" value="25" min="8" max="2048">
+              </div>
+            </div>
+          </div>
+
+          <!-- Appearance Variants (Light / Dark) -->
+          <div class="field">
+            <label class="field-lbl">
+              <span>Appearance Mode</span>
+              <span class="field-hint">Supports iOS 13+ Dark Mode</span>
+            </label>
+            <div class="seg" id="appearanceSeg">
+              <button type="button" class="seg-btn active" data-mode="any" onclick="setAppearanceMode('any')">Any Appearance</button>
+              <button type="button" class="seg-btn" data-mode="dark_pair" onclick="setAppearanceMode('dark_pair')">Light &amp; Dark Mode Pair</button>
+            </div>
+          </div>
+
+          <!-- Dark Mode Upload Pair Container -->
+          <div class="pair-box" id="pairBox" style="display:none;">
+            <div class="pair-card">
+              <div class="pair-title">☀️ Light Appearance</div>
+              <div class="pair-thumb light-bg" id="lightThumb"><img id="lightThumbImg" alt="Light preview"></div>
+              <div class="pair-tag" id="lightDimTag">1x: 25pt · 2x: 50px · 3x: 75px</div>
+            </div>
+            <div class="pair-card">
+              <div class="pair-title">🌙 Dark Appearance</div>
+              <div class="pair-thumb" id="darkThumb"><img id="darkThumbImg" alt="Dark preview"></div>
+              <div class="pair-tag" id="darkDimTag">Auto-inverted or upload</div>
+              <div style="display:flex; gap:6px; margin-top:4px;">
+                <button type="button" class="pair-btn" onclick="autoGenerateDarkVariant()">Auto-Invert</button>
+                <label class="pair-btn" style="cursor:pointer;">
+                  Custom Dark
+                  <input type="file" id="darkFileInput" accept="image/*,.svg" style="display:none;" onchange="handleDarkFileUpload(event)">
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Vector Preservation Mode -->
+          <div class="field">
+            <label class="field-lbl">
+              <span>Vector Preservation (PDF / SVG)</span>
+              <span class="field-hint">Preserve Vector Data checkbox</span>
+            </label>
+            <div class="seg" id="vectorSeg">
+              <button type="button" class="seg-btn active" data-vec="raster" onclick="setVectorMode('raster')">Standard Retina Slices (@1x, @2x, @3x)</button>
+              <button type="button" class="seg-btn" data-vec="single" onclick="setVectorMode('single')">Single Scale Vector + Retina</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column: Interactive Catalog Visualizer, Device Preview, JSON -->
+    <div class="col">
+      <div class="card">
+        <!-- Tab Navigation -->
+        <div class="tab-nav">
+          <div class="tab-item active" data-tab="catalog" onclick="switchTab('catalog')">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>
+            Xcode Catalog Slots
+          </div>
+          <div class="tab-item" data-tab="device" onclick="switchTab('device')">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg>
+            Device Simulation
+          </div>
+          <div class="tab-item" data-tab="json" onclick="switchTab('json')">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+            Contents.json Manifest
+          </div>
+          <div class="tab-item" data-tab="swift" onclick="switchTab('swift')">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m18 16 4-4-4-4"/><path d="m6 8-4 4 4 4"/><path d="m14.5 4-5 16"/></svg>
+            Swift Code
+          </div>
+        </div>
+
+        <div class="card-b">
+          <!-- Tab 1: Xcode Catalog Slots Visualizer -->
+          <div id="tabCatalog">
+            <div class="xcode-sim">
+              <div class="xcode-header">
+                <div class="xcode-dots">
+                  <span class="xcode-dot dot-r"></span>
+                  <span class="xcode-dot dot-y"></span>
+                  <span class="xcode-dot dot-g"></span>
+                </div>
+                <div>Assets.xcassets &gt; <span id="xcodeSetBreadcrumb" style="color:#fff;">icon_compass.imageset</span></div>
+                <div style="font-size:11px; color:#888;">Xcode 16 Simulator</div>
+              </div>
+
+              <div class="xcode-body">
+                <div class="xcode-slots-title">
+                  <span>Retina Scale Slots (Universal)</span>
+                  <span style="font-size:11px; font-weight:400; text-transform:none;" id="xcodeSlotSub">Downscaled with bicubic smoothing</span>
+                </div>
+
+                <div class="slots-grid">
+                  <!-- @1x Slot -->
+                  <div class="slot-card">
+                    <div class="slot-badge">@1x Scale</div>
+                    <div class="slot-canvas-wrap">
+                      <canvas id="canvas1x"></canvas>
+                    </div>
+                    <div class="slot-dim" id="dim1x">25 × 25 px</div>
+                    <div class="slot-sub">Standard non-retina</div>
+                  </div>
+
+                  <!-- @2x Slot -->
+                  <div class="slot-card">
+                    <div class="slot-badge">@2x Scale</div>
+                    <div class="slot-canvas-wrap">
+                      <canvas id="canvas2x"></canvas>
+                    </div>
+                    <div class="slot-dim" id="dim2x">50 × 50 px</div>
+                    <div class="slot-sub">Retina (iPhone / iPad)</div>
+                  </div>
+
+                  <!-- @3x Slot -->
+                  <div class="slot-card">
+                    <div class="slot-badge">@3x Scale</div>
+                    <div class="slot-canvas-wrap">
+                      <canvas id="canvas3x"></canvas>
+                    </div>
+                    <div class="slot-dim" id="dim3x">75 × 75 px</div>
+                    <div class="slot-sub">Super Retina / Pro Max</div>
+                  </div>
+                </div>
+
+                <!-- Dark Mode Slots (If active) -->
+                <div id="darkSlotsContainer" style="display:none; margin-top:8px;">
+                  <div class="xcode-slots-title" style="margin-bottom:12px;">
+                    <span style="color:#a855f7;">🌙 Dark Mode Appearance Slices</span>
+                    <span style="font-size:11px; font-weight:400; text-transform:none;">Luminosity: Dark</span>
+                  </div>
+                  <div class="slots-grid">
+                    <div class="slot-card">
+                      <div class="slot-badge">@1x Dark</div>
+                      <div class="slot-canvas-wrap">
+                        <canvas id="canvas1xDark"></canvas>
+                      </div>
+                      <div class="slot-dim" id="dim1xDark">25 × 25 px</div>
+                    </div>
+                    <div class="slot-card">
+                      <div class="slot-badge">@2x Dark</div>
+                      <div class="slot-canvas-wrap">
+                        <canvas id="canvas2xDark"></canvas>
+                      </div>
+                      <div class="slot-dim" id="dim2xDark">50 × 50 px</div>
+                    </div>
+                    <div class="slot-card">
+                      <div class="slot-badge">@3x Dark</div>
+                      <div class="slot-canvas-wrap">
+                        <canvas id="canvas3xDark"></canvas>
+                      </div>
+                      <div class="slot-dim" id="dim3xDark">75 × 75 px</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tab 2: Device Simulation -->
+          <div id="tabDevice" style="display:none;">
+            <div class="device-preview-wrap">
+              <!-- Light Mode Phone -->
+              <div class="phone-mock light-mode">
+                <div class="phone-island"></div>
+                <div class="phone-content">
+                  <div class="phone-icon-center">
+                    <img id="devPreviewLightCenter" alt="Light preview">
+                  </div>
+                  <div class="phone-label" id="devLabelLight">icon_compass</div>
+                  <div style="font-size:11.5px; color:#666; text-align:center; max-width:180px;">
+                    Simulating iOS Light UI presentation
+                  </div>
+                </div>
+                <div class="phone-tabbar">
+                  <div class="phone-tab-item active">
+                    <div class="phone-tab-icon"><img id="devTabActiveLight" alt="tab"></div>
+                    <span>Explore</span>
+                  </div>
+                  <div class="phone-tab-item">
+                    <div class="phone-tab-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/></svg></div>
+                    <span>Saved</span>
+                  </div>
+                  <div class="phone-tab-item">
+                    <div class="phone-tab-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div>
+                    <span>Settings</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Dark Mode Phone -->
+              <div class="phone-mock dark-mode">
+                <div class="phone-island"></div>
+                <div class="phone-content">
+                  <div class="phone-icon-center">
+                    <img id="devPreviewDarkCenter" alt="Dark preview">
+                  </div>
+                  <div class="phone-label" id="devLabelDark">icon_compass</div>
+                  <div style="font-size:11.5px; color:#888; text-align:center; max-width:180px;">
+                    Simulating iOS Dark UI presentation
+                  </div>
+                </div>
+                <div class="phone-tabbar">
+                  <div class="phone-tab-item active">
+                    <div class="phone-tab-icon"><img id="devTabActiveDark" alt="tab"></div>
+                    <span>Explore</span>
+                  </div>
+                  <div class="phone-tab-item">
+                    <div class="phone-tab-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/></svg></div>
+                    <span>Saved</span>
+                  </div>
+                  <div class="phone-tab-item">
+                    <div class="phone-tab-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div>
+                    <span>Settings</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tab 3: JSON Manifest -->
+          <div id="tabJson" style="display:none;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:12px; font-weight:600; color:var(--muted);">Contents.json generated for this .imageset</span>
+              <button type="button" class="btn btn-sub btn-sm" onclick="copyJsonManifest()">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+                Copy JSON
+              </button>
+            </div>
+            <pre class="code-box" id="jsonPreviewBox"></pre>
+          </div>
+
+          <!-- Tab 4: Swift Code -->
+          <div id="tabSwift" style="display:none;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:12px; font-weight:600; color:var(--muted);">SwiftUI &amp; UIKit Usage Snippets</span>
+              <button type="button" class="btn btn-sub btn-sm" onclick="copySwiftSnippet()">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+                Copy Swift
+              </button>
+            </div>
+            <pre class="code-box" id="swiftPreviewBox"></pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action & Export Bar -->
+      <div class="action-bar">
+        <div class="action-group">
+          <button type="button" class="btn btn-primary" onclick="exportFullCatalogZip()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Export Assets.xcassets (.zip)
+          </button>
+          <button type="button" class="btn btn-sub" onclick="exportCurrentSetZip()">
+            Export This .imageset
+          </button>
+        </div>
+        <div class="action-group">
+          <button type="button" class="btn btn-sub" onclick="downloadAllSlicesPNG()">
+            Download PNG Slices
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// State Management
+const $ = (id) => document.getElementById(id);
+
+let catalogAssets = [];
+let currentAssetIdx = 0;
+let activeTab = 'catalog';
+
+// SVG Sample Templates (Clean crisp vector graphics)
+const SAMPLE_SVGS = {
+  compass: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128"><circle cx="64" cy="64" r="56" fill="#182234" stroke="#4A94FF" stroke-width="8"/><polygon points="64,24 82,64 64,104 46,64" fill="#60A5FA"/><polygon points="64,24 82,64 64,64" fill="#FF5C5C"/><circle cx="64" cy="64" r="8" fill="#FFFFFF"/></svg>`,
+  shield: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128"><path d="M64 12 L108 28 C108 80 64 116 64 116 C64 116 20 80 20 28 Z" fill="#1e1b4b" stroke="#818cf8" stroke-width="8"/><path d="M64 24 L96 36 C96 76 64 104 64 104 Z" fill="#6366f1" opacity="0.8"/><circle cx="64" cy="64" r="16" fill="#fbbf24"/></svg>`,
+  bookmark: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128"><path d="M32 16 L96 16 C100 16 104 20 104 24 L104 116 L64 92 L24 116 L24 24 C24 20 28 16 32 16 Z" fill="#312e81" stroke="#a855f7" stroke-width="8"/><polygon points="64,36 71,51 88,53 75,65 79,82 64,73 49,82 53,65 40,53 57,51" fill="#facc15"/></svg>`,
+  bolt: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128"><circle cx="64" cy="64" r="56" fill="#1c1917" stroke="#f59e0b" stroke-width="8"/><polygon points="70,16 34,70 62,70 58,112 94,58 66,58" fill="#fbbf24"/></svg>`
+};
+
+// Initialize with Default Sample Asset
+window.addEventListener('DOMContentLoaded', () => {
+  setupDropzone();
+  loadSample('compass');
+});
+
+// Setup drag and drop
+function setupDropzone() {
+  const drop = $('dropArea');
+  const fileIn = $('fileInput');
+
+  ['dragenter', 'dragover'].forEach(ev => {
+    drop.addEventListener(ev, (e) => {
+      e.preventDefault();
+      drop.classList.add('dragover');
+    });
+  });
+
+  ['dragleave', 'drop'].forEach(ev => {
+    drop.addEventListener(ev, (e) => {
+      e.preventDefault();
+      drop.classList.remove('dragover');
+    });
+  });
+
+  drop.addEventListener('drop', (e) => {
+    const files = e.dataTransfer.files;
+    if (files && files.length > 0) handleFiles(files);
+  });
+
+  fileIn.addEventListener('change', (e) => {
+    if (e.target.files && e.target.files.length > 0) handleFiles(e.target.files);
+  });
+
+  // Input listeners
+  $('assetNameInput').addEventListener('input', (e) => {
+    if (!catalogAssets[currentAssetIdx]) return;
+    catalogAssets[currentAssetIdx].name = sanitizeName(e.target.value);
+    updateQueueUI();
+    renderAssetPreview();
+  });
+
+  $('baseWidthInput').addEventListener('input', (e) => {
+    if (!catalogAssets[currentAssetIdx]) return;
+    catalogAssets[currentAssetIdx].baseWidth = Math.max(8, parseInt(e.target.value) || 25);
+    renderAssetPreview();
+  });
+
+  $('baseHeightInput').addEventListener('input', (e) => {
+    if (!catalogAssets[currentAssetIdx]) return;
+    catalogAssets[currentAssetIdx].baseHeight = Math.max(8, parseInt(e.target.value) || 25);
+    renderAssetPreview();
+  });
+
+  $('idiomSelect').addEventListener('change', (e) => {
+    if (!catalogAssets[currentAssetIdx]) return;
+    catalogAssets[currentAssetIdx].idiom = e.target.value;
+    updateCodeViews();
+  });
+}
+
+function sanitizeName(name) {
+  return name.replace(/\.[^/.]+$/, '').replace(/[^a-zA-Z0-9_\-]/g, '_');
+}
+
+// Load a sample preset
+function loadSample(key) {
+  const svgStr = SAMPLE_SVGS[key] || SAMPLE_SVGS.compass;
+  const img = new Image();
+  const blob = new Blob([svgStr], { type: 'image/svg+xml' });
+  const url = URL.createObjectURL(blob);
+
+  img.onload = () => {
+    const asset = {
+      name: `icon_${key}`,
+      idiom: 'universal',
+      baseWidth: 25,
+      baseHeight: 25,
+      appearance: 'any',
+      vectorMode: 'raster',
+      lightImg: img,
+      darkImg: null,
+      rawBlob: blob,
+      sourceWidth: 128,
+      sourceHeight: 128
+    };
+
+    catalogAssets = [asset];
+    currentAssetIdx = 0;
+    updateUIFromCurrentAsset();
+    setStatus('ok', `Loaded sample preset icon_${key}!`);
+  };
+  img.src = url;
+}
+
+// Handle multiple uploaded files
+function handleFiles(fileList) {
+  const files = Array.from(fileList);
+  if (!files.length) return;
+
+  setStatus('', `Processing ${files.length} uploaded file(s)…`);
+
+  let loadedCount = 0;
+  files.forEach(file => {
+    const isSvg = file.type.includes('svg') || file.name.endsWith('.svg');
+    const reader = new FileReader();
+
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const cleanName = sanitizeName(file.name);
+        const w = img.naturalWidth || 128;
+        const h = img.naturalHeight || 128;
+
+        // Auto determine base size (if high-res e.g. 75px or 1024px, base @1x is / 3 or preset)
+        let baseW = 25;
+        let baseH = 25;
+        if (w <= 128) {
+          baseW = Math.round(w / 3) || 25;
+          baseH = Math.round(h / 3) || 25;
+        }
+
+        const newAsset = {
+          name: cleanName,
+          idiom: 'universal',
+          baseWidth: baseW,
+          baseHeight: baseH,
+          appearance: 'any',
+          vectorMode: isSvg ? 'single' : 'raster',
+          lightImg: img,
+          darkImg: null,
+          rawBlob: file,
+          sourceWidth: w,
+          sourceHeight: h
+        };
+
+        catalogAssets.push(newAsset);
+        loadedCount++;
+
+        if (loadedCount === files.length) {
+          currentAssetIdx = catalogAssets.length - 1;
+          updateUIFromCurrentAsset();
+          setStatus('ok', `Added ${files.length} asset(s) to catalog.`);
+        }
+      };
+      img.src = e.target.result;
+    };
+
+    if (isSvg) reader.readAsDataURL(file);
+    else reader.readAsDataURL(file);
+  });
+}
+
+function updateUIFromCurrentAsset() {
+  const asset = catalogAssets[currentAssetIdx];
+  if (!asset) return;
+
+  $('assetNameInput').value = asset.name;
+  $('idiomSelect').value = asset.idiom;
+  $('baseWidthInput').value = asset.baseWidth;
+  $('baseHeightInput').value = asset.baseHeight;
+
+  // Appearance
+  setAppearanceMode(asset.appearance, false);
+
+  // Vector mode
+  setVectorMode(asset.vectorMode, false);
+
+  updateQueueUI();
+  renderAssetPreview();
+}
+
+function updateQueueUI() {
+  const list = $('queueList');
+  $('assetCount').textContent = catalogAssets.length;
+  list.innerHTML = '';
+
+  catalogAssets.forEach((ast, idx) => {
+    const item = document.createElement('div');
+    item.className = 'queue-item' + (idx === currentAssetIdx ? ' selected' : '');
+    item.onclick = () => {
+      currentAssetIdx = idx;
+      updateUIFromCurrentAsset();
+    };
+
+    const thumb = document.createElement('div');
+    thumb.className = 'q-thumb';
+    const img = document.createElement('img');
+    img.src = ast.lightImg ? ast.lightImg.src : '';
+    thumb.appendChild(img);
+
+    const info = document.createElement('div');
+    info.className = 'q-info';
+    info.innerHTML = `
+      <div class="q-name">${ast.name}.imageset</div>
+      <div class="q-meta">${ast.baseWidth}×${ast.baseHeight} pt · ${ast.appearance === 'dark_pair' ? 'Light & Dark' : 'Any'}</div>
+    `;
+
+    const del = document.createElement('button');
+    del.className = 'q-del';
+    del.title = 'Remove asset';
+    del.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>`;
+    del.onclick = (e) => {
+      e.stopPropagation();
+      removeAsset(idx);
+    };
+
+    item.appendChild(thumb);
+    item.appendChild(info);
+    if (catalogAssets.length > 1) item.appendChild(del);
+    list.appendChild(item);
+  });
+}
+
+function removeAsset(idx) {
+  catalogAssets.splice(idx, 1);
+  if (currentAssetIdx >= catalogAssets.length) {
+    currentAssetIdx = Math.max(0, catalogAssets.length - 1);
+  }
+  updateUIFromCurrentAsset();
+  setStatus('', 'Removed asset.');
+}
+
+// Preset application
+function applySizePreset() {
+  const val = $('sizePresetSelect').value;
+  const asset = catalogAssets[currentAssetIdx];
+  if (!asset) return;
+
+  switch (val) {
+    case 'tabbar':
+      asset.baseWidth = 25;
+      asset.baseHeight = 25;
+      break;
+    case 'navbar':
+      asset.baseWidth = 22;
+      asset.baseHeight = 22;
+      break;
+    case 'toolbar':
+      asset.baseWidth = 32;
+      asset.baseHeight = 32;
+      break;
+    case 'button':
+      asset.baseWidth = 44;
+      asset.baseHeight = 44;
+      break;
+    case 'illustration':
+      asset.baseWidth = 120;
+      asset.baseHeight = 120;
+      break;
+    case 'source':
+      asset.baseWidth = Math.round(asset.sourceWidth / 3) || 32;
+      asset.baseHeight = Math.round(asset.sourceHeight / 3) || 32;
+      break;
+  }
+
+  $('baseWidthInput').value = asset.baseWidth;
+  $('baseHeightInput').value = asset.baseHeight;
+  renderAssetPreview();
+}
+
+function setAppearanceMode(mode, save = true) {
+  const asset = catalogAssets[currentAssetIdx];
+  if (save && asset) asset.appearance = mode;
+
+  document.querySelectorAll('#appearanceSeg .seg-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.mode === mode);
+  });
+
+  const isDarkPair = mode === 'dark_pair';
+  $('pairBox').style.display = isDarkPair ? 'grid' : 'none';
+  $('darkSlotsContainer').style.display = isDarkPair ? 'block' : 'none';
+
+  if (isDarkPair && asset && !asset.darkImg) {
+    autoGenerateDarkVariant(false);
+  }
+
+  renderAssetPreview();
+}
+
+function setVectorMode(mode, save = true) {
+  const asset = catalogAssets[currentAssetIdx];
+  if (save && asset) asset.vectorMode = mode;
+
+  document.querySelectorAll('#vectorSeg .seg-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.vec === mode);
+  });
+
+  updateCodeViews();
+}
+
+// Auto Invert for Dark Mode Variant
+function autoGenerateDarkVariant(notify = true) {
+  const asset = catalogAssets[currentAssetIdx];
+  if (!asset || !asset.lightImg) return;
+
+  const c = document.createElement('canvas');
+  c.width = asset.sourceWidth || 128;
+  c.height = asset.sourceHeight || 128;
+  const ctx = c.getContext('2d');
+  ctx.drawImage(asset.lightImg, 0, 0, c.width, c.height);
+
+  const imgData = ctx.getImageData(0, 0, c.width, c.height);
+  const data = imgData.data;
+
+  // Invert colors while keeping alpha
+  for (let i = 0; i < data.length; i += 4) {
+    data[i] = 255 - data[i];       // R
+    data[i + 1] = 255 - data[i + 1]; // G
+    data[i + 2] = 255 - data[i + 2]; // B
+  }
+  ctx.putImageData(imgData, 0, 0);
+
+  const darkImg = new Image();
+  darkImg.onload = () => {
+    asset.darkImg = darkImg;
+    renderAssetPreview();
+    if (notify) setStatus('ok', 'Generated Dark Mode inverted appearance variant.');
+  };
+  darkImg.src = c.toDataURL('image/png');
+}
+
+function handleDarkFileUpload(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    const img = new Image();
+    img.onload = () => {
+      const asset = catalogAssets[currentAssetIdx];
+      if (asset) {
+        asset.darkImg = img;
+        renderAssetPreview();
+        setStatus('ok', 'Loaded custom Dark Appearance file.');
+      }
+    };
+    img.src = ev.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+// Render previews across all scales and simulators
+function renderAssetPreview() {
+  const asset = catalogAssets[currentAssetIdx];
+  if (!asset || !asset.lightImg) return;
+
+  $('xcodeSetBreadcrumb').textContent = `${asset.name}.imageset`;
+
+  const bw = asset.baseWidth;
+  const bh = asset.baseHeight;
+
+  // Draw 1x, 2x, 3x Light
+  drawScaleCanvas('canvas1x', asset.lightImg, bw * 1, bh * 1);
+  drawScaleCanvas('canvas2x', asset.lightImg, bw * 2, bh * 2);
+  drawScaleCanvas('canvas3x', asset.lightImg, bw * 3, bh * 3);
+
+  $('dim1x').textContent = `${bw} × ${bh} px`;
+  $('dim2x').textContent = `${bw * 2} × ${bh * 2} px`;
+  $('dim3x').textContent = `${bw * 3} × ${bh * 3} px`;
+
+  // Draw Dark mode if pair
+  if (asset.appearance === 'dark_pair' && asset.darkImg) {
+    drawScaleCanvas('canvas1xDark', asset.darkImg, bw * 1, bh * 1);
+    drawScaleCanvas('canvas2xDark', asset.darkImg, bw * 2, bh * 2);
+    drawScaleCanvas('canvas3xDark', asset.darkImg, bw * 3, bh * 3);
+
+    $('dim1xDark').textContent = `${bw} × ${bh} px`;
+    $('dim2xDark').textContent = `${bw * 2} × ${bh * 2} px`;
+    $('dim3xDark').textContent = `${bw * 3} × ${bh * 3} px`;
+
+    $('darkThumbImg').src = asset.darkImg.src;
+  }
+
+  $('lightThumbImg').src = asset.lightImg.src;
+  $('lightDimTag').textContent = `1x: ${bw}px · 2x: ${bw * 2}px · 3x: ${bw * 3}px`;
+
+  // Update Device Simulators
+  const previewLightSrc = $('canvas3x').toDataURL('image/png');
+  const previewDarkSrc = asset.appearance === 'dark_pair' && asset.darkImg ? $('canvas3xDark').toDataURL('image/png') : previewLightSrc;
+
+  $('devPreviewLightCenter').src = previewLightSrc;
+  $('devTabActiveLight').src = previewLightSrc;
+  $('devLabelLight').textContent = asset.name;
+
+  $('devPreviewDarkCenter').src = previewDarkSrc;
+  $('devTabActiveDark').src = previewDarkSrc;
+  $('devLabelDark').textContent = asset.name;
+
+  updateCodeViews();
+}
+
+function drawScaleCanvas(canvasId, img, w, h) {
+  const canvas = $(canvasId);
+  if (!canvas) return;
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, w, h);
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(img, 0, 0, w, h);
+}
+
+// Generate valid Xcode Contents.json
+function generateContentsJson(asset) {
+  const images = [];
+  const idiom = asset.idiom || 'universal';
+
+  // Light or Any appearance
+  images.push({
+    idiom: idiom,
+    scale: '1x',
+    filename: `${asset.name}@1x.png`
+  });
+  images.push({
+    idiom: idiom,
+    scale: '2x',
+    filename: `${asset.name}@2x.png`
+  });
+  images.push({
+    idiom: idiom,
+    scale: '3x',
+    filename: `${asset.name}@3x.png`
+  });
+
+  // Dark appearance if enabled
+  if (asset.appearance === 'dark_pair') {
+    images.push({
+      appearances: [
+        {
+          appearance: 'luminosity',
+          value: 'dark'
+        }
+      ],
+      idiom: idiom,
+      scale: '1x',
+      filename: `${asset.name}_dark@1x.png`
+    });
+    images.push({
+      appearances: [
+        {
+          appearance: 'luminosity',
+          value: 'dark'
+        }
+      ],
+      idiom: idiom,
+      scale: '2x',
+      filename: `${asset.name}_dark@2x.png`
+    });
+    images.push({
+      appearances: [
+        {
+          appearance: 'luminosity',
+          value: 'dark'
+        }
+      ],
+      idiom: idiom,
+      scale: '3x',
+      filename: `${asset.name}_dark@3x.png`
+    });
+  }
+
+  const manifest = {
+    images: images,
+    info: {
+      author: 'xcode',
+      version: 1
+    }
+  };
+
+  if (asset.vectorMode === 'single') {
+    manifest.properties = {
+      'preserves-vector-representation': true
+    };
+  }
+
+  return JSON.stringify(manifest, null, 2);
+}
+
+// Update JSON & Swift preview boxes
+function updateCodeViews() {
+  const asset = catalogAssets[currentAssetIdx];
+  if (!asset) return;
+
+  const jsonStr = generateContentsJson(asset);
+  $('jsonPreviewBox').textContent = jsonStr;
+
+  const swiftCode = `// SwiftUI
+Image("${asset.name}")
+    .resizable()
+    .frame(width: ${asset.baseWidth}, height: ${asset.baseHeight})
+    .renderingMode(.template)
+
+// UIKit (iOS / iPadOS)
+let icon = UIImage(named: "${asset.name}")
+let imageView = UIImageView(image: icon)
+imageView.frame = CGRect(x: 0, y: 0, width: ${asset.baseWidth}, height: ${asset.baseHeight})
+
+// AppKit (macOS)
+let macImage = NSImage(named: "${asset.name}")`;
+
+  $('swiftPreviewBox').textContent = swiftCode;
+}
+
+// Tab Switching
+function switchTab(tabId) {
+  activeTab = tabId;
+  document.querySelectorAll('.tab-nav .tab-item').forEach(item => {
+    item.classList.toggle('active', item.dataset.tab === tabId);
+  });
+
+  $('tabCatalog').style.display = tabId === 'catalog' ? 'block' : 'none';
+  $('tabDevice').style.display = tabId === 'device' ? 'block' : 'none';
+  $('tabJson').style.display = tabId === 'json' ? 'block' : 'none';
+  $('tabSwift').style.display = tabId === 'swift' ? 'block' : 'none';
+}
+
+function copyJsonManifest() {
+  const text = $('jsonPreviewBox').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    setStatus('ok', 'Copied Contents.json manifest to clipboard!');
+  });
+}
+
+function copySwiftSnippet() {
+  const text = $('swiftPreviewBox').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    setStatus('ok', 'Copied Swift code snippets to clipboard!');
+  });
+}
+
+// Export Full Assets.xcassets.zip
+async function exportFullCatalogZip() {
+  if (typeof JSZip === 'undefined') {
+    setStatus('err', 'ZIP library is initializing. Please try again.');
+    return;
+  }
+
+  setStatus('', 'Packaging complete Assets.xcassets catalog…');
+  const zip = new JSZip();
+  const root = zip.folder('Assets.xcassets');
+
+  // Root Contents.json
+  const rootManifest = {
+    info: {
+      author: 'xcode',
+      version: 1
+    }
+  };
+  root.file('Contents.json', JSON.stringify(rootManifest, null, 2));
+
+  // Loop through each asset in catalog
+  for (const asset of catalogAssets) {
+    const setFolder = root.folder(`${asset.name}.imageset`);
+    const bw = asset.baseWidth;
+    const bh = asset.baseHeight;
+
+    // Slices for light
+    const b1x = await renderBlob(asset.lightImg, bw * 1, bh * 1);
+    const b2x = await renderBlob(asset.lightImg, bw * 2, bh * 2);
+    const b3x = await renderBlob(asset.lightImg, bw * 3, bh * 3);
+
+    setFolder.file(`${asset.name}@1x.png`, b1x);
+    setFolder.file(`${asset.name}@2x.png`, b2x);
+    setFolder.file(`${asset.name}@3x.png`, b3x);
+
+    // Dark slices if present
+    if (asset.appearance === 'dark_pair' && asset.darkImg) {
+      const b1xD = await renderBlob(asset.darkImg, bw * 1, bh * 1);
+      const b2xD = await renderBlob(asset.darkImg, bw * 2, bh * 2);
+      const b3xD = await renderBlob(asset.darkImg, bw * 3, bh * 3);
+
+      setFolder.file(`${asset.name}_dark@1x.png`, b1xD);
+      setFolder.file(`${asset.name}_dark@2x.png`, b2xD);
+      setFolder.file(`${asset.name}_dark@3x.png`, b3xD);
+    }
+
+    setFolder.file('Contents.json', generateContentsJson(asset));
+  }
+
+  const blob = await zip.generateAsync({ type: 'blob' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'Assets.xcassets.zip';
+  a.click();
+  setStatus('ok', `Exported Assets.xcassets.zip (${(blob.size / 1024).toFixed(1)} KB) containing ${catalogAssets.length} image set(s)!`);
+}
+
+// Export Single Active .imageset
+async function exportCurrentSetZip() {
+  if (typeof JSZip === 'undefined') return;
+  const asset = catalogAssets[currentAssetIdx];
+  if (!asset) return;
+
+  setStatus('', `Packaging ${asset.name}.imageset.zip…`);
+  const zip = new JSZip();
+  const folder = zip.folder(`${asset.name}.imageset`);
+
+  const bw = asset.baseWidth;
+  const bh = asset.baseHeight;
+
+  const b1x = await renderBlob(asset.lightImg, bw * 1, bh * 1);
+  const b2x = await renderBlob(asset.lightImg, bw * 2, bh * 2);
+  const b3x = await renderBlob(asset.lightImg, bw * 3, bh * 3);
+
+  folder.file(`${asset.name}@1x.png`, b1x);
+  folder.file(`${asset.name}@2x.png`, b2x);
+  folder.file(`${asset.name}@3x.png`, b3x);
+
+  if (asset.appearance === 'dark_pair' && asset.darkImg) {
+    const b1xD = await renderBlob(asset.darkImg, bw * 1, bh * 1);
+    const b2xD = await renderBlob(asset.darkImg, bw * 2, bh * 2);
+    const b3xD = await renderBlob(asset.darkImg, bw * 3, bh * 3);
+
+    folder.file(`${asset.name}_dark@1x.png`, b1xD);
+    folder.file(`${asset.name}_dark@2x.png`, b2xD);
+    folder.file(`${asset.name}_dark@3x.png`, b3xD);
+  }
+
+  folder.file('Contents.json', generateContentsJson(asset));
+
+  const blob = await zip.generateAsync({ type: 'blob' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `${asset.name}.imageset.zip`;
+  a.click();
+  setStatus('ok', `Exported ${asset.name}.imageset.zip!`);
+}
+
+// Download All PNG slices directly
+function downloadAllSlicesPNG() {
+  const asset = catalogAssets[currentAssetIdx];
+  if (!asset) return;
+
+  ['1x', '2x', '3x'].forEach(scale => {
+    const canvas = $(`canvas${scale}`);
+    if (canvas) {
+      const a = document.createElement('a');
+      a.href = canvas.toDataURL('image/png');
+      a.download = `${asset.name}@${scale}.png`;
+      a.click();
+    }
+  });
+  setStatus('ok', `Downloaded @1x, @2x, @3x PNG slices for ${asset.name}!`);
+}
+
+function renderBlob(img, w, h) {
+  const c = document.createElement('canvas');
+  c.width = w;
+  c.height = h;
+  const ctx = c.getContext('2d');
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(img, 0, 0, w, h);
+  return new Promise(res => c.toBlob(res, 'image/png'));
+}
+
+function setStatus(type, msg) {
+  const bar = $('statusBar');
+  bar.className = 'status-bar ' + (type || '');
+  bar.textContent = msg;
+}
+</script>
+</body>
+</html>

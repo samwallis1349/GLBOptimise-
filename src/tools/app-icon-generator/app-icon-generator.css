@@ -1,0 +1,22 @@
+.app-icon-generator-page {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background: #000;
+}
+
+.app-icon-generator-frame {
+  display: block;
+  width: 100%;
+  height: max(960px, 100vh);
+  border: 0;
+  background: #000;
+}
+
+@media (max-width: 650px) {
+  .app-icon-generator-frame {
+    height: max(1300px, 150vh);
+  }
+}
