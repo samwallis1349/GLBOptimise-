@@ -2,6 +2,7 @@ import { TOOLS } from '../shared/config/tools.js';
 import { hasAccess } from '../shared/config/billing.js';
 import { Paywall } from '../shared/components/Paywall.js';
 import { ToolOffer } from '../shared/components/ToolOffer.js';
+import { ToolNews } from '../shared/components/ToolNews.js';
 import { AdSenseAd } from '../shared/components/AdSenseAd.js';
 import { initTrial } from '../services/TrialService.js';
 import { recordToolOpen } from '../services/UsageService.js';
@@ -33,6 +34,9 @@ async function mountTool(tool, container, params) {
   const result = await mod.mount(container, params);
   const offer = ToolOffer(tool);
   if (offer) container.prepend(offer);
+  // Editorial news, updates, and pro tips for this tool
+  const news = ToolNews(tool);
+  if (news) container.append(news);
   // One ad, below the whole tool — never between its controls, preview or downloads.
   const ad = AdSenseAd({ placement: 'tool', toolId: tool.id });
   if (ad) container.append(ad);

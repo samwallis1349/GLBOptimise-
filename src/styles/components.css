@@ -1971,3 +1971,202 @@ html.has-consent-notice .promo-bot {
   }
 }
 
+/* ==========================================================================
+   Tool News & Workflow Notes
+   ========================================================================== */
+.tool-news {
+  margin: var(--space-8) auto var(--space-6);
+  padding-top: var(--space-6);
+  border-top: 1px solid var(--border);
+}
+
+.tool-news__header {
+  margin-bottom: var(--space-5);
+}
+
+.tool-news__eyebrow {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 4px;
+}
+
+.tool-news__title {
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+  margin: 0 0 6px;
+}
+
+.tool-news__subtitle {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin: 0;
+  max-width: 680px;
+  line-height: 1.5;
+}
+
+.tool-news__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-4);
+}
+
+@media (max-width: 900px) {
+  .tool-news__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.tool-news__card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-5);
+  transition: border-color 200ms ease, transform 200ms ease;
+}
+
+.tool-news__card:hover {
+  border-color: rgba(255, 181, 71, 0.35);
+  transform: translateY(-2px);
+}
+
+.tool-news__card--partner {
+  background: linear-gradient(180deg, rgba(255, 181, 71, 0.04) 0%, var(--panel) 100%);
+  border-color: rgba(255, 181, 71, 0.28);
+}
+
+.tool-news__card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+
+.tool-news__tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.tool-news__tag--version {
+  background: rgba(91, 157, 255, 0.12);
+  border: 1px solid rgba(91, 157, 255, 0.3);
+  color: var(--cat-blue);
+}
+
+.tool-news__tag--tip {
+  background: rgba(255, 181, 71, 0.12);
+  border: 1px solid rgba(255, 181, 71, 0.3);
+  color: var(--accent);
+}
+
+.tool-news__tag--partner {
+  background: rgba(168, 85, 247, 0.12);
+  border: 1px solid rgba(168, 85, 247, 0.3);
+  color: #c084fc;
+}
+
+.tool-news__tag-icon {
+  width: 12px;
+  height: 12px;
+}
+
+.tool-news__date {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.tool-news__card-title {
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.3;
+  margin: 0 0 var(--space-2);
+  color: var(--text-primary);
+}
+
+.tool-news__card-text {
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--text-secondary);
+  margin: 0;
+  flex: 1;
+}
+
+.tool-news__card-action {
+  margin-top: var(--space-4);
+  padding-top: var(--space-2);
+}
+
+.tool-news__partner-btn {
+  width: 100%;
+  justify-content: center;
+  font-size: 12px;
+  padding: 8px 14px;
+}
+
+.tool-news__related {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-top: var(--space-5);
+  padding: var(--space-3) var(--space-4);
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.tool-news__related-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.tool-news__chips {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.tool-news__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  background: var(--panel);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  font-size: 11.5px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: border-color 150ms ease, color 150ms ease;
+}
+
+.tool-news__chip:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.tool-news__chip-icon {
+  width: 13px;
+  height: 13px;
+  opacity: 0.75;
+}
+
