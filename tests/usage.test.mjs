@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import worker from '../worker/index.js';
+import { TOOLS, PINNED_MOBILE_TOOLS } from '../src/shared/config/tools.js';
 import { placeAtRowStart, placePairTogether, rankByUsage } from '../src/services/UsageService.js';
 
 function memoryKv() {
@@ -55,4 +56,15 @@ test('placePairTogether keeps a pair side by side, starting on an even column', 
   // Already on an even column: just pulls the partner alongside.
   const even = ['a', 'b', 'p', 'c', 'q'].map((id) => ({ id }));
   assert.deepEqual(ids(placePairTogether(even, ['p', 'q'])), ['a', 'b', 'p', 'q', 'c']);
+});
+
+test('PINNED_MOBILE_TOOLS pins all 4 mobile tools to the top row', () => {
+  const ranked = rankByUsage(TOOLS, { 'thumbnail-maker': 999 }, PINNED_MOBILE_TOOLS);
+  assert.deepEqual(ranked.slice(0, 4).map((t) => t.id), PINNED_MOBILE_TOOLS);
+  assert.equal(ranked[4].id, 'thumbnail-maker');
+});
+
+test('only mobile app dev tools have blue cardTheme', () => {
+  const blueTools = TOOLS.filter((t) => t.cardTheme === 'blue').map((t) => t.id);
+  assert.deepEqual(blueTools, PINNED_MOBILE_TOOLS);
 });

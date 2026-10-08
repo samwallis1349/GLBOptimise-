@@ -135,8 +135,6 @@ export const TOOLS = [
       description:
         'Clean up fine line art and colouring book pages free in your browser. Turn rough, broken lines smooth at an even line weight, join gaps, remove the white background and export a transparent PNG or SVG.',
     },
-    // Card-only re-tint: this card swaps the site's gold for blue.
-    cardTheme: 'blue',
     features: [
       { icon: 'wand-2', label: 'Smooth lines' },
       { icon: 'activity', label: 'Line weight' },
@@ -393,6 +391,7 @@ export const TOOLS = [
     keywords: ['mobile', 'phone', 'performance', 'budget', 'vr', 'quest', 'draw calls', 'triangles', 'texture memory', 'check', 'game ready'],
     icon: 'smartphone',
     thumbnail: '/thumbnails/mobile-ready-checker.webp',
+    cardTheme: 'blue',
     features: [
       { icon: 'smartphone', label: 'Phone & VR' },
       { icon: 'gauge', label: 'Budgets' },
@@ -495,3 +494,14 @@ export function getToolByRoute(route) {
 export function getToolsByCategory(categoryId) {
   return TOOLS.filter((tool) => tool.category === categoryId);
 }
+
+/**
+ * Mobile app development tools pinned to row 1 of tool grids.
+ * Styled with cardTheme: 'blue' to stand out together.
+ */
+export const PINNED_MOBILE_TOOLS = [
+  'app-icon-generator',
+  'app-store-screenshot-generator',
+  'xcassets-generator',
+  'mobile-ready-checker',
+];

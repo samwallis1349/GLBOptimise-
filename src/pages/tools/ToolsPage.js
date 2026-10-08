@@ -1,4 +1,4 @@
-import { TOOLS } from '../../shared/config/tools.js';
+import { TOOLS, PINNED_MOBILE_TOOLS } from '../../shared/config/tools.js';
 import { ToolCard } from '../../shared/components/ToolCard.js';
 import { cachedUsageCounts, fetchUsageCounts, rankByUsage } from '../../services/UsageService.js';
 
@@ -60,9 +60,9 @@ export function render(container) {
   const grid = document.createElement('div');
   grid.className = 'tool-grid';
   const fill = (counts) => {
-    // Most-used first (VALUE_ORDER breaks ties). The GLB Builder keeps its
-    // wide featured card style without being fixed to the top rank.
-    const ranked = rankByUsage(orderedTools(), counts);
+    // Pinned mobile tools lead row 1; the rest are ranked by usage (VALUE_ORDER
+    // breaks ties). The GLB Builder keeps its wide featured card style on row 2.
+    const ranked = rankByUsage(orderedTools(), counts, PINNED_MOBILE_TOOLS);
     grid.replaceChildren(...ranked.map((tool, i) => ToolCard(tool, { index: i + 1, featured: tool.id === 'glb-builder' })));
   };
   fill(cachedUsageCounts());
