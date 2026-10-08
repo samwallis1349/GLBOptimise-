@@ -12,6 +12,7 @@ import { initLayoutEditor } from '../editor/LayoutEditor.js';
 import { initCommandPalette } from '../shared/effects/CommandPalette.js';
 import { initPromoBot } from '../shared/effects/PromoBot.js';
 import { initConsentBanner } from '../shared/components/ConsentBanner.js';
+import { initWelcomeModal } from '../shared/components/WelcomeModal.js';
 import { initAnalytics } from '../services/AnalyticsService.js';
 import { hasAccess, trialEndsAt } from '../shared/config/billing.js';
 import { TOOLS } from '../shared/config/tools.js';
@@ -53,6 +54,9 @@ export function App(rootEl) {
   // Ctrl/Cmd+K tool finder — same pattern: mounted once, outside the
   // router's DOM, reachable from any page.
   initCommandPalette();
+
+  // Welcome modal showcasing 3D AI generator partner
+  initWelcomeModal();
 
   // The banner and Bench Bot both quote days left, so they wait for the
   // trial clock. initTrial() never rejects — it falls back to local time.
