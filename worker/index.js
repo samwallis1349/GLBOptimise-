@@ -280,8 +280,8 @@ const BANNER_PREFIX = 'banner:';
 const BANNER_ACTIVE_KEY = 'banner_active:current';
 
 function isBannerAuthorized(request, env) {
-  const secret = env.BANNER_SECRET || env.STATS_KEY;
-  if (!secret) return true; // Open if no secret is configured yet
+  const secret = env.BANNER_SECRET;
+  if (!secret) return true; // Simple route: open for external programs unless BANNER_SECRET is configured
   const authHeader = request.headers.get('Authorization');
   if (authHeader && (authHeader === `Bearer ${secret}` || authHeader === secret)) return true;
   const keyHeader = request.headers.get('x-api-key') || request.headers.get('x-banner-key');
