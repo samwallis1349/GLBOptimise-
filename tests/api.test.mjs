@@ -13,7 +13,7 @@ import { memoryKv, pngBytes, sphereGlb } from './helpers/apiFixtures.mjs';
 // The Worker bundles the Basis encoder .wasm as a module; under Node it is injected.
 globalThis.__ASSETBENCH_BASIS_WASM__ = await WebAssembly.compile(readFileSync(new URL('../node_modules/ktx2-encoder/dist/basis/basis_encoder.wasm', import.meta.url)));
 
-const ADMIN = 'owner-secret';
+const ADMIN = 'owner-secret-long-enough-for-tests';
 
 function setup() {
   const env = { TRIALS: memoryKv(), API_ADMIN_KEY: ADMIN };
@@ -395,4 +395,10 @@ test('game-ready with ktx2 for Unity mentions the KTX package; Unreal skips KTX2
   const unreal = await (await call('/api/v1/3d/game-ready?engine=unreal&ktx2=true&lods=false&collision=false&output=json', { method: 'POST', headers: auth(key), body: glb })).json();
   assert.equal(unreal.report.after.stats.compression.ktx2, false);
   assert.ok(unreal.report.warnings.some((w) => w.includes('KTX2')));
+});
+
+test('a short owner key never unlocks owner actions', async () => {
+  const env = { TRIALS: memoryKv(), API_ADMIN_KEY: '1234' };
+  const res = await worker.fetch(new Request('https://www.assetbench.co.uk/api/v1/auth/keys', { method: 'POST', headers: { Authorization: 'Bearer 1234', 'CF-Connecting-IP': '198.51.100.7' }, body: JSON.stringify({ plan: 'all' }) }), env, {});
+  assert.equal((await res.json()).plan, 'trial', 'falls back to a trial key');
 });

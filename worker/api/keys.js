@@ -45,8 +45,11 @@ function ipKeySource(ip) {
   return `${groups.slice(0, 4).join(':')}::/64`;
 }
 
+// Short owner keys can be brute-forced over HTTP, so they never unlock owner actions.
+const MIN_ADMIN_KEY_LENGTH = 24;
+
 export async function isAdmin(request, env) {
-  if (!env.API_ADMIN_KEY) return false;
+  if (!env.API_ADMIN_KEY || env.API_ADMIN_KEY.length < MIN_ADMIN_KEY_LENGTH) return false;
   const header = request.headers.get('Authorization') || '';
   const given = header.startsWith('Bearer ') ? header.slice(7) : '';
   if (!given) return false;
