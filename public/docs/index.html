@@ -1,0 +1,487 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AssetBench Cloud API</title>
+<meta name="description" content="AssetBench Cloud API: make 3D models and app graphics mobile-ready from your own code. Inspect, optimise and LOD GLBs; generate iOS, watchOS and Android icon sets; resize textures.">
+<link rel="canonical" href="https://www.assetbench.co.uk/docs/">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap">
+<style>
+:root{
+  --bg:#000; --panel:#111214; --tile:#0B0C0E; --field:#08090A; --line:#24262B; --line2:#2E3138;
+  --ink:#F3EFE6; --text:#D7D4CE; --muted:#8C8A86; --dim:#5E5C59;
+  --accent:#C9CED6; --accent-hi:#EEF1F5; --accent-ink:#0B0C0E;
+  --silver:linear-gradient(180deg,#F6F7F9 0%,#C9CED6 45%,#9AA0A9 100%);
+  --ok:#3DDC84; --warn:#FFC861; --bad:#FF6B5E;
+  --display:"Outfit","Segoe UI",system-ui,sans-serif; --body:"Inter","Segoe UI",system-ui,sans-serif; --mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html{color-scheme:dark}
+body{margin:0;background:var(--bg);color:var(--text);font:14px/1.55 var(--body);padding:28px 16px 64px}
+.wrap{max-width:1080px;margin:0 auto}
+a{color:var(--accent-hi)}
+.top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:28px;flex-wrap:wrap}
+.brand{font:800 18px var(--display);color:var(--ink);text-decoration:none;letter-spacing:-.01em}
+.eyebrow{font:700 10.5px var(--body);letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin:0 0 10px}
+h1{font:800 clamp(34px,6vw,56px)/.98 var(--display);letter-spacing:-.03em;margin:0;color:var(--ink);text-wrap:balance}
+h1 em{font-style:normal;background:var(--silver);-webkit-background-clip:text;background-clip:text;color:transparent}
+h2{font:700 20px var(--display);color:var(--ink);margin:0 0 4px}
+h3{font:600 14px var(--body);color:var(--ink);margin:0 0 8px}
+.lede{margin:14px 0 0;font-size:15px;color:var(--muted);max-width:68ch}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px;margin-top:18px}
+.sub{color:var(--muted);margin:0 0 16px;font-size:13px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+input[type=text],input[type=password],select{background:var(--field);color:var(--ink);border:1px solid var(--line2);border-radius:10px;padding:10px 12px;font:13px var(--mono);min-width:0}
+input[type=text]:focus,select:focus,button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.key{flex:1 1 320px}
+button{font:600 13px var(--body);border-radius:10px;padding:10px 16px;cursor:pointer;border:1px solid var(--line2);background:var(--tile);color:var(--ink)}
+button.primary{background:var(--silver);color:var(--accent-ink);border:0}
+button:disabled{opacity:.5;cursor:default}
+.status{font-size:12.5px;color:var(--muted);min-height:18px;margin-top:10px}
+.status.ok{color:var(--ok)} .status.bad{color:var(--bad)}
+.plan{background:var(--tile);border:1px solid var(--line);border-radius:12px;padding:16px;position:relative}
+.plan.best{border-color:var(--accent)}
+.plan .price{font:800 26px var(--display);color:var(--ink)}
+.plan .price small{font:500 12px var(--body);color:var(--muted)}
+.plan p{margin:6px 0 0;color:var(--muted);font-size:12.5px}
+.tag{position:absolute;top:12px;right:12px;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent-ink);background:var(--accent);border-radius:999px;padding:3px 8px;font-weight:700}
+.tabs{display:flex;gap:6px;border-bottom:1px solid var(--line);margin-bottom:16px;flex-wrap:wrap}
+.tabs button{border:0;background:none;border-bottom:2px solid transparent;border-radius:0;color:var(--muted);padding:10px 12px}
+.tabs button[aria-selected=true]{color:var(--ink);border-bottom-color:var(--accent)}
+.drop{border:1.5px dashed var(--line2);border-radius:14px;padding:26px 16px;text-align:center;background:var(--tile);cursor:pointer;transition:border-color .15s}
+.drop.over{border-color:var(--accent)}
+.drop strong{color:var(--ink)}
+.drop .file{display:none;align-items:center;justify-content:center;gap:12px;margin-top:6px}
+.drop.has .file{display:flex} .drop.has .hint{display:none}
+.drop img{max-width:72px;max-height:72px;border-radius:12px;border:1px solid var(--line)}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.chip{font-size:12px;padding:5px 10px;border-radius:999px}
+label.f{display:flex;flex-direction:column;gap:6px;font-size:12px;color:var(--muted)}
+label.c{display:inline-flex;gap:6px;align-items:center;font-size:13px}
+.opts{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));margin-top:16px}
+.result{margin-top:16px;display:none}
+.result.show{display:block}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:12px}
+.stat{background:var(--tile);border:1px solid var(--line);border-radius:12px;padding:12px}
+.stat b{display:block;font:700 20px var(--display);color:var(--ink)}
+.stat span{font-size:11.5px;color:var(--muted)}
+pre{background:var(--field);border:1px solid var(--line);border-radius:12px;padding:14px;overflow:auto;font:12px/1.55 var(--mono);color:var(--text);margin:0;white-space:pre}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--muted);font-weight:600}
+td code,p code{font:12px var(--mono);color:var(--accent-hi)}
+.tbl{overflow-x:auto}
+.s-pass{color:var(--ok)} .s-close{color:var(--warn)} .s-fail{color:var(--bad)}
+.m{font:600 11px var(--mono);padding:2px 6px;border-radius:6px;background:var(--accent-ink);border:1px solid var(--line2)}
+[hidden]{display:none!important}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <a class="brand" href="/">Asset Bench</a>
+    <a href="/api/v1">GET /api/v1 →</a>
+  </div>
+
+  <p class="eyebrow">AssetBench Cloud · API v1</p>
+  <h1>Mobile-ready graphics, <em>from your own code.</em></h1>
+  <p class="lede">The same engines as the AssetBench tools, behind one API. Check a GLB against phone and headset budgets, cut it down to fit, build LOD chains, and turn one master image into every iOS, watchOS and Android icon. No GPU, no AI image generation: the processing is deterministic, so the same input always gives the same output.</p>
+
+  <section class="card" aria-labelledby="key-h">
+    <h2 id="key-h">1. Your API key</h2>
+    <p class="sub">Send it as <code>Authorization: Bearer &lt;key&gt;</code>. It is kept in this browser only so the playground and code samples can use it.</p>
+    <div class="row">
+      <label class="sr" for="apiKey">API key</label>
+      <input class="key" id="apiKey" type="password" placeholder="abk_live_…" autocomplete="off" spellcheck="false">
+      <button id="btnShow" type="button">Show</button>
+      <button id="btnMe" type="button">Check key</button>
+      <button id="btnTrial" class="primary" type="button">Get a free trial key</button>
+    </div>
+    <div class="status" id="keyStatus" role="status"></div>
+  </section>
+
+  <section class="card" aria-labelledby="plans-h">
+    <h2 id="plans-h">Plans</h2>
+    <p class="sub">One operation = one processed file (an LOD chain or an icon pack counts once). <code>3d/inspect</code> is free on any plan with the 3D engine.</p>
+    <div class="grid" id="plans"><p class="sub">Loading…</p></div>
+    <p class="sub" style="margin-top:14px">Paid plans are set up by hand for now: email <a id="contactLink" href="mailto:Workbench5@gmail.com">Workbench5@gmail.com</a> and your key is upgraded the same day.</p>
+  </section>
+
+  <section class="card" aria-labelledby="play-h">
+    <h2 id="play-h">2. Playground</h2>
+    <p class="sub">Runs real requests with your key, so they count against your quota (except Inspect).</p>
+    <div class="tabs" role="tablist">
+      <button role="tab" id="tab3d" aria-selected="true" aria-controls="panel3d" type="button">🧊 3D models</button>
+      <button role="tab" id="tab2d" aria-selected="false" aria-controls="panel2d" type="button">🎨 App icons &amp; textures</button>
+    </div>
+
+    <div id="panel3d" role="tabpanel" aria-labelledby="tab3d">
+      <div class="drop" id="drop3d" tabindex="0" role="button" aria-label="Choose a GLB file">
+        <div class="hint"><strong>Drop a .glb here</strong> or click to browse<br><span class="sub">Up to 15 MB on the trial, 25 MB on paid plans</span></div>
+        <div class="file"><span id="name3d"></span><button type="button" class="chip" data-remove="3d">✕ Remove</button></div>
+        <input type="file" id="file3d" accept=".glb,model/gltf-binary" hidden>
+      </div>
+      <div class="opts">
+        <label class="f">Operation
+          <select id="op3d">
+            <option value="inspect">Inspect: mobile-ready report (free)</option>
+            <option value="optimize" selected>Optimize: reduce, resize, compress</option>
+            <option value="lods">LODs: ZIP of a level-of-detail chain</option>
+          </select>
+        </label>
+        <label class="f" id="wrapTarget">Target (plain English or prop / character / scene / quest / web)
+          <input type="text" id="target" value="prop" spellcheck="false">
+        </label>
+        <label class="f" id="wrapRatio">Keep triangles: <span id="ratioLabel">auto (from target)</span>
+          <input type="range" id="ratio" min="0" max="90" step="5" value="0" aria-describedby="ratioLabel">
+        </label>
+        <label class="f" id="wrapPreset" hidden>LOD preset
+          <select id="preset"><option value="standard">Standard · 100/50/25/10%</option><option value="aggressive">Aggressive · 100/35/15/5%</option><option value="minimal">Minimal · 100/50%</option></select>
+        </label>
+        <label class="c" id="wrapCompress"><input type="checkbox" id="compress" checked> Meshopt compression</label>
+      </div>
+      <div class="chips" id="targetChips" aria-label="Example targets">
+        <button type="button" class="chip">low-end Android phone, Roblox style, 60fps</button>
+        <button type="button" class="chip">Shopify product viewer on mobile Safari</button>
+        <button type="button" class="chip">rigged mobile game character</button>
+        <button type="button" class="chip">Quest VR scene</button>
+        <button type="button" class="chip">under 5k tris, 512px textures</button>
+      </div>
+      <div class="status" id="intentPreview"></div>
+      <div class="row" style="margin-top:14px"><button class="primary" id="run3d" type="button">Run</button></div>
+      <div class="status" id="status3d" role="status"></div>
+      <div class="result" id="result3d"></div>
+    </div>
+
+    <div id="panel2d" role="tabpanel" aria-labelledby="tab2d" hidden>
+      <div class="drop" id="drop2d" tabindex="0" role="button" aria-label="Choose an image">
+        <div class="hint"><strong>Drop a PNG or JPEG here</strong> or click to browse<br><span class="sub">For icons: a square master, ideally 1024 × 1024</span></div>
+        <div class="file"><img id="thumb2d" alt=""><span id="name2d"></span><button type="button" class="chip" data-remove="2d">✕ Remove</button></div>
+        <input type="file" id="file2d" accept="image/png,image/jpeg" hidden>
+      </div>
+      <div class="opts">
+        <label class="f">Operation
+          <select id="op2d">
+            <option value="app-icons" selected>App icons: iOS / watchOS / Android ZIP</option>
+            <option value="resize">Resize texture</option>
+          </select>
+        </label>
+        <div id="iconOpts" class="f" style="font-size:12px;color:var(--muted)">Platforms
+          <div class="row"><label class="c"><input type="checkbox" value="ios" checked> iOS</label><label class="c"><input type="checkbox" value="android" checked> Android</label><label class="c"><input type="checkbox" value="watchos"> watchOS</label></div>
+        </div>
+        <label class="f" id="wrapBg">Background (iOS flattening, Android adaptive)
+          <input type="text" id="background" value="#FFFFFF" spellcheck="false">
+        </label>
+        <label class="f" id="wrapMax" hidden>Max size
+          <select id="maxSize"><option>256</option><option>512</option><option selected>1024</option><option>2048</option></select>
+        </label>
+        <label class="f" id="wrapFormat" hidden>Format
+          <select id="format"><option value="">Same as input</option><option value="png">PNG</option><option value="jpeg">JPEG</option></select>
+        </label>
+      </div>
+      <div class="row" style="margin-top:14px"><button class="primary" id="run2d" type="button">Run</button></div>
+      <div class="status" id="status2d" role="status"></div>
+      <div class="result" id="result2d"></div>
+    </div>
+  </section>
+
+  <section class="card" aria-labelledby="code-h">
+    <h2 id="code-h">3. Code</h2>
+    <p class="sub">Follows the playground settings above.</p>
+    <div class="tabs" role="tablist" id="codeTabs">
+      <button role="tab" aria-selected="true" data-lang="curl" type="button">cURL</button>
+      <button role="tab" aria-selected="false" data-lang="node" type="button">Node.js</button>
+      <button role="tab" aria-selected="false" data-lang="python" type="button">Python</button>
+    </div>
+    <pre id="code"></pre>
+    <div class="row" style="margin-top:10px"><button id="copyCode" type="button">Copy</button></div>
+  </section>
+
+  <section class="card" aria-labelledby="ref-h">
+    <h2 id="ref-h">Reference</h2>
+    <p class="sub">Send files as <code>multipart/form-data</code> (field <code>file</code>, options as fields) or as the raw body with options in the query string. Responses are the file itself, with a JSON summary in the <code>X-AssetBench-Summary</code> header and your quota in <code>X-Quota-Remaining</code>. Add <code>?output=json</code> to get the full report with the file base64-encoded.</p>
+    <div class="tbl"><table>
+      <thead><tr><th>Endpoint</th><th>Options</th><th>Returns</th></tr></thead>
+      <tbody>
+        <tr><td><span class="m">POST</span> <code>/api/v1/3d/inspect</code></td><td><code>target</code></td><td>JSON stats + scored checks against the target budget. Free.</td></tr>
+        <tr><td><span class="m">POST</span> <code>/api/v1/3d/optimize</code></td><td><code>target</code> (plain English ok), <code>ratio</code> 0–1, <code>maxTextureSize</code>, <code>compress</code>, <code>lockBorder</code></td><td>Optimised <code>.glb</code>; with <code>output=json</code>, a before/after report and a plain-text certificate.</td></tr>
+        <tr><td><span class="m">POST</span> <code>/api/v1/3d/lods</code></td><td><code>preset</code> standard|aggressive|minimal or <code>levels</code> "1,0.5,0.25", <code>compress</code></td><td>ZIP: <code>lod0.glb</code>… + <code>report.json</code>. Every level is cut from the original.</td></tr>
+        <tr><td><span class="m">POST</span> <code>/api/v1/2d/app-icons</code></td><td><code>platforms</code> ios,android,watchos · <code>background</code> #RRGGBB · <code>adaptiveScale</code></td><td>ZIP: <code>AppIcon.appiconset</code> with <code>Contents.json</code>, Android mipmaps + adaptive icon XML, Play Store 512.</td></tr>
+        <tr><td><span class="m">POST</span> <code>/api/v1/2d/xcassets</code></td><td>as app-icons, iOS by default</td><td>ZIP with the Xcode asset catalog.</td></tr>
+        <tr><td><span class="m">POST</span> <code>/api/v1/2d/resize</code></td><td><code>maxSize</code> 16–4096, <code>powerOfTwo</code>, <code>format</code> png|jpeg, <code>quality</code></td><td>Resized image.</td></tr>
+        <tr><td><span class="m">GET</span> <code>/api/v1/auth/me</code></td><td></td><td>Plan and remaining quota.</td></tr>
+        <tr><td><span class="m">GET</span> <code>/api/v1/intent?target=…</code></td><td></td><td>How a plain-English target compiles to settings. No key needed.</td></tr>
+        <tr><td><span class="m">GET</span> <code>/api/v1/pricing</code> · <code>/api/v1/targets</code></td><td></td><td>Plans; device budgets.</td></tr>
+      </tbody>
+    </table></div>
+    <h3 style="margin-top:18px">Errors</h3>
+    <p class="sub" style="margin:0">Errors are JSON: <code>{"error":{"code":"quota_exhausted","message":"…"}}</code>. Status codes: 400 bad option · 401 missing/invalid key · 403 engine not in plan · 413 file too large · 415 wrong file type (including Draco-compressed GLBs, which can be inspected but not processed yet) · 422 unreadable file · 429 quota used up.</p>
+  </section>
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const store = { get(k) { try { return localStorage.getItem(k); } catch { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch {} } };
+const ORIGIN = location.origin;
+const files = { '3d': null, '2d': null };
+let lang = 'curl';
+
+const keyInput = $('apiKey');
+keyInput.value = store.get('ab_api_key') || '';
+keyInput.addEventListener('input', () => { store.set('ab_api_key', keyInput.value.trim()); renderCode(); });
+$('btnShow').addEventListener('click', () => { const show = keyInput.type === 'password'; keyInput.type = show ? 'text' : 'password'; $('btnShow').textContent = show ? 'Hide' : 'Show'; });
+const key = () => keyInput.value.trim();
+const setStatus = (id, cls, text) => { const el = $(id); el.className = 'status ' + (cls || ''); el.textContent = text; };
+const errText = async (res) => { try { const j = await res.json(); return j.error?.message || res.statusText; } catch { return res.statusText; } };
+
+$('btnTrial').addEventListener('click', async () => {
+  setStatus('keyStatus', '', 'Requesting a trial key…');
+  const res = await fetch('/api/v1/auth/keys', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+  if (!res.ok) return setStatus('keyStatus', 'bad', await errText(res));
+  const j = await res.json();
+  keyInput.value = j.key; keyInput.type = 'text'; $('btnShow').textContent = 'Hide';
+  store.set('ab_api_key', j.key); renderCode();
+  setStatus('keyStatus', 'ok', 'Trial key created and saved in this browser. Copy it somewhere safe: it is not shown again.');
+});
+$('btnMe').addEventListener('click', async () => {
+  if (!key()) return setStatus('keyStatus', 'bad', 'Paste a key first.');
+  const res = await fetch('/api/v1/auth/me', { headers: { Authorization: 'Bearer ' + key() } });
+  if (!res.ok) return setStatus('keyStatus', 'bad', await errText(res));
+  const j = await res.json();
+  setStatus('keyStatus', 'ok', `${j.plan.name}: ${j.quota.remaining} of ${j.quota.limit} operations left${j.quota.resetsAt ? ', resets ' + j.quota.resetsAt.slice(0, 10) : ''}.`);
+});
+
+fetch('/api/v1/pricing').then((r) => r.json()).then(({ plans }) => {
+  const box = $('plans'); box.replaceChildren();
+  for (const p of plans) {
+    const el = document.createElement('div'); el.className = 'plan' + (p.bestValue ? ' best' : '');
+    if (p.bestValue) { const t = document.createElement('span'); t.className = 'tag'; t.textContent = 'Best value'; el.append(t); }
+    const h = document.createElement('h3'); h.textContent = p.name;
+    const price = document.createElement('div'); price.className = 'price'; price.textContent = p.price.amount ? `£${p.price.amount}` : 'Free';
+    const small = document.createElement('small'); small.textContent = p.price.interval ? ' / month' : ''; price.append(small);
+    const q = document.createElement('p'); q.textContent = `${p.quota} operations ${p.period === 'lifetime' ? 'in total' : 'per month'} · ${p.engines.map((e) => e.toUpperCase()).join(' + ')} · ${p.maxUploadMB} MB files`;
+    const s = document.createElement('p'); s.textContent = p.summary;
+    el.append(h, price, q, s); box.append(el);
+  }
+}).catch(() => { $('plans').textContent = 'Could not load plans.'; });
+
+// ---------- tabs ----------
+function selectTab(which) {
+  for (const t of ['3d', '2d']) { $('tab' + t).setAttribute('aria-selected', String(t === which)); $('panel' + t).hidden = t !== which; }
+  renderCode();
+}
+$('tab3d').addEventListener('click', () => selectTab('3d'));
+$('tab2d').addEventListener('click', () => selectTab('2d'));
+const activeTab = () => ($('panel3d').hidden ? '2d' : '3d');
+
+// ---------- dropzones ----------
+function setupDrop(kind, accept) {
+  const drop = $('drop' + kind), input = $('file' + kind);
+  const pick = (file) => {
+    if (!file) return;
+    if (!accept(file)) return setStatus('status' + kind, 'bad', kind === '3d' ? 'Choose a .glb file.' : 'Choose a PNG or JPEG image.');
+    files[kind] = file; drop.classList.add('has'); $('name' + kind).textContent = `${file.name} · ${(file.size / 1048576).toFixed(2)} MB`;
+    if (kind === '2d') { const img = $('thumb2d'); if (img.src) URL.revokeObjectURL(img.src); img.src = URL.createObjectURL(file); }
+    setStatus('status' + kind, '', ''); renderCode();
+  };
+  drop.addEventListener('click', (e) => { if (!e.target.closest('[data-remove]')) input.click(); });
+  drop.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); input.click(); } });
+  input.addEventListener('change', () => pick(input.files[0]));
+  drop.addEventListener('dragover', (e) => { e.preventDefault(); drop.classList.add('over'); });
+  drop.addEventListener('dragleave', () => drop.classList.remove('over'));
+  drop.addEventListener('drop', (e) => { e.preventDefault(); drop.classList.remove('over'); pick(e.dataTransfer.files[0]); });
+  drop.querySelector('[data-remove]').addEventListener('click', (e) => { e.stopPropagation(); files[kind] = null; input.value = ''; drop.classList.remove('has'); $('result' + kind).classList.remove('show'); renderCode(); });
+}
+setupDrop('3d', (f) => /\.glb$/i.test(f.name));
+setupDrop('2d', (f) => /^image\/(png|jpeg)$/.test(f.type) || /\.(png|jpe?g)$/i.test(f.name));
+
+// ---------- 3D options ----------
+const ratioValue = () => Number($('ratio').value) ? (100 - Number($('ratio').value)) / 100 : null;
+$('ratio').addEventListener('input', () => { const r = ratioValue(); $('ratioLabel').textContent = r ? `${Math.round(r * 100)}%` : 'auto (from target)'; renderCode(); });
+$('op3d').addEventListener('change', () => {
+  const op = $('op3d').value;
+  $('wrapRatio').hidden = op !== 'optimize'; $('wrapPreset').hidden = op !== 'lods'; $('wrapCompress').hidden = op === 'inspect';
+  $('wrapTarget').hidden = op === 'lods'; $('targetChips').hidden = op === 'lods'; $('intentPreview').hidden = op === 'lods';
+  renderCode();
+});
+let intentTimer;
+const previewIntent = () => {
+  clearTimeout(intentTimer);
+  intentTimer = setTimeout(async () => {
+    const t = $('target').value.trim();
+    if (!t) return setStatus('intentPreview', '', '');
+    const j = await (await fetch('/api/v1/intent?target=' + encodeURIComponent(t))).json().catch(() => null);
+    if (j) setStatus('intentPreview', '', `→ ${j.target} budget · ≤${j.triangleBudget.toLocaleString('en-GB')} triangles · textures ≤${j.maxTextureSize}px${j.compress ? ' · Meshopt' : ''}`);
+  }, 250);
+};
+$('target').addEventListener('input', () => { previewIntent(); renderCode(); });
+$('targetChips').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) { $('target').value = b.textContent; previewIntent(); renderCode(); } });
+for (const id of ['preset', 'compress', 'op2d', 'background', 'maxSize', 'format']) $(id).addEventListener('change', renderCode);
+$('background').addEventListener('input', renderCode);
+document.querySelectorAll('#iconOpts input').forEach((c) => c.addEventListener('change', renderCode));
+$('op2d').addEventListener('change', () => {
+  const icons = $('op2d').value === 'app-icons';
+  $('iconOpts').hidden = !icons; $('wrapBg').hidden = !icons; $('wrapMax').hidden = icons; $('wrapFormat').hidden = icons;
+});
+
+/** The request the playground would send, shared by Run and the code samples. */
+function currentRequest() {
+  const tab = activeTab();
+  const fields = {};
+  let endpoint;
+  if (tab === '3d') {
+    const op = $('op3d').value;
+    endpoint = `/api/v1/3d/${op}`;
+    if (op !== 'lods' && $('target').value.trim()) fields.target = $('target').value.trim();
+    if (op === 'optimize' && ratioValue()) fields.ratio = String(ratioValue());
+    if (op === 'lods') fields.preset = $('preset').value;
+    if (op !== 'inspect' && !$('compress').checked) fields.compress = 'false';
+  } else {
+    const op = $('op2d').value;
+    endpoint = `/api/v1/2d/${op}`;
+    if (op === 'app-icons') {
+      fields.platforms = [...document.querySelectorAll('#iconOpts input:checked')].map((c) => c.value).join(',') || 'ios';
+      fields.background = $('background').value.trim();
+    } else {
+      fields.maxSize = $('maxSize').value;
+      if ($('format').value) fields.format = $('format').value;
+    }
+  }
+  return { tab, endpoint, fields, file: files[tab] };
+}
+
+// ---------- run ----------
+function download(blob, name) {
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+}
+function b64ToBlob(b64, type) { const s = atob(b64); const u = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) u[i] = s.charCodeAt(i); return new Blob([u], { type }); }
+function statTiles(pairs) {
+  const box = document.createElement('div'); box.className = 'stats';
+  for (const [label, value] of pairs) { const d = document.createElement('div'); d.className = 'stat'; const b = document.createElement('b'); b.textContent = value; const s = document.createElement('span'); s.textContent = label; d.append(b, s); box.append(d); }
+  return box;
+}
+function checksTable(evaluation) {
+  const wrap = document.createElement('div'); wrap.className = 'tbl';
+  const t = document.createElement('table');
+  t.innerHTML = '<thead><tr><th>Check</th><th>Value</th><th>Budget</th><th>Result</th></tr></thead>';
+  const body = document.createElement('tbody');
+  for (const c of evaluation.checks) {
+    const tr = document.createElement('tr');
+    for (const v of [c.name, c.value.toLocaleString('en-GB'), c.budget.toLocaleString('en-GB'), c.status]) { const td = document.createElement('td'); td.textContent = v; tr.append(td); }
+    tr.lastChild.className = 's-' + c.status; body.append(tr);
+  }
+  t.append(body); wrap.append(t); return wrap;
+}
+const fmtMB = (b) => b >= 1048576 ? (b / 1048576).toFixed(2) + ' MB' : Math.max(1, Math.round(b / 1024)) + ' KB';
+
+async function run(kind) {
+  const req = currentRequest();
+  const out = $('result' + kind); out.classList.remove('show'); out.replaceChildren();
+  if (!key()) return setStatus('status' + kind, 'bad', 'Add your API key above first (the trial button gives you one).');
+  if (!req.file) return setStatus('status' + kind, 'bad', 'Choose a file first.');
+  const form = new FormData(); form.append('file', req.file);
+  for (const [k, v] of Object.entries(req.fields)) form.append(k, v);
+  const asJson = req.endpoint.endsWith('/optimize');
+  const btn = $('run' + kind); btn.disabled = true;
+  setStatus('status' + kind, '', 'Processing…');
+  const t0 = performance.now();
+  try {
+    const res = await fetch(req.endpoint + (asJson ? '?output=json' : ''), { method: 'POST', headers: { Authorization: 'Bearer ' + key() }, body: form });
+    if (!res.ok) return setStatus('status' + kind, 'bad', `${res.status}: ${await errText(res)}`);
+    const secs = ((performance.now() - t0) / 1000).toFixed(2);
+    const remaining = res.headers.get('X-Quota-Remaining');
+    if (req.endpoint.endsWith('/inspect')) {
+      const j = await res.json();
+      out.append(statTiles([['Mobile score', `${j.evaluation.score}/100`], ['Verdict', j.evaluation.verdict], ['Triangles', j.stats.triangles.toLocaleString('en-GB')], ['Draw calls', j.stats.drawCalls], ['Texture memory', fmtMB(j.stats.textureMemoryBytes)], ['File size', fmtMB(j.stats.fileBytes)]]), checksTable(j.evaluation));
+      setStatus('status' + kind, 'ok', `Inspected in ${secs}s against the ${j.evaluation.targetName.toLowerCase()} budget. Inspect is free.`);
+    } else if (asJson) {
+      const j = await res.json();
+      const r = j.report;
+      const blob = b64ToBlob(j.file.base64, j.file.contentType);
+      const dl = document.createElement('button'); dl.className = 'primary'; dl.type = 'button'; dl.textContent = `Download ${j.file.name}`; dl.addEventListener('click', () => download(blob, j.file.name));
+      const pre = document.createElement('pre'); pre.textContent = r.summaryText;
+      out.append(statTiles([['Triangles', `${r.before.stats.triangles.toLocaleString('en-GB')} → ${r.after.stats.triangles.toLocaleString('en-GB')}`], ['File size', `${fmtMB(r.before.stats.fileBytes)} → ${fmtMB(r.after.stats.fileBytes)}`], ['Mobile score', `${r.before.evaluation.score} → ${r.after.evaluation.score}`]]), pre, Object.assign(document.createElement('div'), { className: 'row', style: 'margin-top:12px' }));
+      out.lastChild.append(dl);
+      setStatus('status' + kind, 'ok', `Done in ${secs}s. ${j.quota.remaining} operations left.`);
+    } else {
+      const blob = await res.blob();
+      const name = (/filename="([^"]+)"/.exec(res.headers.get('Content-Disposition') || '') || [])[1] || 'result';
+      const summary = res.headers.get('X-AssetBench-Summary');
+      const dl = document.createElement('button'); dl.className = 'primary'; dl.type = 'button'; dl.textContent = `Download ${name} (${fmtMB(blob.size)})`; dl.addEventListener('click', () => download(blob, name));
+      const pre = document.createElement('pre'); pre.textContent = summary ? JSON.stringify(JSON.parse(summary), null, 2) : '';
+      out.append(pre, Object.assign(document.createElement('div'), { className: 'row', style: 'margin-top:12px' }));
+      out.lastChild.append(dl);
+      setStatus('status' + kind, 'ok', `Done in ${secs}s.${remaining ? ` ${remaining} operations left.` : ''}`);
+    }
+    out.classList.add('show');
+  } catch (err) {
+    setStatus('status' + kind, 'bad', 'Request failed: ' + err.message);
+  } finally { btn.disabled = false; }
+}
+$('run3d').addEventListener('click', () => run('3d'));
+$('run2d').addEventListener('click', () => run('2d'));
+
+// ---------- code samples ----------
+const q = (s) => `'${String(s).replace(/'/g, `'\\''`)}'`;
+function renderCode() {
+  const { endpoint, fields, file, tab } = currentRequest();
+  const k = key() || 'abk_live_YOUR_KEY';
+  const fname = file?.name || (tab === '3d' ? 'model.glb' : 'icon.png');
+  const binary = !endpoint.endsWith('/inspect');
+  const outName = endpoint.endsWith('/optimize') ? 'optimised.glb' : endpoint.endsWith('/resize') ? 'resized' + (fields.format === 'jpeg' ? '.jpg' : '.png') : endpoint.endsWith('/inspect') ? '' : 'result.zip';
+  let code;
+  if (lang === 'curl') {
+    code = [`curl -X POST ${ORIGIN}${endpoint} \\`, `  -H "Authorization: Bearer ${k}" \\`, `  -F "file=@${fname}"${Object.keys(fields).length || binary ? ' \\' : ''}`];
+    const entries = Object.entries(fields);
+    entries.forEach(([f, v], i) => code.push(`  -F ${q(`${f}=${v}`)}${i < entries.length - 1 || binary ? ' \\' : ''}`));
+    if (binary) code.push(`  -o ${outName}`);
+    code = code.join('\n');
+  } else if (lang === 'node') {
+    code = `import { readFile, writeFile } from 'node:fs/promises';
+
+const form = new FormData();
+form.append('file', new Blob([await readFile(${JSON.stringify(fname)})]), ${JSON.stringify(fname)});
+${Object.entries(fields).map(([f, v]) => `form.append(${JSON.stringify(f)}, ${JSON.stringify(v)});`).join('\n')}
+
+const res = await fetch('${ORIGIN}${endpoint}', {
+  method: 'POST',
+  headers: { Authorization: 'Bearer ${k}' },
+  body: form,
+});
+if (!res.ok) throw new Error((await res.json()).error.message);
+${binary ? `console.log(JSON.parse(res.headers.get('X-AssetBench-Summary')));
+await writeFile(${JSON.stringify(outName)}, Buffer.from(await res.arrayBuffer()));` : `console.log(await res.json());`}`;
+  } else {
+    code = `import json, requests
+
+with open(${JSON.stringify(fname)}, "rb") as f:
+    res = requests.post(
+        "${ORIGIN}${endpoint}",
+        headers={"Authorization": "Bearer ${k}"},
+        files={"file": f},
+        data=${JSON.stringify(fields)},
+    )
+res.raise_for_status()
+${binary ? `print(json.loads(res.headers["X-AssetBench-Summary"]))
+with open(${JSON.stringify(outName)}, "wb") as out:
+    out.write(res.content)` : `print(res.json())`}`;
+  }
+  $('code').textContent = code;
+}
+document.querySelectorAll('#codeTabs button').forEach((b) => b.addEventListener('click', () => {
+  lang = b.dataset.lang;
+  document.querySelectorAll('#codeTabs button').forEach((x) => x.setAttribute('aria-selected', String(x === b)));
+  renderCode();
+}));
+$('copyCode').addEventListener('click', async () => { try { await navigator.clipboard.writeText($('code').textContent); $('copyCode').textContent = 'Copied'; setTimeout(() => { $('copyCode').textContent = 'Copy'; }, 1500); } catch {} });
+previewIntent();
+renderCode();
+</script>
+</body>
+</html>

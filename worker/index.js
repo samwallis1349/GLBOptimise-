@@ -24,6 +24,7 @@
  */
 
 import { TOOLS } from '../src/shared/config/tools.js';
+import { handleApiV1 } from './api/index.js';
 
 const TOOL_IDS = new Set(TOOLS.map((tool) => tool.id));
 const USAGE_PREFIX = 'usage:';
@@ -187,6 +188,7 @@ async function handleSalesWebhook(request, env) {
   const event = payload.meta?.event_name ?? request.headers.get('X-Event-Name');
   if (event !== 'order_created') return json({ ok: true, ignored: true });
   const order = payload.data;
+  const attributes = order?.attributes ?? {};
   const orderProductId = Number(attributes.first_order_item?.product_id);
   if ((orderProductId !== LICENSE_PRODUCT_ID && orderProductId !== SINGLE_TOOL_PRODUCT_ID) || attributes.test_mode || attributes.status !== 'paid') return json({ ok: true, ignored: true });
   const totalCents = Math.round(Number(attributes.total) * 100);
@@ -436,6 +438,7 @@ export default {
     if (pathname === '/api/banner' || pathname === '/api/banners' || pathname === '/api/banner/active') {
       return handleBanner(request, env);
     }
+    if (pathname === '/api/v1' || pathname.startsWith('/api/v1/')) return handleApiV1(request, env);
     if (pathname.startsWith('/api/')) return json({ error: 'Not found' }, 404);
     return env.ASSETS.fetch(request);
   },
