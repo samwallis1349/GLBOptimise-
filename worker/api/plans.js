@@ -66,8 +66,12 @@ export const PRODUCTS = [
   { id: 'ios', name: 'iOS Asset Generation API', blurb: 'App icons, store screenshot sizes and ready-to-import .xcassets packages.', endpoints: ['POST /api/v1/ios/app-icons', 'POST /api/v1/ios/xcassets', 'POST /api/v1/ios/screenshots'] },
 ];
 
-export function publicPlans() {
+/** Plans for display. Checkout links come from the API_LS_CHECKOUTS var: {"studio2d":"https://…", …}. */
+export function publicPlans(env = {}) {
+  let checkouts = {};
+  try { checkouts = typeof env.API_LS_CHECKOUTS === 'string' ? JSON.parse(env.API_LS_CHECKOUTS) : env.API_LS_CHECKOUTS || {}; } catch { checkouts = {}; }
   return Object.values(PLANS).map(({ id, name, price, quota, period, engines, maxUploadMB, batchMaxMB, summary, bestValue }) => ({
     id, name, price, quota, period, engines, maxUploadMB, batchMaxMB, summary, bestValue: Boolean(bestValue),
+    checkoutUrl: /^https:\/\/[\w.-]+\.lemonsqueezy\.com\//.test(checkouts[id] || '') ? checkouts[id] : null,
   }));
 }

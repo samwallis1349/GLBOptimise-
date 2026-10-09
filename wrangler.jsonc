@@ -18,7 +18,14 @@
   // the Worker, which needs more than the default 30 s of CPU per request.
   // Requires the Workers Paid plan; 300000 ms (5 min) is the maximum.
   "limits": { "cpu_ms": 300000 },
-  "vars": { "TRIAL_GENERATION": "2026-10-reset-1" },
+  "vars": {
+    "TRIAL_GENERATION": "2026-10-reset-1",
+    // Cloud API billing. Lemon Squeezy product id -> plan (studio2d | studio3d | all),
+    // one subscription product per plan, each with license keys enabled.
+    "API_LS_PRODUCTS": {},
+    // Plan -> Lemon Squeezy checkout link, shown as Subscribe buttons on /docs.
+    "API_LS_CHECKOUTS": {}
+  },
   // Trial start times keyed by a salted hash of the visitor's IP.
   // Create once with: npx wrangler kv namespace create TRIALS
   // then paste the printed id below.

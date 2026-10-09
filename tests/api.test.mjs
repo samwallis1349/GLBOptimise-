@@ -402,3 +402,42 @@ test('a short owner key never unlocks owner actions', async () => {
   const res = await worker.fetch(new Request('https://www.assetbench.co.uk/api/v1/auth/keys', { method: 'POST', headers: { Authorization: 'Bearer 1234', 'CF-Connecting-IP': '198.51.100.7' }, body: JSON.stringify({ plan: 'all' }) }), env, {});
   assert.equal((await res.json()).plan, 'trial', 'falls back to a trial key');
 });
+
+test('Lemon Squeezy subscription lifecycle drives the license key as an API key', async () => {
+  const env = { TRIALS: memoryKv(), LEMONSQUEEZY_WEBHOOK_SECRET: 'whsec', API_LS_PRODUCTS: JSON.stringify({ 900001: 'studio3d', 900002: 'all' }) };
+  const sign = async (body) => {
+    const k = await crypto.subtle.importKey('raw', new TextEncoder().encode('whsec'), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+    return [...new Uint8Array(await crypto.subtle.sign('HMAC', k, new TextEncoder().encode(body)))].map((b) => b.toString(16).padStart(2, '0')).join('');
+  };
+  const hook = async (event, attributes) => {
+    const body = JSON.stringify({ meta: { event_name: event }, data: { id: '1', attributes } });
+    const res = await worker.fetch(new Request('https://www.assetbench.co.uk/api/sales-webhook', { method: 'POST', headers: { 'X-Signature': await sign(body) }, body }), env, {});
+    assert.equal(res.status, 200);
+    return res.json();
+  };
+  const me = (k) => worker.fetch(new Request('https://www.assetbench.co.uk/api/v1/auth/me', { headers: { Authorization: `Bearer ${k}` } }), env, {});
+  const license = '38B1460A-5104-4067-A91D-77B872934D51';
+
+  // Subscription event first, license key second: order must not matter.
+  await hook('subscription_created', { order_id: 77, product_id: 900001, status: 'active' });
+  assert.match((await hook('license_key_created', { order_id: 77, product_id: 900001, key: license })).api, /key issued/);
+  const ok = await (await me(license.toLowerCase())).json();
+  assert.equal(ok.plan.id, 'studio3d');
+
+  await hook('subscription_updated', { order_id: 77, product_id: 900002, status: 'active' });
+  assert.equal((await (await me(license)).json()).plan.id, 'all', 'upgrade follows the product');
+
+  await hook('subscription_updated', { order_id: 77, product_id: 900002, status: 'cancelled' });
+  assert.equal((await me(license)).status, 200, 'cancelled keeps working until the period ends');
+
+  await hook('subscription_expired', { order_id: 77, product_id: 900002, status: 'expired' });
+  const off = await me(license);
+  assert.equal(off.status, 403);
+  assert.equal((await off.json()).error.code, 'subscription_inactive');
+
+  await hook('subscription_updated', { order_id: 77, product_id: 900002, status: 'active' });
+  assert.equal((await me(license)).status, 200, 'renewal turns it back on');
+
+  assert.equal((await hook('license_key_created', { order_id: 78, product_id: 1420844, key: '11111111-2222-3333-4444-555555555555' })).ignored, true, 'site products are not API keys');
+  assert.ok(![...env.TRIALS.store.values()].some((v) => v.value.includes(license)), 'raw license key never stored');
+});

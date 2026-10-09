@@ -344,7 +344,7 @@ async function route(request, env) {
   if (path === '/api/v1' && method === 'GET') {
     return json({ name: 'AssetBench Cloud API', version: 'v1', docs: `${url.origin}/docs/`, auth: 'Authorization: Bearer abk_live_...', products: PRODUCTS });
   }
-  if (path === '/api/v1/pricing' && method === 'GET') return json({ currency: 'GBP', plans: publicPlans(), products: PRODUCTS });
+  if (path === '/api/v1/pricing' && method === 'GET') return json({ currency: 'GBP', plans: publicPlans(env), products: PRODUCTS });
   if (path === '/api/v1/targets' && method === 'GET') return json({ targets: TARGETS });
   if (path === '/api/v1/formats' && method === 'GET') return json({ conversions: CONVERSIONS, screenshots: SCREENSHOT_SIZES, ktx2Modes: ['auto', 'etc1s', 'uastc'] });
   if (path === '/api/v1/devices' && method === 'GET') {

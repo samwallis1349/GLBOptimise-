@@ -25,6 +25,7 @@
 
 import { TOOLS } from '../src/shared/config/tools.js';
 import { handleApiV1 } from './api/index.js';
+import { handleApiBillingEvent } from './api/billing.js';
 
 const TOOL_IDS = new Set(TOOLS.map((tool) => tool.id));
 const USAGE_PREFIX = 'usage:';
@@ -186,6 +187,9 @@ async function handleSalesWebhook(request, env) {
   if (!await validWebhookSignature(rawBody, request.headers.get('X-Signature'), env.LEMONSQUEEZY_WEBHOOK_SECRET)) return json({ error: 'Invalid signature' }, 401);
   const payload = JSON.parse(rawBody);
   const event = payload.meta?.event_name ?? request.headers.get('X-Event-Name');
+  // Cloud API subscriptions (license key = API key) are handled separately from site sales.
+  const api = await handleApiBillingEvent(env, event, payload);
+  if (api.handled) return json({ ok: true, api: api.action });
   if (event !== 'order_created') return json({ ok: true, ignored: true });
   const order = payload.data;
   const attributes = order?.attributes ?? {};

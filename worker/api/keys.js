@@ -1,6 +1,7 @@
 import { PLANS } from './plans.js';
 import { CONTACT_EMAIL } from '../../src/shared/config/app.js';
 import { ApiError, sha256Hex } from './http.js';
+import { LICENSE_KEY_PATTERN } from './billing.js';
 
 /**
  * API keys and quotas, stored in the TRIALS KV namespace.
@@ -113,13 +114,19 @@ async function readUsage(kv, hash, period) {
 /** Resolves the caller's key, or throws 401/403. */
 export async function authenticate(request, env) {
   const kv = requireKv(env);
-  const key = keyFromRequest(request);
+  let key = keyFromRequest(request);
   if (!key) throw new ApiError(401, 'missing_api_key', 'Send your key as "Authorization: Bearer abk_live_..." or "x-api-key". Get one at /docs.');
-  if (!/^abk_live_[a-f0-9]{48}$/.test(key)) throw new ApiError(401, 'invalid_api_key', 'That API key is not valid.');
+  // Lemon Squeezy license keys (paid plans) are matched upper-case; abk_live_ keys are trial/owner-minted.
+  if (LICENSE_KEY_PATTERN.test(key)) key = key.toUpperCase();
+  else if (!/^abk_live_[a-f0-9]{48}$/.test(key)) throw new ApiError(401, 'invalid_api_key', 'That API key is not valid.');
   const hash = await sha256Hex(key);
   const record = await kv.get(`${KEY_PREFIX}${hash}`, 'json');
   if (!record) throw new ApiError(401, 'invalid_api_key', 'That API key is not valid.');
-  if (record.revoked) throw new ApiError(403, 'key_revoked', 'This API key has been revoked.');
+  if (record.revoked) {
+    throw record.source === 'lemonsqueezy'
+      ? new ApiError(403, 'subscription_inactive', `Your subscription is ${record.subscriptionStatus || 'not active'}. Renew it in your Lemon Squeezy account to use this key again.`)
+      : new ApiError(403, 'key_revoked', 'This API key has been revoked.');
+  }
   const plan = PLANS[record.plan];
   if (!plan) throw new ApiError(403, 'unknown_plan', 'This key is attached to a plan that no longer exists.');
   return { hash, record, plan };

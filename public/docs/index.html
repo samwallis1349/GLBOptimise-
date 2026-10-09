@@ -79,6 +79,7 @@ td code,p code{font:12px var(--mono);color:var(--accent-hi)}
 .m{font:600 11px var(--mono);padding:2px 6px;border-radius:6px;background:var(--accent-ink);border:1px solid var(--line2)}
 [hidden]{display:none!important}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.buy{display:inline-block;margin-top:10px;font:600 13px var(--body);border-radius:10px;padding:9px 14px;background:var(--silver);color:var(--accent-ink);text-decoration:none}
 .products{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
 .product{background:var(--tile);border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:8px}
 .product h3{margin:0;font:700 15px var(--display)}
@@ -121,7 +122,8 @@ td code,p code{font:12px var(--mono);color:var(--accent-hi)}
     <h2 id="plans-h">Plans</h2>
     <p class="sub">One operation = one processed file (a game-ready pack, LOD chain, icon pack or screenshot set counts once; a batch counts each file). Audits are free.</p>
     <div class="grid" id="plans"><p class="sub">Loading…</p></div>
-    <p class="sub" style="margin-top:14px">Paid plans are set up by hand for now: email <a href="mailto:Workbench5@gmail.com">Workbench5@gmail.com</a> and your key is upgraded the same day.</p>
+    <p class="sub" style="margin-top:14px">After subscribing, Lemon Squeezy emails you a license key: use it as your API key. Manage or cancel any time from your Lemon Squeezy receipt.</p>
+    <p class="sub" id="manualNote" style="margin-top:6px">Paid plans are set up by hand for now: email <a href="mailto:Workbench5@gmail.com">Workbench5@gmail.com</a> and your key is upgraded the same day.</p>
   </section>
 
   <section class="card" aria-labelledby="play-h">
@@ -344,6 +346,7 @@ $('btnMe').addEventListener('click', async () => {
 // Which playground setup each product card opens.
 const TRY = { optimise: ['3d', 'game-ready'], batch: ['batch', 'game-ready'], ktx2: ['2d', 'ktx2'], audit: ['3d', 'audit'], convert: ['3d', 'convert'], lods: ['3d', 'lods'], ios: ['2d', 'app-icons'] };
 
+let paidCheckout = false;
 fetch('/api/v1/pricing').then((r) => r.json()).then(({ plans, products }) => {
   const box = $('plans'); box.replaceChildren();
   for (const p of plans) {
@@ -354,8 +357,14 @@ fetch('/api/v1/pricing').then((r) => r.json()).then(({ plans, products }) => {
     const small = document.createElement('small'); small.textContent = p.price.interval ? ' / month' : ''; price.append(small);
     const q = document.createElement('p'); q.textContent = `${p.quota} operations ${p.period === 'lifetime' ? 'in total' : 'per month'} · ${p.engines.map((e) => e.toUpperCase()).join(' + ')} · ${p.maxUploadMB} MB files`;
     const s = document.createElement('p'); s.textContent = p.summary;
-    el.append(h, price, q, s); box.append(el);
+    el.append(h, price, q, s);
+    if (p.checkoutUrl) {
+      const buy = document.createElement('a'); buy.className = 'buy'; buy.href = p.checkoutUrl; buy.target = '_blank'; buy.rel = 'noopener'; buy.textContent = `Subscribe to ${p.name} →`;
+      el.append(buy); paidCheckout = true;
+    }
+    box.append(el);
   }
+  $('manualNote').hidden = paidCheckout;
   const grid = $('products'); grid.replaceChildren();
   products.forEach((p, i) => {
     const el = document.createElement('div'); el.className = 'product';
