@@ -17,9 +17,24 @@ export function pngBytes(width, height, { alpha = false } = {}) {
 }
 
 /** UV sphere with `segments`² quads (~2·segments² triangles) and an optional texture. */
-export async function sphereGlb(segments = 120, { textureSize = null } = {}) {
+export async function sphereGlb(segments = 120, { textureSize = null, parts = 1, lift = 0 } = {}) {
   const doc = new Document();
   const buffer = doc.createBuffer();
+  const scene = doc.createScene();
+  const material = doc.createMaterial('Skin');
+  if (textureSize) {
+    const tex = doc.createTexture('albedo').setImage(pngBytes(textureSize[0], textureSize[1])).setMimeType('image/png');
+    material.setBaseColorTexture(tex);
+  }
+  // Each part is its own mesh + node sharing one material: a typical kitbashed prop.
+  for (let p = 0; p < parts; p += 1) {
+    const mesh = buildSphere(doc, buffer, segments, material);
+    scene.addChild(doc.createNode(`Part${p}`).setMesh(mesh).setTranslation([p * 2.2, lift, 0]));
+  }
+  return new NodeIO().writeBinary(doc);
+}
+
+function buildSphere(doc, buffer, segments, material) {
   const positions = [];
   const uvs = [];
   const indices = [];
@@ -44,15 +59,8 @@ export async function sphereGlb(segments = 120, { textureSize = null } = {}) {
     .setAttribute('POSITION', doc.createAccessor().setType('VEC3').setArray(new Float32Array(positions)).setBuffer(buffer))
     .setAttribute('TEXCOORD_0', doc.createAccessor().setType('VEC2').setArray(new Float32Array(uvs)).setBuffer(buffer))
     .setIndices(doc.createAccessor().setType('SCALAR').setArray(new Uint32Array(indices)).setBuffer(buffer));
-  const material = doc.createMaterial('Skin');
-  if (textureSize) {
-    const tex = doc.createTexture('albedo').setImage(pngBytes(textureSize[0], textureSize[1])).setMimeType('image/png');
-    material.setBaseColorTexture(tex);
-  }
   prim.setMaterial(material);
-  const mesh = doc.createMesh('Sphere').addPrimitive(prim);
-  doc.createScene().addChild(doc.createNode('Sphere').setMesh(mesh));
-  return new NodeIO().writeBinary(doc);
+  return doc.createMesh('Sphere').addPrimitive(prim);
 }
 
 /** Minimal in-memory stand-in for a Workers KV namespace. */

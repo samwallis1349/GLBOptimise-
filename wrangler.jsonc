@@ -14,6 +14,10 @@
     // straight from the static assets.
     "run_worker_first": ["/api/*"]
   },
+  // The Cloud API (/api/v1) encodes KTX2 textures and simplifies meshes on
+  // the Worker, which needs more than the default 30 s of CPU per request.
+  // Requires the Workers Paid plan; 300000 ms (5 min) is the maximum.
+  "limits": { "cpu_ms": 300000 },
   "vars": { "TRIAL_GENERATION": "2026-10-reset-1" },
   // Trial start times keyed by a salted hash of the visitor's IP.
   // Create once with: npx wrangler kv namespace create TRIALS

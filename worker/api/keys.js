@@ -136,7 +136,7 @@ export async function quotaStatus(env, account) {
 
 /** Checks engine access and remaining quota before any work is done. */
 export async function assertCanRun(env, account, engine) {
-  if (!account.plan.engines.includes(engine)) {
+  if (engine !== 'any' && !account.plan.engines.includes(engine)) {
     throw new ApiError(403, 'engine_not_in_plan', `Your ${account.plan.name} plan does not include the ${engine.toUpperCase()} engine.`, { plan: account.plan.id, engines: account.plan.engines });
   }
   const quota = await quotaStatus(env, account);
@@ -146,11 +146,11 @@ export async function assertCanRun(env, account, engine) {
   return quota;
 }
 
-/** Charges one operation after a successful run. */
-export async function chargeOperation(env, account) {
+/** Charges `count` operations after a successful run. */
+export async function chargeOperation(env, account, count = 1) {
   const period = periodFor(account.plan);
   const key = `${USE_PREFIX}${account.hash}:${period}`;
-  const used = (await readUsage(env.TRIALS, account.hash, period)) + 1;
+  const used = (await readUsage(env.TRIALS, account.hash, period)) + count;
   await env.TRIALS.put(key, '', { metadata: { count: used } });
   return { limit: account.plan.quota, used, remaining: Math.max(0, account.plan.quota - used), period };
 }

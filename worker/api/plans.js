@@ -3,8 +3,9 @@
  * to Lemon Squeezy yet, so paid keys are minted by the owner (POST
  * /api/v1/auth/keys with the API_ADMIN_KEY secret) after a sale.
  *
- * `engines` gates which endpoint families a key may call; `quota` is
- * operations per calendar month (UTC), or lifetime for the trial.
+ * `engines` gates which endpoint families a key may call (texture
+ * endpoints work with either); `quota` is operations per calendar month
+ * (UTC), or lifetime for the trial. One processed file = one operation.
  */
 export const PLANS = {
   trial: {
@@ -15,7 +16,8 @@ export const PLANS = {
     period: 'lifetime',
     engines: ['2d', '3d'],
     maxUploadMB: 15,
-    summary: '25 operations to try every endpoint. One key per network.',
+    batchMaxMB: 15,
+    summary: '25 operations to try every API. One key per network.',
   },
   studio2d: {
     id: 'studio2d',
@@ -25,7 +27,8 @@ export const PLANS = {
     period: 'month',
     engines: ['2d'],
     maxUploadMB: 25,
-    summary: 'iOS, watchOS and Android app icon sets, adaptive icons and texture resizing.',
+    batchMaxMB: 40,
+    summary: 'iOS asset generation (icons, xcassets, store screenshots), KTX2 and texture resizing, batch.',
   },
   studio3d: {
     id: 'studio3d',
@@ -35,7 +38,8 @@ export const PLANS = {
     period: 'month',
     engines: ['3d'],
     maxUploadMB: 25,
-    summary: 'Mobile-ready inspection, polygon reduction, texture downscaling, Meshopt compression and LOD chains.',
+    batchMaxMB: 40,
+    summary: 'GLB optimisation and game-ready packs, audits, LODs, format conversion, KTX2, batch.',
   },
   all: {
     id: 'all',
@@ -45,13 +49,25 @@ export const PLANS = {
     period: 'month',
     engines: ['2d', '3d'],
     maxUploadMB: 25,
-    summary: 'Both engines with a shared monthly pool. Best value.',
+    batchMaxMB: 40,
+    summary: 'All seven APIs with a shared monthly pool. Best value.',
     bestValue: true,
   },
 };
 
+/** The seven products in the package, in the order the docs present them. */
+export const PRODUCTS = [
+  { id: 'optimise', name: 'GLB Optimisation API', blurb: 'Upload a model; get back a compressed, reduced GLB, or a full game-ready pack fitted to a device and engine.', endpoints: ['POST /api/v1/3d/optimize', 'POST /api/v1/3d/game-ready'] },
+  { id: 'batch', name: 'Batch Asset Processing API', blurb: 'Run any operation over up to 50 models or textures in one request (send several files or one ZIP).', endpoints: ['POST /api/v1/batch'] },
+  { id: 'ktx2', name: 'KTX2 Texture API', blurb: 'PNG, JPEG or every texture inside a GLB to GPU-compressed KTX2 (Basis Universal ETC1S / UASTC).', endpoints: ['POST /api/v1/textures/ktx2'] },
+  { id: 'audit', name: '3D Asset Audit API', blurb: 'File size, triangles, draw calls, texture memory, animation data and a mobile-readiness score per device class.', endpoints: ['POST /api/v1/3d/audit'] },
+  { id: 'convert', name: '3D Format Conversion API', blurb: 'FBX, OBJ and glTF to GLB; GLB to glTF or OBJ.', endpoints: ['POST /api/v1/3d/convert'] },
+  { id: 'lods', name: 'LOD Generation API', blurb: 'Level-of-detail chains for game engines and mobile games.', endpoints: ['POST /api/v1/3d/lods'] },
+  { id: 'ios', name: 'iOS Asset Generation API', blurb: 'App icons, store screenshot sizes and ready-to-import .xcassets packages.', endpoints: ['POST /api/v1/ios/app-icons', 'POST /api/v1/ios/xcassets', 'POST /api/v1/ios/screenshots'] },
+];
+
 export function publicPlans() {
-  return Object.values(PLANS).map(({ id, name, price, quota, period, engines, maxUploadMB, summary, bestValue }) => ({
-    id, name, price, quota, period, engines, maxUploadMB, summary, bestValue: Boolean(bestValue),
+  return Object.values(PLANS).map(({ id, name, price, quota, period, engines, maxUploadMB, batchMaxMB, summary, bestValue }) => ({
+    id, name, price, quota, period, engines, maxUploadMB, batchMaxMB, summary, bestValue: Boolean(bestValue),
   }));
 }

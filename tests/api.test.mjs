@@ -6,7 +6,12 @@ import worker from '../worker/index.js';
 import { compileIntent } from '../worker/api/intent.js';
 import { fitSize } from '../worker/api/images.js';
 import { analyseGlb } from '../worker/api/glb.js';
+import { readFileSync } from 'node:fs';
+import jpeg from 'jpeg-js';
 import { memoryKv, pngBytes, sphereGlb } from './helpers/apiFixtures.mjs';
+
+// The Worker bundles the Basis encoder .wasm as a module; under Node it is injected.
+globalThis.__ASSETBENCH_BASIS_WASM__ = await WebAssembly.compile(readFileSync(new URL('../node_modules/ktx2-encoder/dist/basis/basis_encoder.wasm', import.meta.url)));
 
 const ADMIN = 'owner-secret';
 
@@ -226,4 +231,168 @@ test('sales webhook records paid orders', async () => {
   const res = await worker.fetch(new Request('https://www.assetbench.co.uk/api/sales-webhook', { method: 'POST', headers: { 'X-Signature': sig }, body }), env, {});
   assert.equal(res.status, 200);
   assert.deepEqual(JSON.parse(env.TRIALS.store.get('site-sale:42').value), { productId: 1420844, cents: 999, currency: 'GBP', createdAt: '2026-10-09T00:00:00Z' });
+});
+
+test('game-ready runs the pipeline and returns an engine pack', async () => {
+  const { call, mint } = setup();
+  const key = await mint('studio3d');
+  const glb = await sphereGlb(80, { textureSize: [3000, 1500], parts: 6, lift: 4 });
+  const res = await call('/api/v1/3d/game-ready?device=low&role=prop&engine=unity', { method: 'POST', headers: { ...auth(key), 'x-filename': 'Crate Stack.glb' }, body: glb });
+  assert.equal(res.status, 200);
+  assert.match(res.headers.get('Content-Disposition'), /Crate_Stack-low-unity\.zip/);
+  const zip = await JSZip.loadAsync(await res.arrayBuffer());
+  assert.deepEqual(Object.keys(zip.files).sort(), ['Crate_Stack_LOD0.glb', 'Crate_Stack_LOD1.glb', 'Crate_Stack_LOD2.glb', 'Crate_Stack_collision.glb', 'IMPORT-UNITY.md', 'REPORT.txt', 'report.json']);
+
+  const report = JSON.parse(await zip.file('report.json').async('string'));
+  assert.equal(report.budget.tris, 5000);
+  assert.equal(report.budget.texMax, 512);
+  assert.equal(report.before.stats.drawCalls, 6);
+  assert.equal(report.after.stats.drawCalls, 1, 'parts sharing a material are merged');
+  assert.ok(report.after.stats.triangles <= 5000 * 1.05);
+  assert.equal(report.after.stats.largestTexture, 512);
+  assert.equal(report.after.evaluation.verdict, 'mobile-ready');
+  const [lod0, lod1, lod2] = report.files.filter((f) => f.kind === 'lod').map((f) => f.triangles);
+  assert.ok(lod0 > lod1 && lod1 > lod2 && lod2 <= lod0 * 0.25, `${lod0}/${lod1}/${lod2}`);
+  const collider = report.files.find((f) => f.kind === 'collision');
+  assert.ok(collider.triangles <= 255, `Unity convex collider limit, got ${collider.triangles}`);
+  assert.equal(analyseGlb(await zip.file('Crate_Stack_LOD0.glb').async('uint8array')).compression.meshopt, false, 'engines import uncompressed');
+
+  // Pivot: the model now sits on the ground at the origin.
+  const { NodeIO, getBounds } = await import('@gltf-transform/core');
+  const doc = await new NodeIO().readBinary(await zip.file('Crate_Stack_LOD0.glb').async('uint8array'));
+  const { min, max } = getBounds(doc.getRoot().getDefaultScene() || doc.getRoot().listScenes()[0]);
+  assert.ok(Math.abs(min[1]) < 1e-4, `bottom at y=0, got ${min[1]}`);
+  assert.ok(Math.abs((min[0] + max[0]) / 2) < 1e-4);
+
+  assert.match(await zip.file('IMPORT-UNITY.md').async('string'), /LOD Group/);
+  assert.match(await zip.file('REPORT.txt').async('string'), /Merge parts to cut draw calls: 6 → 1/);
+});
+
+test('game-ready engine rules: web compresses, roblox caps, bad options rejected', async () => {
+  const { call, mint } = setup();
+  const key = await mint('all');
+  const glb = await sphereGlb(120);
+  const web = await call('/api/v1/3d/game-ready?device=high&role=hero&engine=web&collision=false&lods=false&output=json', { method: 'POST', headers: auth(key), body: glb });
+  const j = await web.json();
+  assert.equal(j.report.files.length, 1);
+  assert.equal(j.report.after.stats.compression.meshopt, true);
+
+  const roblox = await (await call('/api/v1/devices')).json();
+  assert.equal(roblox.roles.hero.budgets.high.tris, 80000);
+
+  const bad = await call('/api/v1/3d/game-ready?engine=cryengine', { method: 'POST', headers: auth(key), body: glb });
+  assert.equal(bad.status, 400);
+  assert.equal((await bad.json()).error.code, 'invalid_engine');
+});
+
+test('inspect scores every device class', async () => {
+  const { call, mint } = setup();
+  const key = await mint('all');
+  const j = await (await call('/api/v1/3d/inspect?role=character', { method: 'POST', headers: auth(key), body: await getSphere() })).json();
+  assert.deepEqual(j.devices.results.map((d) => d.device), ['low', 'mid', 'high', 'quest']);
+  assert.equal(j.devices.results.find((d) => d.device === 'high').triangleBudget, 40000);
+});
+
+const isKtx2 = (u8) => [0xab, 0x4b, 0x54, 0x58, 0x20, 0x32, 0x30].every((b, i) => u8[i] === b);
+
+test('KTX2: images and GLB textures', async () => {
+  const { call, mint } = setup();
+  const key = await mint('studio2d');
+  const img = await call('/api/v1/textures/ktx2?mode=etc1s', { method: 'POST', headers: auth(key), body: pngBytes(100, 60) });
+  assert.equal(img.status, 200);
+  assert.equal(img.headers.get('Content-Type'), 'image/ktx2');
+  assert.ok(isKtx2(new Uint8Array(await img.arrayBuffer())));
+  assert.deepEqual([JSON.parse(img.headers.get('X-AssetBench-Summary')).width, JSON.parse(img.headers.get('X-AssetBench-Summary')).height], [128, 64], 'snapped to powers of two');
+
+  const glb = await call('/api/v1/textures/ktx2', { method: 'POST', headers: auth(key), body: await sphereGlb(10, { textureSize: [64, 64] }) });
+  assert.equal(glb.status, 200);
+  const stats = analyseGlb(new Uint8Array(await glb.arrayBuffer()));
+  assert.equal(stats.compression.ktx2, true);
+  assert.equal(stats.textures[0].mimeType, 'image/ktx2');
+});
+
+test('convert: GLB to OBJ and glTF and back keeps geometry and textures; FBX output refused', async () => {
+  const { call, mint } = setup();
+  const key = await mint('studio3d');
+  const glb = await sphereGlb(20, { textureSize: [64, 64], parts: 2 });
+  for (const to of ['obj', 'gltf']) {
+    const res = await call(`/api/v1/3d/convert?to=${to}`, { method: 'POST', headers: { ...auth(key), 'x-filename': 'ball.glb' }, body: glb });
+    assert.equal(res.status, 200, to);
+    const zipBytes = new Uint8Array(await res.arrayBuffer());
+    const files = Object.keys((await JSZip.loadAsync(zipBytes)).files);
+    assert.ok(files.includes(`ball.${to}`), files.join());
+    const back = await call('/api/v1/3d/convert', { method: 'POST', headers: { ...auth(key), 'x-filename': 'ball.zip' }, body: zipBytes });
+    assert.equal(back.status, 200);
+    const stats = analyseGlb(new Uint8Array(await back.arrayBuffer()));
+    assert.equal(stats.triangles, 2 * 2 * 20 * 20);
+    assert.equal(stats.textures.length, 1);
+  }
+  const fbx = await call('/api/v1/3d/convert?to=fbx', { method: 'POST', headers: auth(key), body: glb });
+  assert.equal((await fbx.json()).error.code, 'fbx_output_unsupported');
+  const junk = await call('/api/v1/3d/convert', { method: 'POST', headers: auth(key), body: new Uint8Array([1, 2, 3, 4, 5]) });
+  assert.equal(junk.status, 415);
+});
+
+test('store screenshots: every device size, orientation follows the input, always opaque', async () => {
+  const { call, mint } = setup();
+  const key = await mint('studio2d');
+  const form = new FormData();
+  form.append('file', new Blob([pngBytes(400, 866, { alpha: true })]), 'home.png');
+  form.append('file', new Blob([pngBytes(866, 400)]), 'map.png');
+  form.append('devices', 'iphone-6.9,android-phone');
+  const res = await call('/api/v1/ios/screenshots', { method: 'POST', headers: auth(key), body: form });
+  assert.equal(res.status, 200);
+  const zip = await JSZip.loadAsync(await res.arrayBuffer());
+  const sizes = {};
+  for (const name of Object.keys(zip.files).filter((n) => n.endsWith('.jpg'))) {
+    const img = jpeg.decode(await zip.file(name).async('uint8array'), { useTArray: true });
+    sizes[name] = `${img.width}x${img.height}`;
+  }
+  assert.deepEqual(sizes, {
+    'iphone-6.9/01_home.jpg': '1320x2868',
+    'android-phone/01_home.jpg': '1080x1920',
+    'iphone-6.9/02_map.jpg': '2868x1320',
+    'android-phone/02_map.jpg': '1920x1080',
+  });
+});
+
+test('batch: one ZIP in, per-file results and manifest out, failures isolated, charged per success', async () => {
+  const { call, mint } = setup();
+  const key = await mint('studio3d');
+  const zip = new JSZip();
+  zip.file('a.glb', await sphereGlb(40));
+  zip.file('nested/b.glb', await sphereGlb(60));
+  zip.file('broken.glb', new Uint8Array([0x67, 0x6c, 0x54, 0x46, 2, 0, 0, 0]));
+  zip.file('readme.txt', 'ignored');
+  const body = await zip.generateAsync({ type: 'uint8array' });
+
+  const audit = await call('/api/v1/batch?operation=audit', { method: 'POST', headers: auth(key), body });
+  const a = await audit.json();
+  assert.equal(a.total, 3);
+  assert.equal(a.succeeded, 2);
+  assert.equal(a.files.find((f) => f.file === 'broken.glb').status, 'error');
+  assert.equal(a.charged, 0);
+
+  const opt = await call('/api/v1/batch?operation=optimize&target=prop', { method: 'POST', headers: auth(key), body });
+  assert.equal(opt.status, 200);
+  assert.equal(opt.headers.get('X-Quota-Remaining'), '148');
+  const out = await JSZip.loadAsync(await opt.arrayBuffer());
+  const manifest = JSON.parse(await out.file('manifest.json').async('string'));
+  assert.deepEqual(manifest.files.map((f) => f.status), ['ok', 'error', 'ok']);
+  assert.ok(out.file('results/a/a-optimised.glb'));
+
+  assert.equal((await (await call('/api/v1/batch?operation=nope', { method: 'POST', headers: auth(key), body })).json()).error.code, 'invalid_operation');
+});
+
+test('game-ready with ktx2 for Unity mentions the KTX package; Unreal skips KTX2', async () => {
+  const { call, mint } = setup();
+  const key = await mint('all');
+  const glb = await sphereGlb(20, { textureSize: [64, 64] });
+  const unity = await JSZip.loadAsync(await (await call('/api/v1/3d/game-ready?engine=unity&ktx2=true&lods=false&collision=false', { method: 'POST', headers: auth(key), body: glb })).arrayBuffer());
+  const name = Object.keys(unity.files).find((n) => n.endsWith('_LOD0.glb'));
+  assert.equal(analyseGlb(await unity.file(name).async('uint8array')).compression.ktx2, true);
+  assert.match(await unity.file('IMPORT-UNITY.md').async('string'), /com\.unity\.cloud\.ktx/);
+  const unreal = await (await call('/api/v1/3d/game-ready?engine=unreal&ktx2=true&lods=false&collision=false&output=json', { method: 'POST', headers: auth(key), body: glb })).json();
+  assert.equal(unreal.report.after.stats.compression.ktx2, false);
+  assert.ok(unreal.report.warnings.some((w) => w.includes('KTX2')));
 });

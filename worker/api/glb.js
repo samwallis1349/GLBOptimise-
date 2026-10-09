@@ -251,8 +251,10 @@ const judge = (value, budget) => {
 };
 
 /** Scores stats against a target budget, same weighting as the site's checker. */
-export function evaluate(stats, targetId) {
-  const T = TARGETS[targetId];
+/** `target` is a TARGETS id or a budget object with the same fields plus `name`. */
+export function evaluate(stats, target) {
+  const targetId = typeof target === 'string' ? target : target.id;
+  const T = typeof target === 'string' ? TARGETS[target] : target;
   if (!T) throw new ApiError(400, 'unknown_target', `Unknown target '${targetId}'.`, { targets: Object.keys(TARGETS) });
   const checks = [];
   const add = (key, name, value, budget, fix, forced) => checks.push({ key, name, value, budget, fix, ...(forced || judge(value, budget)) });

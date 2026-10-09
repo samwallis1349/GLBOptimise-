@@ -8,6 +8,7 @@ const NAV_LINKS = [
   { label: 'Tools', path: '/tools' },
   { label: 'About', path: '/about' },
   { label: 'Pricing', path: '/pricing' },
+  { label: 'API', path: '/docs/' },
 ];
 
 /** Renders the single shared Asset Bench header, kept in sync with the router. */

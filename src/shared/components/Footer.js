@@ -7,6 +7,7 @@ const FOOTER_LINKS = [
   { label: 'Tools', href: '/tools' },
   { label: 'About', href: '/about' },
   { label: 'Pricing', href: '/pricing' },
+  { label: 'API', href: '/docs/' },
   { label: 'Contact', href: '/contact' },
   { label: 'Privacy', href: '/privacy' },
   { label: 'Terms', href: '/terms' },

@@ -67,6 +67,8 @@ export function renderSitemap() {
     `  <url>\n    <loc>${SITE_URL}${path}</loc>\n    <changefreq>${changefreq}</changefreq>\n    <priority>${priority}</priority>\n  </url>`;
   const entries = [
     ...STATIC_PAGES.map((p) => url(p.path, p.changefreq, p.priority)),
+    // The API docs are a standalone page (public/docs/), not an SPA route, so they're listed here rather than in STATIC_PAGES.
+    url('/docs/', 'weekly', '0.8'),
     ...TOOLS.filter((t) => LIVE.has(t.status)).map((t) => url(t.route, 'monthly', t.id === 'optimise-glb' ? '0.9' : '0.8')),
   ];
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${entries.join('\n')}\n</urlset>\n`;

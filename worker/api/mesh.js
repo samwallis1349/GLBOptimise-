@@ -19,7 +19,7 @@ function clampRatio(value) {
   return Math.max(0.01, n);
 }
 
-function bool(value, fallback) {
+export function bool(value, fallback) {
   if (value === undefined || value === null || value === '') return fallback;
   return !['false', '0', 'no', 'off'].includes(String(value).toLowerCase());
 }
@@ -53,7 +53,7 @@ export function resolveSettings(params, beforeStats) {
 }
 
 /** Downscales embedded PNG/JPEG textures to fit maxSize, snapping to powers of two. */
-async function downscaleTextures(document, maxSize, warnings) {
+export async function downscaleTextures(document, maxSize, warnings) {
   const changed = [];
   if (!maxSize) return changed;
   for (const texture of document.getRoot().listTextures()) {
@@ -81,13 +81,13 @@ async function downscaleTextures(document, maxSize, warnings) {
   return changed;
 }
 
-async function compressMeshopt(document) {
+export async function compressMeshopt(document) {
   await MeshoptEncoder.ready;
   await document.transform(meshopt({ encoder: MeshoptEncoder, level: 'high' }));
 }
 
-async function reduce(document, ratio, lockBorder) {
-  return reducePolys({ document, ratio, options: { lockBorder, error: ratio < 0.2 ? 0.05 : 0.01, cleanup: true } });
+export async function reduce(document, ratio, lockBorder, error = ratio < 0.2 ? 0.05 : 0.01) {
+  return reducePolys({ document, ratio, options: { lockBorder, error, cleanup: true } });
 }
 
 export async function optimizeGlb(bytes, params) {

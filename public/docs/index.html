@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>AssetBench Cloud API</title>
-<meta name="description" content="AssetBench Cloud API: make 3D models and app graphics mobile-ready from your own code. Inspect, optimise and LOD GLBs; generate iOS, watchOS and Android icon sets; resize textures.">
+<meta name="description" content="AssetBench Cloud API: seven APIs for mobile game and app assets. GLB optimisation and game-ready packs, batch processing, KTX2 textures, 3D audits, format conversion, LOD generation and iOS asset generation.">
 <link rel="canonical" href="https://www.assetbench.co.uk/docs/">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -79,6 +79,12 @@ td code,p code{font:12px var(--mono);color:var(--accent-hi)}
 .m{font:600 11px var(--mono);padding:2px 6px;border-radius:6px;background:var(--accent-ink);border:1px solid var(--line2)}
 [hidden]{display:none!important}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.products{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+.product{background:var(--tile);border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:8px}
+.product h3{margin:0;font:700 15px var(--display)}
+.product p{margin:0;color:var(--muted);font-size:12.5px;flex:1}
+.product code{font:11px var(--mono);color:var(--accent-hi);display:block}
+.product .num{font:700 11px var(--mono);color:var(--dim)}
 </style>
 </head>
 <body>
@@ -89,8 +95,14 @@ td code,p code{font:12px var(--mono);color:var(--accent-hi)}
   </div>
 
   <p class="eyebrow">AssetBench Cloud · API v1</p>
-  <h1>Mobile-ready graphics, <em>from your own code.</em></h1>
-  <p class="lede">The same engines as the AssetBench tools, behind one API. Check a GLB against phone and headset budgets, cut it down to fit, build LOD chains, and turn one master image into every iOS, watchOS and Android icon. No GPU, no AI image generation: the processing is deterministic, so the same input always gives the same output.</p>
+  <h1>Game and app assets, <em>ready for mobile.</em></h1>
+  <p class="lede">Seven APIs on one key. Optimise and audit 3D models for phones and headsets, build LODs, convert formats, compress textures to KTX2, generate iOS and Android assets, and run any of it over a whole folder in one request. The processing is deterministic, with no AI image generation, so the same input always gives the same output.</p>
+
+  <section class="card" aria-labelledby="pkg-h">
+    <h2 id="pkg-h">The package</h2>
+    <p class="sub">Every plan with the right engine gets all of these. Click a card to try it below.</p>
+    <div class="products" id="products"><p class="sub">Loading…</p></div>
+  </section>
 
   <section class="card" aria-labelledby="key-h">
     <h2 id="key-h">1. Your API key</h2>
@@ -107,86 +119,148 @@ td code,p code{font:12px var(--mono);color:var(--accent-hi)}
 
   <section class="card" aria-labelledby="plans-h">
     <h2 id="plans-h">Plans</h2>
-    <p class="sub">One operation = one processed file (an LOD chain or an icon pack counts once). <code>3d/inspect</code> is free on any plan with the 3D engine.</p>
+    <p class="sub">One operation = one processed file (a game-ready pack, LOD chain, icon pack or screenshot set counts once; a batch counts each file). Audits are free.</p>
     <div class="grid" id="plans"><p class="sub">Loading…</p></div>
-    <p class="sub" style="margin-top:14px">Paid plans are set up by hand for now: email <a id="contactLink" href="mailto:Workbench5@gmail.com">Workbench5@gmail.com</a> and your key is upgraded the same day.</p>
+    <p class="sub" style="margin-top:14px">Paid plans are set up by hand for now: email <a href="mailto:Workbench5@gmail.com">Workbench5@gmail.com</a> and your key is upgraded the same day.</p>
   </section>
 
   <section class="card" aria-labelledby="play-h">
     <h2 id="play-h">2. Playground</h2>
-    <p class="sub">Runs real requests with your key, so they count against your quota (except Inspect).</p>
+    <p class="sub">Runs real requests with your key, so they count against your quota (audits are free).</p>
     <div class="tabs" role="tablist">
       <button role="tab" id="tab3d" aria-selected="true" aria-controls="panel3d" type="button">🧊 3D models</button>
-      <button role="tab" id="tab2d" aria-selected="false" aria-controls="panel2d" type="button">🎨 App icons &amp; textures</button>
+      <button role="tab" id="tab2d" aria-selected="false" aria-controls="panel2d" type="button">📱 iOS assets &amp; textures</button>
+      <button role="tab" id="tabbatch" aria-selected="false" aria-controls="panelbatch" type="button">📦 Batch</button>
     </div>
 
     <div id="panel3d" role="tabpanel" aria-labelledby="tab3d">
-      <div class="drop" id="drop3d" tabindex="0" role="button" aria-label="Choose a GLB file">
-        <div class="hint"><strong>Drop a .glb here</strong> or click to browse<br><span class="sub">Up to 15 MB on the trial, 25 MB on paid plans</span></div>
+      <div class="drop" id="drop3d" tabindex="0" role="button" aria-label="Choose a model">
+        <div class="hint"><strong>Drop a model here</strong> or click to browse<br><span class="sub">.glb · or .fbx / .obj / .gltf / .zip to convert · 15 MB trial, 25 MB paid</span></div>
         <div class="file"><span id="name3d"></span><button type="button" class="chip" data-remove="3d">✕ Remove</button></div>
-        <input type="file" id="file3d" accept=".glb,model/gltf-binary" hidden>
+        <input type="file" id="file3d" accept=".glb,.gltf,.obj,.fbx,.zip" hidden>
       </div>
       <div class="opts">
         <label class="f">Operation
           <select id="op3d">
-            <option value="inspect">Inspect: mobile-ready report (free)</option>
-            <option value="optimize" selected>Optimize: reduce, resize, compress</option>
-            <option value="lods">LODs: ZIP of a level-of-detail chain</option>
+            <option value="game-ready" selected>Game-ready pack (recommended)</option>
+            <option value="audit">Audit: which devices can run it (free)</option>
+            <option value="optimize">Optimise GLB: reduce, resize, compress</option>
+            <option value="lods">LODs: level-of-detail chain</option>
+            <option value="convert">Convert format</option>
+            <option value="ktx2">KTX2: compress the model's textures</option>
           </select>
         </label>
-        <label class="f" id="wrapTarget">Target (plain English or prop / character / scene / quest / web)
+        <label class="f" data-for="game-ready">Device
+          <select id="device"><option value="low">Low-end phone</option><option value="mid" selected>Mid-range phone</option><option value="high">High-end phone</option><option value="quest">Standalone VR (Quest)</option></select>
+        </label>
+        <label class="f" data-for="game-ready audit">The model is a…
+          <select id="role"><option value="prop" selected>Prop</option><option value="vehicle">Vehicle</option><option value="character">Character</option><option value="hero">Hero character</option><option value="environment">Environment piece</option></select>
+        </label>
+        <label class="f" data-for="game-ready">Engine
+          <select id="engine"><option value="unity" selected>Unity</option><option value="unreal">Unreal Engine</option><option value="godot">Godot 4</option><option value="roblox">Roblox</option><option value="web">Web (three.js)</option></select>
+        </label>
+        <label class="c" data-for="game-ready optimize"><input type="checkbox" id="useKtx2"> KTX2 textures</label>
+        <label class="f" data-for="optimize">Target (plain English or prop / character / scene / quest / web)
           <input type="text" id="target" value="prop" spellcheck="false">
         </label>
-        <label class="f" id="wrapRatio">Keep triangles: <span id="ratioLabel">auto (from target)</span>
+        <label class="f" data-for="optimize">Keep triangles: <span id="ratioLabel">auto (from target)</span>
           <input type="range" id="ratio" min="0" max="90" step="5" value="0" aria-describedby="ratioLabel">
         </label>
-        <label class="f" id="wrapPreset" hidden>LOD preset
+        <label class="f" data-for="lods">LOD preset
           <select id="preset"><option value="standard">Standard · 100/50/25/10%</option><option value="aggressive">Aggressive · 100/35/15/5%</option><option value="minimal">Minimal · 100/50%</option></select>
         </label>
-        <label class="c" id="wrapCompress"><input type="checkbox" id="compress" checked> Meshopt compression</label>
+        <label class="c" data-for="optimize lods"><input type="checkbox" id="compress" checked> Meshopt compression</label>
+        <label class="f" data-for="convert">Convert to
+          <select id="convertTo"><option value="">Auto (GLB, or glTF from a GLB)</option><option value="glb">GLB</option><option value="gltf">glTF (.gltf + .bin + textures)</option><option value="obj">OBJ (+ .mtl + textures)</option></select>
+        </label>
+        <label class="f" data-for="convert">Scale
+          <select id="scale"><option value="">1 (keep)</option><option value="0.01">0.01 (centimetres → metres, common for FBX)</option><option value="100">100</option></select>
+        </label>
       </div>
-      <div class="chips" id="targetChips" aria-label="Example targets">
+      <div class="chips" id="targetChips" data-for="optimize" aria-label="Example targets">
         <button type="button" class="chip">low-end Android phone, Roblox style, 60fps</button>
         <button type="button" class="chip">Shopify product viewer on mobile Safari</button>
         <button type="button" class="chip">rigged mobile game character</button>
         <button type="button" class="chip">Quest VR scene</button>
         <button type="button" class="chip">under 5k tris, 512px textures</button>
       </div>
-      <div class="status" id="intentPreview"></div>
+      <div class="status" id="intentPreview" data-for="optimize"></div>
       <div class="row" style="margin-top:14px"><button class="primary" id="run3d" type="button">Run</button></div>
       <div class="status" id="status3d" role="status"></div>
       <div class="result" id="result3d"></div>
     </div>
 
     <div id="panel2d" role="tabpanel" aria-labelledby="tab2d" hidden>
-      <div class="drop" id="drop2d" tabindex="0" role="button" aria-label="Choose an image">
-        <div class="hint"><strong>Drop a PNG or JPEG here</strong> or click to browse<br><span class="sub">For icons: a square master, ideally 1024 × 1024</span></div>
+      <div class="drop" id="drop2d" tabindex="0" role="button" aria-label="Choose images">
+        <div class="hint"><strong>Drop a PNG or JPEG here</strong> or click to browse<br><span class="sub">Icons: a square master, ideally 1024 × 1024 · Screenshots: up to 10 at once</span></div>
         <div class="file"><img id="thumb2d" alt=""><span id="name2d"></span><button type="button" class="chip" data-remove="2d">✕ Remove</button></div>
-        <input type="file" id="file2d" accept="image/png,image/jpeg" hidden>
+        <input type="file" id="file2d" accept="image/png,image/jpeg" multiple hidden>
       </div>
       <div class="opts">
         <label class="f">Operation
           <select id="op2d">
-            <option value="app-icons" selected>App icons: iOS / watchOS / Android ZIP</option>
+            <option value="app-icons" selected>App icons: iOS / watchOS / Android</option>
+            <option value="xcassets">Xcode .xcassets (iOS)</option>
+            <option value="screenshots">Store screenshots: every device size</option>
+            <option value="ktx2">KTX2 texture</option>
             <option value="resize">Resize texture</option>
           </select>
         </label>
-        <div id="iconOpts" class="f" style="font-size:12px;color:var(--muted)">Platforms
+        <div class="f" data-for="app-icons" id="iconOpts" style="font-size:12px;color:var(--muted)">Platforms
           <div class="row"><label class="c"><input type="checkbox" value="ios" checked> iOS</label><label class="c"><input type="checkbox" value="android" checked> Android</label><label class="c"><input type="checkbox" value="watchos"> watchOS</label></div>
         </div>
-        <label class="f" id="wrapBg">Background (iOS flattening, Android adaptive)
+        <label class="f" data-for="app-icons xcassets screenshots">Background colour
           <input type="text" id="background" value="#FFFFFF" spellcheck="false">
         </label>
-        <label class="f" id="wrapMax" hidden>Max size
-          <select id="maxSize"><option>256</option><option>512</option><option selected>1024</option><option>2048</option></select>
+        <div class="f" data-for="screenshots" id="shotOpts" style="font-size:12px;color:var(--muted)">Devices
+          <div class="row" style="row-gap:4px">
+            <label class="c"><input type="checkbox" value="iphone-6.9" checked> iPhone 6.9"</label><label class="c"><input type="checkbox" value="iphone-6.5" checked> iPhone 6.5"</label><label class="c"><input type="checkbox" value="iphone-5.5"> iPhone 5.5"</label>
+            <label class="c"><input type="checkbox" value="ipad-13" checked> iPad 13"</label><label class="c"><input type="checkbox" value="ipad-12.9"> iPad 12.9"</label><label class="c"><input type="checkbox" value="android-phone"> Android phone</label><label class="c"><input type="checkbox" value="android-tablet"> Android tablet</label>
+          </div>
+        </div>
+        <label class="f" data-for="screenshots">Fit
+          <select id="fit"><option value="cover">Cover (crop to fill)</option><option value="contain">Contain (keep everything, add bars)</option></select>
         </label>
-        <label class="f" id="wrapFormat" hidden>Format
+        <label class="f" data-for="ktx2">Mode
+          <select id="ktxMode"><option value="etc1s">ETC1S: smallest, colour maps</option><option value="uastc">UASTC: higher quality</option></select>
+        </label>
+        <label class="c" data-for="ktx2"><input type="checkbox" id="normalMap"> This is a normal map</label>
+        <label class="f" data-for="resize ktx2">Max size
+          <select id="maxSize"><option value="">Keep</option><option>256</option><option>512</option><option selected>1024</option><option>2048</option></select>
+        </label>
+        <label class="f" data-for="resize">Format
           <select id="format"><option value="">Same as input</option><option value="png">PNG</option><option value="jpeg">JPEG</option></select>
         </label>
       </div>
       <div class="row" style="margin-top:14px"><button class="primary" id="run2d" type="button">Run</button></div>
       <div class="status" id="status2d" role="status"></div>
       <div class="result" id="result2d"></div>
+    </div>
+
+    <div id="panelbatch" role="tabpanel" aria-labelledby="tabbatch" hidden>
+      <div class="drop" id="dropbatch" tabindex="0" role="button" aria-label="Choose files for a batch">
+        <div class="hint"><strong>Drop many files, or one ZIP</strong> or click to browse<br><span class="sub">Up to 50 files · 15 MB trial, 40 MB paid per request</span></div>
+        <div class="file"><span id="namebatch"></span><button type="button" class="chip" data-remove="batch">✕ Remove</button></div>
+        <input type="file" id="filebatch" accept=".glb,.gltf,.obj,.fbx,.zip,image/png,image/jpeg" multiple hidden>
+      </div>
+      <div class="opts">
+        <label class="f">Run this on every file
+          <select id="opbatch">
+            <option value="audit">Audit (free)</option>
+            <option value="game-ready" selected>Game-ready pack</option>
+            <option value="optimize">Optimise GLB</option>
+            <option value="lods">LODs</option>
+            <option value="convert">Convert format</option>
+            <option value="ktx2">KTX2</option>
+            <option value="resize">Resize texture</option>
+            <option value="app-icons">App icons</option>
+          </select>
+        </label>
+      </div>
+      <p class="sub" style="margin-top:10px">Batch uses the options set on the other two tabs (device, engine, target, sizes…). Each file is charged as one operation, and one bad file never stops the rest: <code>manifest.json</code> lists every outcome.</p>
+      <div class="row" style="margin-top:14px"><button class="primary" id="runbatch" type="button">Run batch</button></div>
+      <div class="status" id="statusbatch" role="status"></div>
+      <div class="result" id="resultbatch"></div>
     </div>
   </section>
 
@@ -208,19 +282,30 @@ td code,p code{font:12px var(--mono);color:var(--accent-hi)}
     <div class="tbl"><table>
       <thead><tr><th>Endpoint</th><th>Options</th><th>Returns</th></tr></thead>
       <tbody>
-        <tr><td><span class="m">POST</span> <code>/api/v1/3d/inspect</code></td><td><code>target</code></td><td>JSON stats + scored checks against the target budget. Free.</td></tr>
-        <tr><td><span class="m">POST</span> <code>/api/v1/3d/optimize</code></td><td><code>target</code> (plain English ok), <code>ratio</code> 0–1, <code>maxTextureSize</code>, <code>compress</code>, <code>lockBorder</code></td><td>Optimised <code>.glb</code>; with <code>output=json</code>, a before/after report and a plain-text certificate.</td></tr>
-        <tr><td><span class="m">POST</span> <code>/api/v1/3d/lods</code></td><td><code>preset</code> standard|aggressive|minimal or <code>levels</code> "1,0.5,0.25", <code>compress</code></td><td>ZIP: <code>lod0.glb</code>… + <code>report.json</code>. Every level is cut from the original.</td></tr>
-        <tr><td><span class="m">POST</span> <code>/api/v1/2d/app-icons</code></td><td><code>platforms</code> ios,android,watchos · <code>background</code> #RRGGBB · <code>adaptiveScale</code></td><td>ZIP: <code>AppIcon.appiconset</code> with <code>Contents.json</code>, Android mipmaps + adaptive icon XML, Play Store 512.</td></tr>
-        <tr><td><span class="m">POST</span> <code>/api/v1/2d/xcassets</code></td><td>as app-icons, iOS by default</td><td>ZIP with the Xcode asset catalog.</td></tr>
-        <tr><td><span class="m">POST</span> <code>/api/v1/2d/resize</code></td><td><code>maxSize</code> 16–4096, <code>powerOfTwo</code>, <code>format</code> png|jpeg, <code>quality</code></td><td>Resized image.</td></tr>
-        <tr><td><span class="m">GET</span> <code>/api/v1/auth/me</code></td><td></td><td>Plan and remaining quota.</td></tr>
-        <tr><td><span class="m">GET</span> <code>/api/v1/intent?target=…</code></td><td></td><td>How a plain-English target compiles to settings. No key needed.</td></tr>
-        <tr><td><span class="m">GET</span> <code>/api/v1/pricing</code> · <code>/api/v1/targets</code></td><td></td><td>Plans; device budgets.</td></tr>
+        <tr><td colspan="3"><b>1 · GLB Optimisation</b></td></tr>
+        <tr><td><span class="m">POST</span> <code>/api/v1/3d/game-ready</code></td><td><code>device</code> low|mid|high|quest · <code>role</code> prop|vehicle|character|hero|environment · <code>engine</code> unity|unreal|godot|roblox|web · <code>pivot</code> bottom|center|keep · <code>lods</code> · <code>collision</code> · <code>keepAnimations</code> · <code>ktx2</code></td><td>ZIP: <code>name_LOD0/1/2.glb</code>, <code>name_collision.glb</code>, <code>REPORT.txt</code>, <code>IMPORT-ENGINE.md</code>, <code>report.json</code>.</td></tr>
+        <tr><td><span class="m">POST</span> <code>/api/v1/3d/optimize</code></td><td><code>target</code> (plain English ok) · <code>ratio</code> 0–1 · <code>maxTextureSize</code> · <code>compress</code> · <code>lockBorder</code> · <code>ktx2</code></td><td>Optimised <code>.glb</code>; with <code>output=json</code>, a before/after report.</td></tr>
+        <tr><td colspan="3"><b>2 · Batch Asset Processing</b></td></tr>
+        <tr><td><span class="m">POST</span> <code>/api/v1/batch</code></td><td><code>operation</code> (any below) + that operation's options · files as several <code>files</code> fields or one ZIP</td><td>ZIP: <code>results/&lt;file&gt;/…</code> + <code>manifest.json</code> (JSON for audit). Up to 50 files per request.</td></tr>
+        <tr><td colspan="3"><b>3 · KTX2 Textures</b></td></tr>
+        <tr><td><span class="m">POST</span> <code>/api/v1/textures/ktx2</code></td><td>PNG/JPEG: <code>mode</code> etc1s|uastc · <code>normalMap</code> · <code>linear</code> · <code>mipmaps</code> · <code>maxSize</code>. GLB: <code>mode</code> auto (ETC1S colour, UASTC normals)</td><td><code>.ktx2</code>, or a GLB with <code>KHR_texture_basisu</code> textures.</td></tr>
+        <tr><td colspan="3"><b>4 · 3D Asset Audit</b></td></tr>
+        <tr><td><span class="m">POST</span> <code>/api/v1/3d/audit</code></td><td><code>role</code> · <code>target</code> · <code>engine</code></td><td>JSON: size, triangles, draw calls, materials, texture memory, animation data, scored checks, and a score per device class. Free.</td></tr>
+        <tr><td colspan="3"><b>5 · 3D Format Conversion</b></td></tr>
+        <tr><td><span class="m">POST</span> <code>/api/v1/3d/convert</code></td><td><code>to</code> glb|gltf|obj · <code>scale</code></td><td>FBX / OBJ / glTF → GLB; GLB → glTF or OBJ (ZIPs). Send a ZIP when textures sit next to the model. FBX output is not offered.</td></tr>
+        <tr><td colspan="3"><b>6 · LOD Generation</b></td></tr>
+        <tr><td><span class="m">POST</span> <code>/api/v1/3d/lods</code></td><td><code>preset</code> standard|aggressive|minimal or <code>levels</code> "1,0.5,0.25" · <code>compress</code></td><td>ZIP: <code>lod0.glb</code>… + <code>report.json</code>.</td></tr>
+        <tr><td colspan="3"><b>7 · iOS Asset Generation</b></td></tr>
+        <tr><td><span class="m">POST</span> <code>/api/v1/ios/app-icons</code></td><td><code>platforms</code> ios,android,watchos · <code>background</code> · <code>adaptiveScale</code></td><td>ZIP: <code>AppIcon.appiconset</code> + <code>Contents.json</code>, Android mipmaps + adaptive icons, Play Store 512.</td></tr>
+        <tr><td><span class="m">POST</span> <code>/api/v1/ios/xcassets</code></td><td>as app-icons, iOS by default</td><td>ZIP with the Xcode asset catalog.</td></tr>
+        <tr><td><span class="m">POST</span> <code>/api/v1/ios/screenshots</code></td><td>1–10 images (or a ZIP) · <code>devices</code> iphone-6.9,iphone-6.5,iphone-5.5,ipad-13,ipad-12.9,android-phone,android-tablet · <code>fit</code> cover|contain · <code>background</code> · <code>format</code> jpeg|png</td><td>ZIP: one folder per device, sized exactly, opaque.</td></tr>
+        <tr><td colspan="3"><b>Also</b></td></tr>
+        <tr><td><span class="m">POST</span> <code>/api/v1/textures/resize</code></td><td><code>maxSize</code> · <code>powerOfTwo</code> · <code>format</code> · <code>quality</code></td><td>Resized image.</td></tr>
+        <tr><td><span class="m">GET</span> <code>/api/v1/auth/me</code> · <code>/pricing</code> · <code>/devices</code> · <code>/formats</code> · <code>/intent?target=…</code></td><td></td><td>Quota; plans and products; device budgets; formats and sizes; how a plain-English target compiles.</td></tr>
       </tbody>
     </table></div>
     <h3 style="margin-top:18px">Errors</h3>
-    <p class="sub" style="margin:0">Errors are JSON: <code>{"error":{"code":"quota_exhausted","message":"…"}}</code>. Status codes: 400 bad option · 401 missing/invalid key · 403 engine not in plan · 413 file too large · 415 wrong file type (including Draco-compressed GLBs, which can be inspected but not processed yet) · 422 unreadable file · 429 quota used up.</p>
+    <p class="sub" style="margin:0">Errors are JSON: <code>{"error":{"code":"quota_exhausted","message":"…"}}</code>. Status codes: 400 bad option · 401 missing/invalid key · 403 engine not in plan · 413 file too large · 415 wrong file type (Draco-compressed GLBs can be audited but not processed yet) · 422 unreadable file · 429 quota used up.</p>
   </section>
 </div>
 
@@ -228,7 +313,7 @@ td code,p code{font:12px var(--mono);color:var(--accent-hi)}
 const $ = (id) => document.getElementById(id);
 const store = { get(k) { try { return localStorage.getItem(k); } catch { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch {} } };
 const ORIGIN = location.origin;
-const files = { '3d': null, '2d': null };
+const files = { '3d': [], '2d': [], batch: [] };
 let lang = 'curl';
 
 const keyInput = $('apiKey');
@@ -256,7 +341,10 @@ $('btnMe').addEventListener('click', async () => {
   setStatus('keyStatus', 'ok', `${j.plan.name}: ${j.quota.remaining} of ${j.quota.limit} operations left${j.quota.resetsAt ? ', resets ' + j.quota.resetsAt.slice(0, 10) : ''}.`);
 });
 
-fetch('/api/v1/pricing').then((r) => r.json()).then(({ plans }) => {
+// Which playground setup each product card opens.
+const TRY = { optimise: ['3d', 'game-ready'], batch: ['batch', 'game-ready'], ktx2: ['2d', 'ktx2'], audit: ['3d', 'audit'], convert: ['3d', 'convert'], lods: ['3d', 'lods'], ios: ['2d', 'app-icons'] };
+
+fetch('/api/v1/pricing').then((r) => r.json()).then(({ plans, products }) => {
   const box = $('plans'); box.replaceChildren();
   for (const p of plans) {
     const el = document.createElement('div'); el.className = 'plan' + (p.bestValue ? ' best' : '');
@@ -268,47 +356,68 @@ fetch('/api/v1/pricing').then((r) => r.json()).then(({ plans }) => {
     const s = document.createElement('p'); s.textContent = p.summary;
     el.append(h, price, q, s); box.append(el);
   }
+  const grid = $('products'); grid.replaceChildren();
+  products.forEach((p, i) => {
+    const el = document.createElement('div'); el.className = 'product';
+    const n = document.createElement('span'); n.className = 'num'; n.textContent = String(i + 1).padStart(2, '0');
+    const h = document.createElement('h3'); h.textContent = p.name;
+    const d = document.createElement('p'); d.textContent = p.blurb;
+    const eps = document.createElement('div'); for (const e of p.endpoints) { const c = document.createElement('code'); c.textContent = e; eps.append(c); }
+    const b = document.createElement('button'); b.type = 'button'; b.textContent = 'Try it →';
+    b.addEventListener('click', () => { const [tab, op] = TRY[p.id]; selectTab(tab); $('op' + tab).value = op; syncAll(); $('play-h').scrollIntoView({ behavior: 'smooth' }); });
+    el.append(n, h, d, eps, b); grid.append(el);
+  });
 }).catch(() => { $('plans').textContent = 'Could not load plans.'; });
 
 // ---------- tabs ----------
+const TABS = ['3d', '2d', 'batch'];
 function selectTab(which) {
-  for (const t of ['3d', '2d']) { $('tab' + t).setAttribute('aria-selected', String(t === which)); $('panel' + t).hidden = t !== which; }
+  for (const t of TABS) { $('tab' + t).setAttribute('aria-selected', String(t === which)); $('panel' + t).hidden = t !== which; }
   renderCode();
 }
-$('tab3d').addEventListener('click', () => selectTab('3d'));
-$('tab2d').addEventListener('click', () => selectTab('2d'));
-const activeTab = () => ($('panel3d').hidden ? '2d' : '3d');
+for (const t of TABS) $('tab' + t).addEventListener('click', () => selectTab(t));
+const activeTab = () => TABS.find((t) => !$('panel' + t).hidden);
 
 // ---------- dropzones ----------
-function setupDrop(kind, accept) {
-  const drop = $('drop' + kind), input = $('file' + kind);
-  const pick = (file) => {
-    if (!file) return;
-    if (!accept(file)) return setStatus('status' + kind, 'bad', kind === '3d' ? 'Choose a .glb file.' : 'Choose a PNG or JPEG image.');
-    files[kind] = file; drop.classList.add('has'); $('name' + kind).textContent = `${file.name} · ${(file.size / 1048576).toFixed(2)} MB`;
-    if (kind === '2d') { const img = $('thumb2d'); if (img.src) URL.revokeObjectURL(img.src); img.src = URL.createObjectURL(file); }
+const ACCEPT = {
+  '3d': (f) => /\.(glb|gltf|obj|fbx|zip)$/i.test(f.name),
+  '2d': (f) => /^image\/(png|jpeg)$/.test(f.type) || /\.(png|jpe?g)$/i.test(f.name),
+  batch: (f) => /\.(glb|gltf|obj|fbx|zip|png|jpe?g)$/i.test(f.name),
+};
+function setupDrop(kind) {
+  const drop = $('drop' + kind), input = $('file' + kind), multiple = input.multiple;
+  const pick = (list) => {
+    const chosen = [...list].filter(ACCEPT[kind]);
+    if (!chosen.length) return setStatus('status' + kind, 'bad', 'Those files are not a supported type.');
+    files[kind] = multiple ? chosen : chosen.slice(0, 1);
+    drop.classList.add('has');
+    const total = files[kind].reduce((t, f) => t + f.size, 0);
+    $('name' + kind).textContent = files[kind].length === 1 ? `${files[kind][0].name} · ${(total / 1048576).toFixed(2)} MB` : `${files[kind].length} files · ${(total / 1048576).toFixed(2)} MB`;
+    if (kind === '2d') { const img = $('thumb2d'); if (img.src) URL.revokeObjectURL(img.src); img.src = URL.createObjectURL(files[kind][0]); }
     setStatus('status' + kind, '', ''); renderCode();
   };
   drop.addEventListener('click', (e) => { if (!e.target.closest('[data-remove]')) input.click(); });
   drop.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); input.click(); } });
-  input.addEventListener('change', () => pick(input.files[0]));
+  input.addEventListener('change', () => pick(input.files));
   drop.addEventListener('dragover', (e) => { e.preventDefault(); drop.classList.add('over'); });
   drop.addEventListener('dragleave', () => drop.classList.remove('over'));
-  drop.addEventListener('drop', (e) => { e.preventDefault(); drop.classList.remove('over'); pick(e.dataTransfer.files[0]); });
-  drop.querySelector('[data-remove]').addEventListener('click', (e) => { e.stopPropagation(); files[kind] = null; input.value = ''; drop.classList.remove('has'); $('result' + kind).classList.remove('show'); renderCode(); });
+  drop.addEventListener('drop', (e) => { e.preventDefault(); drop.classList.remove('over'); pick(e.dataTransfer.files); });
+  drop.querySelector('[data-remove]').addEventListener('click', (e) => { e.stopPropagation(); files[kind] = []; input.value = ''; drop.classList.remove('has'); $('result' + kind).classList.remove('show'); renderCode(); });
 }
-setupDrop('3d', (f) => /\.glb$/i.test(f.name));
-setupDrop('2d', (f) => /^image\/(png|jpeg)$/.test(f.type) || /\.(png|jpe?g)$/i.test(f.name));
+TABS.forEach(setupDrop);
 
-// ---------- 3D options ----------
+// ---------- options ----------
 const ratioValue = () => Number($('ratio').value) ? (100 - Number($('ratio').value)) / 100 : null;
 $('ratio').addEventListener('input', () => { const r = ratioValue(); $('ratioLabel').textContent = r ? `${Math.round(r * 100)}%` : 'auto (from target)'; renderCode(); });
-$('op3d').addEventListener('change', () => {
-  const op = $('op3d').value;
-  $('wrapRatio').hidden = op !== 'optimize'; $('wrapPreset').hidden = op !== 'lods'; $('wrapCompress').hidden = op === 'inspect';
-  $('wrapTarget').hidden = op === 'lods'; $('targetChips').hidden = op === 'lods'; $('intentPreview').hidden = op === 'lods';
+/** Shows only the controls tagged (data-for) with the selected operation. */
+function syncAll() {
+  for (const tab of ['3d', '2d']) {
+    const op = $('op' + tab).value;
+    $('panel' + tab).querySelectorAll('[data-for]').forEach((el) => { el.hidden = !el.dataset.for.split(' ').includes(op); });
+  }
   renderCode();
-});
+}
+['op3d', 'op2d', 'opbatch'].forEach((id) => $(id).addEventListener('change', syncAll));
 let intentTimer;
 const previewIntent = () => {
   clearTimeout(intentTimer);
@@ -321,38 +430,42 @@ const previewIntent = () => {
 };
 $('target').addEventListener('input', () => { previewIntent(); renderCode(); });
 $('targetChips').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) { $('target').value = b.textContent; previewIntent(); renderCode(); } });
-for (const id of ['preset', 'compress', 'op2d', 'background', 'maxSize', 'format']) $(id).addEventListener('change', renderCode);
+document.querySelectorAll('#panel3d select, #panel3d input, #panel2d select, #panel2d input').forEach((el) => { if (el.type !== 'file') el.addEventListener('change', renderCode); });
 $('background').addEventListener('input', renderCode);
-document.querySelectorAll('#iconOpts input').forEach((c) => c.addEventListener('change', renderCode));
-$('op2d').addEventListener('change', () => {
-  const icons = $('op2d').value === 'app-icons';
-  $('iconOpts').hidden = !icons; $('wrapBg').hidden = !icons; $('wrapMax').hidden = icons; $('wrapFormat').hidden = icons;
-});
+
+const ENDPOINTS = {
+  'game-ready': '/api/v1/3d/game-ready', audit: '/api/v1/3d/audit', optimize: '/api/v1/3d/optimize', lods: '/api/v1/3d/lods', convert: '/api/v1/3d/convert',
+  ktx2: '/api/v1/textures/ktx2', resize: '/api/v1/textures/resize', 'app-icons': '/api/v1/ios/app-icons', xcassets: '/api/v1/ios/xcassets', screenshots: '/api/v1/ios/screenshots',
+};
+
+/** Options for an operation, read from whichever controls own them. */
+function optionsFor(op, tab) {
+  const f = {};
+  const checked = (sel) => [...document.querySelectorAll(sel)].map((c) => c.value).join(',');
+  if (op === 'game-ready') { f.device = $('device').value; f.role = $('role').value; f.engine = $('engine').value; if ($('useKtx2').checked) f.ktx2 = 'true'; }
+  if (op === 'audit') f.role = $('role').value;
+  if (op === 'optimize') {
+    if ($('target').value.trim()) f.target = $('target').value.trim();
+    if (ratioValue()) f.ratio = String(ratioValue());
+    if (!$('compress').checked) f.compress = 'false';
+    if ($('useKtx2').checked) f.ktx2 = 'true';
+  }
+  if (op === 'lods') { f.preset = $('preset').value; if (!$('compress').checked) f.compress = 'false'; }
+  if (op === 'convert') { if ($('convertTo').value) f.to = $('convertTo').value; if ($('scale').value) f.scale = $('scale').value; }
+  if (op === 'app-icons') { f.platforms = checked('#iconOpts input:checked') || 'ios'; f.background = $('background').value.trim(); }
+  if (op === 'xcassets') f.background = $('background').value.trim();
+  if (op === 'screenshots') { f.devices = checked('#shotOpts input:checked') || 'iphone-6.9'; f.fit = $('fit').value; f.background = $('background').value.trim(); }
+  if (op === 'ktx2' && tab !== '3d') { f.mode = $('ktxMode').value; if ($('normalMap').checked) f.normalMap = 'true'; if ($('maxSize').value) f.maxSize = $('maxSize').value; }
+  if (op === 'resize') { if ($('maxSize').value) f.maxSize = $('maxSize').value; if ($('format').value) f.format = $('format').value; }
+  return f;
+}
 
 /** The request the playground would send, shared by Run and the code samples. */
 function currentRequest() {
   const tab = activeTab();
-  const fields = {};
-  let endpoint;
-  if (tab === '3d') {
-    const op = $('op3d').value;
-    endpoint = `/api/v1/3d/${op}`;
-    if (op !== 'lods' && $('target').value.trim()) fields.target = $('target').value.trim();
-    if (op === 'optimize' && ratioValue()) fields.ratio = String(ratioValue());
-    if (op === 'lods') fields.preset = $('preset').value;
-    if (op !== 'inspect' && !$('compress').checked) fields.compress = 'false';
-  } else {
-    const op = $('op2d').value;
-    endpoint = `/api/v1/2d/${op}`;
-    if (op === 'app-icons') {
-      fields.platforms = [...document.querySelectorAll('#iconOpts input:checked')].map((c) => c.value).join(',') || 'ios';
-      fields.background = $('background').value.trim();
-    } else {
-      fields.maxSize = $('maxSize').value;
-      if ($('format').value) fields.format = $('format').value;
-    }
-  }
-  return { tab, endpoint, fields, file: files[tab] };
+  const op = $('op' + tab).value;
+  if (tab === 'batch') return { tab, op, endpoint: '/api/v1/batch', fields: { operation: op, ...optionsFor(op, tab) }, files: files.batch, field: 'files' };
+  return { tab, op, endpoint: ENDPOINTS[op], fields: optionsFor(op, tab), files: files[tab], field: 'file' };
 }
 
 // ---------- run ----------
@@ -379,44 +492,52 @@ function checksTable(evaluation) {
   t.append(body); wrap.append(t); return wrap;
 }
 const fmtMB = (b) => b >= 1048576 ? (b / 1048576).toFixed(2) + ' MB' : Math.max(1, Math.round(b / 1024)) + ' KB';
+function downloadRow(blob, name) {
+  const row = document.createElement('div'); row.className = 'row'; row.style.marginTop = '12px';
+  const dl = document.createElement('button'); dl.className = 'primary'; dl.type = 'button'; dl.textContent = `Download ${name} (${fmtMB(blob.size)})`;
+  dl.addEventListener('click', () => download(blob, name)); row.append(dl); return row;
+}
 
 async function run(kind) {
   const req = currentRequest();
   const out = $('result' + kind); out.classList.remove('show'); out.replaceChildren();
   if (!key()) return setStatus('status' + kind, 'bad', 'Add your API key above first (the trial button gives you one).');
-  if (!req.file) return setStatus('status' + kind, 'bad', 'Choose a file first.');
-  const form = new FormData(); form.append('file', req.file);
+  if (!req.files.length) return setStatus('status' + kind, 'bad', 'Choose a file first.');
+  const form = new FormData();
+  for (const f of req.files) form.append(req.field, f);
   for (const [k, v] of Object.entries(req.fields)) form.append(k, v);
-  const asJson = req.endpoint.endsWith('/optimize');
+  const rich = kind !== 'batch' && (req.op === 'optimize' || req.op === 'game-ready');
   const btn = $('run' + kind); btn.disabled = true;
   setStatus('status' + kind, '', 'Processing…');
   const t0 = performance.now();
   try {
-    const res = await fetch(req.endpoint + (asJson ? '?output=json' : ''), { method: 'POST', headers: { Authorization: 'Bearer ' + key() }, body: form });
+    const res = await fetch(req.endpoint + (rich ? '?output=json' : ''), { method: 'POST', headers: { Authorization: 'Bearer ' + key() }, body: form });
     if (!res.ok) return setStatus('status' + kind, 'bad', `${res.status}: ${await errText(res)}`);
     const secs = ((performance.now() - t0) / 1000).toFixed(2);
     const remaining = res.headers.get('X-Quota-Remaining');
-    if (req.endpoint.endsWith('/inspect')) {
+    if (kind === 'batch' && req.op === 'audit') {
       const j = await res.json();
+      const pre = document.createElement('pre');
+      pre.textContent = j.files.map((f) => `${f.status === 'ok' ? '✓' : '✕'} ${f.file}  ${f.status === 'ok' ? `${f.summary.triangles.toLocaleString('en-GB')} tris · ${f.summary.score}/100 ${f.summary.verdict}` : f.error.message}`).join('\n');
+      out.append(statTiles([['Files', j.total], ['Succeeded', j.succeeded], ['Failed', j.failed]]), pre);
+      setStatus('status' + kind, 'ok', `Audited ${j.total} files in ${secs}s. Audits are free.`);
+    } else if (req.op === 'audit') {
+      const j = await res.json();
+      out.append(statTiles(j.devices.results.map((d) => [`${d.name} (${d.triangleBudget.toLocaleString('en-GB')} tris)`, `${d.score}/100 ${d.verdict === 'mobile-ready' ? '✓' : d.verdict === 'needs-work' ? '!' : '✕'}`])));
       out.append(statTiles([['Mobile score', `${j.evaluation.score}/100`], ['Verdict', j.evaluation.verdict], ['Triangles', j.stats.triangles.toLocaleString('en-GB')], ['Draw calls', j.stats.drawCalls], ['Texture memory', fmtMB(j.stats.textureMemoryBytes)], ['File size', fmtMB(j.stats.fileBytes)]]), checksTable(j.evaluation));
-      setStatus('status' + kind, 'ok', `Inspected in ${secs}s against the ${j.evaluation.targetName.toLowerCase()} budget. Inspect is free.`);
-    } else if (asJson) {
+      setStatus('status' + kind, 'ok', `Audited in ${secs}s against the ${j.evaluation.targetName.toLowerCase()} budget. Audits are free.`);
+    } else if (rich) {
       const j = await res.json();
       const r = j.report;
-      const blob = b64ToBlob(j.file.base64, j.file.contentType);
-      const dl = document.createElement('button'); dl.className = 'primary'; dl.type = 'button'; dl.textContent = `Download ${j.file.name}`; dl.addEventListener('click', () => download(blob, j.file.name));
-      const pre = document.createElement('pre'); pre.textContent = r.summaryText;
-      out.append(statTiles([['Triangles', `${r.before.stats.triangles.toLocaleString('en-GB')} → ${r.after.stats.triangles.toLocaleString('en-GB')}`], ['File size', `${fmtMB(r.before.stats.fileBytes)} → ${fmtMB(r.after.stats.fileBytes)}`], ['Mobile score', `${r.before.evaluation.score} → ${r.after.evaluation.score}`]]), pre, Object.assign(document.createElement('div'), { className: 'row', style: 'margin-top:12px' }));
-      out.lastChild.append(dl);
+      const pre = document.createElement('pre'); pre.textContent = r.summaryText || r.text;
+      out.append(statTiles([['Draw calls', `${r.before.stats.drawCalls} → ${r.after.stats.drawCalls}`], ['Triangles', `${r.before.stats.triangles.toLocaleString('en-GB')} → ${r.after.stats.triangles.toLocaleString('en-GB')}`], ['File size', `${fmtMB(r.before.stats.fileBytes)} → ${fmtMB(r.after.stats.fileBytes)}`], ['Mobile score', `${r.before.evaluation.score} → ${r.after.evaluation.score}`]]), pre, downloadRow(b64ToBlob(j.file.base64, j.file.contentType), j.file.name));
       setStatus('status' + kind, 'ok', `Done in ${secs}s. ${j.quota.remaining} operations left.`);
     } else {
       const blob = await res.blob();
       const name = (/filename="([^"]+)"/.exec(res.headers.get('Content-Disposition') || '') || [])[1] || 'result';
       const summary = res.headers.get('X-AssetBench-Summary');
-      const dl = document.createElement('button'); dl.className = 'primary'; dl.type = 'button'; dl.textContent = `Download ${name} (${fmtMB(blob.size)})`; dl.addEventListener('click', () => download(blob, name));
       const pre = document.createElement('pre'); pre.textContent = summary ? JSON.stringify(JSON.parse(summary), null, 2) : '';
-      out.append(pre, Object.assign(document.createElement('div'), { className: 'row', style: 'margin-top:12px' }));
-      out.lastChild.append(dl);
+      out.append(pre, downloadRow(blob, name));
       setStatus('status' + kind, 'ok', `Done in ${secs}s.${remaining ? ` ${remaining} operations left.` : ''}`);
     }
     out.classList.add('show');
@@ -424,29 +545,27 @@ async function run(kind) {
     setStatus('status' + kind, 'bad', 'Request failed: ' + err.message);
   } finally { btn.disabled = false; }
 }
-$('run3d').addEventListener('click', () => run('3d'));
-$('run2d').addEventListener('click', () => run('2d'));
+for (const t of TABS) $('run' + t).addEventListener('click', () => run(t));
 
 // ---------- code samples ----------
+const OUT_NAMES = { 'game-ready': 'game-ready.zip', optimize: 'optimised.glb', lods: 'lods.zip', convert: 'converted.glb', resize: 'resized.png', 'app-icons': 'icons.zip', xcassets: 'xcassets.zip', screenshots: 'screenshots.zip' };
 const q = (s) => `'${String(s).replace(/'/g, `'\\''`)}'`;
 function renderCode() {
-  const { endpoint, fields, file, tab } = currentRequest();
+  const { endpoint, fields, files: chosen, tab, op, field } = currentRequest();
   const k = key() || 'abk_live_YOUR_KEY';
-  const fname = file?.name || (tab === '3d' ? 'model.glb' : 'icon.png');
-  const binary = !endpoint.endsWith('/inspect');
-  const outName = endpoint.endsWith('/optimize') ? 'optimised.glb' : endpoint.endsWith('/resize') ? 'resized' + (fields.format === 'jpeg' ? '.jpg' : '.png') : endpoint.endsWith('/inspect') ? '' : 'result.zip';
+  const names = chosen.length ? chosen.map((f) => f.name) : [tab === '2d' ? 'icon.png' : tab === 'batch' ? 'models.zip' : 'model.glb'];
+  const jsonOut = op === 'audit';
+  const outName = tab === 'batch' ? 'batch.zip' : op === 'ktx2' ? (tab === '3d' ? 'model-ktx2.glb' : 'texture.ktx2') : OUT_NAMES[op] || 'result';
   let code;
   if (lang === 'curl') {
-    code = [`curl -X POST ${ORIGIN}${endpoint} \\`, `  -H "Authorization: Bearer ${k}" \\`, `  -F "file=@${fname}"${Object.keys(fields).length || binary ? ' \\' : ''}`];
-    const entries = Object.entries(fields);
-    entries.forEach(([f, v], i) => code.push(`  -F ${q(`${f}=${v}`)}${i < entries.length - 1 || binary ? ' \\' : ''}`));
-    if (binary) code.push(`  -o ${outName}`);
-    code = code.join('\n');
+    const lines = [`curl -X POST ${ORIGIN}${endpoint}`, `  -H "Authorization: Bearer ${k}"`, ...names.map((n) => `  -F "${field}=@${n}"`), ...Object.entries(fields).map(([f, v]) => `  -F ${q(`${f}=${v}`)}`)];
+    if (!jsonOut) lines.push(`  -o ${outName}`);
+    code = lines.join(' \\\n');
   } else if (lang === 'node') {
     code = `import { readFile, writeFile } from 'node:fs/promises';
 
 const form = new FormData();
-form.append('file', new Blob([await readFile(${JSON.stringify(fname)})]), ${JSON.stringify(fname)});
+${names.map((n) => `form.append(${JSON.stringify(field)}, new Blob([await readFile(${JSON.stringify(n)})]), ${JSON.stringify(n)});`).join('\n')}
 ${Object.entries(fields).map(([f, v]) => `form.append(${JSON.stringify(f)}, ${JSON.stringify(v)});`).join('\n')}
 
 const res = await fetch('${ORIGIN}${endpoint}', {
@@ -455,20 +574,20 @@ const res = await fetch('${ORIGIN}${endpoint}', {
   body: form,
 });
 if (!res.ok) throw new Error((await res.json()).error.message);
-${binary ? `console.log(JSON.parse(res.headers.get('X-AssetBench-Summary')));
+${!jsonOut ? `console.log(JSON.parse(res.headers.get('X-AssetBench-Summary')));
 await writeFile(${JSON.stringify(outName)}, Buffer.from(await res.arrayBuffer()));` : `console.log(await res.json());`}`;
   } else {
     code = `import json, requests
 
-with open(${JSON.stringify(fname)}, "rb") as f:
-    res = requests.post(
-        "${ORIGIN}${endpoint}",
-        headers={"Authorization": "Bearer ${k}"},
-        files={"file": f},
-        data=${JSON.stringify(fields)},
-    )
+files = [${names.map((n) => `("${field}", open(${JSON.stringify(n)}, "rb"))`).join(', ')}]
+res = requests.post(
+    "${ORIGIN}${endpoint}",
+    headers={"Authorization": "Bearer ${k}"},
+    files=files,
+    data=${JSON.stringify(fields)},
+)
 res.raise_for_status()
-${binary ? `print(json.loads(res.headers["X-AssetBench-Summary"]))
+${!jsonOut ? `print(json.loads(res.headers["X-AssetBench-Summary"]))
 with open(${JSON.stringify(outName)}, "wb") as out:
     out.write(res.content)` : `print(res.json())`}`;
   }
@@ -480,8 +599,8 @@ document.querySelectorAll('#codeTabs button').forEach((b) => b.addEventListener(
   renderCode();
 }));
 $('copyCode').addEventListener('click', async () => { try { await navigator.clipboard.writeText($('code').textContent); $('copyCode').textContent = 'Copied'; setTimeout(() => { $('copyCode').textContent = 'Copy'; }, 1500); } catch {} });
+syncAll();
 previewIntent();
-renderCode();
 </script>
 </body>
 </html>
