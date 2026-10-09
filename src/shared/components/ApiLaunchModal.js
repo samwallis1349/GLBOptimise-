@@ -1,0 +1,103 @@
+const DISMISSED_KEY = 'assetbench_api_launch_v1';
+// The Tripo welcome modal owns a visitor's first visit; this one waits until that has been seen.
+const TRIPO_DISMISSED_KEY = 'assetbench_welcome_tripo_v1';
+
+const PRODUCTS = [
+  ['GLB optimisation', 'one call makes a model game-ready for a phone, Quest or the web'],
+  ['Batch', 'run any of it over a whole folder'],
+  ['KTX2', 'GPU-compressed textures'],
+  ['Audit', 'which devices can run this model?'],
+  ['Convert', 'FBX, OBJ, glTF to GLB'],
+  ['LODs', 'level-of-detail chains'],
+  ['iOS assets', 'icons, .xcassets, store screenshots'],
+];
+
+function seen(key) {
+  try { return Boolean(localStorage.getItem(key) || sessionStorage.getItem(key)); } catch { return false; }
+}
+
+function remember() {
+  try {
+    localStorage.setItem(DISMISSED_KEY, 'true');
+    sessionStorage.setItem(DISMISSED_KEY, 'true');
+  } catch {}
+}
+
+/** Anonymous launch counters (see worker/api/stats.js); never blocks or throws. */
+export function trackApiEvent(event) {
+  try {
+    fetch('/api/v1/track', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event }), keepalive: true }).catch(() => {});
+  } catch {}
+}
+
+/**
+ * Announces the free Cloud API once per visitor, on a later visit than the
+ * Tripo welcome modal so nobody gets two popups in one go.
+ */
+export function initApiLaunchModal() {
+  if (typeof window === 'undefined') return;
+  if (location.pathname.startsWith('/docs')) return;
+  if (seen(DISMISSED_KEY)) return;
+  // Tripo was not dismissed on an earlier visit: it is this visit's popup.
+  try { if (!localStorage.getItem(TRIPO_DISMISSED_KEY)) return; } catch { return; }
+  // Dismissed only this session (sessionStorage set too): still this visit's popup slot.
+  try { if (sessionStorage.getItem(TRIPO_DISMISSED_KEY)) return; } catch {}
+
+  setTimeout(() => {
+    if (document.querySelector('.welcome-modal-overlay')) return;
+    openApiLaunchModal();
+  }, 1500);
+}
+
+export function openApiLaunchModal() {
+  const overlay = document.createElement('div');
+  overlay.className = 'welcome-modal-overlay';
+  overlay.setAttribute('role', 'dialog');
+  overlay.setAttribute('aria-modal', 'true');
+  overlay.setAttribute('aria-labelledby', 'api-launch-title');
+
+  overlay.innerHTML = `
+    <div class="welcome-modal api-launch">
+      <button class="welcome-modal__close" type="button" aria-label="Close">✕</button>
+      <div class="api-launch__card">
+        <span class="api-launch__badge">New · Free during launch</span>
+        <h2 class="api-launch__title" id="api-launch-title">The AssetBench API</h2>
+        <p class="api-launch__lede">Everything AssetBench does, from your own code. Built for mobile game and app developers.</p>
+        <ul class="api-launch__list">
+          ${PRODUCTS.map(([name, what]) => `<li><b>${name}</b><span>${what}</span></li>`).join('')}
+        </ul>
+        <a class="api-launch__cta" href="/docs/">Get a free API key →</a>
+        <button class="api-launch__later" type="button">Maybe later</button>
+      </div>
+    </div>
+  `;
+
+  function onKeydown(e) {
+    if (e.key === 'Escape') dismiss();
+  }
+  function close() {
+    remember();
+    overlay.classList.add('welcome-modal-overlay--closing');
+    document.removeEventListener('keydown', onKeydown);
+    setTimeout(() => overlay.remove(), 220);
+  }
+  function dismiss() {
+    trackApiEvent('popup_dismiss');
+    close();
+  }
+
+  overlay.querySelector('.welcome-modal__close').addEventListener('click', dismiss);
+  overlay.querySelector('.api-launch__later').addEventListener('click', dismiss);
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) dismiss(); });
+  overlay.querySelector('.api-launch__cta').addEventListener('click', () => {
+    trackApiEvent('popup_click');
+    remember();
+  });
+
+  document.addEventListener('keydown', onKeydown);
+  document.body.appendChild(overlay);
+  requestAnimationFrame(() => overlay.classList.add('welcome-modal-overlay--open'));
+  trackApiEvent('popup_shown');
+  overlay.querySelector('.api-launch__cta').focus({ preventScroll: true });
+  return close;
+}

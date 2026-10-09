@@ -113,17 +113,17 @@ td code,p code{font:12px var(--mono);color:var(--accent-hi)}
       <input class="key" id="apiKey" type="password" placeholder="abk_live_…" autocomplete="off" spellcheck="false">
       <button id="btnShow" type="button">Show</button>
       <button id="btnMe" type="button">Check key</button>
-      <button id="btnTrial" class="primary" type="button">Get a free trial key</button>
+      <button id="btnTrial" class="primary" type="button">Get a free API key</button>
     </div>
     <div class="status" id="keyStatus" role="status"></div>
   </section>
 
   <section class="card" aria-labelledby="plans-h">
-    <h2 id="plans-h">Plans</h2>
-    <p class="sub">One operation = one processed file (a game-ready pack, LOD chain, icon pack or screenshot set counts once; a batch counts each file). Audits are free.</p>
+    <h2 id="plans-h">Free during launch</h2>
+    <p class="sub">Every key gets all seven APIs and 100 operations a month, free. One operation = one processed file (a game-ready pack, LOD chain, icon pack or screenshot set counts once; a batch counts each file). Audits are free.</p>
     <div class="grid" id="plans"><p class="sub">Loading…</p></div>
-    <p class="sub" style="margin-top:14px">After subscribing, Lemon Squeezy emails you a license key: use it as your API key. Manage or cancel any time from your Lemon Squeezy receipt.</p>
-    <p class="sub" id="manualNote" style="margin-top:6px">Paid plans are set up by hand for now: email <a href="mailto:Workbench5@gmail.com">Workbench5@gmail.com</a> and your key is upgraded the same day.</p>
+    <p class="sub" id="paidNote" style="margin-top:14px" hidden>After subscribing, Lemon Squeezy emails you a license key: use it as your API key. Manage or cancel any time from your Lemon Squeezy receipt.</p>
+    <p class="sub" id="manualNote" style="margin-top:14px">Need more than 100 operations a month? Email <a href="mailto:Workbench5@gmail.com">Workbench5@gmail.com</a>, and tell us what you're building.</p>
   </section>
 
   <section class="card" aria-labelledby="play-h">
@@ -137,7 +137,7 @@ td code,p code{font:12px var(--mono);color:var(--accent-hi)}
 
     <div id="panel3d" role="tabpanel" aria-labelledby="tab3d">
       <div class="drop" id="drop3d" tabindex="0" role="button" aria-label="Choose a model">
-        <div class="hint"><strong>Drop a model here</strong> or click to browse<br><span class="sub">.glb · or .fbx / .obj / .gltf / .zip to convert · 15 MB trial, 25 MB paid</span></div>
+        <div class="hint"><strong>Drop a model here</strong> or click to browse<br><span class="sub">.glb · or .fbx / .obj / .gltf / .zip to convert · up to 25 MB</span></div>
         <div class="file"><span id="name3d"></span><button type="button" class="chip" data-remove="3d">✕ Remove</button></div>
         <input type="file" id="file3d" accept=".glb,.gltf,.obj,.fbx,.zip" hidden>
       </div>
@@ -241,7 +241,7 @@ td code,p code{font:12px var(--mono);color:var(--accent-hi)}
 
     <div id="panelbatch" role="tabpanel" aria-labelledby="tabbatch" hidden>
       <div class="drop" id="dropbatch" tabindex="0" role="button" aria-label="Choose files for a batch">
-        <div class="hint"><strong>Drop many files, or one ZIP</strong> or click to browse<br><span class="sub">Up to 50 files · 15 MB trial, 40 MB paid per request</span></div>
+        <div class="hint"><strong>Drop many files, or one ZIP</strong> or click to browse<br><span class="sub">Up to 50 files · 40 MB per request</span></div>
         <div class="file"><span id="namebatch"></span><button type="button" class="chip" data-remove="batch">✕ Remove</button></div>
         <input type="file" id="filebatch" accept=".glb,.gltf,.obj,.fbx,.zip,image/png,image/jpeg" multiple hidden>
       </div>
@@ -333,7 +333,7 @@ $('btnTrial').addEventListener('click', async () => {
   const j = await res.json();
   keyInput.value = j.key; keyInput.type = 'text'; $('btnShow').textContent = 'Hide';
   store.set('ab_api_key', j.key); renderCode();
-  setStatus('keyStatus', 'ok', 'Trial key created and saved in this browser. Copy it somewhere safe: it is not shown again.');
+  setStatus('keyStatus', 'ok', 'Free key created and saved in this browser. Copy it somewhere safe: it is not shown again.');
 });
 $('btnMe').addEventListener('click', async () => {
   if (!key()) return setStatus('keyStatus', 'bad', 'Paste a key first.');
@@ -364,7 +364,7 @@ fetch('/api/v1/pricing').then((r) => r.json()).then(({ plans, products }) => {
     }
     box.append(el);
   }
-  $('manualNote').hidden = paidCheckout;
+  $('paidNote').hidden = !paidCheckout;
   const grid = $('products'); grid.replaceChildren();
   products.forEach((p, i) => {
     const el = document.createElement('div'); el.className = 'product';
@@ -510,7 +510,7 @@ function downloadRow(blob, name) {
 async function run(kind) {
   const req = currentRequest();
   const out = $('result' + kind); out.classList.remove('show'); out.replaceChildren();
-  if (!key()) return setStatus('status' + kind, 'bad', 'Add your API key above first (the trial button gives you one).');
+  if (!key()) return setStatus('status' + kind, 'bad', 'Add your API key above first (the "Get a free API key" button gives you one).');
   if (!req.files.length) return setStatus('status' + kind, 'bad', 'Choose a file first.');
   const form = new FormData();
   for (const f of req.files) form.append(req.field, f);
@@ -610,6 +610,8 @@ document.querySelectorAll('#codeTabs button').forEach((b) => b.addEventListener(
 $('copyCode').addEventListener('click', async () => { try { await navigator.clipboard.writeText($('code').textContent); $('copyCode').textContent = 'Copied'; setTimeout(() => { $('copyCode').textContent = 'Copy'; }, 1500); } catch {} });
 syncAll();
 previewIntent();
+// Anonymous launch counter (no identifiers); see worker/api/stats.js.
+fetch('/api/v1/track', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event: 'docs_view' }), keepalive: true }).catch(() => {});
 </script>
 </body>
 </html>

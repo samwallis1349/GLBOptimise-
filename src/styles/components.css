@@ -2326,3 +2326,111 @@ html.has-consent-notice .promo-bot {
 }
 
 
+
+/* ==========================================================================
+   API launch modal (reuses the welcome-modal overlay)
+   ========================================================================== */
+.api-launch__card {
+  width: 100%;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-hover);
+  border-radius: var(--radius-lg);
+  padding: 28px 24px 20px;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.85), 0 0 36px var(--accent-glow-mid);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 86vh;
+  overflow-y: auto;
+}
+
+.api-launch__badge {
+  align-self: flex-start;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+  background: var(--accent-muted);
+  border-radius: 999px;
+  padding: 4px 10px;
+}
+
+.api-launch__title {
+  margin: 0;
+  font-size: 26px;
+  line-height: 1.1;
+  color: var(--text-primary);
+}
+
+.api-launch__lede {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.api-launch__list {
+  list-style: none;
+  margin: 4px 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.api-launch__list li {
+  display: flex;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.api-launch__list b {
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.api-launch__list b::after {
+  content: ' —';
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+.api-launch__cta {
+  display: block;
+  text-align: center;
+  margin-top: 6px;
+  padding: 12px 16px;
+  border-radius: var(--radius-md);
+  background: var(--accent);
+  color: #000;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.api-launch__cta:hover,
+.api-launch__cta:focus-visible {
+  background: var(--accent-strong);
+}
+
+.api-launch__later {
+  background: none;
+  border: 0;
+  color: var(--text-muted);
+  font-size: 13px;
+  cursor: pointer;
+  padding: 6px;
+}
+
+.api-launch__later:hover {
+  color: var(--text-secondary);
+}
+
+@media (max-width: 600px) {
+  .api-launch__list li {
+    flex-direction: column;
+    gap: 0;
+  }
+  .api-launch__list b::after {
+    content: '';
+  }
+}

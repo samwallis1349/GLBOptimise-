@@ -442,7 +442,7 @@ export default {
     if (pathname === '/api/banner' || pathname === '/api/banners' || pathname === '/api/banner/active') {
       return handleBanner(request, env);
     }
-    if (pathname === '/api/v1' || pathname.startsWith('/api/v1/')) return handleApiV1(request, env);
+    if (pathname === '/api/v1' || pathname.startsWith('/api/v1/')) return handleApiV1(request, env, ctx);
     if (pathname.startsWith('/api/')) return json({ error: 'Not found' }, 404);
     return env.ASSETS.fetch(request);
   },

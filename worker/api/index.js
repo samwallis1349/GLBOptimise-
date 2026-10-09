@@ -10,6 +10,7 @@ import { DEVICES, ENGINES, ROLES, budgetFor, deviceMatrix, gameReady } from './g
 import { decodeImage, encodeImage, fitSize, resize, sniffImage } from './images.js';
 import { convert, CONVERSIONS } from './convert.js';
 import { buildScreenshots, SCREENSHOT_SIZES } from './screenshots.js';
+import { bump, PAGE_EVENTS, readStats } from './stats.js';
 
 /**
  * AssetBench Cloud: /api/v1/*. Seven products on one key (see PRODUCTS in
@@ -240,7 +241,7 @@ function respond({ output, filename, contentType, summary, report, quota, params
   return fileResponse(output, { filename, contentType, summary, quota });
 }
 
-async function runSingle(request, env, opName) {
+async function runSingle(request, env, opName, track) {
   const op = OPERATIONS[opName];
   const account = await authenticate(request, env);
   if (op.free) {
@@ -250,11 +251,12 @@ async function runSingle(request, env, opName) {
   }
   const { files, params } = await readUploads(request, account.plan.maxUploadMB * 1048576);
   const result = await op.run(files[0].bytes, params, files[0].filename);
+  track(`op:${opName}`);
   const quota = op.free ? undefined : await chargeOperation(env, account);
   return respond({ ...result, quota, params, jsonOnly: op.json });
 }
 
-async function runScreenshots(request, env) {
+async function runScreenshots(request, env, track) {
   const account = await authenticate(request, env);
   await assertCanRun(env, account, '2d');
   const { files, params } = await readUploads(request, account.plan.maxUploadMB * 1048576);
@@ -267,6 +269,7 @@ async function runScreenshots(request, env) {
     }
   }
   const { output, report } = await buildScreenshots(inputs, params);
+  track('op:screenshots');
   const quota = await chargeOperation(env, account);
   return respond({ output, report, quota, params, filename: 'store-screenshots.zip', contentType: 'application/zip', summary: { devices: report.devices.map((d) => d.id), images: report.files.length, warnings: report.warnings.length } });
 }
@@ -280,7 +283,7 @@ const BATCH_EXT = /\.(glb|gltf|obj|fbx|png|jpe?g)$/i;
  * land in results/<name>/, and manifest.json reports every file's outcome.
  * A failure on one file never stops the others.
  */
-async function runBatch(request, env) {
+async function runBatch(request, env, track) {
   const account = await authenticate(request, env);
   const { files, params } = await readUploads(request, account.plan.batchMaxMB * 1048576);
   const opName = String(params.operation || '');
@@ -323,6 +326,8 @@ async function runBatch(request, env) {
       manifest.push({ file: item.filename, status: 'error', error: err instanceof ApiError ? { code: err.code, message: err.message } : { code: 'internal_error', message: 'Processing failed.' }, ms: Date.now() - started });
     }
   }
+  track('op:batch');
+  track('batch_files', ok);
   const quota = op.free || !ok ? await quotaStatus(env, account) : await chargeOperation(env, account, ok);
   const report = { operation: opName, total: items.length, succeeded: ok, failed: items.length - ok, charged: op.free ? 0 : ok, files: manifest };
   zip.file('manifest.json', JSON.stringify(report, null, 2));
@@ -336,7 +341,7 @@ function summarizeAudit(report) {
   return { triangles: report.stats.triangles, score: report.evaluation.score, verdict: report.evaluation.verdict };
 }
 
-async function route(request, env) {
+async function route(request, env, track) {
   const url = new URL(request.url);
   const path = url.pathname.replace(/\/+$/, '') || '/';
   const method = request.method;
@@ -363,7 +368,9 @@ async function route(request, env) {
   if (path === '/api/v1/auth/keys') {
     if (method === 'POST') {
       const body = await request.json().catch(() => ({}));
-      return json({ ok: true, ...(await mintKey(request, env, body)), note: 'Store this key now; it is not shown again.' }, 201);
+      const minted = await mintKey(request, env, body);
+      track(minted.plan === 'trial' ? 'key_issued' : 'key_minted_owner');
+      return json({ ok: true, ...minted, note: 'Store this key now; it is not shown again.' }, 201);
     }
     if (method === 'DELETE') {
       if (!(await isAdmin(request, env))) throw new ApiError(401, 'unauthorized', 'Owner key required.');
@@ -377,18 +384,37 @@ async function route(request, env) {
     return json({ ok: true, plan: { id: account.plan.id, name, engines, maxUploadMB, batchMaxMB }, label: account.record.label, createdAt: account.record.createdAt, quota: await quotaStatus(env, account) });
   }
 
-  if (ROUTES[path]) return runSingle(request, env, ROUTES[path]);
-  if (path === '/api/v1/ios/screenshots') return runScreenshots(request, env);
-  if (path === '/api/v1/batch') return runBatch(request, env);
+  if (path === '/api/v1/track' && method === 'POST') {
+    const body = await request.json().catch(() => ({}));
+    if (!PAGE_EVENTS.has(body?.event)) throw new ApiError(400, 'unknown_event', 'Unknown event.');
+    track(body.event);
+    return json({ ok: true });
+  }
+  if (path === '/api/v1/stats' && method === 'GET') {
+    if (!(await isAdmin(request, env))) throw new ApiError(401, 'unauthorized', 'Owner key required.');
+    const days = Math.min(400, Math.max(1, Number(url.searchParams.get('days')) || 30));
+    return json({ ok: true, ...(await readStats(env, days)) });
+  }
+
+  if (ROUTES[path]) return runSingle(request, env, ROUTES[path], track);
+  if (path === '/api/v1/ios/screenshots') return runScreenshots(request, env, track);
+  if (path === '/api/v1/batch') return runBatch(request, env, track);
 
   throw new ApiError(404, 'not_found', `No endpoint ${method} ${path}. See GET /api/v1 for the list.`);
 }
 
-export async function handleApiV1(request, env) {
+// Counters are written after the response is sent (ctx.waitUntil) so they never slow a request.
+export async function handleApiV1(request, env, ctx) {
   if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS_HEADERS });
+  const pending = [];
+  const track = (metric, by) => { pending.push(bump(env, metric, by)); };
   try {
-    return await route(request, env);
+    return await route(request, env, track);
   } catch (err) {
+    if (err instanceof ApiError && err.status !== 401) track(`error:${err.code}`);
     return errorResponse(err);
+  } finally {
+    const all = Promise.all(pending);
+    if (ctx?.waitUntil) ctx.waitUntil(all); else await all;
   }
 }

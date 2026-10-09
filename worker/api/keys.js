@@ -71,7 +71,7 @@ export async function mintKey(request, env, body) {
     if (!ip) throw new ApiError(400, 'no_client_ip', 'Cannot issue a trial key without a client address.');
     trialKey = `${TRIAL_PREFIX}${await sha256Hex(`${env.TRIAL_SALT || 'assetbench-api'}|${ipKeySource(ip)}`)}`;
     if (await kv.get(trialKey)) {
-      throw new ApiError(409, 'trial_already_issued', `A free trial key has already been issued to this network. Email ${CONTACT_EMAIL} if you lost it, or choose a paid plan.`);
+      throw new ApiError(409, 'trial_already_issued', `A free API key has already been issued to this network. Email ${CONTACT_EMAIL} if you lost it.`);
     }
   }
 

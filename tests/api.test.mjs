@@ -34,7 +34,9 @@ const getSphere = async () => (sphere ??= await sphereGlb(120, { textureSize: [1
 test('pricing, targets and intent are public', async () => {
   const { call } = setup();
   const pricing = await (await call('/api/v1/pricing')).json();
-  assert.deepEqual(pricing.plans.map((p) => [p.id, p.price.amount]), [['trial', 0], ['studio2d', 29], ['studio3d', 79], ['all', 99]]);
+  assert.deepEqual(pricing.plans.map((p) => [p.id, p.price.amount, p.quota]), [['trial', 0, 100]], 'free launch hides paid plans');
+  const paid = await (await worker.fetch(new Request('https://www.assetbench.co.uk/api/v1/pricing'), { API_PAID_PLANS: 'on' }, {})).json();
+  assert.deepEqual(paid.plans.map((p) => [p.id, p.price.amount]), [['trial', 0], ['studio2d', 29], ['studio3d', 79], ['all', 99]]);
   assert.ok((await (await call('/api/v1/targets')).json()).targets.prop);
   const intent = await (await call('/api/v1/intent?target=shopify%20viewer')).json();
   assert.equal(intent.target, 'web');
@@ -191,8 +193,8 @@ test('plans gate engines and quotas', async () => {
   assert.equal((await blocked.json()).error.code, 'engine_not_in_plan');
 
   const trial = await mint('trial');
-  const usageKey = [...env.TRIALS.store.keys()].find((k) => k.startsWith('apikey:') && JSON.parse(env.TRIALS.store.get(k).value).plan === 'trial').replace('apikey:', 'apiuse:') + ':lifetime';
-  await env.TRIALS.put(usageKey, '', { metadata: { count: 25 } });
+  const usageKey = [...env.TRIALS.store.keys()].find((k) => k.startsWith('apikey:') && JSON.parse(env.TRIALS.store.get(k).value).plan === 'trial').replace('apikey:', 'apiuse:') + `:${new Date().toISOString().slice(0, 7)}`;
+  await env.TRIALS.put(usageKey, '', { metadata: { count: 100 } });
   const spent = await call('/api/v1/2d/resize', { method: 'POST', headers: auth(trial), body: pngBytes(64, 64) });
   assert.equal(spent.status, 429);
   assert.equal((await spent.json()).error.code, 'quota_exhausted');
@@ -440,4 +442,27 @@ test('Lemon Squeezy subscription lifecycle drives the license key as an API key'
 
   assert.equal((await hook('license_key_created', { order_id: 78, product_id: 1420844, key: '11111111-2222-3333-4444-555555555555' })).ignored, true, 'site products are not API keys');
   assert.ok(![...env.TRIALS.store.values()].some((v) => v.value.includes(license)), 'raw license key never stored');
+});
+
+test('launch metrics: anonymous counters and an owner-only stats endpoint', async () => {
+  const { call, env, mint } = setup();
+  for (const event of ['popup_shown', 'popup_shown', 'popup_click', 'docs_view']) {
+    assert.equal((await call('/api/v1/track', { method: 'POST', body: JSON.stringify({ event }) })).status, 200);
+  }
+  assert.equal((await call('/api/v1/track', { method: 'POST', body: JSON.stringify({ event: 'anything' }) })).status, 400);
+  const free = await (await call('/api/v1/auth/keys', { method: 'POST', headers: { 'CF-Connecting-IP': '192.0.2.44' }, body: '{}' })).json();
+  await call('/api/v1/2d/resize?maxSize=64', { method: 'POST', headers: auth(free.key), body: pngBytes(128, 128) });
+  await call('/api/v1/2d/resize', { method: 'POST', headers: auth(free.key), body: new Uint8Array([1, 2, 3]) });
+  await mint('all');
+
+  assert.equal((await call('/api/v1/stats')).status, 401);
+  const stats = await (await call('/api/v1/stats', { headers: { Authorization: `Bearer ${ADMIN}` } })).json();
+  assert.equal(stats.totals.popup_shown, 2);
+  assert.equal(stats.popupClickRate, 0.5);
+  assert.equal(stats.totals.key_issued, 1);
+  assert.equal(stats.totals.key_minted_owner, 1);
+  assert.equal(stats.totals['op:resize'], 1);
+  assert.equal(stats.totals['error:unsupported_image'], 1);
+  assert.equal(stats.downloads, 1);
+  assert.ok(![...env.TRIALS.store.keys()].some((k) => k.startsWith('apistat:') && k.includes('192.0.2.44')), 'no identifiers in counters');
 });

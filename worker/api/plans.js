@@ -8,16 +8,17 @@
  * (UTC), or lifetime for the trial. One processed file = one operation.
  */
 export const PLANS = {
+  // The free plan keeps the id 'trial' so keys issued before launch stay valid.
   trial: {
     id: 'trial',
-    name: 'Free Trial',
+    name: 'Free',
     price: { amount: 0, currency: 'GBP', interval: null },
-    quota: 25,
-    period: 'lifetime',
+    quota: 100,
+    period: 'month',
     engines: ['2d', '3d'],
-    maxUploadMB: 15,
-    batchMaxMB: 15,
-    summary: '25 operations to try every API. One key per network.',
+    maxUploadMB: 25,
+    batchMaxMB: 40,
+    summary: 'All seven APIs, 100 operations a month, free during launch. One key per network.',
   },
   studio2d: {
     id: 'studio2d',
@@ -66,11 +67,16 @@ export const PRODUCTS = [
   { id: 'ios', name: 'iOS Asset Generation API', blurb: 'App icons, store screenshot sizes and ready-to-import .xcassets packages.', endpoints: ['POST /api/v1/ios/app-icons', 'POST /api/v1/ios/xcassets', 'POST /api/v1/ios/screenshots'] },
 ];
 
-/** Plans for display. Checkout links come from the API_LS_CHECKOUTS var: {"studio2d":"https://…", …}. */
+/**
+ * Plans for display. Paid plans are hidden unless API_PAID_PLANS is "on"
+ * (free launch); their Lemon Squeezy billing keeps working either way.
+ * Checkout links come from the API_LS_CHECKOUTS var: {"studio2d":"https://…", …}.
+ */
 export function publicPlans(env = {}) {
   let checkouts = {};
   try { checkouts = typeof env.API_LS_CHECKOUTS === 'string' ? JSON.parse(env.API_LS_CHECKOUTS) : env.API_LS_CHECKOUTS || {}; } catch { checkouts = {}; }
-  return Object.values(PLANS).map(({ id, name, price, quota, period, engines, maxUploadMB, batchMaxMB, summary, bestValue }) => ({
+  const paid = env.API_PAID_PLANS === 'on';
+  return Object.values(PLANS).filter((p) => paid || p.price.amount === 0).map(({ id, name, price, quota, period, engines, maxUploadMB, batchMaxMB, summary, bestValue }) => ({
     id, name, price, quota, period, engines, maxUploadMB, batchMaxMB, summary, bestValue: Boolean(bestValue),
     checkoutUrl: /^https:\/\/[\w.-]+\.lemonsqueezy\.com\//.test(checkouts[id] || '') ? checkouts[id] : null,
   }));
