@@ -95,7 +95,7 @@ td code,p code{font:12px var(--mono);color:var(--accent-hi)}
     <a href="/api/v1">GET /api/v1 →</a>
   </div>
 
-  <p class="eyebrow">AssetBench Cloud · API v1</p>
+  <p class="eyebrow">AssetBench Cloud · API v1 · <span style="color:var(--warn)">In construction</span> · Free</p>
   <h1>Game and app assets, <em>ready for mobile.</em></h1>
   <p class="lede">Seven APIs on one key. Optimise and audit 3D models for phones and headsets, build LODs, convert formats, compress textures to KTX2, generate iOS and Android assets, and run any of it over a whole folder in one request. The processing is deterministic, with no AI image generation, so the same input always gives the same output.</p>
 
@@ -312,6 +312,11 @@ td code,p code{font:12px var(--mono);color:var(--accent-hi)}
 </div>
 
 <script>
+// Opened inside the site's "Try API" panel: drop the page chrome that panel already provides.
+if (new URLSearchParams(location.search).has('embed')) {
+  document.querySelector('.top')?.remove();
+  document.body.style.paddingTop = '16px';
+}
 const $ = (id) => document.getElementById(id);
 const store = { get(k) { try { return localStorage.getItem(k); } catch { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch {} } };
 const ORIGIN = location.origin;

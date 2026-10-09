@@ -60,13 +60,13 @@ export function openApiLaunchModal() {
     <div class="welcome-modal api-launch">
       <button class="welcome-modal__close" type="button" aria-label="Close">✕</button>
       <div class="api-launch__card">
-        <span class="api-launch__badge">New · Free during launch</span>
+        <span class="api-launch__badge">New · In construction · Free</span>
         <h2 class="api-launch__title" id="api-launch-title">The AssetBench API</h2>
         <p class="api-launch__lede">Everything AssetBench does, from your own code. Built for mobile game and app developers.</p>
         <ul class="api-launch__list">
           ${PRODUCTS.map(([name, what]) => `<li><b>${name}</b><span>${what}</span></li>`).join('')}
         </ul>
-        <a class="api-launch__cta" href="/docs/">Get a free API key →</a>
+        <a class="api-launch__cta" href="/docs/">Try the API free →</a>
         <button class="api-launch__later" type="button">Maybe later</button>
       </div>
     </div>
@@ -89,9 +89,12 @@ export function openApiLaunchModal() {
   overlay.querySelector('.welcome-modal__close').addEventListener('click', dismiss);
   overlay.querySelector('.api-launch__later').addEventListener('click', dismiss);
   overlay.addEventListener('click', (e) => { if (e.target === overlay) dismiss(); });
-  overlay.querySelector('.api-launch__cta').addEventListener('click', () => {
+  overlay.querySelector('.api-launch__cta').addEventListener('click', (e) => {
     trackApiEvent('popup_click');
-    remember();
+    // Open the playground over the current page; the href stays as a fallback.
+    e.preventDefault();
+    close();
+    openApiPanel();
   });
 
   document.addEventListener('keydown', onKeydown);
@@ -99,5 +102,47 @@ export function openApiLaunchModal() {
   requestAnimationFrame(() => overlay.classList.add('welcome-modal-overlay--open'));
   trackApiEvent('popup_shown');
   overlay.querySelector('.api-launch__cta').focus({ preventScroll: true });
+  return close;
+}
+
+/**
+ * The API playground (/docs) in a panel over the current page, so trying
+ * the API never takes a visitor away from the tool they were using.
+ */
+export function openApiPanel() {
+  if (document.querySelector('.api-panel-overlay')) return;
+  const overlay = document.createElement('div');
+  overlay.className = 'welcome-modal-overlay api-panel-overlay';
+  overlay.setAttribute('role', 'dialog');
+  overlay.setAttribute('aria-modal', 'true');
+  overlay.setAttribute('aria-label', 'AssetBench API playground');
+  overlay.innerHTML = `
+    <div class="api-panel">
+      <div class="api-panel__bar">
+        <span class="api-panel__title">AssetBench API <span class="api-panel__tag">In construction · Free</span></span>
+        <a class="api-panel__full" href="/docs/" target="_blank" rel="noopener">Open full page ↗</a>
+        <button class="api-panel__close" type="button" aria-label="Close">✕</button>
+      </div>
+      <iframe class="api-panel__frame" src="/docs/?embed=1" title="AssetBench API playground"></iframe>
+    </div>
+  `;
+  const previousFocus = document.activeElement;
+  function onKeydown(e) {
+    if (e.key === 'Escape') close();
+  }
+  function close() {
+    overlay.classList.add('welcome-modal-overlay--closing');
+    document.removeEventListener('keydown', onKeydown);
+    document.documentElement.style.overflow = '';
+    setTimeout(() => { overlay.remove(); previousFocus?.focus?.(); }, 220);
+  }
+  overlay.querySelector('.api-panel__close').addEventListener('click', close);
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+  document.addEventListener('keydown', onKeydown);
+  document.documentElement.style.overflow = 'hidden';
+  document.body.appendChild(overlay);
+  requestAnimationFrame(() => overlay.classList.add('welcome-modal-overlay--open'));
+  overlay.querySelector('.api-panel__close').focus({ preventScroll: true });
+  trackApiEvent('panel_open');
   return close;
 }

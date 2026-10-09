@@ -5,12 +5,12 @@
  *
  * Metrics: key_issued, op:<operation> (a successful run = a delivered
  * download or report), batch_files, error:<code>, plus page events sent by
- * the site (popup_shown, popup_click, popup_dismiss, docs_view). The
+ * the site (popup_shown, popup_click, popup_dismiss, docs_view, panel_open). The
  * read-modify-write can drop a count under a race; fine for trends.
  */
 
 const PREFIX = 'apistat:';
-export const PAGE_EVENTS = new Set(['popup_shown', 'popup_click', 'popup_dismiss', 'docs_view']);
+export const PAGE_EVENTS = new Set(['popup_shown', 'popup_click', 'popup_dismiss', 'docs_view', 'panel_open']);
 
 const today = () => new Date().toISOString().slice(0, 10);
 

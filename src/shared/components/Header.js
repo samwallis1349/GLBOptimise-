@@ -3,12 +3,12 @@ import { getToolByRoute } from '../config/tools.js';
 import { getCurrentPath, onRouteChange } from '../../app/router.js';
 import { iconSvg } from '../utils/icons.js';
 import { openCommandPalette } from '../effects/CommandPalette.js';
+import { openApiPanel } from './ApiLaunchModal.js';
 
 const NAV_LINKS = [
   { label: 'Tools', path: '/tools' },
   { label: 'About', path: '/about' },
   { label: 'Pricing', path: '/pricing' },
-  { label: 'API', path: '/docs/' },
 ];
 
 /** Renders the single shared Asset Bench header, kept in sync with the router. */
@@ -57,7 +57,13 @@ export function Header() {
   themeToggle.textContent = '◐';
   themeToggle.title = 'Theme switching is not implemented yet';
 
-  right.append(tagline, themeToggle);
+  const tryApi = document.createElement('button');
+  tryApi.type = 'button';
+  tryApi.className = 'ab-header__try-api';
+  tryApi.innerHTML = 'Try API <span class="ab-header__try-api-tag">In construction · Free</span>';
+  tryApi.addEventListener('click', () => openApiPanel());
+
+  right.append(tryApi, tagline, themeToggle);
   inner.append(brand, nav, search.el, right);
   header.append(inner);
 
