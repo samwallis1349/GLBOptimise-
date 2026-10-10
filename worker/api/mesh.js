@@ -133,6 +133,58 @@ export async function optimizeGlb(bytes, params) {
   return { output, report };
 }
 
+/**
+ * Geometry-only reduction: no texture or compression changes. Keep either a
+ * fraction (`ratio`, default 0.5) or a triangle count (`triangles`, which
+ * wins when both are sent).
+ */
+export async function reduceGlb(bytes, params) {
+  const before = analyseGlb(bytes);
+  if (!before.triangles) throw new ApiError(422, 'no_geometry', 'This model contains no triangle geometry to reduce.');
+
+  let ratio = 0.5;
+  let targetTriangles = null;
+  if (params.triangles !== undefined && params.triangles !== '') {
+    targetTriangles = Number(params.triangles);
+    if (!Number.isInteger(targetTriangles) || targetTriangles <= 0) {
+      throw new ApiError(400, 'invalid_triangles', 'triangles must be a whole number greater than 0.');
+    }
+    ratio = Math.max(0.01, Math.min(1, targetTriangles / before.triangles));
+  } else if (params.ratio !== undefined && params.ratio !== '') {
+    ratio = clampRatio(params.ratio);
+  }
+  const lockBorder = bool(params.lockBorder, false);
+
+  const document = await readDocument(bytes);
+  const warnings = [];
+  let meshReports = [];
+  if (ratio < 0.999) {
+    const result = await reduce(document, ratio, lockBorder);
+    meshReports = result.meshReports;
+    warnings.push(...result.warnings);
+  } else {
+    warnings.push('Model is already at or under the requested triangle count; geometry left unchanged.');
+  }
+  const output = await writeDocument(document);
+  await readDocument(output); // the output must re-parse before it is returned
+  const after = analyseGlb(output);
+
+  return {
+    output,
+    report: {
+      settings: { ratio: Number(ratio.toFixed(4)), targetTriangles, lockBorder },
+      before: { triangles: before.triangles, fileBytes: before.fileBytes },
+      after: { triangles: after.triangles, fileBytes: output.byteLength },
+      reduction: {
+        triangles: Number((1 - after.triangles / before.triangles).toFixed(4)),
+        fileBytes: before.fileBytes ? Number((1 - output.byteLength / before.fileBytes).toFixed(4)) : 0,
+      },
+      meshes: meshReports.map(({ name, before: b, after: a, status, reason }) => ({ name, before: b, after: a, status, reason })),
+      warnings,
+    },
+  };
+}
+
 const pct = (v) => `${(v * 100).toFixed(1)}%`;
 const mb = (b) => (b >= 1048576 ? `${(b / 1048576).toFixed(2)} MB` : `${Math.max(1, Math.round(b / 1024))} KB`);
 

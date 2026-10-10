@@ -118,6 +118,27 @@ test('optimize with explicit ratio and JSON output', async () => {
   assert.ok(j.file.base64.length > 1000);
 });
 
+test('reduce cuts triangles by ratio or to a target count, geometry only', async () => {
+  const { call, mint } = setup();
+  const key = await mint('all');
+  const before = analyseGlb(await getSphere()).triangles;
+
+  const res = await call('/api/v1/3d/reduce?ratio=0.25', { method: 'POST', headers: auth(key), body: await getSphere() });
+  assert.equal(res.status, 200);
+  assert.equal(res.headers.get('Content-Type'), 'model/gltf-binary');
+  const out = analyseGlb(new Uint8Array(await res.arrayBuffer()));
+  assert.ok(Math.abs(out.triangles - before * 0.25) < before * 0.05);
+  assert.equal(out.textures.length, analyseGlb(await getSphere()).textures.length);
+
+  const j = await (await call('/api/v1/3d/reduce?triangles=5000&output=json', { method: 'POST', headers: auth(key), body: await getSphere() })).json();
+  assert.equal(j.report.settings.targetTriangles, 5000);
+  assert.ok(j.report.after.triangles <= 5000 * 1.1 && j.report.after.triangles < before);
+
+  const bad = await call('/api/v1/3d/reduce?triangles=-3', { method: 'POST', headers: auth(key), body: await getSphere() });
+  assert.equal(bad.status, 400);
+  assert.equal((await bad.json()).error.code, 'invalid_triangles');
+});
+
 test('LOD chain is a ZIP of decreasing levels', async () => {
   const { call, mint } = setup();
   const key = await mint('all');

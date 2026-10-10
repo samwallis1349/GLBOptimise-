@@ -4,7 +4,7 @@ import { PRODUCTS, publicPlans } from './plans.js';
 import { assertCanRun, authenticate, chargeOperation, isAdmin, mintKey, quotaStatus, revokeKey } from './keys.js';
 import { analyseGlb, evaluate, readDocument, TARGETS, writeDocument } from './glb.js';
 import { compileIntent } from './intent.js';
-import { generateLodChain, optimizeGlb } from './mesh.js';
+import { generateLodChain, optimizeGlb, reduceGlb } from './mesh.js';
 import { buildIconPack } from './icons.js';
 import { DEVICES, ENGINES, ROLES, budgetFor, deviceMatrix, gameReady } from './gameReady.js';
 import { decodeImage, encodeImage, fitSize, resize, sniffImage } from './images.js';
@@ -84,6 +84,26 @@ const OPERATIONS = {
           },
         };
       }
+    },
+  },
+
+  reduce: {
+    engine: '3d',
+    async run(bytes, params, filename) {
+      const { output, report } = await reduceGlb(bytes, params);
+      return {
+        output,
+        report,
+        filename: `${baseName(filename, 'model')}-reduced.glb`,
+        contentType: 'model/gltf-binary',
+        summary: {
+          trianglesBefore: report.before.triangles,
+          trianglesAfter: report.after.triangles,
+          bytesBefore: report.before.fileBytes,
+          bytesAfter: report.after.fileBytes,
+          warnings: report.warnings.length,
+        },
+      };
     },
   },
 
@@ -196,6 +216,7 @@ const ROUTES = {
   '/api/v1/3d/audit': 'audit',
   '/api/v1/3d/inspect': 'audit',
   '/api/v1/3d/optimize': 'optimize',
+  '/api/v1/3d/reduce': 'reduce',
   '/api/v1/3d/game-ready': 'game-ready',
   '/api/v1/3d/lods': 'lods',
   '/api/v1/3d/convert': 'convert',

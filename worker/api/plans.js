@@ -58,7 +58,7 @@ export const PLANS = {
 
 /** The seven products in the package, in the order the docs present them. */
 export const PRODUCTS = [
-  { id: 'optimise', name: 'GLB Optimisation API', blurb: 'Upload a model; get back a compressed, reduced GLB, or a full game-ready pack fitted to a device and engine.', endpoints: ['POST /api/v1/3d/optimize', 'POST /api/v1/3d/game-ready'] },
+  { id: 'optimise', name: 'GLB Optimisation API', blurb: 'Upload a model; get back a compressed, reduced GLB, or a full game-ready pack fitted to a device and engine.', endpoints: ['POST /api/v1/3d/optimize', 'POST /api/v1/3d/reduce', 'POST /api/v1/3d/game-ready'] },
   { id: 'batch', name: 'Batch Asset Processing API', blurb: 'Run any operation over up to 50 models or textures in one request (send several files or one ZIP).', endpoints: ['POST /api/v1/batch'] },
   { id: 'ktx2', name: 'KTX2 Texture API', blurb: 'PNG, JPEG or every texture inside a GLB to GPU-compressed KTX2 (Basis Universal ETC1S / UASTC).', endpoints: ['POST /api/v1/textures/ktx2'] },
   { id: 'audit', name: '3D Asset Audit API', blurb: 'File size, triangles, draw calls, texture memory, animation data and a mobile-readiness score per device class.', endpoints: ['POST /api/v1/3d/audit'] },
