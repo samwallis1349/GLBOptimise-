@@ -9,6 +9,8 @@ export function pageMarkup() {
         <h1>Asset <span>Pipeline</span></h1>
         <p class="ap-lede">Drop a folder of models, set the pipeline once, and get optimised, validated, game-ready GLBs with LODs and reports in one ZIP.</p>
       </div>
+      <div class="ap-head-side">
+      <a class="ap-btn ap-btn--primary ap-api-cta" href="/docs/">Automate it free with the Cloud API →</a>
       <details class="ap-pill-wrap">
         <summary class="ap-pill">Runs in your browser · files stay on this device</summary>
         <div class="ap-pill-body">
@@ -17,6 +19,7 @@ export function pageMarkup() {
           <p>Limits: ${LIMITS.maxAssets} assets per batch, ${LIMITS.maxFileBytes / 1048576} MB per file, ${LIMITS.maxZipBytes / 1048576} MB per ZIP.</p>
         </div>
       </details>
+      </div>
     </header>
 
     <div class="ap-tabs" role="tablist" aria-label="Panels">

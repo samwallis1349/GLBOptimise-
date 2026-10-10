@@ -517,7 +517,13 @@ export function getToolsByCategory(categoryId) {
 }
 
 /**
- * Mobile app development tools pinned to row 1 of tool grids.
+ * The headline tool: pinned above everything on its own full-width row.
+ * Asset Pipeline does the work of several single tools in one batch.
+ */
+export const HEADLINE_TOOL = 'asset-pipeline';
+
+/**
+ * Mobile app development tools pinned to the first row of cards.
  * Styled with cardTheme: 'blue' to stand out together.
  */
 export const PINNED_MOBILE_TOOLS = [
@@ -527,13 +533,19 @@ export const PINNED_MOBILE_TOOLS = [
   'mobile-ready-checker',
 ];
 
+/** Pin order for tool grids: the headline row, then the mobile row. */
+export const PINNED_TOOLS = [HEADLINE_TOOL, ...PINNED_MOBILE_TOOLS];
+
 /**
  * Canonical popularity order for tie-breaking and initial zero-cache state.
+ * - Headline row: Asset Pipeline (full width, pinned).
  * - Row 1: Mobile App Dev tools (blue, pinned).
  * - Row 2: Top 4 most-used tools on the platform (Line Studio, GLB Builder, KTX2, LODs).
  * - Subsequent rows: Ranked by platform usage counts.
  */
 export const POPULARITY_ORDER = [
+  // Headline row (pinned)
+  'asset-pipeline',
   // Row 1: Mobile app dev suite (pinned)
   'app-icon-generator',
   'app-store-screenshot-generator',
@@ -549,7 +561,6 @@ export const POPULARITY_ORDER = [
   'thumbnail-maker',
   'model-to-isometric',
   'asset-report',
-  'asset-pipeline',
   'optimise-glb',
   'reduce-polys',
   'strip-animations',

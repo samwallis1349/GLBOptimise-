@@ -32,19 +32,21 @@ import { iconSvg } from '../utils/icons.js';
  *
  * Options: `index` overrides the numbered pill (for pages that show tools
  * in their own order), and `featured` renders the double-width variant
- * using the tool's wide `banner` artwork.
+ * using the tool's wide `banner` artwork. `headline` renders a full-row
+ * card with the square thumbnail beside the body, for the one tool pinned
+ * above the grid.
  *
  * @param {import('../config/tools.js').TOOLS[number]} tool
- * @param {{ index?: number, featured?: boolean }} [options]
+ * @param {{ index?: number, featured?: boolean, headline?: boolean }} [options]
  * @returns {HTMLElement}
  */
-export function ToolCard(tool, { index: displayIndex, featured = false } = {}) {
+export function ToolCard(tool, { index: displayIndex, featured = false, headline = false } = {}) {
   const category = getCategoryById(tool.category);
   const isAvailable = tool.status === 'available' || tool.status === 'beta';
 
   const card = document.createElement('a');
   const wide = featured && Boolean(tool.banner);
-  card.className = `tool-card${wide ? ' tool-card--featured' : ''}${tool.cardTheme ? ` tool-card--${tool.cardTheme}` : ''}`;
+  card.className = `tool-card${wide ? ' tool-card--featured' : ''}${headline ? ' tool-card--headline' : ''}${tool.cardTheme ? ` tool-card--${tool.cardTheme}` : ''}`;
   card.href = tool.route;
   card.dataset.status = tool.status;
   if (category) card.style.setProperty('--card-accent', `var(${category.accent})`);
@@ -61,7 +63,7 @@ export function ToolCard(tool, { index: displayIndex, featured = false } = {}) {
           : iconSvg(tool.icon, { class: 'tool-card__visual-icon' })
       }
       <span class="tool-card__scan" aria-hidden="true"></span>
-      <span class="tool-card__index">${wide ? 'New · ' : ''}#${index}</span>
+      <span class="tool-card__index">${wide || headline ? 'New · ' : ''}#${index}</span>
     </div>
 
     <div class="tool-card__body">
