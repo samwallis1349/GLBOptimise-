@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import worker from '../worker/index.js';
-import { TOOLS, PINNED_MOBILE_TOOLS, getOrderedTools } from '../src/shared/config/tools.js';
+import { TOOLS, HEADLINE_TOOL, PINNED_MOBILE_TOOLS, PINNED_TOOLS, getOrderedTools } from '../src/shared/config/tools.js';
 import { placeAtRowStart, placePairTogether, rankByUsage } from '../src/services/UsageService.js';
 
 function memoryKv() {
@@ -69,10 +69,18 @@ test('only mobile app dev tools have blue cardTheme', () => {
   assert.deepEqual(blueTools, PINNED_MOBILE_TOOLS);
 });
 
+test('Asset Pipeline leads the grid, then the mobile row, even against heavy usage', () => {
+  const ranked = rankByUsage(getOrderedTools(), { 'thumbnail-maker': 999 }, PINNED_TOOLS);
+  assert.equal(HEADLINE_TOOL, 'asset-pipeline');
+  assert.deepEqual(ranked.slice(0, 5).map((t) => t.id), PINNED_TOOLS);
+  assert.equal(ranked[5].id, 'thumbnail-maker');
+});
+
 test('row 2 contains the top 4 most used tools', () => {
-  const ranked = rankByUsage(getOrderedTools(), {}, PINNED_MOBILE_TOOLS);
+  // The headline card takes its own full-width row, so card rows start at index 1.
+  const ranked = rankByUsage(getOrderedTools(), {}, PINNED_TOOLS);
   assert.deepEqual(
-    ranked.slice(4, 8).map((t) => t.id),
+    ranked.slice(5, 9).map((t) => t.id),
     ['line-studio', 'glb-builder', 'ktx2-texture-encoder', 'generate-lods'],
   );
 });

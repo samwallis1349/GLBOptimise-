@@ -177,6 +177,27 @@ export const TOOLS = [
     category: 'optimise',
   },
   {
+    id: 'asset-pipeline',
+    name: 'Asset Pipeline',
+    route: '/asset-pipeline',
+    description: 'Batch-optimise a whole folder of GLB / glTF: geometry, textures, LODs, validation and one ZIP out.',
+    keywords: ['batch', 'pipeline', 'folder', 'bulk', 'automate', 'optimise', 'lod', 'ktx2', 'texture compression', 'polygon reduction', 'unity', 'unreal', 'godot', 'three.js', 'mobile', 'vr', 'zip', 'manifest', 'report'],
+    icon: 'layers',
+    thumbnail: '/thumbnails/asset-pipeline.webp',
+    seo: {
+      title: 'Asset Pipeline — Batch GLB Optimiser with LODs, Texture Compression & Validation | Asset Bench',
+      description:
+        'Optimise a whole folder of GLB and glTF models in your browser: polygon reduction, per-role texture resizing and KTX2/WebP compression, LOD chains, budgets, validation, reports and one ZIP download. Presets for Unity, Unreal, Godot, three.js, mobile and VR.',
+    },
+    features: [
+      { icon: 'layers', label: 'Whole folders' },
+      { icon: 'shield', label: 'Validated' },
+      { icon: 'package-open', label: 'One ZIP' },
+    ],
+    status: 'available',
+    category: 'optimise',
+  },
+  {
     id: 'reduce-polys',
     name: 'Reduce Polys',
     route: '/reduce-polys',
@@ -496,7 +517,13 @@ export function getToolsByCategory(categoryId) {
 }
 
 /**
- * Mobile app development tools pinned to row 1 of tool grids.
+ * The headline tool: pinned above everything on its own full-width row.
+ * Asset Pipeline does the work of several single tools in one batch.
+ */
+export const HEADLINE_TOOL = 'asset-pipeline';
+
+/**
+ * Mobile app development tools pinned to the first row of cards.
  * Styled with cardTheme: 'blue' to stand out together.
  */
 export const PINNED_MOBILE_TOOLS = [
@@ -506,13 +533,19 @@ export const PINNED_MOBILE_TOOLS = [
   'mobile-ready-checker',
 ];
 
+/** Pin order for tool grids: the headline row, then the mobile row. */
+export const PINNED_TOOLS = [HEADLINE_TOOL, ...PINNED_MOBILE_TOOLS];
+
 /**
  * Canonical popularity order for tie-breaking and initial zero-cache state.
+ * - Headline row: Asset Pipeline (full width, pinned).
  * - Row 1: Mobile App Dev tools (blue, pinned).
  * - Row 2: Top 4 most-used tools on the platform (Line Studio, GLB Builder, KTX2, LODs).
  * - Subsequent rows: Ranked by platform usage counts.
  */
 export const POPULARITY_ORDER = [
+  // Headline row (pinned)
+  'asset-pipeline',
   // Row 1: Mobile app dev suite (pinned)
   'app-icon-generator',
   'app-store-screenshot-generator',

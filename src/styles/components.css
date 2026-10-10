@@ -1371,6 +1371,61 @@
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45), 0 0 44px rgba(255, 181, 71, 0.12);
 }
 
+/* ---------- Headline (full-row) card ----------
+   The one tool pinned above the grid. It spans every column; from tablet
+   width up the square thumbnail sits beside the body at one card's width,
+   so the image lines up with the column below it. */
+.tool-card--headline {
+  grid-column: 1 / -1;
+  border-color: rgba(255, 181, 71, 0.32);
+  box-shadow: 0 0 0 1px rgba(255, 181, 71, 0.05), 0 0 36px rgba(255, 181, 71, 0.07);
+}
+
+@media (min-width: 601px) {
+  .tool-card--headline {
+    flex-direction: row;
+  }
+
+  .tool-card--headline .tool-card__visual {
+    flex: 0 0 calc((100% - var(--space-4)) / 2);
+    border-bottom: 0;
+    border-right: 1px solid var(--border);
+  }
+
+  .tool-card--headline .tool-card__body {
+    justify-content: center;
+  }
+
+  .tool-card--headline .tool-card__name {
+    font-size: 26px;
+  }
+
+  .tool-card--headline .tool-card__description {
+    flex: 0 0 auto;
+    max-width: 60ch;
+  }
+}
+
+@media (min-width: 981px) {
+  .tool-card--headline .tool-card__visual {
+    flex-basis: calc((100% - 3 * var(--space-4)) / 4);
+  }
+}
+
+.tool-card--headline::before {
+  opacity: 0.5;
+}
+
+.tool-card--headline .tool-card__index {
+  color: var(--accent);
+  border-color: rgba(255, 181, 71, 0.4);
+}
+
+.tool-card--headline:hover {
+  border-color: rgba(255, 181, 71, 0.55);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45), 0 0 44px rgba(255, 181, 71, 0.12);
+}
+
 .support-panel__icon {
   color: #ff4d91;
   background: rgba(255, 77, 145, 0.09);

@@ -107,6 +107,27 @@ export async function reducePolys({
       reason: null,
     };
 
+    // Optional per-mesh override (used by Asset Pipeline for per-mesh targets
+    // and to leave skinned / morph-target meshes alone): returns a keep ratio,
+    // or { skip: reason } to leave the mesh untouched.
+    let meshRatio = effectiveRatio;
+    if (opts.ratioForMesh) {
+      const meshTris = mesh
+        .listPrimitives()
+        .reduce((n, p) => n + (p.getMode() === Primitive.Mode.TRIANGLES ? getGLPrimitiveCount(p) : 0), 0);
+      const decision = opts.ratioForMesh(mesh, meshTris, effectiveRatio);
+      if (decision && typeof decision === 'object' && decision.skip) {
+        report.before = report.after = meshTris;
+        report.status = 'Skipped';
+        report.reason = decision.skip;
+        report.reduction = 0;
+        operationReport.skipped.push({ mesh: report.name, reason: report.reason });
+        meshReports.push(report);
+        continue;
+      }
+      if (Number.isFinite(decision)) meshRatio = Math.max(0.001, Math.min(1, decision));
+    }
+
     for (const prim of mesh.listPrimitives()) {
       const before = prim.getMode() === Primitive.Mode.TRIANGLES ? getGLPrimitiveCount(prim) : 0;
       report.before += before;
@@ -127,7 +148,7 @@ export async function reducePolys({
       try {
         simplifyPrimitive(prim, {
           simplifier,
-          ratio: effectiveRatio,
+          ratio: meshRatio,
           error: opts.error,
           lockBorder: opts.lockBorder,
         });
@@ -175,12 +196,14 @@ export async function reducePolys({
       ? (originalStats.triangleCount - reducedStats.triangleCount) / originalStats.triangleCount
       : 0;
   const requestedReduction = 1 - effectiveRatio;
-  if (requestedReduction > 0.05 && achieved < requestedReduction * 0.5) {
+  // With per-mesh ratios the document-wide comparison is meaningless; the
+  // caller judges the outcome from meshReports instead.
+  if (!opts.ratioForMesh && requestedReduction > 0.05 && achieved < requestedReduction * 0.5) {
     warnings.push(
       `Geometry could not be reduced as far as requested (${(achieved * 100).toFixed(1)}% removed vs ${(requestedReduction * 100).toFixed(1)}% asked for). The error limit or preservation settings are the constraint.`
     );
   }
-  if (achieved <= 0.001) {
+  if (!opts.ratioForMesh && achieved <= 0.001) {
     warnings.push('Geometry could not be reduced significantly with the current preservation settings.');
   }
 

@@ -202,6 +202,17 @@ export const TOOL_NEWS = {
       'Halving texture resolution (e.g., from 2048 to 1024) reduces memory consumption by 75% because pixel count scales quadratically with dimensions.',
     relatedTools: ['compress-textures', 'ktx2-texture-encoder', 'mobile-ready-checker'],
   },
+  'asset-pipeline': {
+    version: 'v1.0 Launch',
+    date: 'October 2026',
+    title: 'Whole-Folder Optimisation with LODs, Budgets and Validation',
+    content:
+      'Drop a folder or ZIP of GLB / glTF assets, pick an engine preset, and run geometry reduction, per-role texture resizing and compression, LOD generation and post-export validation on every file. Download one ZIP with a manifest, CSV and HTML report.',
+    proTipTitle: 'Protect Your Characters',
+    proTip:
+      'Skinned and morph-target meshes are skipped by polygon reduction unless you explicitly allow it. Run characters and static props as separate batches with the Animated Characters and Static Environment Props profiles.',
+    relatedTools: ['optimise-glb', 'generate-lods', 'compress-textures'],
+  },
   'asset-report': {
     version: 'v2.0 Update',
     date: 'October 2026',
