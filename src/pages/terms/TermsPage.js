@@ -64,7 +64,10 @@ export function render(container) {
         unlocks every current and future ${APP_NAME} tool in the browser on
         up to ${LICENSE_MACHINE_LIMIT} machines, with no account needed. You
         can cancel at any time; access continues until the end of the period
-        you have paid for, then the key stops unlocking tools. Lifetime
+        you have paid for, then the key stops unlocking tools. If a payment
+        fails, our payment provider retries it for a short period; if it
+        still fails, the subscription is cancelled automatically, the key
+        stops unlocking tools and nothing further is owed. Lifetime
         licences bought before 10 October 2026 keep working for as long as
         ${APP_NAME} is operated.
       </p>

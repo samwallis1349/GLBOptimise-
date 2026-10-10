@@ -14,6 +14,8 @@ import { deactivateLicense, deactivateToolLicense, getStoredLicense, getToolLice
 import { TOOLS } from '../../shared/config/tools.js';
 import { LicenseActivationForm } from '../../shared/components/LicenseActivationForm.js';
 import { splashHero } from '../../shared/components/WelcomeOffer.js';
+
+const SHOW_OFFER_ART = false;
 import { refundNoticeHtml } from '../../shared/components/RefundNotice.js';
 
 function maskKey(key) {
@@ -109,6 +111,11 @@ function buyPanel(onChange) {
       cancel before then and you won't be charged. Cancel any time from Lemon
       Squeezy My Orders.
     </p>
+    <p class="text-secondary" style="margin-top: var(--space-3);">
+      <strong>Never left owing.</strong> If a payment fails, it's retried for a
+      short while; if it still doesn't go through, your subscription is
+      cancelled automatically. No debt, no chasing.
+    </p>
     <div class="pricing-discount">
       <div class="pricing-discount__art-wrap" aria-hidden="true">
         <img class="pricing-discount__art" src="/pricing/ten-percent-off.webp" alt="" loading="lazy" decoding="async" />
@@ -178,7 +185,9 @@ export async function render(container) {
 
   const rerender = () => render(container);
   const card = license ? licensedPanel(license, rerender) : buyPanel(rerender);
-  card.prepend(splashHero());
+  // Offer artwork hidden: public/pricing/offer.webp still shows the old
+  // one-off "forever" price. Restore once it's replaced with £25/month art.
+  if (SHOW_OFFER_ART) card.prepend(splashHero());
   section.appendChild(card);
   const toolKeys = getToolLicenses();
   if (toolKeys.length) section.appendChild(toolKeysPanel(toolKeys, rerender));
