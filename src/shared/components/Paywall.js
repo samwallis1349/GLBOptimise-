@@ -1,4 +1,4 @@
-import { LICENSE_MACHINE_LIMIT, LIFETIME_PRICE_LABEL, MY_ORDERS_URL, TRIAL_DAYS, hasAccess } from '../config/billing.js';
+import { LICENSE_MACHINE_LIMIT, PRICE_LABEL, SUBSCRIPTION_TRIAL_DAYS, MY_ORDERS_URL, TRIAL_DAYS, hasAccess } from '../config/billing.js';
 import { TOOL_DEVICE_LIMIT, TOOL_PRICE_LABEL, toolProduct } from '../config/toolProducts.js';
 import { TOOLS } from '../config/tools.js';
 import { LicenseActivationForm } from './LicenseActivationForm.js';
@@ -7,7 +7,7 @@ import { refundNoticeHtml } from './RefundNotice.js';
 /**
  * Locked-tool screen rendered instead of a gated tool once the visitor's free
  * trial has ended and no valid license is stored. The tool's own module is never
- * imported while locked — see app/routes.js. Offers the lifetime license and,
+ * imported while locked — see app/routes.js. Offers the All Access subscription and,
  * once the tool is on sale by itself (shared/config/toolProducts.js), just
  * this tool for £5.
  * @param {{ tool: import('../config/tools.js').TOOLS[number], onUnlock: () => void }} options
@@ -22,9 +22,9 @@ export function Paywall({ tool, onUnlock }) {
   panel.innerHTML = `
     <h1 class="tool-page__title">Your ${TRIAL_DAYS}-day free trial has ended</h1>
     <p class="tool-page__description">
-      ${tool.name}, and every other Asset Bench tool, needs a one-time license key to keep using.
+      ${tool.name}, and every other Asset Bench tool, needs an All Access subscription to keep using.
     </p>
-    <div class="paywall__price">${LIFETIME_PRICE_LABEL} <span class="text-muted">once, forever · every tool · ${LICENSE_MACHINE_LIMIT} machines</span></div>
+    <div class="paywall__price">${PRICE_LABEL} <span class="text-muted">first ${SUBSCRIPTION_TRIAL_DAYS} days free · every tool · ${LICENSE_MACHINE_LIMIT} machines · cancel any time</span></div>
     <a class="btn btn--primary paywall__buy" href="/pricing">View pricing and buy</a>
     ${single ? `
       <a class="btn btn--secondary paywall__buy paywall__single" href="${single.checkoutUrl}" target="_blank" rel="noopener">

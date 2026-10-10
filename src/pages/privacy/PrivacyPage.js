@@ -36,7 +36,7 @@ const sessionHours = Math.round(SESSION_EXPIRY_MS / 3_600_000);
 const STORAGE = [
   ['assetbench_trial_v2', 'Local storage', `When your ${TRIAL_DAYS}-day free trial started.`, 'Until you clear it'],
   ['assetbench_dev_id', 'Local storage', 'A one-way hardware signature hash used to prevent trial abuse.', 'Until you clear it'],
-  ['assetbench_license_v1', 'Local storage', 'Your lifetime licence key, its activation ID and whether it was valid when last checked. Only set if you activate a key.', 'Until you remove the key or clear it'],
+  ['assetbench_license_v1', 'Local storage', 'Your All Access (or lifetime) licence key, its activation ID and whether it was valid when last checked. Only set if you activate a key.', 'Until you remove the key or clear it'],
   ['assetbench_tool_licenses_v1', 'Local storage', 'Single-tool licence keys, as above. Only set if you activate one.', 'Until you remove the key or clear it'],
   ['assetbench_consent_v1', 'Local storage', 'Your privacy choices (Analytics and Advertising on or off), the version of this notice and the date you chose.', 'Until you change it or clear it'],
   ['assetbench_usage_v1', 'Local storage', 'While Analytics is on: how many times this browser has opened each tool, used to order the tool lists when our server can’t be reached.', 'Until you clear it'],

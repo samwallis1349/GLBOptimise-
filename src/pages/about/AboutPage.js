@@ -1,6 +1,6 @@
 import { APP_NAME, APP_TAGLINE } from '../../shared/config/app.js';
 import { CATEGORIES, TOOLS } from '../../shared/config/tools.js';
-import { ALL_TOOLS_FREE, LIFETIME_PRICE_LABEL, LICENSE_MACHINE_LIMIT, TRIAL_DAYS } from '../../shared/config/billing.js';
+import { ALL_TOOLS_FREE, PRICE_LABEL, LICENSE_MACHINE_LIMIT, TRIAL_DAYS } from '../../shared/config/billing.js';
 
 const LIVE_STATUSES = new Set(['available', 'beta']);
 
@@ -71,9 +71,9 @@ export function render(container) {
       <p>
         Many ${APP_NAME} tools can be tried before purchasing access. Every
         tool is unlocked for ${TRIAL_DAYS} days from your first visit. After
-        that, a one-time ${LIFETIME_PRICE_LABEL} lifetime licence unlocks
+        that, an All Access subscription at ${PRICE_LABEL} unlocks
         every current and future tool on up to ${LICENSE_MACHINE_LIMIT}
-        machines — no subscription and no account.
+        machines — no account, cancel any time.
         ${ALL_TOOLS_FREE ? 'At the moment, every tool is temporarily unlocked for everyone.' : ''}
         See <a href="/pricing">pricing</a> for details.
       </p>

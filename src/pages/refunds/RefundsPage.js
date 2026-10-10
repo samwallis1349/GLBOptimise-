@@ -1,7 +1,7 @@
 import { APP_NAME, CONTACT_EMAIL, OPERATOR_NAME } from '../../shared/config/app.js';
 import { TRIAL_DAYS } from '../../shared/config/billing.js';
 
-const UPDATED = '4 October 2026';
+const UPDATED = '10 October 2026';
 
 export function render(container) {
   container.innerHTML = '';
@@ -22,8 +22,10 @@ export function render(container) {
         usable straight away. Because every tool can be tried for
         ${TRIAL_DAYS} days before you buy, we don't offer refunds if you change
         your mind, no longer need the tools, or bought without trying them
-        first. This applies to the lifetime licence and to any single-tool
-        licence.
+        first. This applies to All Access subscription payments, lifetime
+        licences and single-tool licences. You can cancel All Access at any
+        time to stop future payments; access continues until the end of the
+        month you've paid for, and part-months aren't refunded.
       </p>
 
       <h2>Try before you buy</h2>

@@ -96,7 +96,7 @@ async function postForm(action, params) {
   return { ok: response.ok, data };
 }
 
-/** True if the key was issued for the Asset Bench lifetime product, not some other Lemon Squeezy store. */
+/** True if the key was issued for the Asset Bench All Access product, not some other Lemon Squeezy store. */
 function isOurProduct(meta) {
   return meta?.store_id === LICENSE_STORE_ID && meta?.product_id === LICENSE_PRODUCT_ID;
 }

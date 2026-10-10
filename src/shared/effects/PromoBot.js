@@ -1,5 +1,5 @@
 import { TOOLS } from '../config/tools.js';
-import { ALL_TOOLS_FREE, CHECKOUT_URL, LIFETIME_PRICE_LABEL, freeDaysRemaining, hasAccess, isFreePeriodActive } from '../config/billing.js';
+import { ALL_TOOLS_FREE, CHECKOUT_URL, PRICE_LABEL, SUBSCRIPTION_TRIAL_DAYS, freeDaysRemaining, hasAccess, isFreePeriodActive } from '../config/billing.js';
 import { hasStoredLicense } from '../../services/LicenseService.js';
 import { navigate } from '../../app/router.js';
 import { iconSvg } from '../utils/icons.js';
@@ -7,7 +7,7 @@ import { openCommandPalette } from './CommandPalette.js';
 
 /**
  * "Bench Bot" — a small floating helper that points visitors at the right
- * tool and nudges toward the lifetime license. Entirely rule-based: it
+ * tool and nudges toward the All Access subscription. Entirely rule-based: it
  * matches what the visitor types against the TOOLS registry plus a few
  * canned FAQ intents, so there's no API, no cost and nothing leaves the
  * browser. Mounted once from App.js, outside the router's DOM, like the
@@ -63,13 +63,13 @@ function isLive(tool) {
 }
 
 function pricePitch() {
-  if (hasStoredLicense()) return "You've got a lifetime license — every tool is unlocked for good. Thanks for backing Asset Bench!";
+  if (hasStoredLicense()) return "You've got All Access — every tool is unlocked. Thanks for backing Asset Bench!";
   if (ALL_TOOLS_FREE) return 'Every tool is free for everyone at the moment — no trial, no key needed.';
   if (isFreePeriodActive()) {
     const days = freeDaysRemaining();
-    return `Your free trial has ${days} day${days === 1 ? '' : 's'} left. After that it's ${LIFETIME_PRICE_LABEL} once — no subscription, every tool, forever.`;
+    return `Your free trial has ${days} day${days === 1 ? '' : 's'} left. After that, All Access is ${PRICE_LABEL} for every tool — cancel any time.`;
   }
-  return `Asset Bench is ${LIFETIME_PRICE_LABEL} once for lifetime access to every tool — no subscription, and your files never leave your browser.`;
+  return `All Access is ${PRICE_LABEL} for every Asset Bench tool — cancel any time, and your files never leave your browser.`;
 }
 
 /** Scores tools against the message: goal hints first, then registry text overlap. */
@@ -118,7 +118,7 @@ function reply(raw) {
   if (tools.length) {
     const live = tools.filter(isLive);
     const lead = live.length
-      ? `Try ${live.length === 1 ? 'this' : 'these'} — ${hasAccess() ? 'free to use right now' : `unlocked with a ${LIFETIME_PRICE_LABEL} lifetime license`}:`
+      ? `Try ${live.length === 1 ? 'this' : 'these'} — ${hasAccess() ? 'free to use right now' : `unlocked with All Access at ${PRICE_LABEL}`}:`
       : "That one's on the way — here's what's coming:";
     return { text: lead, tools };
   }
@@ -143,7 +143,7 @@ function toolCardHtml(tool) {
 }
 
 const ACTIONS = {
-  buy: () => `<a class="promo-bot__action promo-bot__action--primary" href="${CHECKOUT_URL}" target="_blank" rel="noopener">Get lifetime access — ${LIFETIME_PRICE_LABEL}</a>`,
+  buy: () => `<a class="promo-bot__action promo-bot__action--primary" href="${CHECKOUT_URL}" target="_blank" rel="noopener">Try All Access free for ${SUBSCRIPTION_TRIAL_DAYS} days</a>`,
   pricing: () => '<button type="button" class="promo-bot__action" data-nav="/pricing">See pricing</button>',
   search: () => '<button type="button" class="promo-bot__action" data-search>Search all tools</button>',
 };

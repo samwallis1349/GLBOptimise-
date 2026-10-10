@@ -2,7 +2,8 @@ import {
   CHECKOUT_URL,
   DISCOUNT_CODE,
   LICENSE_MACHINE_LIMIT,
-  LIFETIME_PRICE_LABEL,
+  PRICE_LABEL,
+  SUBSCRIPTION_TRIAL_DAYS,
   MY_ORDERS_URL,
   TRIAL_DAYS,
   isFreePeriodActive,
@@ -28,7 +29,7 @@ function licensedPanel(license, onChange) {
   const usage = license.usage ? `This key is active on ${license.usage} of ${limit} machines.` : `One key works on up to ${limit} machines.`;
 
   panel.innerHTML = `
-    <p><strong>Lifetime license active — every tool is unlocked on this machine.</strong></p>
+    <p><strong>All Access active — every tool is unlocked on this machine.</strong></p>
     <p class="text-secondary" style="margin-top: var(--space-3);">
       Key <code>${maskKey(license.key)}</code>. ${usage}
       Moving to a new computer? Remove this machine first to free up its slot.
@@ -98,12 +99,15 @@ function buyPanel(onChange) {
   panel.className = 'panel panel--elevated pricing-card';
 
   panel.innerHTML = `
-    <p><strong>${LIFETIME_PRICE_LABEL} once — lifetime access to every Asset Bench tool.</strong></p>
+    <p><strong>All Access — ${PRICE_LABEL} for every Asset Bench tool.</strong></p>
     <p class="text-secondary" style="margin-top: var(--space-3);">
       Every tool is free for ${TRIAL_DAYS} days from your first visit. After that,
-      pay once and your license key is emailed to you straight away — no
-      subscription, no credits, no account. One key unlocks every current and
-      future tool on up to ${LICENSE_MACHINE_LIMIT} machines.
+      subscribe and your license key is emailed to you straight away — no
+      credits, no account. One key unlocks every current and future tool on up
+      to ${LICENSE_MACHINE_LIMIT} machines while your subscription is active.
+      Your subscription starts with ${SUBSCRIPTION_TRIAL_DAYS} more days free —
+      cancel before then and you won't be charged. Cancel any time from Lemon
+      Squeezy My Orders.
     </p>
     <div class="pricing-discount">
       <div class="pricing-discount__art-wrap" aria-hidden="true">
@@ -111,7 +115,7 @@ function buyPanel(onChange) {
       </div>
       <div class="pricing-discount__content">
         <span class="pricing-discount__eyebrow">Special offer</span>
-        <strong>10% off lifetime access</strong>
+        <strong>10% off All Access</strong>
         <span>Use this code at checkout:</span>
         <div class="pricing-discount__code-row">
           <code>${DISCOUNT_CODE}</code>
@@ -121,7 +125,7 @@ function buyPanel(onChange) {
       </div>
     </div>
     <a class="btn btn--primary" style="margin-top: var(--space-4); width: 100%;" href="${CHECKOUT_URL}" target="_blank" rel="noopener">
-      Buy lifetime access — ${LIFETIME_PRICE_LABEL}
+      Start ${SUBSCRIPTION_TRIAL_DAYS}-day free trial — then ${PRICE_LABEL}
     </a>
     ${refundNoticeHtml()}
     <p class="text-secondary" style="margin-top: var(--space-5);">
@@ -167,7 +171,7 @@ export async function render(container) {
     <div class="pricing-page__header">
       <h1 class="tool-page__title">Pricing</h1>
       <p class="tool-page__description">
-        ${!license && free ? `Your free trial has ${days} day${days === 1 ? '' : 's'} left.` : 'One price. Every tool. Forever.'}
+        ${!license && free ? `Your free trial has ${days} day${days === 1 ? '' : 's'} left.` : 'One subscription. Every tool.'}
       </p>
     </div>
   `;

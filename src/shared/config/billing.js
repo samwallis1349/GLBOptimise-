@@ -3,7 +3,8 @@ import { trialStartedAt } from '../../services/TrialService.js';
 
 /**
  * Every visitor gets TRIAL_DAYS of full access from their first visit, then
- * every 'available'/'beta' tool needs a paid lifetime license key. The
+ * every 'available'/'beta' tool needs an All Access subscription key (or a
+ * lifetime key bought before subscriptions, which keeps working). The
  * trial clock itself lives in services/TrialService.js.
  */
 export const TRIAL_DAYS = 3;
@@ -18,13 +19,25 @@ export const ALL_TOOLS_FREE = false;
 /** PayPal donation page, offered in the free-tools popup and the footer. */
 export const DONATE_URL = 'https://www.paypal.com/ncp/payment/SUD2ZPA339KCY';
 
-export const LIFETIME_PRICE_LABEL = '£9.99';
+/** All Access: monthly subscription to every tool. Keys stop validating once the subscription ends. */
+export const PRICE_LABEL = '£25/month';
+
+/**
+ * Free trial on the Lemon Squeezy subscription itself (card taken at checkout,
+ * first charge after this many days). Separate from the on-site TRIAL_DAYS,
+ * which needs no card. Must match the product's trial setting in Lemon Squeezy.
+ */
+export const SUBSCRIPTION_TRIAL_DAYS = 3;
 
 export const CHECKOUT_URL = 'https://workbenchlabs.lemonsqueezy.com/checkout/buy/3d09253a-bc8b-44a4-853f-5882dc964807';
 
 export const DISCOUNT_CODE = 'G0MTE1NA';
 
-/** Lemon Squeezy IDs for the lifetime product — keys from any other store/product are rejected. */
+/**
+ * Lemon Squeezy IDs for the All Access product (formerly the £9.99 lifetime
+ * product; its old one-off keys stay valid) — keys from any other
+ * store/product are rejected.
+ */
 export const LICENSE_STORE_ID = 480634;
 export const LICENSE_PRODUCT_ID = 1420844;
 
@@ -52,7 +65,7 @@ export function freeDaysRemaining() {
 
 /**
  * True if the visitor can use gated tools right now — free period, trial
- * still running or a validated lifetime license. Pass a tool ID to also
+ * still running or a validated All Access license. Pass a tool ID to also
  * count a single-tool key for that tool.
  */
 export function hasAccess(toolId) {

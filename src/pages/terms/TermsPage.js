@@ -1,8 +1,8 @@
 import { APP_NAME, OPERATOR_NAME } from '../../shared/config/app.js';
-import { ALL_TOOLS_FREE, LIFETIME_PRICE_LABEL, LICENSE_MACHINE_LIMIT, TRIAL_DAYS } from '../../shared/config/billing.js';
+import { ALL_TOOLS_FREE, PRICE_LABEL, SUBSCRIPTION_TRIAL_DAYS, LICENSE_MACHINE_LIMIT, TRIAL_DAYS } from '../../shared/config/billing.js';
 import { TOOL_DEVICE_LIMIT, TOOL_PRICE_LABEL, TOOL_PRODUCTS } from '../../shared/config/toolProducts.js';
 
-const UPDATED = '4 October 2026';
+const UPDATED = '10 October 2026';
 
 export function render(container) {
   container.innerHTML = '';
@@ -57,11 +57,16 @@ export function render(container) {
         ${ALL_TOOLS_FREE ? 'At the moment, every tool is temporarily unlocked for everyone; this may end at any time, after which the trial and licence rules apply.' : ''}
       </p>
       <p>
-        The lifetime licence is a one-time purchase of ${LIFETIME_PRICE_LABEL}.
-        It is not a subscription. Its licence key unlocks every current and
-        future ${APP_NAME} tool in the browser on up to
-        ${LICENSE_MACHINE_LIMIT} machines, with no account needed. "Lifetime"
-        means for as long as ${APP_NAME} is operated.
+        All Access is a subscription of ${PRICE_LABEL}, billed monthly
+        through our payment provider until you cancel. A new subscription
+        starts with a ${SUBSCRIPTION_TRIAL_DAYS}-day free trial; you are first
+        charged when it ends unless you cancel before then. Its licence key
+        unlocks every current and future ${APP_NAME} tool in the browser on
+        up to ${LICENSE_MACHINE_LIMIT} machines, with no account needed. You
+        can cancel at any time; access continues until the end of the period
+        you have paid for, then the key stops unlocking tools. Lifetime
+        licences bought before 10 October 2026 keep working for as long as
+        ${APP_NAME} is operated.
       </p>
       ${
         singleToolKeys

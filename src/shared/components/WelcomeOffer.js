@@ -1,4 +1,4 @@
-import { LIFETIME_PRICE_LABEL } from '../config/billing.js';
+import { PRICE_LABEL } from '../config/billing.js';
 
 // The on-load welcome popup that used to live here was removed: trial and
 // licence messages now appear only where they're relevant (the paywall on a
@@ -15,7 +15,7 @@ export function splashHero(onMissing = () => {}) {
   const hero = document.createElement('div');
   hero.className = 'welcome-offer__hero';
   hero.innerHTML = `
-    <img class="welcome-offer__image" src="${OFFER_IMAGE}" alt="Asset Bench — full access forever for ${LIFETIME_PRICE_LABEL}" width="1344" height="756" />
+    <img class="welcome-offer__image" src="${OFFER_IMAGE}" alt="Asset Bench All Access — every tool for ${PRICE_LABEL}" width="1344" height="756" />
     <div class="welcome-offer__sweep" aria-hidden="true"></div>
     <div class="welcome-offer__embers" aria-hidden="true"></div>
   `;

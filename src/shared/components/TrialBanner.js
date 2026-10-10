@@ -1,4 +1,4 @@
-import { ALL_TOOLS_FREE, isFreePeriodActive, freeDaysRemaining, LIFETIME_PRICE_LABEL } from '../config/billing.js';
+import { ALL_TOOLS_FREE, isFreePeriodActive, freeDaysRemaining, PRICE_LABEL } from '../config/billing.js';
 import { hasStoredLicense } from '../../services/LicenseService.js';
 
 const DISMISS_KEY = 'assetbench_trial_banner_dismissed';
@@ -19,7 +19,7 @@ export function TrialBanner() {
   const bar = document.createElement('div');
   bar.className = 'trial-banner';
   bar.innerHTML = `
-    <span>Free trial — ${days} day${days === 1 ? '' : 's'} left, then <a href="/pricing">${LIFETIME_PRICE_LABEL} once, forever</a>.</span>
+    <span>Free trial — ${days} day${days === 1 ? '' : 's'} left, then <a href="/pricing">All Access ${PRICE_LABEL}</a>.</span>
     <button type="button" class="trial-banner__close" aria-label="Dismiss">&times;</button>
   `;
 
