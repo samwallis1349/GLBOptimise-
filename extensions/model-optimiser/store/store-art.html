@@ -4,7 +4,7 @@
   ?shot=s1|s2|s3 (1280x800) or tile (440x280). Expects, next to it: the
   built extension's icons/, panel screenshots rp-reduced.png and rp-check.png,
   models before.glb / after.glb, and three.js under build/ and jsm/.
-  The price text comes from ?price=.
+  The pricing line on s2 comes from ?deal=.
 -->
 <html><head><meta charset="utf-8">
 <script>delete window.createImageBitmap; window.createImageBitmap = undefined;</script>
@@ -56,7 +56,7 @@
     <ul class="ticks">
       <li>Textures and materials kept</li>
       <li>Runs on your computer, nothing uploaded</li>
-      <li><span class="price"></span> once. No subscription.</li>
+      <li id="deal"></li>
     </ul>
   </div>
   <img class="panelshot" src="rp-reduced.png" alt="">
@@ -91,7 +91,7 @@ const [w, h] = which === 'tile' ? [440, 280] : [1280, 800];
 document.body.style.setProperty('--w', w + 'px');
 document.body.style.setProperty('--h', h + 'px');
 document.getElementById(which).classList.add('on');
-document.querySelectorAll('.price').forEach((el) => { el.textContent = q.get('price') || ''; });
+document.getElementById('deal').textContent = q.get('deal') || '';
 
 async function render(canvasId, file) {
   const canvas = document.getElementById(canvasId);

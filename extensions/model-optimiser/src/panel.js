@@ -5,6 +5,8 @@ import { activateKey, isUnlocked, revalidate, SITE_TOOL } from './licensing.js';
 // Set at build time from editions.js: which tools this store product has.
 const EDITION = __EDITION__;
 
+const FREE = new Set(EDITION.free);
+
 const $ = (id) => document.getElementById(id);
 const LICENSES = 'licenses';
 const SETTINGS = 'settings';
@@ -49,12 +51,12 @@ function render() {
   document.querySelectorAll('[role=tab]').forEach((tab) => {
     const id = tab.dataset.tool;
     tab.setAttribute('aria-selected', String(id === tool));
-    tab.classList.toggle('is-locked', !isUnlocked(id, licenses));
+    tab.classList.toggle('is-locked', !isUnlocked(id, licenses, FREE));
     tab.dataset.price = TOOL_PRICE_LABEL;
   });
   document.querySelectorAll('.tool').forEach((section) => { section.hidden = section.dataset.panel !== tool; });
 
-  const unlocked = isUnlocked(tool, licenses);
+  const unlocked = isUnlocked(tool, licenses, FREE);
   $('lock').hidden = unlocked;
   if (!unlocked) {
     const siteTool = SITE_TOOL[tool];
@@ -160,7 +162,7 @@ function paramsFor(toolId) {
 }
 
 async function run() {
-  if (!model || busy || !isUnlocked(tool, licenses)) return;
+  if (!model || busy || !isUnlocked(tool, licenses, FREE)) return;
   const toolId = tool;
   busy = true;
   $('result').hidden = true;
@@ -205,7 +207,7 @@ async function activate() {
   licenses = [...licenses.filter((l) => l.key !== result.license.key), result.license];
   await chrome.storage.local.set({ [LICENSES]: licenses });
   $('keyInput').value = '';
-  const unlockedHere = isUnlocked(tool, licenses);
+  const unlockedHere = isUnlocked(tool, licenses, FREE);
   status(
     result.license.scope === 'all' ? 'All Access active: every tool is unlocked.'
       : unlockedHere ? `${TOOL_NAMES[tool]} unlocked.` : 'That key unlocks a different tool, so it was saved for that one.',

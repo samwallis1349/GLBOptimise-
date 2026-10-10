@@ -27,3 +27,4 @@ Thumbs.db
 extensions/*.zip
 extensions/model-optimiser/dist/
 /Chrome Web Store Upload - */
+/Edge Add-ons Upload - */

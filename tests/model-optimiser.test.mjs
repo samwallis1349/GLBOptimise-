@@ -64,6 +64,7 @@ test('Model Optimiser: All Access unlocks everything; a £5 key unlocks the tab 
   assert.ok(isUnlocked('optimise', [one.license]));
   assert.ok(!isUnlocked('reduce', [one.license]));
   assert.ok(isUnlocked('check', []), 'Check is free');
+  assert.ok(isUnlocked('reduce', [], new Set(['check', 'reduce'])), 'an edition can make Reduce free');
 
   // A key already bound to another tool on the website keeps that binding.
   const elsewhere = await activateKey('KEY-SITE', 'compress', fakeServers({ product: SINGLE_TOOL_PRODUCT_ID, bound: 'reduce-polys' }));
@@ -85,12 +86,15 @@ test('Model Optimiser: foreign keys are refused and released; refunded keys drop
 });
 
 test('editions: each has valid tools, and the store description fits', async () => {
-  const { EDITIONS, DEFAULT_EDITION } = await import('../extensions/model-optimiser/editions.js');
+  const { EDITIONS, DEFAULT_EDITION, allFree } = await import('../extensions/model-optimiser/editions.js');
   assert.equal(DEFAULT_EDITION, 'reduce-polys');
   assert.deepEqual(EDITIONS['reduce-polys'].tools, ['check', 'reduce']);
+  assert.ok(!allFree(EDITIONS['reduce-polys']), 'Chrome: Reduce is paid');
+  assert.ok(allFree(EDITIONS['reduce-polys-edge']), 'Edge: everything free');
   for (const [id, e] of Object.entries(EDITIONS)) {
     assert.ok(e.tools.every((t) => TOOL_IDS.includes(t)), id);
     assert.ok(e.tools.includes(e.firstTool), id);
+    assert.ok(e.free.every((t) => e.tools.includes(t)), `${id} frees a tool it doesn't have`);
     assert.ok(e.description.length <= 132, `${id} description is ${e.description.length} chars`);
     assert.ok(e.name.length <= 75, `${id} name too long`);
   }

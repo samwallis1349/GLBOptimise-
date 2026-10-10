@@ -104,7 +104,8 @@ export async function revalidate(licenses, { fetchImpl = fetch } = {}) {
   return kept;
 }
 
-export function isUnlocked(tool, licenses) {
-  if (FREE_TOOLS.has(tool)) return true;
+/** `free`: tools that need no licence in this edition (see editions.js). */
+export function isUnlocked(tool, licenses, free = FREE_TOOLS) {
+  if (free.has(tool)) return true;
   return licenses.some((l) => l.scope === 'all' || l.scope === SITE_TOOL[tool]);
 }

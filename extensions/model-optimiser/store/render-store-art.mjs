@@ -1,11 +1,12 @@
 /**
- * Re-renders the Chrome Web Store art for Reduce Polys into this folder:
- * three 1280x800 screenshots and the 440x280 promo tile. Builds the
+ * Re-renders the store art for a Reduce Polys edition: three 1280x800
+ * screenshots and the 440x280 promo tile (plus a 300x300 store logo for
+ * Edge), into this folder (Chrome) or store/edge/ (Edge). Builds the
  * extension, drives its real panel in headless Chrome (with stand-ins for
  * chrome.* APIs) to capture the panel shots, renders the model before and
  * after with three.js, and saves RGB PNGs (the store rejects transparency).
  *
- *   node extensions/model-optimiser/store/render-store-art.mjs [model.glb]
+ *   node extensions/model-optimiser/store/render-store-art.mjs [--edition reduce-polys|reduce-polys-edge] [model.glb]
  *
  * Default model: ~/Downloads/assetbench-wizard-balanced.glb. Needs Chrome
  * or Edge installed.
@@ -13,18 +14,26 @@
 import { execFileSync, spawn } from 'node:child_process';
 import { createServer } from 'node:http';
 import { existsSync } from 'node:fs';
-import { cp, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { homedir, tmpdir } from 'node:os';
 import { basename, dirname, extname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
 import { TOOL_PRICE_LABEL } from '../../../src/shared/config/toolProducts.js';
 import { runTool } from '../src/engine.js';
+import { allFree, EDITIONS } from '../editions.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const EXT = join(HERE, '..');
 const ROOT = join(EXT, '..', '..');
-const MODEL = process.argv[2] || join(homedir(), 'Downloads', 'assetbench-wizard-balanced.glb');
+const args = process.argv.slice(2);
+const editionAt = args.indexOf('--edition');
+const EDITION_ID = editionAt === -1 ? 'reduce-polys' : args[editionAt + 1];
+const EDITION = EDITIONS[EDITION_ID];
+if (!EDITION) throw new Error(`Unknown edition '${EDITION_ID}'.`);
+const OUT = EDITION_ID === 'reduce-polys' ? HERE : join(HERE, 'edge');
+const MODEL = args.find((a, i) => !a.startsWith('--') && args[i - 1] !== '--edition') || join(homedir(), 'Downloads', 'assetbench-wizard-balanced.glb');
+const DEAL = allFree(EDITION) ? 'Free. No account, no limits.' : `${TOOL_PRICE_LABEL} once. No subscription.`;
 const KEEP = 0.25;
 const BROWSERS = [
   'C:/Program Files/Google/Chrome/Application/chrome.exe',
@@ -37,9 +46,10 @@ if (!browserPath) throw new Error('Chrome or Edge not found.');
 if (!existsSync(MODEL)) throw new Error(`Model not found: ${MODEL}`);
 
 // 1. Build the extension and stage everything in a temp folder.
-execFileSync(process.execPath, [join(EXT, 'build.mjs'), '--edition', 'reduce-polys'], { stdio: 'inherit' });
+execFileSync(process.execPath, [join(EXT, 'build.mjs'), '--edition', EDITION_ID], { stdio: 'inherit' });
 const work = await mkdtemp(join(tmpdir(), 'ab-store-art-'));
-await cp(join(EXT, 'dist', 'reduce-polys'), work, { recursive: true });
+await cp(join(EXT, 'dist', EDITION_ID), work, { recursive: true });
+await mkdir(OUT, { recursive: true });
 await cp(join(ROOT, 'node_modules/three/build'), join(work, 'build'), { recursive: true });
 await cp(join(ROOT, 'node_modules/three/examples/jsm'), join(work, 'jsm'), { recursive: true });
 await cp(join(HERE, 'store-art.html'), join(work, 'store-art.html'));
@@ -57,7 +67,8 @@ const stub = (stored) => `<script>window.chrome={storage:{local:{get:async()=>($
   `const f=window.fetch;window.fetch=(u,o)=>String(u).includes('lemonsqueezy')?Promise.resolve(new Response('{"valid":true}')):f(u,o);</script>`;
 const withStub = (stored) => panel.replace('<script type="module" src="panel.js"></script>', `${stub(stored)}<script type="module" src="panel.js"></script>`);
 await writeFile(join(work, 'panel-free.html'), withStub({}));
-await writeFile(join(work, 'panel-paid.html'), withStub({ licenses: [{ key: 'K', instanceId: null, scope: 'reduce-polys' }] }));
+// A free edition needs no key, so its "paid" shot is just the free panel.
+await writeFile(join(work, 'panel-paid.html'), withStub(allFree(EDITION) ? {} : { licenses: [{ key: 'K', instanceId: null, scope: 'reduce-polys' }] }));
 
 // 2. Serve it and start headless Chrome with the DevTools protocol.
 const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.png': 'image/png', '.json': 'application/json', '.glb': 'model/gltf-binary', '.wasm': 'application/wasm' };
@@ -139,18 +150,28 @@ try {
   await writeFile(join(work, 'rp-reduced.png'), await paid.shot());
 
   // 4. Store art, saved as RGB PNGs.
-  const price = encodeURIComponent(TOOL_PRICE_LABEL);
+  const deal = encodeURIComponent(DEAL);
   for (const [shot, file, w, h] of [
     ['s1', 'screenshot-1-before-after.png', 1280, 800],
     ['s2', 'screenshot-2-reduce.png', 1280, 800],
     ['s3', 'screenshot-3-free-check.png', 1280, 800],
     ['tile', 'promo-tile-440x280.png', 440, 280],
   ]) {
-    const page = await open(`${base}/store-art.html?shot=${shot}&price=${price}`, w, h, 1);
+    const page = await open(`${base}/store-art.html?shot=${shot}&deal=${deal}`, w, h, 1);
     await page.waitFor("document.title === 'ready'");
     await sleep(400);
-    await sharp(await page.shot()).flatten({ background: '#0b0b0a' }).removeAlpha().png().toFile(join(HERE, file));
-    console.log(`saved store/${file}`);
+    await sharp(await page.shot()).flatten({ background: '#0b0b0a' }).removeAlpha().png().toFile(join(OUT, file));
+    console.log(`saved ${join(OUT, file)}`);
+  }
+  // Edge's store logo: the icon redrawn at 300x300.
+  if (OUT !== HERE) {
+    const logo = `<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 32 32">
+      <rect width="32" height="32" rx="7" fill="#10100E"/>
+      <g fill="none" stroke="#FFB547" stroke-width="1.6" stroke-linejoin="round">
+        <path d="M16 7L24 11.5V20.5L16 25L8 20.5V11.5L16 7Z"/><path d="M16 16L24 11.5M16 16L8 11.5M16 16V25"/>
+      </g></svg>`;
+    await sharp(Buffer.from(logo)).png().toFile(join(OUT, 'store-logo-300x300.png'));
+    console.log(`saved ${join(OUT, 'store-logo-300x300.png')}`);
   }
 } finally {
   ws.close();

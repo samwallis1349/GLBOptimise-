@@ -5,14 +5,14 @@
  * edition's manifest name, the engine Web Worker and the panel script
  * bundled with esbuild, and the Basis KTX2 .wasm when Compress is included.
  *
- *   node extensions/model-optimiser/build.mjs [--edition reduce-polys|model-optimiser] [--zip]
+ *   node extensions/model-optimiser/build.mjs [--edition reduce-polys|reduce-polys-edge|model-optimiser] [--zip]
  */
 import { build } from 'esbuild';
 import JSZip from 'jszip';
 import { cp, mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { dirname, join, relative, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { DEFAULT_EDITION, EDITIONS } from './editions.js';
+import { allFree, DEFAULT_EDITION, EDITIONS } from './editions.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, '..', '..');
@@ -45,6 +45,8 @@ manifest.name = EDITION.name;
 manifest.short_name = EDITION.shortName;
 manifest.description = EDITION.description;
 manifest.action.default_title = EDITION.shortName;
+// Nothing to unlock means no licence checks, so no host permissions to ask for.
+if (allFree(EDITION)) delete manifest.host_permissions;
 if (manifest.description.length > 132) throw new Error('Store descriptions are limited to 132 characters.');
 await writeFile(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
 

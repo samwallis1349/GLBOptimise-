@@ -272,7 +272,8 @@ export function render(container) {
         extension storage on your device. When you enter a key, it is sent to our payment provider, Lemon Squeezy,
         to check it is valid, and a one-way hash of it is stored on our server so a £5 key stays linked to the
         tool it was bought for. The extension does not use analytics, advertising or cookies, and collects nothing
-        else. Removing the extension deletes everything it stored.
+        else. Removing the extension deletes everything it stored. The free Microsoft Edge version has no
+        licence key at all and makes no network requests; it only remembers its last settings.
       </p>
 
       <h2 id="cookies">Cookies and similar technologies</h2>
