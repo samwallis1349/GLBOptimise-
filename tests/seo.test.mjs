@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { renderPage, renderSitemap } from '../scripts/seo-pages.mjs';
+import { renderNoindexPage, renderPage, renderSitemap } from '../scripts/seo-pages.mjs';
 import { TOOLS } from '../src/shared/config/tools.js';
 import { HOME_SEO } from '../src/shared/config/seo.js';
 
@@ -39,4 +39,12 @@ test('sitemap dates each page from its source history, and omits dates without g
   assert.ok(seen.some((p) => p.includes('src/tools/reduce-polys')));
   assert.ok(seen.some((p) => p.includes('public/docs')));
   assert.ok(!renderSitemap({ lastmod: () => null }).includes('<lastmod>'));
+});
+
+test('the 404 page is the app shell, noindex, with no canonical', () => {
+  const html = renderNoindexPage(indexHtml, 'Page not found | Asset Bench');
+  assert.match(html, /<title>Page not found \| Asset Bench<\/title>/);
+  assert.match(html, /<meta name="robots" content="noindex, follow" \/>/);
+  assert.ok(!html.includes('rel="canonical"'));
+  assert.ok(html.includes('<div id="app"></div>'));
 });

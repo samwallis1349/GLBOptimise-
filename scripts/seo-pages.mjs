@@ -89,6 +89,23 @@ const sourcesFor = (path, tool) =>
     ? [`src/tools/${tool.id}`, `public/thumbnails/${tool.id}.webp`, `public/thumbnails/${tool.id}-wide.webp`]
     : PAGE_SOURCES[path] ?? [`src/pages${path}`];
 
+/**
+ * The page served with a real 404 status for unknown URLs (wrangler.jsonc:
+ * not_found_handling "404-page"), plus pages that exist in the app but
+ * shouldn't be indexed. Same app shell, so the router still renders its own
+ * not-found screen; noindex and no canonical so it never competes with "/".
+ */
+export function renderNoindexPage(indexHtml, title) {
+  let html = indexHtml.replace(/<title>[^<]*<\/title>/, `<title>${esc(title)}</title>`);
+  html = html.replace(/<meta name="robots" content="[^"]*"\s*\/?>/, '<meta name="robots" content="noindex, follow" />');
+  html = html.replace(/\s*<link rel="canonical" href="[^"]*"\s*\/?>/, '');
+  if (!html.includes('content="noindex, follow"')) throw new Error('seo-pages: robots meta not found in index.html');
+  return html;
+}
+
+/** App routes that aren't in the sitemap but must still load on a direct visit. */
+const UNLISTED_ROUTES = ['/wizard-compare'];
+
 export function renderSitemap({ lastmod = lastModified } = {}) {
   const url = (path, changefreq, priority, tool) => {
     const date = lastmod(sourcesFor(path, tool));
@@ -118,6 +135,10 @@ export function seoPages() {
       for (const path of paths) {
         await writeFile(join(outDir, `${path.slice(1)}.html`), renderPage(indexHtml, path));
       }
+      for (const path of UNLISTED_ROUTES) {
+        await writeFile(join(outDir, `${path.slice(1)}.html`), renderNoindexPage(indexHtml, `${SITE_NAME}`));
+      }
+      await writeFile(join(outDir, '404.html'), renderNoindexPage(indexHtml, `Page not found | ${SITE_NAME}`));
       await writeFile(join(outDir, 'sitemap.xml'), renderSitemap());
     },
   };
