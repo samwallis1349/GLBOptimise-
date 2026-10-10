@@ -143,6 +143,8 @@ test('reduce cuts triangles by ratio or to a target count, geometry only', async
   const bad = await call('/api/v1/3d/reduce?triangles=-3', { method: 'POST', headers: auth(key), body: await getSphere() });
   assert.equal(bad.status, 400);
   assert.equal((await bad.json()).error.code, 'invalid_triangles');
+  const badError = await call('/api/v1/3d/reduce?error=2', { method: 'POST', headers: auth(key), body: await getSphere() });
+  assert.equal((await badError.json()).error.code, 'invalid_error');
 });
 
 test('LOD chain is a ZIP of decreasing levels', async () => {

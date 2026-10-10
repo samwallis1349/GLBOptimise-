@@ -137,7 +137,16 @@ export async function optimizeGlb(bytes, params) {
  * Geometry-only reduction: no texture or compression changes. Keep either a
  * fraction (`ratio`, default 0.5) or a triangle count (`triangles`, which
  * wins when both are sent).
+ *
+ * meshoptimizer stops early when collapsing more would move the surface
+ * further than its error limit. Unless the caller pins `error`, the limit is
+ * loosened step by step (re-reducing from the original each time) until the
+ * result lands within 10% of the target or the cap (0.1) is reached; beyond
+ * that quality drops fast for little gain. Heavily seamed meshes (UV/normal
+ * splits) can still stop short, and the report says so.
  */
+const REDUCE_ERROR_STEPS = [0.01, 0.05, 0.1];
+
 export async function reduceGlb(bytes, params) {
   const before = analyseGlb(bytes);
   if (!before.triangles) throw new ApiError(422, 'no_geometry', 'This model contains no triangle geometry to reduce.');
@@ -155,24 +164,44 @@ export async function reduceGlb(bytes, params) {
   }
   const lockBorder = bool(params.lockBorder, false);
 
-  const document = await readDocument(bytes);
+  let errorSteps = REDUCE_ERROR_STEPS.filter((e) => e >= (ratio < 0.2 ? 0.05 : 0.01));
+  if (params.error !== undefined && params.error !== '') {
+    const e = Number(params.error);
+    if (!Number.isFinite(e) || e <= 0 || e > 1) throw new ApiError(400, 'invalid_error', 'error must be a number greater than 0 and at most 1 (max surface deviation as a fraction of mesh size).');
+    errorSteps = [e];
+  }
+
+  const goal = Math.ceil(before.triangles * ratio * 1.1);
   const warnings = [];
   let meshReports = [];
-  if (ratio < 0.999) {
-    const result = await reduce(document, ratio, lockBorder);
-    meshReports = result.meshReports;
-    warnings.push(...result.warnings);
-  } else {
+  let output;
+  let after;
+  let errorUsed = null;
+  if (ratio >= 0.999) {
     warnings.push('Model is already at or under the requested triangle count; geometry left unchanged.');
+    output = await writeDocument(await readDocument(bytes));
+    after = analyseGlb(output);
+  } else {
+    let lastWarnings = [];
+    for (const error of errorSteps) {
+      const document = await readDocument(bytes);
+      const result = await reduce(document, ratio, lockBorder, error);
+      output = await writeDocument(document);
+      after = analyseGlb(output);
+      meshReports = result.meshReports;
+      lastWarnings = result.warnings;
+      errorUsed = error;
+      if (after.triangles <= goal) break;
+    }
+    warnings.push(...lastWarnings);
+    if (errorUsed > errorSteps[0]) warnings.push(`Error limit raised to ${errorUsed} to reach the target; check fine detail. Pass error= to cap it.`);
   }
-  const output = await writeDocument(document);
   await readDocument(output); // the output must re-parse before it is returned
-  const after = analyseGlb(output);
 
   return {
     output,
     report: {
-      settings: { ratio: Number(ratio.toFixed(4)), targetTriangles, lockBorder },
+      settings: { ratio: Number(ratio.toFixed(4)), targetTriangles, lockBorder, error: errorUsed },
       before: { triangles: before.triangles, fileBytes: before.fileBytes },
       after: { triangles: after.triangles, fileBytes: output.byteLength },
       reduction: {
