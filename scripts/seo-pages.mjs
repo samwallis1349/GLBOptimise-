@@ -12,6 +12,7 @@
  * so new tools are listed automatically.
  */
 
+import { execFileSync } from 'node:child_process';
 import { readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { TOOLS } from '../src/shared/config/tools.js';
@@ -62,14 +63,42 @@ export function renderPage(indexHtml, path) {
   return html.replace('<div id="app"></div>', summary);
 }
 
-export function renderSitemap() {
-  const url = (path, changefreq, priority) =>
-    `  <url>\n    <loc>${SITE_URL}${path}</loc>\n    <changefreq>${changefreq}</changefreq>\n    <priority>${priority}</priority>\n  </url>`;
+/**
+ * Last real change to a page, as YYYY-MM-DD from git history of the files
+ * behind it. Google uses <lastmod> to pick what to re-crawl, and ignores it
+ * if it's always "today", so it must track actual edits. Null (no lastmod)
+ * when git isn't available, e.g. a build from a downloaded copy.
+ */
+function lastModified(paths) {
+  try {
+    const out = execFileSync('git', ['log', '-1', '--format=%cs', '--', ...paths], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim();
+    return /^\d{4}-\d{2}-\d{2}$/.test(out) ? out : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Source files behind each sitemap URL. */
+const PAGE_SOURCES = {
+  '/': ['src/pages/home'],
+  '/pricing': ['src/pages/pricing', 'src/shared/config/billing.js'],
+  '/docs/': ['public/docs', 'worker/api/plans.js'],
+};
+const sourcesFor = (path, tool) =>
+  tool
+    ? [`src/tools/${tool.id}`, `public/thumbnails/${tool.id}.webp`, `public/thumbnails/${tool.id}-wide.webp`]
+    : PAGE_SOURCES[path] ?? [`src/pages${path}`];
+
+export function renderSitemap({ lastmod = lastModified } = {}) {
+  const url = (path, changefreq, priority, tool) => {
+    const date = lastmod(sourcesFor(path, tool));
+    return `  <url>\n    <loc>${SITE_URL}${path}</loc>\n${date ? `    <lastmod>${date}</lastmod>\n` : ''}    <changefreq>${changefreq}</changefreq>\n    <priority>${priority}</priority>\n  </url>`;
+  };
   const entries = [
     ...STATIC_PAGES.map((p) => url(p.path, p.changefreq, p.priority)),
     // The API docs are a standalone page (public/docs/), not an SPA route, so they're listed here rather than in STATIC_PAGES.
     url('/docs/', 'weekly', '0.8'),
-    ...TOOLS.filter((t) => LIVE.has(t.status)).map((t) => url(t.route, 'monthly', t.id === 'optimise-glb' ? '0.9' : '0.8')),
+    ...TOOLS.filter((t) => LIVE.has(t.status)).map((t) => url(t.route, 'monthly', t.id === 'optimise-glb' ? '0.9' : '0.8', t)),
   ];
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${entries.join('\n')}\n</urlset>\n`;
 }

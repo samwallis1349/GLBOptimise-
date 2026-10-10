@@ -31,3 +31,12 @@ test('sitemap lists every live tool', () => {
   for (const tool of TOOLS) assert.ok(xml.includes(`<loc>https://www.assetbench.co.uk${tool.route}</loc>`), tool.id);
   assert.ok(xml.includes('<loc>https://www.assetbench.co.uk/pricing</loc>'));
 });
+
+test('sitemap dates each page from its source history, and omits dates without git', () => {
+  const seen = [];
+  const xml = renderSitemap({ lastmod: (paths) => { seen.push(paths); return '2026-10-10'; } });
+  assert.equal((xml.match(/<lastmod>2026-10-10<\/lastmod>/g) || []).length, (xml.match(/<loc>/g) || []).length);
+  assert.ok(seen.some((p) => p.includes('src/tools/reduce-polys')));
+  assert.ok(seen.some((p) => p.includes('public/docs')));
+  assert.ok(!renderSitemap({ lastmod: () => null }).includes('<lastmod>'));
+});
