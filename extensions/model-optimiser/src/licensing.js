@@ -58,7 +58,7 @@ async function boundTool(fetchImpl, key, wanted) {
  * entered on. Resolves { ok, license } where license is
  * { key, instanceId, scope: 'all' | <siteToolId> }, or { ok: false, error }.
  */
-export async function activateKey(key, tool, { fetchImpl = fetch, instanceName = 'AssetBench Model Optimiser' } = {}) {
+export async function activateKey(key, tool, { fetchImpl = fetch, instanceName = 'AssetBench Model Optimiser', products = {} } = {}) {
   key = key.trim();
   if (!key) return { ok: false, error: 'Enter a licence key.' };
   let result;
@@ -78,7 +78,9 @@ export async function activateKey(key, tool, { fetchImpl = fetch, instanceName =
   }
   if (meta.product_id === LICENSE_PRODUCT_ID) return { ok: true, license: { key, instanceId, scope: 'all' } };
 
-  const specific = Object.keys(TOOL_PRODUCTS).find((id) => TOOL_PRODUCTS[id].productId && TOOL_PRODUCTS[id].productId === meta.product_id);
+  // An edition's own products (e.g. the £3 Edge product), then the site's per-tool products.
+  const specific = products[meta.product_id]
+    || Object.keys(TOOL_PRODUCTS).find((id) => TOOL_PRODUCTS[id].productId && TOOL_PRODUCTS[id].productId === meta.product_id);
   const scope = specific || (meta.product_id === SINGLE_TOOL_PRODUCT_ID ? await boundTool(fetchImpl, key, SITE_TOOL[tool]) : null);
   if (!scope) {
     await deactivate();

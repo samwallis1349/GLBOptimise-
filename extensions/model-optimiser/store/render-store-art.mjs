@@ -33,7 +33,7 @@ const EDITION = EDITIONS[EDITION_ID];
 if (!EDITION) throw new Error(`Unknown edition '${EDITION_ID}'.`);
 const OUT = EDITION_ID === 'reduce-polys' ? HERE : join(HERE, 'edge');
 const MODEL = args.find((a, i) => !a.startsWith('--') && args[i - 1] !== '--edition') || join(homedir(), 'Downloads', 'assetbench-wizard-balanced.glb');
-const DEAL = allFree(EDITION) ? 'Free. No account, no limits.' : `${TOOL_PRICE_LABEL} once. No subscription.`;
+const DEAL = allFree(EDITION) ? 'Free. No account, no limits.' : `${EDITION.price || TOOL_PRICE_LABEL} once. No subscription.`;
 const KEEP = 0.25;
 const BROWSERS = [
   'C:/Program Files/Google/Chrome/Application/chrome.exe',

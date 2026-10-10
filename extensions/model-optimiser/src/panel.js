@@ -6,6 +6,7 @@ import { activateKey, isUnlocked, revalidate, SITE_TOOL } from './licensing.js';
 const EDITION = __EDITION__;
 
 const FREE = new Set(EDITION.free);
+const PRICE = EDITION.price || TOOL_PRICE_LABEL;
 
 const $ = (id) => document.getElementById(id);
 const LICENSES = 'licenses';
@@ -52,7 +53,7 @@ function render() {
     const id = tab.dataset.tool;
     tab.setAttribute('aria-selected', String(id === tool));
     tab.classList.toggle('is-locked', !isUnlocked(id, licenses, FREE));
-    tab.dataset.price = TOOL_PRICE_LABEL;
+    tab.dataset.price = PRICE;
   });
   document.querySelectorAll('.tool').forEach((section) => { section.hidden = section.dataset.panel !== tool; });
 
@@ -61,8 +62,8 @@ function render() {
   if (!unlocked) {
     const siteTool = SITE_TOOL[tool];
     $('lockTitle').textContent = `Unlock ${TOOL_NAMES[tool]}`;
-    $('buyTool').textContent = `Unlock ${TOOL_NAMES[tool]} for ${TOOL_PRICE_LABEL}`;
-    $('buyTool').href = TOOL_PRODUCTS[siteTool]?.checkoutUrl || SINGLE_TOOL_CHECKOUT_URL;
+    $('buyTool').textContent = `Unlock ${TOOL_NAMES[tool]} for ${PRICE}`;
+    $('buyTool').href = EDITION.checkoutUrl || TOOL_PRODUCTS[siteTool]?.checkoutUrl || SINGLE_TOOL_CHECKOUT_URL;
     $('buyAll').textContent = `Every tool with All Access, ${PRICE_LABEL}`;
     $('buyAll').href = CHECKOUT_URL;
   }
@@ -201,7 +202,7 @@ async function activate() {
   const key = $('keyInput').value;
   $('activate').disabled = true;
   status('Checking key…');
-  const result = await activateKey(key, tool, { instanceName: 'Chrome extension' });
+  const result = await activateKey(key, tool, { instanceName: `${EDITION.store} extension`, products: EDITION.products || {} });
   $('activate').disabled = false;
   if (!result.ok) return status(result.error, 'bad');
   licenses = [...licenses.filter((l) => l.key !== result.license.key), result.license];

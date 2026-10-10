@@ -66,6 +66,11 @@ test('Model Optimiser: All Access unlocks everything; a £5 key unlocks the tab 
   assert.ok(isUnlocked('check', []), 'Check is free');
   assert.ok(isUnlocked('reduce', [], new Set(['check', 'reduce'])), 'an edition can make Reduce free');
 
+  // An edition's own product (e.g. the £3 Edge one) unlocks its tool directly.
+  const edge = await activateKey('KEY-EDGE', 'reduce', { ...fakeServers({ product: 4242 }), products: { 4242: 'reduce-polys' } });
+  assert.equal(edge.license.scope, 'reduce-polys');
+  assert.ok(isUnlocked('reduce', [edge.license]));
+
   // A key already bound to another tool on the website keeps that binding.
   const elsewhere = await activateKey('KEY-SITE', 'compress', fakeServers({ product: SINGLE_TOOL_PRODUCT_ID, bound: 'reduce-polys' }));
   assert.equal(elsewhere.license.scope, 'reduce-polys');
@@ -90,7 +95,8 @@ test('editions: each has valid tools, and the store description fits', async () 
   assert.equal(DEFAULT_EDITION, 'reduce-polys');
   assert.deepEqual(EDITIONS['reduce-polys'].tools, ['check', 'reduce']);
   assert.ok(!allFree(EDITIONS['reduce-polys']), 'Chrome: Reduce is paid');
-  assert.ok(allFree(EDITIONS['reduce-polys-edge']), 'Edge: everything free');
+  assert.ok(!allFree(EDITIONS['reduce-polys-edge']), 'Edge: Reduce is paid');
+  assert.equal(EDITIONS['reduce-polys-edge'].price, '£3');
   for (const [id, e] of Object.entries(EDITIONS)) {
     assert.ok(e.tools.every((t) => TOOL_IDS.includes(t)), id);
     assert.ok(e.tools.includes(e.firstTool), id);

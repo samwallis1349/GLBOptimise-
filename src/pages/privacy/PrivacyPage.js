@@ -267,13 +267,12 @@ export function render(container) {
 
       <h2 id="extension">Browser extension</h2>
       <p>
-        Our Chrome extension (Reduce Polys) processes your 3D models on your own computer. Models are never
+        Our browser extension (Reduce Polys, for Chrome and Microsoft Edge) processes your 3D models on your own computer. Models are never
         uploaded to us or anyone else. The extension keeps your licence key and its last settings in Chrome’s
         extension storage on your device. When you enter a key, it is sent to our payment provider, Lemon Squeezy,
         to check it is valid, and a one-way hash of it is stored on our server so a £5 key stays linked to the
         tool it was bought for. The extension does not use analytics, advertising or cookies, and collects nothing
-        else. Removing the extension deletes everything it stored. The free Microsoft Edge version has no
-        licence key at all and makes no network requests; it only remembers its last settings.
+        else. Removing the extension deletes everything it stored.
       </p>
 
       <h2 id="cookies">Cookies and similar technologies</h2>

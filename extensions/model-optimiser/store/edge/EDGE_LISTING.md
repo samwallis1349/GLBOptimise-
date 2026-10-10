@@ -1,15 +1,15 @@
-# Microsoft Edge Add-ons listing: Reduce Polys (free)
+# Microsoft Edge Add-ons listing: Reduce Polys (£3 unlock)
 
 Build the upload with `npm run upload:extension:edge`.
 Dashboard: Microsoft Partner Center → Edge → Extensions (https://partner.microsoft.com/dashboard/microsoftedge/overview).
 
 ## Store listing
 
-**Display name** comes from the package: Reduce Polys – Free GLB Polygon Reducer by AssetBench
+**Display name** comes from the package: Reduce Polys – GLB Polygon Reducer by AssetBench
 
 **Description** (Edge needs at least 250 characters)
 
-> Too many triangles? Reduce Polys cuts the polygon count of any GLB (binary glTF) model in a couple of seconds, right in Edge's sidebar. It's free, with no account and no limits.
+> Too many triangles? Reduce Polys cuts the polygon count of any GLB (binary glTF) model in a couple of seconds, right in Edge's sidebar.
 >
 > HOW IT WORKS
 > 1. Click the Reduce Polys icon. The panel opens on the side.
@@ -24,14 +24,17 @@ Dashboard: Microsoft Partner Center → Edge → Extensions (https://partner.mic
 > • A model check: triangles, draw calls, texture memory, and a score for low, mid and high-end phones and Quest VR, for Unity, Unreal, Godot, Roblox or the web
 >
 > PRIVATE BY DESIGN
-> Your models are processed on your own computer. Nothing is uploaded, and the extension collects no data.
+> Your models are processed on your own computer. Nothing is uploaded.
+>
+> PRICE
+> The model check is free. Reducing is a £3 one-off unlock, no subscription. Already have AssetBench All Access or a Reduce Polys key from our website? It unlocks it too.
 >
 > GOOD FOR
 > Mobile and web games, three.js and Babylon.js scenes, AR product viewers, VR, and taming heavy models from Meshy, Tripo and other AI 3D generators.
 >
 > More free 3D tools at https://www.assetbench.co.uk
 
-**Short description** comes from the package: Cut the triangle count of GLB models in your browser, free. Includes a model check. Files never leave your computer.
+**Short description** comes from the package: Cut the triangle count of GLB models in your browser. Free model check, £3 one-off unlock. Files never leave your computer.
 
 **Search terms** (up to 7)
 
@@ -52,7 +55,9 @@ reduce polygons, GLB, glTF, decimate, low poly, 3D model optimizer, polycount
 
 **Category:** Developer tools
 
-**Privacy policy requirements:** "Does your extension access, collect or transmit personal information?" → **No**. It reads only the model the user picks and keeps its settings on the device.
+**Privacy policy requirements:** "Does your extension access, collect or transmit personal information?" → **No**. Models stay on the device. The only thing sent anywhere is the licence key a buyer types, to our payment provider (Lemon Squeezy) and assetbench.co.uk to check it; it isn't personal information.
+
+**Pricing:** the listing is free to install; the £3 unlock is sold through Lemon Squeezy, not Microsoft.
 
 **Privacy policy URL** (optional for this answer, but add it): https://www.assetbench.co.uk/privacy
 
@@ -64,4 +69,4 @@ Visibility: Public. Markets: all markets.
 
 ## Notes for certification
 
-Free extension, no sign-in. To test: click the toolbar icon to open the sidebar panel, drop any .glb model (for example https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/DamagedHelmet/glTF-Binary/DamagedHelmet.glb), choose Keep triangles and click Reduce, then Download. The Check tab scores the model. All processing is local; the extension makes no network requests. Permissions: sidePanel (the UI), storage (last slider settings), downloads (saving the result). WebAssembly (meshoptimizer) is bundled, hence wasm-unsafe-eval in the CSP.
+No sign-in. To test: click the toolbar icon to open the sidebar panel and drop any .glb model (for example https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/DamagedHelmet/glTF-Binary/DamagedHelmet.glb). The Check tab is free and scores the model. Reduce is a £3 unlock: paste this test licence key into the Reduce tab and click Unlock: TEST-KEY-GOES-HERE. Then choose Keep triangles, click Reduce, and Download. Models are processed locally; the only network calls are the licence check to api.lemonsqueezy.com and www.assetbench.co.uk. Permissions: sidePanel (the UI), storage (licence key and last settings), downloads (saving the result). WebAssembly (meshoptimizer) is bundled, hence wasm-unsafe-eval in the CSP.
