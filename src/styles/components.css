@@ -1056,7 +1056,7 @@
 .pricing-card {
   width: 100%;
   max-width: 640px;
-  padding: 0 var(--space-5) var(--space-5);
+  padding: var(--space-5);
   overflow: hidden;
   border-color: rgba(255, 181, 71, 0.35);
   box-shadow: 0 0 60px var(--accent-glow-mid);
@@ -1083,7 +1083,9 @@
 }
 
 .pricing-card > .welcome-offer__hero {
-  margin: 0 calc(-1 * var(--space-5)) var(--space-5);
+  /* Pulled flush to the card's top and sides; the card pads itself so its
+     text never touches the border when the artwork is hidden. */
+  margin: calc(-1 * var(--space-5)) calc(-1 * var(--space-5)) var(--space-5);
 }
 
 .pricing-discount {
