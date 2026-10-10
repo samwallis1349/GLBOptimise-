@@ -1,5 +1,6 @@
-import { meshopt } from '@gltf-transform/functions';
-import { MeshoptEncoder } from 'meshoptimizer';
+import { compactPrimitive, getGLPrimitiveCount, meshopt, weld } from '@gltf-transform/functions';
+import { Primitive } from '@gltf-transform/core';
+import { MeshoptEncoder, MeshoptSimplifier } from 'meshoptimizer';
 import { reducePolys } from '../../src/tools/reduce-polys/ReducePolysEngine.js';
 import { LOD_CHAIN_PRESETS } from '../../src/tools/generate-lods/presets.js';
 import { ApiError } from './http.js';
@@ -142,9 +143,60 @@ export async function optimizeGlb(bytes, params) {
  * further than its error limit. Unless the caller pins `error`, the limit is
  * loosened step by step (re-reducing from the original each time) until the
  * result lands within 10% of the target or the cap (0.1) is reached; beyond
- * that quality drops fast for little gain. Heavily seamed meshes (UV/normal
- * splits) can still stop short, and the report says so.
+ * that quality drops fast for little gain. If it is still short (usually a
+ * mesh with UV seams on most edges), reduceAcrossSeams() runs from the
+ * original — automatically for untextured models, and for textured ones
+ * only with acrossSeams=true, since it stretches the texture.
  */
+/**
+ * Seam-aware fallback for meshes the regular pass can't reduce: models with
+ * a UV seam on almost every edge (common in AI-generated and photogrammetry
+ * assets) leave meshoptimizer nothing it may collapse. 'Permissive' lets it
+ * collapse across seams, while weighting UV and normal changes so the
+ * texture stays on the surface. Skinned and morph-target primitives are left
+ * alone; the vertex data is untouched apart from dropping unused vertices.
+ */
+async function reduceAcrossSeams(document, ratio, error) {
+  await MeshoptSimplifier.ready;
+  await document.transform(weld());
+  for (const mesh of document.getRoot().listMeshes()) {
+    for (const prim of mesh.listPrimitives()) {
+      if (prim.getMode() !== Primitive.Mode.TRIANGLES || !prim.getIndices()) continue;
+      if (prim.listTargets().length || prim.getAttribute('JOINTS_0')) continue;
+      const position = prim.getAttribute('POSITION');
+      const count = position.getCount();
+      const indices = new Uint32Array(prim.getIndices().getArray());
+      const target = Math.max(3, Math.floor((indices.length * ratio) / 3) * 3);
+      if (target >= indices.length) continue;
+
+      const uv = prim.getAttribute('TEXCOORD_0');
+      const normal = prim.getAttribute('NORMAL');
+      const stride = (uv ? 2 : 0) + (normal ? 3 : 0);
+      const weights = [...(uv ? [1, 1] : []), ...(normal ? [0.5, 0.5, 0.5] : [])];
+      const attributes = new Float32Array(Math.max(1, count * stride));
+      const el = [];
+      for (let i = 0; i < count; i += 1) {
+        let o = i * stride;
+        if (uv) for (const v of uv.getElement(i, el)) attributes[o++] = v;
+        if (normal) for (const v of normal.getElement(i, el)) attributes[o++] = v;
+      }
+      const positions = new Float32Array(count * 3);
+      for (let i = 0; i < count; i += 1) positions.set(position.getElement(i, el), i * 3);
+
+      const [out] = stride
+        ? MeshoptSimplifier.simplifyWithAttributes(indices, positions, 3, attributes, stride, weights, null, target, error, ['Permissive'])
+        : MeshoptSimplifier.simplify(indices, positions, 3, target, error, ['Permissive']);
+      if (out.length >= indices.length) continue;
+      prim.getIndices().setArray(count > 65535 ? out : new Uint16Array(out));
+      compactPrimitive(prim);
+    }
+  }
+}
+
+const countTriangles = (document) => document.getRoot().listMeshes()
+  .flatMap((m) => m.listPrimitives())
+  .reduce((n, p) => n + (p.getMode() === Primitive.Mode.TRIANGLES ? getGLPrimitiveCount(p) : 0), 0);
+
 const REDUCE_ERROR_STEPS = [0.01, 0.05, 0.1];
 
 export async function reduceGlb(bytes, params) {
@@ -163,6 +215,12 @@ export async function reduceGlb(bytes, params) {
     ratio = clampRatio(params.ratio);
   }
   const lockBorder = bool(params.lockBorder, false);
+  // Collapsing across UV seams streaks textures (checked visually on real
+  // assets), so by default it only runs on untextured models.
+  const textured = before.textures.length > 0;
+  const acrossSeams = params.acrossSeams === undefined || params.acrossSeams === '' || params.acrossSeams === 'auto'
+    ? !textured
+    : bool(params.acrossSeams, false);
 
   let errorSteps = REDUCE_ERROR_STEPS.filter((e) => e >= (ratio < 0.2 ? 0.05 : 0.01));
   if (params.error !== undefined && params.error !== '') {
@@ -177,6 +235,7 @@ export async function reduceGlb(bytes, params) {
   let output;
   let after;
   let errorUsed = null;
+  let seamMode = false;
   if (ratio >= 0.999) {
     warnings.push('Model is already at or under the requested triangle count; geometry left unchanged.');
     output = await writeDocument(await readDocument(bytes));
@@ -193,15 +252,40 @@ export async function reduceGlb(bytes, params) {
       errorUsed = error;
       if (after.triangles <= goal) break;
     }
+    if (after.triangles > goal && !lockBorder && acrossSeams) {
+      // Still short: try collapsing across UV seams (see reduceAcrossSeams),
+      // again with the tightest error limit that reaches the target.
+      let best = null;
+      for (const error of errorSteps) {
+        const document = await readDocument(bytes);
+        await reduceAcrossSeams(document, ratio, error);
+        const triangles = countTriangles(document);
+        if (!best || triangles < best.triangles) best = { document, triangles, error };
+        if (triangles <= goal) break;
+      }
+      if (best.triangles < after.triangles) {
+        output = await writeDocument(best.document);
+        after = analyseGlb(output);
+        errorUsed = best.error;
+        seamMode = true;
+        lastWarnings = lastWarnings.filter((w) => !w.startsWith('Geometry could not be reduced'));
+        meshReports = [];
+        if (after.triangles > goal) lastWarnings.push(`Reduced to ${after.triangles.toLocaleString('en-GB')} triangles; the mesh could not go further without visible damage.`);
+      }
+    }
+    if (after.triangles > goal && !seamMode && textured && !lockBorder) {
+      lastWarnings.push('This model has UV seams on most edges, so it cannot go lower without smearing its texture. Pass acrossSeams=true to force it (fine for collision, distant LODs or re-texturing).');
+    }
     warnings.push(...lastWarnings);
     if (errorUsed > errorSteps[0]) warnings.push(`Error limit raised to ${errorUsed} to reach the target; check fine detail. Pass error= to cap it.`);
+    if (seamMode && textured) warnings.push('Collapsed across UV seams to reach the target, so the texture will be stretched in places.');
   }
   await readDocument(output); // the output must re-parse before it is returned
 
   return {
     output,
     report: {
-      settings: { ratio: Number(ratio.toFixed(4)), targetTriangles, lockBorder, error: errorUsed },
+      settings: { ratio: Number(ratio.toFixed(4)), targetTriangles, lockBorder, error: errorUsed, acrossSeams: seamMode },
       before: { triangles: before.triangles, fileBytes: before.fileBytes },
       after: { triangles: after.triangles, fileBytes: output.byteLength },
       reduction: {
