@@ -23,6 +23,7 @@ export const TOOL_PRODUCTS = {
   'line-studio': { productId: null, checkoutUrl: null },
   'model-to-isometric': { productId: null, checkoutUrl: null },
   'optimise-glb': { productId: null, checkoutUrl: null },
+  'asset-pipeline': { productId: null, checkoutUrl: null },
   'reduce-polys': { productId: null, checkoutUrl: null },
   'compress-textures': { productId: null, checkoutUrl: null },
   'ktx2-texture-encoder': { productId: null, checkoutUrl: null },

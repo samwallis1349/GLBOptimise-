@@ -177,6 +177,27 @@ export const TOOLS = [
     category: 'optimise',
   },
   {
+    id: 'asset-pipeline',
+    name: 'Asset Pipeline',
+    route: '/asset-pipeline',
+    description: 'Batch-optimise a whole folder of GLB / glTF: geometry, textures, LODs, validation and one ZIP out.',
+    keywords: ['batch', 'pipeline', 'folder', 'bulk', 'automate', 'optimise', 'lod', 'ktx2', 'texture compression', 'polygon reduction', 'unity', 'unreal', 'godot', 'three.js', 'mobile', 'vr', 'zip', 'manifest', 'report'],
+    icon: 'layers',
+    thumbnail: '/thumbnails/asset-pipeline.webp',
+    seo: {
+      title: 'Asset Pipeline — Batch GLB Optimiser with LODs, Texture Compression & Validation | Asset Bench',
+      description:
+        'Optimise a whole folder of GLB and glTF models in your browser: polygon reduction, per-role texture resizing and KTX2/WebP compression, LOD chains, budgets, validation, reports and one ZIP download. Presets for Unity, Unreal, Godot, three.js, mobile and VR.',
+    },
+    features: [
+      { icon: 'layers', label: 'Whole folders' },
+      { icon: 'shield', label: 'Validated' },
+      { icon: 'package-open', label: 'One ZIP' },
+    ],
+    status: 'available',
+    category: 'optimise',
+  },
+  {
     id: 'reduce-polys',
     name: 'Reduce Polys',
     route: '/reduce-polys',
@@ -528,6 +549,7 @@ export const POPULARITY_ORDER = [
   'thumbnail-maker',
   'model-to-isometric',
   'asset-report',
+  'asset-pipeline',
   'optimise-glb',
   'reduce-polys',
   'strip-animations',

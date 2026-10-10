@@ -1,9 +1,9 @@
-import { getBounds, Primitive } from '@gltf-transform/core';
-import { center, compactPrimitive, dedup, flatten, getGLPrimitiveCount, join, prune, resample, weld } from '@gltf-transform/functions';
-import { MeshoptSimplifier } from 'meshoptimizer';
+import { getBounds } from '@gltf-transform/core';
+import { center, dedup, flatten, join, prune, resample } from '@gltf-transform/functions';
 import { ApiError } from './http.js';
 import { analyseGlb, evaluate, readDocument, writeDocument } from './glb.js';
-import { bool, compressMeshopt, downscaleTextures, reduce } from './mesh.js';
+import { bool, compressMeshopt, downscaleTextures } from './mesh.js';
+import { collisionFromDocument, fitTo, triangleCount } from './collision.js';
 
 /**
  * One call that runs the AssetBench tools in the order a mobile game needs
@@ -99,78 +99,9 @@ async function step(steps, warnings, tool, label, fn) {
   }
 }
 
-function triangleCount(document) {
-  let total = 0;
-  for (const mesh of document.getRoot().listMeshes()) {
-    for (const prim of mesh.listPrimitives()) if (prim.getMode() === Primitive.Mode.TRIANGLES) total += getGLPrimitiveCount(prim);
-  }
-  return total;
-}
-
-/**
- * Topology-ignoring simplification (meshoptimizer simplifySloppy). The
- * regular simplifier stops at UV seams and part outlines; far LODs and
- * collision shapes don't need either, so this always reaches the target.
- */
-async function sloppyTo(document, targetTris) {
-  await MeshoptSimplifier.ready;
-  const total = triangleCount(document);
-  if (!total) return;
-  for (const mesh of document.getRoot().listMeshes()) {
-    for (const prim of mesh.listPrimitives()) {
-      const indices = prim.getIndices();
-      const position = prim.getAttribute('POSITION');
-      if (prim.getMode() !== Primitive.Mode.TRIANGLES || !indices || !position || position.getNormalized()) continue;
-      const tris = indices.getCount() / 3;
-      const target = Math.max(12, Math.floor((tris / total) * targetTris));
-      if (target >= tris) continue;
-      const positions = position.getArray() instanceof Float32Array ? position.getArray() : Float32Array.from(position.getArray());
-      const [out] = MeshoptSimplifier.simplifySloppy(Uint32Array.from(indices.getArray()), positions, 3, null, target * 3, 1);
-      if (!out.length) continue;
-      prim.setIndices(document.createAccessor().setType('SCALAR').setArray(Uint32Array.from(out)).setBuffer(indices.getBuffer()));
-      compactPrimitive(prim);
-    }
-  }
-  await document.transform(prune());
-}
-
-/** Regular simplification first; looser passes only if it stalls well short of the target. */
-async function fitTo(document, targetTris, { error = 0.01, allowSloppy = false } = {}) {
-  const passes = [];
-  let current = triangleCount(document);
-  if (current <= targetTris) return { triangles: current, passes, warnings: [] };
-  const warnings = [];
-  const first = await reduce(document, targetTris / current, true, error);
-  warnings.push(...first.warnings);
-  current = triangleCount(document);
-  passes.push('quality');
-  if (current > targetTris * 1.25) {
-    await reduce(document, targetTris / current, false, Math.max(error, 0.05));
-    current = triangleCount(document);
-    passes.push('unlocked borders');
-  }
-  if (allowSloppy && current > targetTris * 1.25) {
-    await sloppyTo(document, targetTris);
-    current = triangleCount(document);
-    passes.push('coarse');
-  }
-  return { triangles: current, passes, warnings: current > targetTris * 1.25 ? warnings : [] };
-}
-
 async function buildCollision(baseBytes, targetTris) {
   const document = await readDocument(baseBytes);
-  const root = document.getRoot();
-  for (const anim of root.listAnimations()) anim.dispose();
-  for (const mesh of root.listMeshes()) {
-    for (const prim of mesh.listPrimitives()) {
-      for (const semantic of prim.listSemantics()) if (semantic !== 'POSITION') prim.setAttribute(semantic, null);
-      for (const target of prim.listTargets()) target.dispose();
-      prim.setMaterial(null);
-    }
-  }
-  for (const material of root.listMaterials()) material.dispose();
-  await document.transform(prune(), dedup(), flatten(), join({ keepNamed: false }), weld());
-  await fitTo(document, targetTris, { error: 0.25, allowSloppy: true });
+  await collisionFromDocument(document, targetTris);
   const output = await writeDocument(document);
   return { output, triangles: analyseGlb(output).triangles };
 }
