@@ -25,7 +25,7 @@ import { openPrivacyChoices } from '../../shared/components/ConsentBanner.js';
  * describes it.
  */
 
-const UPDATED = '4 October 2026';
+const UPDATED = '10 October 2026';
 const SITE = 'www.assetbench.co.uk';
 
 const ext = (href, text) => `<a href="${href}" target="_blank" rel="noopener noreferrer">${text}</a>`;
@@ -263,6 +263,16 @@ export function render(container) {
         the site faster. None of them are used for advertising or to track you on other sites.
         You can delete all of them at any time by clearing this site’s data in your browser settings. If you do,
         your trial is not reset, because our server still holds its record of when it started.
+      </p>
+
+      <h2 id="extension">Browser extension</h2>
+      <p>
+        Our Chrome extension (Reduce Polys) processes your 3D models on your own computer. Models are never
+        uploaded to us or anyone else. The extension keeps your licence key and its last settings in Chrome’s
+        extension storage on your device. When you enter a key, it is sent to our payment provider, Lemon Squeezy,
+        to check it is valid, and a one-way hash of it is stored on our server so a £3 key stays linked to the
+        tool it was bought for. The extension does not use analytics, advertising or cookies, and collects nothing
+        else. Removing the extension deletes everything it stored.
       </p>
 
       <h2 id="cookies">Cookies and similar technologies</h2>

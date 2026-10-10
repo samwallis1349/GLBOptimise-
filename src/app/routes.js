@@ -2,6 +2,7 @@ import { TOOLS } from '../shared/config/tools.js';
 import { hasAccess } from '../shared/config/billing.js';
 import { Paywall } from '../shared/components/Paywall.js';
 import { ToolOffer } from '../shared/components/ToolOffer.js';
+import { ExtensionBar } from '../shared/components/ExtensionBar.js';
 import { ToolNews } from '../shared/components/ToolNews.js';
 import { AdSenseAd } from '../shared/components/AdSenseAd.js';
 import { initTrial } from '../services/TrialService.js';
@@ -34,6 +35,8 @@ async function mountTool(tool, container, params) {
   const result = await mod.mount(container, params);
   const offer = ToolOffer(tool);
   if (offer) container.prepend(offer);
+  const extension = ExtensionBar(tool);
+  if (extension) container.prepend(extension);
   // Editorial news, updates, and pro tips for this tool
   const news = ToolNews(tool);
   if (news) container.append(news);

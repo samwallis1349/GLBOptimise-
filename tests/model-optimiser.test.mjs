@@ -83,3 +83,26 @@ test('Model Optimiser: foreign keys are refused and released; refunded keys drop
   assert.equal((await revalidate([license], fakeServers({ product: 0, valid: true }))).length, 1);
   assert.equal((await revalidate([license], { fetchImpl: async () => { throw new Error('offline'); } })).length, 1, 'offline keeps it');
 });
+
+test('editions: each has valid tools, and the store description fits', async () => {
+  const { EDITIONS, DEFAULT_EDITION } = await import('../extensions/model-optimiser/editions.js');
+  assert.equal(DEFAULT_EDITION, 'reduce-polys');
+  assert.deepEqual(EDITIONS['reduce-polys'].tools, ['check', 'reduce']);
+  for (const [id, e] of Object.entries(EDITIONS)) {
+    assert.ok(e.tools.every((t) => TOOL_IDS.includes(t)), id);
+    assert.ok(e.tools.includes(e.firstTool), id);
+    assert.ok(e.description.length <= 132, `${id} description is ${e.description.length} chars`);
+    assert.ok(e.name.length <= 75, `${id} name too long`);
+  }
+});
+
+test('the Add to Chrome bar stays hidden until a store URL is set', async () => {
+  const { CHROME_EXTENSIONS, chromeExtensionFor } = await import('../src/shared/config/extensions.js');
+  const saved = CHROME_EXTENSIONS['reduce-polys'].url;
+  CHROME_EXTENSIONS['reduce-polys'].url = null;
+  assert.equal(chromeExtensionFor('reduce-polys'), null);
+  CHROME_EXTENSIONS['reduce-polys'].url = 'https://chromewebstore.google.com/detail/x';
+  assert.equal(chromeExtensionFor('reduce-polys').name, 'Reduce Polys');
+  assert.equal(chromeExtensionFor('optimise-glb'), null);
+  CHROME_EXTENSIONS['reduce-polys'].url = saved;
+});

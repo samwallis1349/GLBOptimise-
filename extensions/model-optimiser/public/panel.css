@@ -68,7 +68,7 @@ button:disabled { opacity: 0.45; cursor: default; }
 .drop.is-over { border-style: solid; background: rgba(255, 181, 71, 0.08); }
 .drop strong { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-.tabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin: 12px 0; }
+.tabs { display: grid; grid-template-columns: repeat(var(--tabs, 4), 1fr); gap: 4px; margin: 12px 0; }
 .tabs button { padding: 7px 4px; font-size: 12px; }
 .tabs button[aria-selected='true'] { border-color: var(--accent); color: var(--accent); }
 .tabs em { display: block; font-style: normal; font-size: 9px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ok); }

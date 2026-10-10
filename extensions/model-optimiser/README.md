@@ -1,7 +1,14 @@
-# AssetBench Model Optimiser — Chrome extension
+# AssetBench Chrome extensions (Reduce Polys / Model Optimiser)
 
-One side panel with four GLB tools that run entirely in the browser (nothing
-is uploaded), on the same engines as the Cloud API (`worker/api`):
+One codebase, two store products (`editions.js`). Only one may be listed at a
+time, because the Chrome Web Store refuses duplicate-functionality extensions
+from one developer:
+
+- **Reduce Polys** (`reduce-polys`, the default and what we sell now): Check (free) + Reduce (£3).
+- **Model Optimiser** (`model-optimiser`): all four tabs below, for later.
+
+The tools run entirely in the browser (nothing is uploaded), on the same
+engines as the Cloud API (`worker/api`):
 
 | Tab | Price | Does |
 |---|---|---|
@@ -24,18 +31,19 @@ the panel opens; refunded or cancelled keys drop out (offline keeps them).
 ## Build and try
 
 ```
-npm run build:extension        # -> extensions/model-optimiser/dist
+npm run build:extension                                           # Reduce Polys -> dist/reduce-polys
+node extensions/model-optimiser/build.mjs --edition model-optimiser  # -> dist/model-optimiser
 ```
 
-`chrome://extensions` → Developer mode → **Load unpacked** → choose `extensions/model-optimiser/dist`.
+`chrome://extensions` → Developer mode → **Load unpacked** → choose `extensions/model-optimiser/dist/reduce-polys`.
 Click the cube icon; the panel opens on the right.
 
 ## Publish
 
 1. Bump `version` in `public/manifest.json`.
-2. `npm run zip:extension:optimiser` → `extensions/assetbench-model-optimiser-<version>.zip`.
-3. Upload at <https://chrome.google.com/webstore/devconsole>.
-4. Privacy answers: models are processed locally and never leave the computer; the only network calls are licence checks to Lemon Squeezy and the tool binding on assetbench.co.uk. Payments happen on Lemon Squeezy's checkout, not in the extension.
+2. `npm run zip:extension` → `extensions/assetbench-reduce-polys-<version>.zip`.
+3. Upload at <https://chrome.google.com/webstore/devconsole> and fill in the listing from `store/STORE_LISTING.md` (text, screenshots, promo tile, privacy answers).
+4. Once approved, paste the store URL into `src/shared/config/extensions.js`; the Reduce Polys page then shows an "Add to Chrome" bar.
 
 `wasm-unsafe-eval` in the manifest's CSP is required for the meshoptimizer and Basis KTX2 WebAssembly.
 
