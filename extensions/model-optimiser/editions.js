@@ -35,9 +35,9 @@ export const EDITIONS = {
     free: ['check'],
     firstTool: 'reduce',
     price: '£3',
-    // The £3 Edge product in Lemon Squeezy: fill both in before building for upload.
-    products: { /* <productId>: 'reduce-polys' */ },
-    checkoutUrl: null,
+    // The £3 "Reduce Polys (Edge)" product in Lemon Squeezy.
+    products: { 1428470: 'reduce-polys' },
+    checkoutUrl: 'https://workbenchlabs.lemonsqueezy.com/checkout/buy/d0d42274-6f50-4c44-a4d6-26b2b2c0a4f2',
   },
   'model-optimiser': {
     store: 'Chrome Web Store',
