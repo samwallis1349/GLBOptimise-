@@ -14,8 +14,6 @@ import { deactivateLicense, deactivateToolLicense, getStoredLicense, getToolLice
 import { TOOLS } from '../../shared/config/tools.js';
 import { LicenseActivationForm } from '../../shared/components/LicenseActivationForm.js';
 import { splashHero } from '../../shared/components/WelcomeOffer.js';
-
-const SHOW_OFFER_ART = false;
 import { refundNoticeHtml } from '../../shared/components/RefundNotice.js';
 
 function maskKey(key) {
@@ -185,9 +183,7 @@ export async function render(container) {
 
   const rerender = () => render(container);
   const card = license ? licensedPanel(license, rerender) : buyPanel(rerender);
-  // Offer artwork hidden: public/pricing/offer.webp still shows the old
-  // one-off "forever" price. Restore once it's replaced with £25/month art.
-  if (SHOW_OFFER_ART) card.prepend(splashHero());
+  card.prepend(splashHero());
   section.appendChild(card);
   const toolKeys = getToolLicenses();
   if (toolKeys.length) section.appendChild(toolKeysPanel(toolKeys, rerender));
