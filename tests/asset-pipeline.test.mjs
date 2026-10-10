@@ -370,3 +370,20 @@ test('engine presets produce engine-appropriate defaults', () => {
   assert.equal(compose('mobile', 'balanced').budgets.enabled, true);
   assert.equal(compose('mobile', 'maximum').geometry.keepPercent, 30);
 });
+
+test('Draco input: LODs and export work without a Draco encoder', async () => {
+  // A decoded Draco file keeps KHR_draco_mesh_compression on the document; writing it
+  // (LOD snapshots, export) would need "draco3d.encoder". Simulate that state on read.
+  const { KHRDracoMeshCompression } = await import('@gltf-transform/extensions');
+  const bytes = await staticTextured(io, { segments: 32, size: 256 });
+  const dracoIO = Object.create(io);
+  dracoIO.readBinary = async (b) => {
+    const doc = await io.readBinary(b);
+    if (b === bytes) doc.createExtension(KHRDracoMeshCompression).setRequired(true);
+    return doc;
+  };
+  const s = settings((x) => (x.stages.find((st) => st.id === 'lods').enabled = true));
+  const r = await processAsset({ name: 'packed.glb', bytes }, s, env({ io: dracoIO }));
+  assert.equal(r.status, 'done', r.error);
+  assert.ok(r.lods.length > 1);
+});

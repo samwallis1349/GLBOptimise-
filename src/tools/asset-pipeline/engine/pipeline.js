@@ -1,6 +1,6 @@
 import { meshopt, quantize } from '@gltf-transform/functions';
 import { MeshoptEncoder } from 'meshoptimizer';
-import { inspectAsset, documentFeatures } from './inspect.js';
+import { inspectAsset, documentFeatures, dropDracoCompression } from './inspect.js';
 import { stageEnabled } from './settings.js';
 import { STAGES, checkStageOrder } from './stages.js';
 import { cleanup, optimiseScene, optimiseAnimation } from './scene.js';
@@ -116,7 +116,7 @@ async function runOnce(source, settings, inspection, env) {
   const total = enabled.length;
   const io = env.io;
 
-  const document = await io.readBinary(source.bytes);
+  const document = dropDracoCompression(await io.readBinary(source.bytes));
   const inputFeatures = documentFeatures(document);
   const originals = [];
   const pixels = new Map();

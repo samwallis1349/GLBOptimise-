@@ -59,6 +59,16 @@ function animationSummary(document) {
 }
 
 /** Feature summary of a decoded Document; also used by validation on outputs. */
+/**
+ * Draco geometry is decoded when the file is read, but the extension stays on
+ * the document, and writing would then need a Draco ENCODER (not available in
+ * the browser). Drop it so every write uses Meshopt or plain geometry instead.
+ */
+export function dropDracoCompression(document) {
+  for (const ext of document.getRoot().listExtensionsUsed()) if (ext.extensionName === 'KHR_draco_mesh_compression') ext.dispose();
+  return document;
+}
+
 export function documentFeatures(document) {
   const root = document.getRoot();
   let morphTargets = 0;

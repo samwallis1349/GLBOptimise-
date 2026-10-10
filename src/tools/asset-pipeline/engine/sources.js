@@ -1,4 +1,5 @@
 import JSZip from 'jszip';
+import { dropDracoCompression } from './inspect.js';
 
 /**
  * Turns whatever the user added — loose files, dropped folders (with
@@ -137,6 +138,6 @@ async function packGltf(entry, io, { byPath, byName }) {
   if (missingBin.length) throw new Error(`Missing geometry buffer(s): ${missingBin.join(', ')}. Add them with the .gltf.`);
   // Missing images become empty so the document still reads; inspection reports them.
   for (const uri of missing) resources[uri] = new Uint8Array(0);
-  const document = await io.readJSON({ json, resources });
+  const document = dropDracoCompression(await io.readJSON({ json, resources }));
   return { bytes: await io.writeBinary(document), missing };
 }
