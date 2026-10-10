@@ -33,8 +33,8 @@ import { iconSvg } from '../utils/icons.js';
  * Options: `index` overrides the numbered pill (for pages that show tools
  * in their own order), and `featured` renders the double-width variant
  * using the tool's wide `banner` artwork. `headline` renders a full-row
- * card with the square thumbnail beside the body, for the one tool pinned
- * above the grid.
+ * card with the artwork (wide `banner` when the tool has one, else the
+ * square thumbnail) beside the body, for the one tool pinned above the grid.
  *
  * @param {import('../config/tools.js').TOOLS[number]} tool
  * @param {{ index?: number, featured?: boolean, headline?: boolean }} [options]
@@ -46,20 +46,21 @@ export function ToolCard(tool, { index: displayIndex, featured = false, headline
 
   const card = document.createElement('a');
   const wide = featured && Boolean(tool.banner);
-  card.className = `tool-card${wide ? ' tool-card--featured' : ''}${headline ? ' tool-card--headline' : ''}${tool.cardTheme ? ` tool-card--${tool.cardTheme}` : ''}`;
+  card.className = `tool-card${wide ? ' tool-card--featured' : ''}${headline ? ' tool-card--headline' : ''}${headline && tool.banner ? ' tool-card--headline-banner' : ''}${tool.cardTheme ? ` tool-card--${tool.cardTheme}` : ''}`;
   card.href = tool.route;
   card.dataset.status = tool.status;
   if (category) card.style.setProperty('--card-accent', `var(${category.accent})`);
 
   const position = displayIndex ?? TOOLS.indexOf(tool) + 1;
   const index = String(position > 0 ? position : 0).padStart(2, '0');
-  const image = wide ? tool.banner : tool.thumbnail;
+  const headlineBanner = headline && Boolean(tool.banner);
+  const image = wide || headlineBanner ? tool.banner : tool.thumbnail;
 
   card.innerHTML = `
     <div class="tool-card__visual${image ? ' tool-card__visual--photo' : ''}">
       ${
         image
-          ? `<img class="tool-card__visual-img" src="${escapeAttr(image)}" alt="" ${wide ? 'fetchpriority="high"' : 'loading="lazy"'} decoding="async" />`
+          ? `<img class="tool-card__visual-img" src="${escapeAttr(image)}" alt="" ${wide || headline ? 'fetchpriority="high"' : 'loading="lazy"'} decoding="async" />`
           : iconSvg(tool.icon, { class: 'tool-card__visual-icon' })
       }
       <span class="tool-card__scan" aria-hidden="true"></span>

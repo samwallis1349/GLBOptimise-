@@ -184,6 +184,8 @@ export const TOOLS = [
     keywords: ['batch', 'pipeline', 'folder', 'bulk', 'automate', 'optimise', 'lod', 'ktx2', 'texture compression', 'polygon reduction', 'unity', 'unreal', 'godot', 'three.js', 'mobile', 'vr', 'zip', 'manifest', 'report'],
     icon: 'layers',
     thumbnail: '/thumbnails/asset-pipeline.webp',
+    // Wide art for the full-width headline card (2.5:1).
+    banner: '/thumbnails/asset-pipeline-wide.webp',
     seo: {
       title: 'Asset Pipeline — Batch GLB Optimiser with LODs, Texture Compression & Validation | Asset Bench',
       description:

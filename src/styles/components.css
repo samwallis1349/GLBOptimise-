@@ -1412,6 +1412,34 @@
   }
 }
 
+/* With wide banner art: the 2.5:1 image stacks above the body below
+   desktop, and takes three of the four columns beside it on desktop. */
+.tool-card--headline-banner .tool-card__visual--photo {
+  aspect-ratio: 2.5 / 1;
+}
+
+.tool-card--headline-banner .tool-card__visual::before {
+  opacity: 0.35;
+}
+
+@media (min-width: 601px) and (max-width: 980px) {
+  .tool-card--headline-banner {
+    flex-direction: column;
+  }
+
+  .tool-card--headline-banner .tool-card__visual {
+    flex: none;
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
+  }
+}
+
+@media (min-width: 981px) {
+  .tool-card--headline-banner .tool-card__visual {
+    flex-basis: calc((100% - 3 * var(--space-4)) * 3 / 4 + 2 * var(--space-4));
+  }
+}
+
 .tool-card--headline::before {
   opacity: 0.5;
 }
