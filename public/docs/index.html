@@ -146,6 +146,7 @@ td code,p code{font:12px var(--mono);color:var(--accent-hi)}
           <select id="op3d">
             <option value="game-ready" selected>Game-ready pack (recommended)</option>
             <option value="audit">Audit: which devices can run it (free)</option>
+            <option value="reduce">Reduce polys: cut triangles only (free)</option>
             <option value="optimize">Optimise GLB: reduce, resize, compress</option>
             <option value="lods">LODs: level-of-detail chain</option>
             <option value="convert">Convert format</option>
@@ -168,6 +169,10 @@ td code,p code{font:12px var(--mono);color:var(--accent-hi)}
         <label class="f" data-for="optimize">Keep triangles: <span id="ratioLabel">auto (from target)</span>
           <input type="range" id="ratio" min="0" max="90" step="5" value="0" aria-describedby="ratioLabel">
         </label>
+        <label class="f" data-for="reduce">Keep triangles: <span id="keepLabel">30%</span>
+          <input type="range" id="keep" min="5" max="95" step="5" value="30" aria-describedby="keepLabel">
+        </label>
+        <label class="c" data-for="reduce"><input type="checkbox" id="acrossSeams"> Reduce across UV seams (for models that barely reduce; stretches textures)</label>
         <label class="f" data-for="lods">LOD preset
           <select id="preset"><option value="standard">Standard · 100/50/25/10%</option><option value="aggressive">Aggressive · 100/35/15/5%</option><option value="minimal">Minimal · 100/50%</option></select>
         </label>
@@ -249,6 +254,7 @@ td code,p code{font:12px var(--mono);color:var(--accent-hi)}
         <label class="f">Run this on every file
           <select id="opbatch">
             <option value="audit">Audit (free)</option>
+            <option value="reduce">Reduce polys (free)</option>
             <option value="game-ready" selected>Game-ready pack</option>
             <option value="optimize">Optimise GLB</option>
             <option value="lods">LODs</option>
@@ -423,6 +429,7 @@ TABS.forEach(setupDrop);
 
 // ---------- options ----------
 const ratioValue = () => Number($('ratio').value) ? (100 - Number($('ratio').value)) / 100 : null;
+$('keep').addEventListener('input', () => { $('keepLabel').textContent = `${$('keep').value}%`; renderCode(); });
 $('ratio').addEventListener('input', () => { const r = ratioValue(); $('ratioLabel').textContent = r ? `${Math.round(r * 100)}%` : 'auto (from target)'; renderCode(); });
 /** Shows only the controls tagged (data-for) with the selected operation. */
 function syncAll() {
@@ -449,7 +456,7 @@ document.querySelectorAll('#panel3d select, #panel3d input, #panel2d select, #pa
 $('background').addEventListener('input', renderCode);
 
 const ENDPOINTS = {
-  'game-ready': '/api/v1/3d/game-ready', audit: '/api/v1/3d/audit', optimize: '/api/v1/3d/optimize', lods: '/api/v1/3d/lods', convert: '/api/v1/3d/convert',
+  'game-ready': '/api/v1/3d/game-ready', audit: '/api/v1/3d/audit', reduce: '/api/v1/3d/reduce', optimize: '/api/v1/3d/optimize', lods: '/api/v1/3d/lods', convert: '/api/v1/3d/convert',
   ktx2: '/api/v1/textures/ktx2', resize: '/api/v1/textures/resize', 'app-icons': '/api/v1/ios/app-icons', xcassets: '/api/v1/ios/xcassets', screenshots: '/api/v1/ios/screenshots',
 };
 
@@ -459,6 +466,7 @@ function optionsFor(op, tab) {
   const checked = (sel) => [...document.querySelectorAll(sel)].map((c) => c.value).join(',');
   if (op === 'game-ready') { f.device = $('device').value; f.role = $('role').value; f.engine = $('engine').value; if ($('useKtx2').checked) f.ktx2 = 'true'; }
   if (op === 'audit') f.role = $('role').value;
+  if (op === 'reduce') { f.ratio = String(Number($('keep').value) / 100); if ($('acrossSeams').checked) f.acrossSeams = 'true'; }
   if (op === 'optimize') {
     if ($('target').value.trim()) f.target = $('target').value.trim();
     if (ratioValue()) f.ratio = String(ratioValue());
@@ -521,7 +529,7 @@ async function run(kind) {
   const form = new FormData();
   for (const f of req.files) form.append(req.field, f);
   for (const [k, v] of Object.entries(req.fields)) form.append(k, v);
-  const rich = kind !== 'batch' && (req.op === 'optimize' || req.op === 'game-ready');
+  const rich = kind !== 'batch' && (req.op === 'optimize' || req.op === 'game-ready' || req.op === 'reduce');
   const btn = $('run' + kind); btn.disabled = true;
   setStatus('status' + kind, '', 'Processing…');
   const t0 = performance.now();
@@ -541,6 +549,13 @@ async function run(kind) {
       out.append(statTiles(j.devices.results.map((d) => [`${d.name} (${d.triangleBudget.toLocaleString('en-GB')} tris)`, `${d.score}/100 ${d.verdict === 'mobile-ready' ? '✓' : d.verdict === 'needs-work' ? '!' : '✕'}`])));
       out.append(statTiles([['Mobile score', `${j.evaluation.score}/100`], ['Verdict', j.evaluation.verdict], ['Triangles', j.stats.triangles.toLocaleString('en-GB')], ['Draw calls', j.stats.drawCalls], ['Texture memory', fmtMB(j.stats.textureMemoryBytes)], ['File size', fmtMB(j.stats.fileBytes)]]), checksTable(j.evaluation));
       setStatus('status' + kind, 'ok', `Audited in ${secs}s against the ${j.evaluation.targetName.toLowerCase()} budget. Audits are free.`);
+    } else if (rich && req.op === 'reduce') {
+      const j = await res.json();
+      const r = j.report;
+      out.append(statTiles([['Triangles', `${r.before.triangles.toLocaleString('en-GB')} → ${r.after.triangles.toLocaleString('en-GB')}`], ['Removed', `${Math.round(r.reduction.triangles * 100)}%`], ['File size', `${fmtMB(r.before.fileBytes)} → ${fmtMB(r.after.fileBytes)}`]]));
+      if (r.warnings.length) { const pre = document.createElement('pre'); pre.textContent = r.warnings.map((w) => '! ' + w).join('\n'); out.append(pre); }
+      out.append(downloadRow(b64ToBlob(j.file.base64, j.file.contentType), j.file.name));
+      setStatus('status' + kind, 'ok', `Done in ${secs}s. Reduce is free, so no operations were used.`);
     } else if (rich) {
       const j = await res.json();
       const r = j.report;
@@ -563,7 +578,7 @@ async function run(kind) {
 for (const t of TABS) $('run' + t).addEventListener('click', () => run(t));
 
 // ---------- code samples ----------
-const OUT_NAMES = { 'game-ready': 'game-ready.zip', optimize: 'optimised.glb', lods: 'lods.zip', convert: 'converted.glb', resize: 'resized.png', 'app-icons': 'icons.zip', xcassets: 'xcassets.zip', screenshots: 'screenshots.zip' };
+const OUT_NAMES = { 'game-ready': 'game-ready.zip', reduce: 'reduced.glb', optimize: 'optimised.glb', lods: 'lods.zip', convert: 'converted.glb', resize: 'resized.png', 'app-icons': 'icons.zip', xcassets: 'xcassets.zip', screenshots: 'screenshots.zip' };
 const q = (s) => `'${String(s).replace(/'/g, `'\\''`)}'`;
 function renderCode() {
   const { endpoint, fields, files: chosen, tab, op, field } = currentRequest();

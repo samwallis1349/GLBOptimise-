@@ -329,6 +329,10 @@ function buildAdvancedPanel() {
         </span>
       </div>
       <div class="field-row">
+        <span>Reduce across UV seams<small>For models that barely reduce (seams on most edges). Stretches textures — best for untextured models, collision or distant LODs</small></span>
+        <label class="switch"><input type="checkbox" id="rp-across-seams" ${ADVANCED_DEFAULTS.acrossSeams ? 'checked' : ''} /><span class="switch-track"></span></label>
+      </div>
+      <div class="field-row">
         <span>Remove unused resources<small>Prunes data left unreferenced after reduction</small></span>
         <label class="switch"><input type="checkbox" id="rp-cleanup" ${ADVANCED_DEFAULTS.cleanup ? 'checked' : ''} /><span class="switch-track"></span></label>
       </div>
@@ -357,6 +361,9 @@ function buildAdvancedPanel() {
   });
   byId('rp-cleanup').addEventListener('change', (e) => {
     state.advanced.cleanup = e.target.checked;
+  });
+  byId('rp-across-seams').addEventListener('change', (e) => {
+    state.advanced.acrossSeams = e.target.checked;
   });
   const errorInput = byId('rp-error');
   errorInput.addEventListener('input', () => {

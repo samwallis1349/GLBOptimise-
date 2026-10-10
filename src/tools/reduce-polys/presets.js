@@ -17,6 +17,7 @@ export const ADVANCED_DEFAULTS = {
   lockBorder: true,
   error: 0.01,
   cleanup: true,
+  acrossSeams: false,
 };
 
 /**
@@ -33,7 +34,7 @@ export const PRESERVATION_FACTS = [
   {
     label: 'UV seams',
     state: 'inherent',
-    note: 'Welding is bitwise-exact, so seam vertices stay split and never merge.',
+    note: 'Welding is bitwise-exact, so seam vertices stay split and never merge — unless "Reduce across UV seams" is on.',
   },
   { label: 'Normals', state: 'inherent', note: 'Carried through and recomputed per collapsed vertex.' },
   { label: 'Skinning (joints & weights)', state: 'inherent', note: 'Carried through by meshoptimizer.' },

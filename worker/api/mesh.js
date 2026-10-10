@@ -1,6 +1,6 @@
-import { compactPrimitive, getGLPrimitiveCount, meshopt, weld } from '@gltf-transform/functions';
+import { getGLPrimitiveCount, meshopt } from '@gltf-transform/functions';
 import { Primitive } from '@gltf-transform/core';
-import { MeshoptEncoder, MeshoptSimplifier } from 'meshoptimizer';
+import { MeshoptEncoder } from 'meshoptimizer';
 import { reducePolys } from '../../src/tools/reduce-polys/ReducePolysEngine.js';
 import { LOD_CHAIN_PRESETS } from '../../src/tools/generate-lods/presets.js';
 import { ApiError } from './http.js';
@@ -87,8 +87,8 @@ export async function compressMeshopt(document) {
   await document.transform(meshopt({ encoder: MeshoptEncoder, level: 'high' }));
 }
 
-export async function reduce(document, ratio, lockBorder, error = ratio < 0.2 ? 0.05 : 0.01) {
-  return reducePolys({ document, ratio, options: { lockBorder, error, cleanup: true } });
+export async function reduce(document, ratio, lockBorder, error = ratio < 0.2 ? 0.05 : 0.01, acrossSeams = false) {
+  return reducePolys({ document, ratio, options: { lockBorder, error, cleanup: true, acrossSeams } });
 }
 
 export async function optimizeGlb(bytes, params) {
@@ -144,55 +144,10 @@ export async function optimizeGlb(bytes, params) {
  * loosened step by step (re-reducing from the original each time) until the
  * result lands within 10% of the target or the cap (0.1) is reached; beyond
  * that quality drops fast for little gain. If it is still short (usually a
- * mesh with UV seams on most edges), reduceAcrossSeams() runs from the
- * original — automatically for untextured models, and for textured ones
+ * mesh with UV seams on most edges), the engine's acrossSeams pass runs from
+ * the original — automatically for untextured models, and for textured ones
  * only with acrossSeams=true, since it stretches the texture.
  */
-/**
- * Seam-aware fallback for meshes the regular pass can't reduce: models with
- * a UV seam on almost every edge (common in AI-generated and photogrammetry
- * assets) leave meshoptimizer nothing it may collapse. 'Permissive' lets it
- * collapse across seams, while weighting UV and normal changes so the
- * texture stays on the surface. Skinned and morph-target primitives are left
- * alone; the vertex data is untouched apart from dropping unused vertices.
- */
-async function reduceAcrossSeams(document, ratio, error) {
-  await MeshoptSimplifier.ready;
-  await document.transform(weld());
-  for (const mesh of document.getRoot().listMeshes()) {
-    for (const prim of mesh.listPrimitives()) {
-      if (prim.getMode() !== Primitive.Mode.TRIANGLES || !prim.getIndices()) continue;
-      if (prim.listTargets().length || prim.getAttribute('JOINTS_0')) continue;
-      const position = prim.getAttribute('POSITION');
-      const count = position.getCount();
-      const indices = new Uint32Array(prim.getIndices().getArray());
-      const target = Math.max(3, Math.floor((indices.length * ratio) / 3) * 3);
-      if (target >= indices.length) continue;
-
-      const uv = prim.getAttribute('TEXCOORD_0');
-      const normal = prim.getAttribute('NORMAL');
-      const stride = (uv ? 2 : 0) + (normal ? 3 : 0);
-      const weights = [...(uv ? [1, 1] : []), ...(normal ? [0.5, 0.5, 0.5] : [])];
-      const attributes = new Float32Array(Math.max(1, count * stride));
-      const el = [];
-      for (let i = 0; i < count; i += 1) {
-        let o = i * stride;
-        if (uv) for (const v of uv.getElement(i, el)) attributes[o++] = v;
-        if (normal) for (const v of normal.getElement(i, el)) attributes[o++] = v;
-      }
-      const positions = new Float32Array(count * 3);
-      for (let i = 0; i < count; i += 1) positions.set(position.getElement(i, el), i * 3);
-
-      const [out] = stride
-        ? MeshoptSimplifier.simplifyWithAttributes(indices, positions, 3, attributes, stride, weights, null, target, error, ['Permissive'])
-        : MeshoptSimplifier.simplify(indices, positions, 3, target, error, ['Permissive']);
-      if (out.length >= indices.length) continue;
-      prim.getIndices().setArray(count > 65535 ? out : new Uint16Array(out));
-      compactPrimitive(prim);
-    }
-  }
-}
-
 const countTriangles = (document) => document.getRoot().listMeshes()
   .flatMap((m) => m.listPrimitives())
   .reduce((n, p) => n + (p.getMode() === Primitive.Mode.TRIANGLES ? getGLPrimitiveCount(p) : 0), 0);
@@ -253,12 +208,12 @@ export async function reduceGlb(bytes, params) {
       if (after.triangles <= goal) break;
     }
     if (after.triangles > goal && !lockBorder && acrossSeams) {
-      // Still short: try collapsing across UV seams (see reduceAcrossSeams),
+      // Still short: try collapsing across UV seams (engine option acrossSeams),
       // again with the tightest error limit that reaches the target.
       let best = null;
       for (const error of errorSteps) {
         const document = await readDocument(bytes);
-        await reduceAcrossSeams(document, ratio, error);
+        await reduce(document, ratio, false, error, true);
         const triangles = countTriangles(document);
         if (!best || triangles < best.triangles) best = { document, triangles, error };
         if (triangles <= goal) break;

@@ -1,5 +1,5 @@
 import { Primitive } from '@gltf-transform/core';
-import { weld, simplifyPrimitive, getGLPrimitiveCount, prune } from '@gltf-transform/functions';
+import { weld, simplifyPrimitive, getGLPrimitiveCount, prune, compactPrimitive } from '@gltf-transform/functions';
 import { analyseGeometry } from './ReducePolysAnalysis.js';
 
 /**
@@ -43,7 +43,51 @@ export const DEFAULT_OPTIONS = {
   error: 0.01,
   /** Remove resources left unreferenced after reduction. */
   cleanup: true,
+  /**
+   * Collapse across UV / normal seams (meshoptimizer 'Permissive'). For
+   * meshes with seams on most edges, which otherwise barely reduce. It
+   * stretches textures, so it is off unless asked for.
+   */
+  acrossSeams: false,
 };
+
+/**
+ * Seam-crossing simplification of one primitive. Welding can't merge seam
+ * vertices (their UVs/normals differ), and the regular simplifier won't
+ * collapse across them; 'Permissive' allows it, while UV and normal changes
+ * are weighted so it prefers collapses that disturb them least. Vertex data
+ * is untouched apart from dropping vertices nothing references any more.
+ */
+function simplifyAcrossSeams(simplifier, prim, ratio, error, lockBorder) {
+  const indicesAccessor = prim.getIndices();
+  const position = prim.getAttribute('POSITION');
+  if (!indicesAccessor || !position) return;
+  const count = position.getCount();
+  const indices = new Uint32Array(indicesAccessor.getArray());
+  const target = Math.max(3, Math.floor((indices.length * ratio) / 3) * 3);
+  if (target >= indices.length) return;
+
+  const uv = prim.getAttribute('TEXCOORD_0');
+  const normal = prim.getAttribute('NORMAL');
+  const stride = (uv ? 2 : 0) + (normal ? 3 : 0);
+  const weights = [...(uv ? [1, 1] : []), ...(normal ? [0.5, 0.5, 0.5] : [])];
+  const el = [];
+  const positions = new Float32Array(count * 3);
+  const attributes = new Float32Array(Math.max(1, count * stride));
+  for (let i = 0; i < count; i += 1) {
+    positions.set(position.getElement(i, el), i * 3);
+    let o = i * stride;
+    if (uv) for (const v of uv.getElement(i, el)) attributes[o++] = v;
+    if (normal) for (const v of normal.getElement(i, el)) attributes[o++] = v;
+  }
+  const flags = lockBorder ? ['Permissive', 'LockBorder'] : ['Permissive'];
+  const [out] = stride
+    ? simplifier.simplifyWithAttributes(indices, positions, 3, attributes, stride, weights, null, target, error, flags)
+    : simplifier.simplify(indices, positions, 3, target, error, flags);
+  if (out.length >= indices.length) return;
+  indicesAccessor.setArray(count > 65535 ? out : new Uint16Array(out));
+  compactPrimitive(prim);
+}
 
 /**
  * @param {Object} params
@@ -146,12 +190,18 @@ export async function reducePolys({
       }
 
       try {
-        simplifyPrimitive(prim, {
-          simplifier,
-          ratio: meshRatio,
-          error: opts.error,
-          lockBorder: opts.lockBorder,
-        });
+        // Seam crossing re-indexes the vertex stream, which would desync
+        // morph targets; those primitives keep the regular path.
+        if (opts.acrossSeams && !prim.listTargets().length) {
+          simplifyAcrossSeams(simplifier, prim, meshRatio, opts.error, opts.lockBorder);
+        } else {
+          simplifyPrimitive(prim, {
+            simplifier,
+            ratio: meshRatio,
+            error: opts.error,
+            lockBorder: opts.lockBorder,
+          });
+        }
         report.after += getGLPrimitiveCount(prim);
       } catch (err) {
         report.status = 'Failed';
@@ -173,7 +223,9 @@ export async function reducePolys({
     onProgress('SIMPLIFYING', { mesh: m + 1, total: meshes.length, name: report.name });
     await yieldToUI();
   }
-  operationReport.executed.push(`simplify geometry (meshoptimizer, ratio ${effectiveRatio.toFixed(3)})`);
+  operationReport.executed.push(
+    `simplify geometry (meshoptimizer${opts.acrossSeams ? ', across UV seams' : ''}, ratio ${effectiveRatio.toFixed(3)})`
+  );
 
   onProgress('REBUILDING');
   if (opts.cleanup) {
@@ -200,7 +252,8 @@ export async function reducePolys({
   // caller judges the outcome from meshReports instead.
   if (!opts.ratioForMesh && requestedReduction > 0.05 && achieved < requestedReduction * 0.5) {
     warnings.push(
-      `Geometry could not be reduced as far as requested (${(achieved * 100).toFixed(1)}% removed vs ${(requestedReduction * 100).toFixed(1)}% asked for). The error limit or preservation settings are the constraint.`
+      `Geometry could not be reduced as far as requested (${(achieved * 100).toFixed(1)}% removed vs ${(requestedReduction * 100).toFixed(1)}% asked for). The error limit or preservation settings are the constraint.` +
+        (opts.acrossSeams ? '' : ' If the model has UV seams on most edges, "Reduce across UV seams" can go further (it stretches textures).')
     );
   }
   if (!opts.ratioForMesh && achieved <= 0.001) {
