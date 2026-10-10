@@ -25,3 +25,4 @@ Thumbs.db
 /outputs/
 /Individual Tool Packages/
 extensions/*.zip
+extensions/model-optimiser/dist/
