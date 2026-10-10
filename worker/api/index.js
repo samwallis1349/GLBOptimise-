@@ -89,6 +89,7 @@ const OPERATIONS = {
 
   reduce: {
     engine: '3d',
+    free: true,
     async run(bytes, params, filename) {
       const { output, report } = await reduceGlb(bytes, params);
       return {

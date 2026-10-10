@@ -134,6 +134,12 @@ test('reduce cuts triangles by ratio or to a target count, geometry only', async
   assert.equal(j.report.settings.targetTriangles, 5000);
   assert.ok(j.report.after.triangles <= 5000 * 1.1 && j.report.after.triangles < before);
 
+  // Free: needs a key but never uses quota.
+  const me = await (await call('/api/v1/auth/me', { headers: auth(key) })).json();
+  assert.equal(me.quota.used, 0);
+  assert.equal(res.headers.get('X-Quota-Remaining'), null);
+  assert.equal((await call('/api/v1/3d/reduce', { method: 'POST', body: await getSphere() })).status, 401);
+
   const bad = await call('/api/v1/3d/reduce?triangles=-3', { method: 'POST', headers: auth(key), body: await getSphere() });
   assert.equal(bad.status, 400);
   assert.equal((await bad.json()).error.code, 'invalid_triangles');
