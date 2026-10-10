@@ -15,8 +15,9 @@ function setup() {
 
 test('extension: free key, then reduce a GLB to the requested fraction', async () => {
   const { fetchImpl, base } = setup();
-  const key = await requestFreeKey({ base, fetchImpl });
+  const { key, replaced } = await requestFreeKey({ base, fetchImpl });
   assert.match(key, /^abk_/);
+  assert.equal(replaced, false);
 
   const glb = await sphereGlb(120, { textureSize: [256, 256] });
   const file = new File([glb], 'sphere.glb', { type: 'model/gltf-binary' });
@@ -27,10 +28,13 @@ test('extension: free key, then reduce a GLB to the requested fraction', async (
   assert.ok(Math.abs(out.triangles - report.before.triangles * 0.3) < report.before.triangles * 0.05);
 });
 
-test('extension: second free key on the same network, and bad keys, give clear errors', async () => {
+test('extension: a second free key replaces the first, and bad keys give clear errors', async () => {
   const { fetchImpl, base } = setup();
-  await requestFreeKey({ base, fetchImpl });
-  await assert.rejects(requestFreeKey({ base, fetchImpl }), { code: 'trial_already_issued' });
+  const first = await requestFreeKey({ base, fetchImpl });
+  const second = await requestFreeKey({ base, fetchImpl });
+  assert.equal(second.replaced, true);
+  const old = new File([await sphereGlb(40)], 'old.glb');
+  await assert.rejects(reduceGlb({ file: old, name: 'old.glb', key: first.key, keep: 0.5, base, fetchImpl }), { code: 'key_replaced' });
 
   const file = new File([await sphereGlb(40)], 'a.glb');
   await assert.rejects(reduceGlb({ file, name: 'a.glb', key: 'abk_live_nope', keep: 0.5, base, fetchImpl }), { code: 'invalid_api_key' });

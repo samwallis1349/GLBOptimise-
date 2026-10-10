@@ -19,7 +19,10 @@ async function failure(res) {
   return new ApiError(body?.error?.message || `Request failed (${res.status}).`, body?.error?.code || `http_${res.status}`);
 }
 
-/** One free key per network. Resolves to the key string. */
+/**
+ * The free key for this network. Asking again replaces the network's
+ * previous key (it stops working). Resolves to { key, replaced }.
+ */
 export async function requestFreeKey({ base = API_BASE, fetchImpl = fetch } = {}) {
   const res = await fetchImpl(`${base}/api/v1/auth/keys`, {
     method: 'POST',
@@ -27,7 +30,8 @@ export async function requestFreeKey({ base = API_BASE, fetchImpl = fetch } = {}
     body: JSON.stringify({ label: 'chrome-extension' }),
   });
   if (!res.ok) throw await failure(res);
-  return (await res.json()).key;
+  const json = await res.json();
+  return { key: json.key, replaced: Boolean(json.replacedPreviousKey) };
 }
 
 const fromBase64 = (b64) => Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));

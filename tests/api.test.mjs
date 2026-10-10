@@ -42,7 +42,7 @@ test('pricing, targets and intent are public', async () => {
   assert.equal(intent.target, 'web');
 });
 
-test('one trial key per network, never a paid plan without the owner key', async () => {
+test('one working free key per network, never a paid plan without the owner key', async () => {
   const { call } = setup();
   const req = (ip, body = {}) => call('/api/v1/auth/keys', { method: 'POST', headers: { 'CF-Connecting-IP': ip, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
   const first = await req('203.0.113.9', { plan: 'all' });
@@ -50,9 +50,33 @@ test('one trial key per network, never a paid plan without the owner key', async
   const body = await first.json();
   assert.match(body.key, /^abk_live_[a-f0-9]{48}$/);
   assert.equal(body.plan, 'trial');
-  assert.equal((await req('203.0.113.9')).status, 409);
-  assert.equal((await req('2001:db8:1:2:aaaa::1')).status, 201);
-  assert.equal((await req('2001:db8:1:2:bbbb::2')).status, 409, 'same IPv6 /64');
+  assert.equal(body.replacedPreviousKey, undefined);
+
+  // Asking again from the same network replaces the key; the old one stops working.
+  const again = await (await req('203.0.113.9')).json();
+  assert.equal(again.replacedPreviousKey, true);
+  assert.notEqual(again.key, body.key);
+  const old = await call('/api/v1/auth/me', { headers: auth(body.key) });
+  assert.equal(old.status, 403);
+  assert.equal((await old.json()).error.code, 'key_replaced');
+  assert.equal((await call('/api/v1/auth/me', { headers: auth(again.key) })).status, 200);
+
+  // Same IPv6 /64 counts as the same network.
+  const v6 = await (await req('2001:db8:1:2:aaaa::1')).json();
+  assert.equal(v6.replacedPreviousKey, undefined);
+  assert.equal((await (await req('2001:db8:1:2:bbbb::2')).json()).replacedPreviousKey, true, 'same IPv6 /64');
+});
+
+test('replacing a free key carries this month\'s usage over', async () => {
+  const { call } = setup();
+  const req = () => call('/api/v1/auth/keys', { method: 'POST', headers: { 'CF-Connecting-IP': '198.51.100.20', 'Content-Type': 'application/json' }, body: '{}' });
+  const { key } = await (await req()).json();
+  for (let i = 0; i < 2; i += 1) {
+    assert.equal((await call('/api/v1/3d/optimize?ratio=0.5', { method: 'POST', headers: auth(key), body: await getSphere() })).status, 200);
+  }
+  const { key: next } = await (await req()).json();
+  const me = await (await call('/api/v1/auth/me', { headers: auth(next) })).json();
+  assert.equal(me.quota.used, 2);
 });
 
 test('keys are required and validated; only hashes are stored', async () => {

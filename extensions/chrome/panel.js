@@ -90,7 +90,7 @@ async function run() {
     showResult(report);
     status(`Saved ${name} to your downloads.`, 'ok');
   } catch (err) {
-    if (err instanceof ApiError && err.code === 'invalid_api_key') {
+    if (err instanceof ApiError && ['invalid_api_key', 'key_replaced', 'key_revoked'].includes(err.code)) {
       await saveKey('');
       return status('That key is no longer valid. Add a new one.', 'bad');
     }
@@ -104,15 +104,11 @@ $('getKey').addEventListener('click', async () => {
   $('getKey').disabled = true;
   status('Requesting a free key…');
   try {
-    await saveKey(await requestFreeKey());
-    status('Key saved. Drop a model to start.', 'ok');
+    const { key, replaced } = await requestFreeKey();
+    await saveKey(key);
+    status(replaced ? 'New key saved. Your network’s previous free key has been switched off.' : 'Key saved. Drop a model to start.', 'ok');
   } catch (err) {
-    status(
-      err.code === 'trial_already_issued'
-        ? 'A free key was already issued on this network. Paste it under "I already have a key".'
-        : err.message,
-      'bad',
-    );
+    status(err.message, 'bad');
   } finally {
     $('getKey').disabled = false;
   }

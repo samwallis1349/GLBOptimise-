@@ -116,6 +116,7 @@ td code,p code{font:12px var(--mono);color:var(--accent-hi)}
       <button id="btnTrial" class="primary" type="button">Get a free API key</button>
     </div>
     <div class="status" id="keyStatus" role="status"></div>
+    <p class="sub">One free key per network. Lost it? Click <b>Get a free API key</b> again from the same network: you get a new key, the old one stops working, and this month’s usage carries over.</p>
   </section>
 
   <section class="card" aria-labelledby="plans-h">
@@ -338,14 +339,23 @@ const key = () => keyInput.value.trim();
 const setStatus = (id, cls, text) => { const el = $(id); el.className = 'status ' + (cls || ''); el.textContent = text; };
 const errText = async (res) => { try { const j = await res.json(); return j.error?.message || res.statusText; } catch { return res.statusText; } };
 
+let confirmReplace = false;
 $('btnTrial').addEventListener('click', async () => {
-  setStatus('keyStatus', '', 'Requesting a trial key…');
+  // A saved key would be switched off by a new one, so ask for a second click first.
+  if (key() && !confirmReplace) {
+    confirmReplace = true;
+    return setStatus('keyStatus', 'bad', 'You already have a key here. A new free key switches this one off. Click again to replace it.');
+  }
+  confirmReplace = false;
+  setStatus('keyStatus', '', 'Requesting a free key…');
   const res = await fetch('/api/v1/auth/keys', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
   if (!res.ok) return setStatus('keyStatus', 'bad', await errText(res));
   const j = await res.json();
   keyInput.value = j.key; keyInput.type = 'text'; $('btnShow').textContent = 'Hide';
   store.set('ab_api_key', j.key); renderCode();
-  setStatus('keyStatus', 'ok', 'Free key created and saved in this browser. Copy it somewhere safe: it is not shown again.');
+  setStatus('keyStatus', 'ok', j.replacedPreviousKey
+    ? 'New free key saved in this browser. Your network’s previous key has been switched off. Copy it somewhere safe: it is not shown again.'
+    : 'Free key created and saved in this browser. Copy it somewhere safe: it is not shown again.');
 });
 $('btnMe').addEventListener('click', async () => {
   if (!key()) return setStatus('keyStatus', 'bad', 'Paste a key first.');

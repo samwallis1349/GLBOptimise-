@@ -1,5 +1,4 @@
 import { PLANS } from './plans.js';
-import { CONTACT_EMAIL } from '../../src/shared/config/app.js';
 import { ApiError, sha256Hex } from './http.js';
 import { LICENSE_KEY_PATTERN } from './billing.js';
 
@@ -8,9 +7,10 @@ import { LICENSE_KEY_PATTERN } from './billing.js';
  *
  *   apikey:<sha256(key)>             -> { plan, label, createdAt, revoked }
  *   apiuse:<sha256(key)>:<period>    -> '' with metadata { count }
- *   apitrial:<sha256(salt|ip/64)>    -> key hash of the trial key issued to that network
+ *   apitrial:<sha256(salt|ip/64)>    -> key hash of that network's current free key
  *
- * Only the hash of a key is ever stored, so a key is shown once at creation.
+ * Only the hash of a key is ever stored, so a key is shown once at creation;
+ * a lost free key is replaced, not recovered (see mintKey).
  * KV is eventually consistent, so quota counts can lag by a request or two
  * under concurrent calls; fine for metering, not for hard billing.
  */
@@ -57,7 +57,12 @@ export async function isAdmin(request, env) {
   return (await sha256Hex(given)) === (await sha256Hex(env.API_ADMIN_KEY));
 }
 
-/** Owner mints any plan; anyone else gets one trial key per network. */
+/**
+ * Owner mints any plan; anyone else gets the free key for their network.
+ * Asking again from the same network replaces that key: the old one is
+ * revoked and this month's usage moves to the new one, so a lost key is a
+ * one-click fix but never a way to reset the allowance or hold two keys.
+ */
 export async function mintKey(request, env, body) {
   const kv = requireKv(env);
   const admin = await isAdmin(request, env);
@@ -66,13 +71,12 @@ export async function mintKey(request, env, body) {
   if (!plan) throw new ApiError(400, 'unknown_plan', `Unknown plan '${planId}'.`, { plans: Object.keys(PLANS) });
 
   let trialKey = null;
+  let previousHash = null;
   if (!admin) {
     const ip = request.headers.get('CF-Connecting-IP');
     if (!ip) throw new ApiError(400, 'no_client_ip', 'Cannot issue a trial key without a client address.');
     trialKey = `${TRIAL_PREFIX}${await sha256Hex(`${env.TRIAL_SALT || 'assetbench-api'}|${ipKeySource(ip)}`)}`;
-    if (await kv.get(trialKey)) {
-      throw new ApiError(409, 'trial_already_issued', `A free API key has already been issued to this network. Email ${CONTACT_EMAIL} if you lost it.`);
-    }
+    previousHash = await kv.get(trialKey);
   }
 
   const key = newKey();
@@ -84,8 +88,20 @@ export async function mintKey(request, env, body) {
     revoked: false,
   };
   await kv.put(`${KEY_PREFIX}${hash}`, JSON.stringify(record));
+
+  let replaced = false;
+  if (previousHash) {
+    const old = await kv.get(`${KEY_PREFIX}${previousHash}`, 'json');
+    if (old) {
+      await kv.put(`${KEY_PREFIX}${previousHash}`, JSON.stringify({ ...old, revoked: true, replacedAt: record.createdAt }));
+      const period = periodFor(plan);
+      const used = await readUsage(kv, previousHash, period);
+      if (used) await kv.put(`${USE_PREFIX}${hash}:${period}`, '', { metadata: { count: used } });
+      replaced = true;
+    }
+  }
   if (trialKey) await kv.put(trialKey, hash);
-  return { key, plan: plan.id, label: record.label, createdAt: record.createdAt };
+  return { key, plan: plan.id, label: record.label, createdAt: record.createdAt, ...(replaced ? { replacedPreviousKey: true } : {}) };
 }
 
 export async function revokeKey(env, rawKeyOrHash) {
@@ -125,7 +141,9 @@ export async function authenticate(request, env) {
   if (record.revoked) {
     throw record.source === 'lemonsqueezy'
       ? new ApiError(403, 'subscription_inactive', `Your subscription is ${record.subscriptionStatus || 'not active'}. Renew it in your Lemon Squeezy account to use this key again.`)
-      : new ApiError(403, 'key_revoked', 'This API key has been revoked.');
+      : record.replacedAt
+        ? new ApiError(403, 'key_replaced', 'This free key was replaced by a newer one from your network. Use the new key, or get another at /docs.')
+        : new ApiError(403, 'key_revoked', 'This API key has been revoked.');
   }
   const plan = PLANS[record.plan];
   if (!plan) throw new ApiError(403, 'unknown_plan', 'This key is attached to a plan that no longer exists.');

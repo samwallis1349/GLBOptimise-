@@ -392,7 +392,10 @@ async function route(request, env, track) {
       const body = await request.json().catch(() => ({}));
       const minted = await mintKey(request, env, body);
       track(minted.plan === 'trial' ? 'key_issued' : 'key_minted_owner');
-      return json({ ok: true, ...minted, note: 'Store this key now; it is not shown again.' }, 201);
+      const note = minted.replacedPreviousKey
+        ? 'Your previous free key has been switched off; this one replaces it, with this month’s usage carried over. Store it now; it is not shown again.'
+        : 'Store this key now; it is not shown again. Lost it? Ask again from the same network for a replacement.';
+      return json({ ok: true, ...minted, note }, 201);
     }
     if (method === 'DELETE') {
       if (!(await isAdmin(request, env))) throw new ApiError(401, 'unauthorized', 'Owner key required.');
