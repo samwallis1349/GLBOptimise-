@@ -50,6 +50,7 @@ function render() {
     const id = tab.dataset.tool;
     tab.setAttribute('aria-selected', String(id === tool));
     tab.classList.toggle('is-locked', !isUnlocked(id, licenses));
+    tab.dataset.price = TOOL_PRICE_LABEL;
   });
   document.querySelectorAll('.tool').forEach((section) => { section.hidden = section.dataset.panel !== tool; });
 

@@ -1,16 +1,16 @@
 /**
- * Single tools sold on their own for £3. A tool's key unlocks just that tool
+ * Single tools sold on their own for £5. A tool's key unlocks just that tool
  * in the browser, on up to TOOL_DEVICE_LIMIT devices (e.g. phone + computer),
  * via services/LicenseService.js. The lifetime license still unlocks all.
  *
- * Each tool needs its own Lemon Squeezy product: £3, licence keys on, and
+ * Each tool needs its own Lemon Squeezy product: £5, licence keys on, and
  * activation limit = TOOL_DEVICE_LIMIT. Fill in its product ID and checkout
  * URL below; the tool's "Unlock" bar and paywall option only show once both
  * are set. (desktop/build.mjs can also build an optional Windows app from
  * the same product, but nothing on the site offers it.)
  */
 
-export const TOOL_PRICE_LABEL = '£3';
+export const TOOL_PRICE_LABEL = '£5';
 
 /** Devices one tool key unlocks. Must match each product's activation limit in Lemon Squeezy. */
 export const TOOL_DEVICE_LIMIT = 2;

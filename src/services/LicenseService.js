@@ -12,7 +12,7 @@ import { TOOLS, getToolById, getToolByRoute } from '../shared/config/tools.js';
  * activation limit (LICENSE_MACHINE_LIMIT); deactivateLicense() frees it
  * again so the buyer can move to a new machine.
  *
- * Single-tool £3 keys (shared/config/toolProducts.js) unlock just that tool
+ * Single-tool £5 keys (shared/config/toolProducts.js) unlock just that tool
  * in this browser. They're stored separately, per tool, and never count as
  * the lifetime license.
  */

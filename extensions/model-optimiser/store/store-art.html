@@ -1,0 +1,136 @@
+<!doctype html>
+<!--
+  Chrome Web Store art for Reduce Polys, captured by render-store-art.mjs:
+  ?shot=s1|s2|s3 (1280x800) or tile (440x280). Expects, next to it: the
+  built extension's icons/, panel screenshots rp-reduced.png and rp-check.png,
+  models before.glb / after.glb, and three.js under build/ and jsm/.
+  The price text comes from ?price=.
+-->
+<html><head><meta charset="utf-8">
+<script>delete window.createImageBitmap; window.createImageBitmap = undefined;</script>
+<script type="importmap">{"imports":{"three":"./build/three.module.js","three/addons/":"./jsm/"}}</script>
+<style>
+  :root { --bg: #0b0b0a; --panel: #151513; --text: #f4f1ea; --muted: #a8a49b; --accent: #ffb547; --border: rgba(255,255,255,.1); }
+  * { box-sizing: border-box; margin: 0; }
+  body { width: var(--w); height: var(--h); overflow: hidden; background: radial-gradient(120% 90% at 70% 40%, #1d1710 0%, var(--bg) 60%); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; }
+  .shot { display: none; width: 100%; height: 100%; padding: 64px 72px; }
+  .shot.on { display: grid; }
+  .logo { display: flex; align-items: center; gap: 12px; font-weight: 700; font-size: 22px; color: var(--muted); }
+  .logo img { width: 36px; height: 36px; }
+  h1 { font-size: 64px; line-height: 1.02; letter-spacing: -0.03em; margin: 26px 0 18px; }
+  h1 span { color: var(--accent); }
+  p.sub { font-size: 24px; line-height: 1.35; color: var(--muted); max-width: 30ch; }
+  ul.ticks { list-style: none; padding: 0; margin-top: 28px; display: grid; gap: 12px; font-size: 21px; }
+  ul.ticks li::before { content: '✓'; color: var(--accent); font-weight: 700; margin-right: 12px; }
+  .panelshot { height: 672px; border-radius: 16px; border: 1px solid var(--border); box-shadow: 0 30px 80px rgba(0,0,0,.6), 0 0 60px rgba(255,181,71,.12); justify-self: end; align-self: center; }
+  #s1 { grid-template-rows: auto auto 1fr; }
+  #s1 h1 { font-size: 54px; margin: 18px 0 0; }
+  .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; margin-top: 18px; }
+  .card { position: relative; border: 1px solid var(--border); border-radius: 18px; background: rgba(21,21,19,.7); overflow: hidden; }
+  .card canvas { display: block; width: 100%; height: 100%; }
+  .tag { position: absolute; left: 22px; top: 18px; font-size: 30px; font-weight: 800; letter-spacing: -0.02em; }
+  .tag small { display: block; font-size: 16px; font-weight: 600; color: var(--muted); letter-spacing: 0; }
+  .card.after { border-color: rgba(255,181,71,.55); box-shadow: 0 0 50px rgba(255,181,71,.15); }
+  .card.after .tag { color: var(--accent); }
+  #s2, #s3 { grid-template-columns: 1fr auto; align-items: center; gap: 56px; }
+  #tile { padding: 34px 36px; align-content: center; }
+  #tile .logo img { width: 54px; height: 54px; }
+  #tile h1 { font-size: 46px; margin: 16px 0 8px; }
+  #tile p.sub { font-size: 20px; }
+</style></head>
+<body>
+<section class="shot" id="s1">
+  <div class="logo"><img src="icons/icon-128.png" alt="">AssetBench · Reduce Polys</div>
+  <h1>Cut <span id="cut">75%</span> of the triangles. Keep the look.</h1>
+  <div class="pair">
+    <div class="card"><canvas id="before"></canvas><div class="tag"><span id="trisBefore"></span> <small>triangles · original</small></div></div>
+    <div class="card after"><canvas id="after"></canvas><div class="tag"><span id="trisAfter"></span> <small>triangles · reduced in your browser</small></div></div>
+  </div>
+</section>
+
+<section class="shot" id="s2">
+  <div>
+    <div class="logo"><img src="icons/icon-128.png" alt="">AssetBench</div>
+    <h1>One slider.<br><span>One click.</span></h1>
+    <p class="sub">Drop a GLB, choose how much to keep, download the lighter model.</p>
+    <ul class="ticks">
+      <li>Textures and materials kept</li>
+      <li>Runs on your computer, nothing uploaded</li>
+      <li><span class="price"></span> once. No subscription.</li>
+    </ul>
+  </div>
+  <img class="panelshot" src="rp-reduced.png" alt="">
+</section>
+
+<section class="shot" id="s3">
+  <div>
+    <div class="logo"><img src="icons/icon-128.png" alt="">AssetBench</div>
+    <h1>Free check:<br><span>will it run?</span></h1>
+    <p class="sub">Scores your model for low, mid and high-end phones and Quest VR before you change a thing.</p>
+    <ul class="ticks">
+      <li>Triangles, draw calls, texture memory</li>
+      <li>Unity, Unreal, Godot, Roblox, web</li>
+      <li>Free, no account</li>
+    </ul>
+  </div>
+  <img class="panelshot" src="rp-check.png" alt="">
+</section>
+
+<section class="shot" id="tile">
+  <div class="logo"><img src="icons/icon-128.png" alt=""></div>
+  <h1>Reduce <span>Polys</span></h1>
+  <p class="sub">GLB polygon reducer that runs in your browser.</p>
+</section>
+
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+const q = new URLSearchParams(location.search);
+const which = q.get('shot') || 's1';
+const [w, h] = which === 'tile' ? [440, 280] : [1280, 800];
+document.body.style.setProperty('--w', w + 'px');
+document.body.style.setProperty('--h', h + 'px');
+document.getElementById(which).classList.add('on');
+document.querySelectorAll('.price').forEach((el) => { el.textContent = q.get('price') || ''; });
+
+async function render(canvasId, file) {
+  const canvas = document.getElementById(canvasId);
+  const rect = canvas.parentElement.getBoundingClientRect();
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, preserveDrawingBuffer: true });
+  renderer.setPixelRatio(2);
+  renderer.setSize(rect.width, rect.height, false);
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  const scene = new THREE.Scene();
+  scene.add(new THREE.HemisphereLight(0xfff3e0, 0x2a2420, 2.2));
+  const key = new THREE.DirectionalLight(0xffe2b0, 2.6); key.position.set(2, 4, 3); scene.add(key);
+  const rim = new THREE.DirectionalLight(0xffb547, 1.6); rim.position.set(-3, 2, -3); scene.add(rim);
+  const gltf = await new GLTFLoader().loadAsync(file);
+  const root = gltf.scene;
+  scene.add(root);
+  // Faint wireframe overlay so the triangle density shows.
+  const meshes = [];
+  let tris = 0;
+  root.traverse((o) => { if (o.isMesh) meshes.push(o); });
+  for (const o of meshes) {
+    tris += (o.geometry.index ? o.geometry.index.count : o.geometry.attributes.position.count) / 3;
+    o.add(new THREE.Mesh(o.geometry, new THREE.MeshBasicMaterial({ color: 0xffb547, wireframe: true, transparent: true, opacity: 0.3 })));
+  }
+  const box = new THREE.Box3().setFromObject(root);
+  const c = box.getCenter(new THREE.Vector3()); const s = box.getSize(new THREE.Vector3());
+  const cam = new THREE.PerspectiveCamera(30, rect.width / rect.height, 0.01, 1000);
+  const dist = Math.max(s.y, s.x * rect.height / rect.width) * 2.15;
+  cam.position.set(c.x + dist * 0.35, c.y + s.y * 0.08, c.z + dist);
+  cam.lookAt(c.x, c.y + s.y * 0.04, c.z);
+  renderer.render(scene, cam);
+  return Math.round(tris);
+}
+if (which === 's1') {
+  const before = await render('before', 'before.glb');
+  const after = await render('after', 'after.glb');
+  document.getElementById('trisBefore').textContent = before.toLocaleString('en-GB');
+  document.getElementById('trisAfter').textContent = after.toLocaleString('en-GB');
+  document.getElementById('cut').textContent = `${Math.round((1 - after / before) * 100)}%`;
+}
+document.title = 'ready';
+</script>
+</body></html>

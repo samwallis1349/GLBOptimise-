@@ -95,6 +95,7 @@ After approval: paste the store URL into src/shared/config/extensions.js
 and deploy, so the Reduce Polys page shows "Add to Chrome".
 
 Rebuild this folder any time with:  npm run upload:extension
+Re-render the screenshots and promo tile:  npm run store-art:extension
 `.replace(/\n/g, '\r\n'));
 
 console.log(`upload folder: ${relative(ROOT, OUT)}`);

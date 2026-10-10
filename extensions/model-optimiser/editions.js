@@ -3,14 +3,14 @@
  * Chrome Web Store refuses several extensions with duplicate functionality
  * from the same developer.
  *
- *   reduce-polys     — what we sell now: free Check + Reduce (£3 unlock).
- *   model-optimiser  — all four tools (£3 each), for later.
+ *   reduce-polys     — what we sell now: free Check + Reduce (£5 unlock).
+ *   model-optimiser  — all four tools (£5 each), for later.
  */
 export const EDITIONS = {
   'reduce-polys': {
     name: 'Reduce Polys – GLB Polygon Reducer by AssetBench',
     shortName: 'Reduce Polys',
-    description: 'Cut the triangle count of GLB models in your browser. Free model check, £3 one-off unlock. Files never leave your computer.',
+    description: 'Cut the triangle count of GLB models in your browser. Free model check, £5 one-off unlock. Files never leave your computer.',
     heading: ['Reduce', 'Polys'],
     tools: ['check', 'reduce'],
     firstTool: 'reduce',

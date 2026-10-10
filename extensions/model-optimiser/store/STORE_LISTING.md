@@ -7,8 +7,8 @@ Build the upload with `npm run zip:extension` (→ `extensions/assetbench-reduce
 **Name** (from the manifest, 49/75 characters)
 Reduce Polys – GLB Polygon Reducer by AssetBench
 
-**Summary** (from the manifest, 125/132)
-Cut the triangle count of GLB models in your browser. Free model check, £3 one-off unlock. Files never leave your computer.
+**Summary** (from the manifest, 123/132)
+Cut the triangle count of GLB models in your browser. Free model check, £5 one-off unlock. Files never leave your computer.
 
 **Category:** Developer Tools  
 **Language:** English (United Kingdom)
@@ -33,7 +33,7 @@ Cut the triangle count of GLB models in your browser. Free model check, £3 one-
 > Your models are processed on your own computer. Nothing is uploaded. It works offline once unlocked.
 >
 > PRICE
-> The model check is free. Reducing is a £3 one-off unlock, no subscription. Already have AssetBench All Access? Your key unlocks it too.
+> The model check is free. Reducing is a £5 one-off unlock, no subscription. Already have AssetBench All Access? Your key unlocks it too.
 >
 > GOOD FOR
 > Mobile and web games, three.js and Babylon.js scenes, AR product viewers, VR, and taming heavy models from Meshy, Tripo and other AI 3D generators.
@@ -64,7 +64,7 @@ Reduce the polygon count of GLB 3D models, with a free check of how well a model
 - `storage`: remembers the user's licence key and last slider settings on their computer.
 - `downloads`: saves the reduced .glb to the user's Downloads folder.
 - Host `api.lemonsqueezy.com`: checks the licence key the user enters with our payment provider.
-- Host `www.assetbench.co.uk`: links a £3 key to the tool it was bought for (same as our website).
+- Host `www.assetbench.co.uk`: links a £5 key to the tool it was bought for (same as our website).
 
 **Remote code:** No. All code ships in the package. WebAssembly (meshoptimizer) is bundled, which is why the CSP has `wasm-unsafe-eval`.
 

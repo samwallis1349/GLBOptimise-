@@ -54,7 +54,7 @@ function fakeServers({ product, bound = null, valid = true }) {
   return { fetchImpl, calls };
 }
 
-test('Model Optimiser: All Access unlocks everything; a £3 key unlocks the tab it was bought for', async () => {
+test('Model Optimiser: All Access unlocks everything; a £5 key unlocks the tab it was bought for', async () => {
   const all = await activateKey('KEY-ALL', 'reduce', fakeServers({ product: LICENSE_PRODUCT_ID }));
   assert.equal(all.license.scope, 'all');
   for (const tool of ['check', 'reduce', 'optimise', 'compress']) assert.ok(isUnlocked(tool, [all.license]), tool);
