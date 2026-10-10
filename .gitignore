@@ -24,3 +24,4 @@ Thumbs.db
 *.zip
 /outputs/
 /Individual Tool Packages/
+extensions/*.zip
