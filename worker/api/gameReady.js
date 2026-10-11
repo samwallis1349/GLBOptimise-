@@ -182,16 +182,14 @@ export async function gameReady(bytes, params, filename) {
     return changed.length ? `${changed.length} texture(s) resized to ≤${budget.texMax}px, power of two` : `all textures already ≤${budget.texMax}px and power of two`;
   });
 
+  // KTX2 is applied per LOD file below, after each level's textures are shrunk:
+  // a KTX2 texture can't be resized afterwards.
   const wantKtx2 = bool(params.ktx2, false);
-  if (wantKtx2 && (engineId === 'unreal' || engineId === 'roblox')) {
+  const applyKtx2 = wantKtx2 && engineId !== 'unreal' && engineId !== 'roblox';
+  if (wantKtx2 && !applyKtx2) {
     warnings.push(`KTX2 textures were not applied: ${E.name}'s importer does not read KHR_texture_basisu. It compresses textures itself on import.`);
-  } else if (wantKtx2) {
-    await step(steps, warnings, 'ktx2-texture-encoder', 'Compress textures to KTX2', async () => {
-      const { texturesToKtx2 } = await import('./ktx2.js');
-      const done = await texturesToKtx2(document, { mode: 'auto', warnings });
-      return done.length ? `${done.length} texture(s) → KTX2 (${[...new Set(done.map((t) => t.mode.toUpperCase()))].join(' + ')}), stay compressed in GPU memory` : 'no PNG/JPEG textures to convert';
-    });
   }
+  const ktx2 = applyKtx2 ? (await import('./ktx2.js')).texturesToKtx2 : null;
 
   // Last geometry change, so simplification can't shift the model off its pivot.
   if (pivot !== 'keep') {
@@ -210,19 +208,32 @@ export async function gameReady(bytes, params, filename) {
   for (let i = 0; i < levels.length; i += 1) {
     const keep = levels[i];
     let output = baseBytes;
-    if (keep < 1 || compress) {
+    if (keep < 1 || compress || ktx2) {
       const doc = await readDocument(baseBytes);
       if (keep < 1) {
         const fit = await fitTo(doc, Math.round(triangleCount(doc) * keep), { error: LOD_ERRORS[i], allowSloppy: true });
         if (fit.passes.includes('coarse')) warnings.push(`LOD${i} needed coarse simplification to reach ${Math.round(keep * 100)}%; check it at its switch distance.`);
+        // Far levels are only ever seen small: halve the texture size per level, so each LOD file
+        // (and an engine that imports all of them) doesn't carry full-size copies.
+        await downscaleTextures(doc, Math.max(256, budget.texMax >> i), []);
+      }
+      if (ktx2) {
+        if (i === 0) {
+          await step(steps, warnings, 'ktx2-texture-encoder', 'Compress textures to KTX2', async () => {
+            const done = await ktx2(doc, { mode: 'auto', warnings });
+            return done.length ? `${done.length} texture(s) → KTX2 (${[...new Set(done.map((t) => t.mode.toUpperCase()))].join(' + ')}) in every LOD, stay compressed in GPU memory` : 'no PNG, JPEG or WebP textures to convert';
+          });
+        } else {
+          await ktx2(doc, { mode: 'auto', warnings: [] }).catch(() => {});
+        }
       }
       if (compress) await compressMeshopt(doc);
       output = await writeDocument(doc);
     }
     const stats = analyseGlb(output);
-    files.push({ file: `${name}_LOD${i}.glb`, kind: 'lod', level: i, keep, screenSize: SCREEN_SIZES[i], triangles: stats.triangles, bytes: output.byteLength, output });
+    files.push({ file: `${name}_LOD${i}.glb`, kind: 'lod', level: i, keep, screenSize: SCREEN_SIZES[i], triangles: stats.triangles, largestTexture: stats.largestTexture, bytes: output.byteLength, output });
   }
-  if (wantLods) steps.push({ step: 'Build LOD chain', tool: 'generate-lods', detail: files.map((f) => `LOD${f.level} ${f.triangles.toLocaleString('en-GB')} tris`).join(', ') });
+  if (wantLods) steps.push({ step: 'Build LOD chain', tool: 'generate-lods', detail: files.map((f) => `LOD${f.level} ${f.triangles.toLocaleString('en-GB')} tris${f.largestTexture ? ` · ${f.largestTexture}px` : ''}`).join(', ') });
   if (compress) steps.push({ step: 'Compress for download', tool: 'optimise-glb', detail: 'Meshopt (EXT_meshopt_compression)' });
 
   if (wantCollision && !skinned) {

@@ -1,6 +1,6 @@
 import { PLANS } from './plans.js';
 import { ApiError, sha256Hex } from './http.js';
-import { LICENSE_KEY_PATTERN } from './billing.js';
+import { LICENSE_KEY_PATTERN, activateFromLicense } from './billing.js';
 
 /**
  * API keys and quotas, stored in the TRIALS KV namespace.
@@ -136,7 +136,9 @@ export async function authenticate(request, env) {
   if (LICENSE_KEY_PATTERN.test(key)) key = key.toUpperCase();
   else if (!/^abk_live_[a-f0-9]{48}$/.test(key)) throw new ApiError(401, 'invalid_api_key', 'That API key is not valid.');
   const hash = await sha256Hex(key);
-  const record = await kv.get(`${KEY_PREFIX}${hash}`, 'json');
+  let record = await kv.get(`${KEY_PREFIX}${hash}`, 'json');
+  // A licence key bought before its product included the API gets its record on first use.
+  if (!record && LICENSE_KEY_PATTERN.test(key)) record = await activateFromLicense(env, key, hash);
   if (!record) throw new ApiError(401, 'invalid_api_key', 'That API key is not valid.');
   if (record.revoked) {
     throw record.source === 'lemonsqueezy'

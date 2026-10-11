@@ -32,7 +32,8 @@ function parseTextureSize(text) {
   return /(px|pixel|texture|map|max)/.test(m[0]) ? Number(m[1]) : null;
 }
 
-/** @returns {{target:string, triangleBudget:number, maxTextureSize:number, compress:boolean, lockBorder:boolean, explanation:string[]}} */
+/** `matched` is false when nothing in the text named a use, so `target` is only the default. */
+/** @returns {{target:string, matched:boolean, triangleBudget:number, maxTextureSize:number, compress:boolean, lockBorder:boolean, explanation:string[]}} */
 export function compileIntent(input) {
   const text = String(input ?? '').toLowerCase().trim();
   const explanation = [];
@@ -44,6 +45,7 @@ export function compileIntent(input) {
     const m = re.exec(text);
     if (m) { target = id; explanation.push(`"${m[0]}" → ${TARGETS[id].name} budget.`); }
   }
+  const matched = Boolean(target);
   if (!target) { target = 'prop'; explanation.push('No specific use found, so the strictest mobile budget (mobile game prop) is used.'); }
 
   const T = TARGETS[target];
@@ -73,5 +75,5 @@ export function compileIntent(input) {
   // Locking open borders keeps UV seams and mesh edges from tearing; always on.
   const lockBorder = true;
 
-  return { target, triangleBudget, maxTextureSize, compress, lockBorder, explanation };
+  return { target, matched, triangleBudget, maxTextureSize, compress, lockBorder, explanation };
 }

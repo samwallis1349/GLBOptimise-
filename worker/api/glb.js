@@ -274,8 +274,13 @@ export function evaluate(stats, target) {
 
   const W = (k) => (['triangles', 'drawCalls', 'textureMemory', 'fileSize'].includes(k) ? 2 : 1);
   const pts = checks.reduce((a, c) => a + W(c.key) * (c.status === 'pass' ? 1 : c.status === 'close' ? 0.5 : 0), 0);
-  const score = Math.round((100 * pts) / checks.reduce((a, c) => a + W(c.key), 0));
-  const fails = checks.filter((c) => c.status === 'fail').length;
-  const verdict = !fails && score >= 90 ? 'mobile-ready' : checks.some((c) => c.status === 'fail' && c.ratio > 2) || score < 60 ? 'not-ready' : 'needs-work';
+  // A failed check caps the score, so the number always agrees with the
+  // verdict bands: 90+ mobile-ready, 60-89 needs work, under 60 not ready.
+  // Any fail keeps it under 90; a fail over twice the budget, under 60.
+  let score = Math.round((100 * pts) / checks.reduce((a, c) => a + W(c.key), 0));
+  const fails = checks.filter((c) => c.status === 'fail');
+  if (fails.some((c) => c.ratio > 2)) score = Math.min(score, 59);
+  else if (fails.length) score = Math.min(score, 89);
+  const verdict = score >= 90 ? 'mobile-ready' : score >= 60 ? 'needs-work' : 'not-ready';
   return { target: targetId, targetName: T.name, score, verdict, checks };
 }

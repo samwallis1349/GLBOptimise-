@@ -17,12 +17,21 @@ import { sha256Hex } from './http.js';
  * Only order id, plan and status are stored: never names or emails.
  *
  * Product -> plan mapping comes from the API_LS_PRODUCTS var, e.g.
- * {"123456":"studio2d","123457":"studio3d","123458":"all"}.
+ * {"1420844":"allaccess","1430376":"all"}. The site's All Access product is
+ * mapped too, so the API comes included with that subscription.
+ *
+ * Keys sold before their product was mapped have no record yet: the first
+ * time one is used, activateFromLicense() checks it with Lemon Squeezy and
+ * creates the record (see keys.js authenticate).
  */
 
 const KEY_PREFIX = 'apikey:';
 const ORDER_PREFIX = 'apiorder:';
+const MISS_PREFIX = 'apikeymiss:';
 const OFF_STATUSES = new Set(['expired', 'unpaid', 'paused']);
+const LS_STORE_ID = 480634;
+const LS_VALIDATE_URL = 'https://api.lemonsqueezy.com/v1/licenses/validate';
+const MISS_TTL_SECONDS = 600;
 
 export const LICENSE_KEY_PATTERN = /^[A-F0-9]{8}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{12}$/i;
 
@@ -93,5 +102,53 @@ export async function handleApiBillingEvent(env, event, payload) {
     return { handled: true, action: `subscription ${status} (${plan})` };
   }
 
-  return { handled: true, action: `ignored ${event}` };
+  // Anything else (order_created…) belongs to the site's own sales handling.
+  return { handled: false };
+}
+
+/**
+ * First use of a licence key that has no API record: asks Lemon Squeezy
+ * whether it is a live key for a product that includes the API, and if so
+ * creates the record and links it to its order, so later subscription
+ * webhooks keep it in step. Misses are cached briefly so a wrong key cannot
+ * hammer Lemon Squeezy. Returns the new record, or null.
+ */
+export async function activateFromLicense(env, licenseKey, keyHash) {
+  const plans = productPlans(env);
+  if (!Object.keys(plans).length) return null;
+  const missKey = `${MISS_PREFIX}${keyHash}`;
+  if (await env.TRIALS.get(missKey)) return null;
+  const miss = async () => { await env.TRIALS.put(missKey, '1', { expirationTtl: MISS_TTL_SECONDS }); return null; };
+
+  let body;
+  try {
+    const res = await fetch(LS_VALIDATE_URL, {
+      method: 'POST',
+      headers: { Accept: 'application/json', 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ license_key: licenseKey }),
+    });
+    body = await res.json();
+  } catch {
+    return null; // Lemon Squeezy unreachable: not cached, so the next call retries.
+  }
+  const meta = body?.meta ?? {};
+  const plan = plans[String(meta.product_id)];
+  const status = String(body?.license_key?.status ?? '');
+  if (!body?.valid || Number(meta.store_id) !== LS_STORE_ID || !plan || !['active', 'inactive'].includes(status)) return miss();
+
+  const orderId = String(meta.order_id ?? '');
+  const record = {
+    plan,
+    label: `Lemon Squeezy order ${orderId}`,
+    createdAt: new Date().toISOString(),
+    revoked: false,
+    source: 'lemonsqueezy',
+    orderId,
+  };
+  await env.TRIALS.put(`${KEY_PREFIX}${keyHash}`, JSON.stringify(record));
+  if (orderId) {
+    await mergeOrderState(env, orderId, { keyHash });
+    await applyOrderState(env, orderId);
+  }
+  return (await env.TRIALS.get(`${KEY_PREFIX}${keyHash}`, 'json')) || record;
 }

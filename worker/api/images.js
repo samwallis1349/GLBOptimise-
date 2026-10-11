@@ -3,7 +3,7 @@ import jpeg from 'jpeg-js';
 import { ApiError } from './http.js';
 
 /**
- * DOM-free image handling for the Worker: decode PNG/JPEG to RGBA8, resample
+ * DOM-free image handling for the Worker: decode PNG/JPEG/WebP to RGBA8, resample
  * with a proper area filter (premultiplied, so transparent edges don't go
  * dark), encode back. Pure JS so it runs the same in workerd and Node tests.
  */
@@ -71,17 +71,34 @@ function pngToRgba(png) {
   return out;
 }
 
-/** @returns {{width:number,height:number,data:Uint8ClampedArray,mime:string}} RGBA8 */
-export function decodeImage(bytes) {
+/** Image types the API can decode and re-encode. */
+export const DECODABLE = new Set(['image/png', 'image/jpeg', 'image/webp']);
+
+// WebP (libwebp wasm, ./webp.js) is plugged in by the Worker entry point,
+// worker/api/index.js. The browser Asset Pipeline shares this module, and
+// importing webp.js here would pull the wasm into the site bundle.
+let webp = null;
+export function registerWebpCodec(codec) { webp = codec; }
+const needWebp = () => {
+  if (!webp) throw new ApiError(415, 'unsupported_image', 'WebP is not available here; send PNG or JPEG.');
+  return webp;
+};
+
+/** @returns {Promise<{width:number,height:number,data:Uint8ClampedArray,mime:string}>} RGBA8 */
+export async function decodeImage(bytes) {
   const info = sniffImage(bytes);
-  if (!info || (info.mime !== 'image/png' && info.mime !== 'image/jpeg')) {
-    throw new ApiError(415, 'unsupported_image', 'Send a PNG or JPEG image.');
+  if (!info || !DECODABLE.has(info.mime)) {
+    throw new ApiError(415, 'unsupported_image', 'Send a PNG, JPEG or WebP image.');
   }
   if (!info.width || !info.height) throw new ApiError(422, 'unreadable_image', 'Could not read the image dimensions.');
   if (info.width * info.height > MAX_PIXELS) {
     throw new ApiError(413, 'image_too_large', `Images are limited to ${MAX_PIXELS.toLocaleString('en-GB')} pixels (4096 x 4096).`);
   }
   try {
+    if (info.mime === 'image/webp') {
+      const img = await needWebp().decode(bytes);
+      return { ...img, mime: info.mime };
+    }
     if (info.mime === 'image/png') {
       const png = decodePngRaw(bytes);
       return { width: png.width, height: png.height, data: pngToRgba(png), mime: info.mime };
@@ -92,6 +109,15 @@ export function decodeImage(bytes) {
     if (err instanceof ApiError) throw err;
     throw new ApiError(422, 'unreadable_image', `The image could not be decoded (${err?.message || 'corrupt data'}).`);
   }
+}
+
+/**
+ * Encodes to the given type. WebP is lossy unless `lossless` (use it for
+ * normal and packed data maps); PNG is always lossless; JPEG drops alpha.
+ */
+export async function encodeAnyImage(image, mime, { quality = 88, lossless = false } = {}) {
+  if (mime === 'image/webp') return needWebp().encode(image, { quality, lossless });
+  return encodeImage(image, mime, { quality });
 }
 
 export function encodeImage(image, mime, { quality = 88 } = {}) {

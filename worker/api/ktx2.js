@@ -2,7 +2,7 @@ import { KHRTextureBasisu } from '@gltf-transform/extensions';
 import BASIS from './vendor/basis_encoder.js';
 import { encodeWithModule } from '../../node_modules/ktx2-encoder/dist/encodeCore.js';
 import { ApiError } from './http.js';
-import { decodeImage, fitSize, resize } from './images.js';
+import { DECODABLE, decodeImage, fitSize, resize } from './images.js';
 
 /**
  * KTX2 (Basis Universal) encoding on the Worker. The encoder glue is a
@@ -58,7 +58,7 @@ function prepare(image, maxSize) {
 
 export async function encodeKtx2(imageBytes, { mode = 'etc1s', normalMap = false, srgb = true, mipmaps = true, quality, maxSize } = {}) {
   if (!KTX2_MODES.includes(mode)) throw new ApiError(400, 'invalid_mode', 'mode must be etc1s or uastc.');
-  const image = prepare(decodeImage(imageBytes), maxSize);
+  const image = prepare(await decodeImage(imageBytes), maxSize);
   if (image.width * image.height > 12 * 1024 * 1024) throw new ApiError(413, 'image_too_large', 'KTX2 encoding is limited to 12 megapixels; pass maxSize to shrink first.');
   const module = await basis();
   const bytes = await encodeWithModule(module, imageBytes, {
@@ -70,7 +70,11 @@ export async function encodeKtx2(imageBytes, { mode = 'etc1s', normalMap = false
 
 const LINEAR_SLOTS = new Set(['normalTexture', 'metallicRoughnessTexture', 'occlusionTexture']);
 
-/** Converts every PNG/JPEG texture in a document to KTX2 and marks KHR_texture_basisu required. */
+/**
+ * Converts every PNG, JPEG and WebP texture in a document to KTX2 and marks
+ * KHR_texture_basisu required. EXT_texture_webp is dropped once no WebP
+ * texture is left, so loaders are not asked for a decoder they won't use.
+ */
 export async function texturesToKtx2(document, { mode = 'auto', maxSize = 0, warnings = [] } = {}) {
   const root = document.getRoot();
   const roles = new Map();
@@ -93,7 +97,7 @@ export async function texturesToKtx2(document, { mode = 'auto', maxSize = 0, war
   for (const texture of root.listTextures()) {
     const mime = texture.getMimeType();
     if (mime === 'image/ktx2') continue;
-    if (mime !== 'image/png' && mime !== 'image/jpeg') { warnings.push(`Texture "${texture.getName() || 'unnamed'}" is ${mime}; left as is.`); continue; }
+    if (!DECODABLE.has(mime)) { warnings.push(`Texture "${texture.getName() || 'unnamed'}" is ${mime}; left as is.`); continue; }
     const slots = roles.get(texture) || new Set();
     const normalMap = slots.has('normalTexture');
     const linear = [...slots].some((s) => LINEAR_SLOTS.has(s)) && !slots.has('baseColorTexture') && !slots.has('emissiveTexture');
@@ -101,9 +105,12 @@ export async function texturesToKtx2(document, { mode = 'auto', maxSize = 0, war
     const before = texture.getImage().byteLength;
     const { bytes, width, height } = await encodeKtx2(texture.getImage(), { mode: texMode, normalMap, srgb: !linear, maxSize });
     texture.setImage(bytes).setMimeType('image/ktx2');
-    if (texture.getURI()) texture.setURI(texture.getURI().replace(/\.(png|jpe?g)$/i, '.ktx2'));
+    if (texture.getURI()) texture.setURI(texture.getURI().replace(/\.(png|jpe?g|webp)$/i, '.ktx2'));
     converted.push({ name: texture.getName() || null, slots: [...slots], mode: texMode, size: `${width}x${height}`, bytesBefore: before, bytesAfter: bytes.byteLength });
   }
   if (converted.length) document.createExtension(KHRTextureBasisu).setRequired(true);
+  if (!root.listTextures().some((t) => t.getMimeType() === 'image/webp')) {
+    root.listExtensionsUsed().find((e) => e.extensionName === 'EXT_texture_webp')?.dispose();
+  }
   return converted;
 }

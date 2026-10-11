@@ -1,21 +1,23 @@
 import JSZip from 'jszip';
 import { ApiError, CORS_HEADERS, errorResponse, fileResponse, json, toBase64 } from './http.js';
-import { PRODUCTS, publicPlans } from './plans.js';
+import { ADVANCED_ENDPOINTS, PRODUCTS, publicPlans } from './plans.js';
 import { assertCanRun, authenticate, chargeOperation, isAdmin, mintKey, quotaStatus, revokeKey } from './keys.js';
 import { analyseGlb, evaluate, readDocument, TARGETS, writeDocument } from './glb.js';
 import { compileIntent } from './intent.js';
 import { generateLodChain, optimizeGlb, reduceGlb } from './mesh.js';
 import { buildIconPack } from './icons.js';
 import { DEVICES, ENGINES, ROLES, budgetFor, deviceMatrix, gameReady } from './gameReady.js';
-import { decodeImage, encodeImage, fitSize, resize, sniffImage } from './images.js';
+import { decodeImage, encodeAnyImage, fitSize, registerWebpCodec, resize, sniffImage } from './images.js';
+import { decodeWebp, encodeWebp } from './webp.js';
 import { convert, CONVERSIONS } from './convert.js';
 import { buildScreenshots, SCREENSHOT_SIZES } from './screenshots.js';
 import { bump, PAGE_EVENTS, readStats } from './stats.js';
 
 /**
- * AssetBench Cloud: /api/v1/*. Seven products on one key (see PRODUCTS in
- * plans.js), processed on the edge with the same engines the site runs in
- * the browser. /docs is the interactive reference.
+ * AssetBench Cloud: /api/v1/*. Three products on one key (see PRODUCTS in
+ * plans.js): /check, /game-ready and /app-assets, plus single-step
+ * "advanced" endpoints. Processed on the edge with the same engines the site
+ * runs in the browser. /docs is the interactive reference.
  *
  * Processing calls take the file as multipart/form-data (field "file",
  * options as other fields) or as the raw body (options in the query
@@ -23,6 +25,8 @@ import { bump, PAGE_EVENTS, readStats } from './stats.js';
  * X-AssetBench-Summary header, or JSON with the file base64-encoded when
  * ?output=json is passed. Every operation is also available to /batch.
  */
+
+registerWebpCodec({ decode: decodeWebp, encode: encodeWebp });
 
 const baseName = (filename, fallback) => String(filename || fallback).split(/[\\/]/).pop().replace(/\.[^.]+$/, '').replace(/[^\w.-]+/g, '_').slice(0, 80) || fallback;
 const bool = (v, fallback) => (v === undefined || v === '' ? fallback : !['false', '0', 'no', 'off'].includes(String(v).toLowerCase()));
@@ -32,6 +36,40 @@ async function zipOf(entries, extra = {}) {
   for (const [path, data] of Object.entries(entries)) zip.file(path, data);
   for (const [path, data] of Object.entries(extra)) zip.file(path, data);
   return zip.generateAsync({ type: 'uint8array', compression: 'STORE' });
+}
+
+/**
+ * Settles what a check is scored against. By default that is the role on the
+ * device class (the same budget /game-ready fits to). A `target` that is a
+ * built-in id or describes a use ("Shopify viewer", "Quest level") still wins,
+ * for callers of the older /3d/audit; one that names no use is ignored.
+ * Every unknown value and fallback is reported in `notes`.
+ */
+function resolveAudit(params) {
+  const notes = [];
+  const lower = (v) => String(v ?? '').toLowerCase().trim();
+  const choose = (table, value, fallback, label) => {
+    const id = lower(value);
+    if (!id) return fallback;
+    if (table[id]) return id;
+    notes.push(`Unknown ${label} '${value}', so '${fallback}' was used. ${label[0].toUpperCase()}${label.slice(1)}s: ${Object.keys(table).join(', ')}.`);
+    return fallback;
+  };
+  const role = choose(ROLES, params.role, 'prop', 'role');
+  const device = choose(DEVICES, params.device, 'mid', 'device');
+  const engine = choose(ENGINES, params.engine, 'unity', 'engine');
+
+  const text = lower(params.target);
+  if (text) {
+    if (TARGETS[text]) return { budget: text, resolved: { role, device, engine, target: text }, notes };
+    const intent = compileIntent(text);
+    if (intent.matched) {
+      notes.push(`target '${params.target}' was read as '${intent.target}' (${TARGETS[intent.target].name}).`);
+      return { budget: intent.target, resolved: { role, device, engine, target: intent.target }, notes };
+    }
+    notes.push(`target '${params.target}' names no use, so the role and device decide the budget.`);
+  }
+  return { budget: budgetFor(role, device, engine), resolved: { role, device, engine }, notes };
 }
 
 /**
@@ -46,9 +84,8 @@ const OPERATIONS = {
     json: true,
     async run(bytes, params) {
       const stats = analyseGlb(bytes);
-      const target = TARGETS[params.target] ? params.target : compileIntent(params.target || '').target;
-      const role = ROLES[params.role] ? params.role : 'prop';
-      return { report: { stats, evaluation: evaluate(stats, target), devices: { role, results: deviceMatrix(stats, role, ENGINES[params.engine] ? params.engine : 'unity') } } };
+      const { budget, resolved, notes } = resolveAudit(params);
+      return { report: { stats, resolved, notes, evaluation: evaluate(stats, budget), devices: { role: resolved.role, results: deviceMatrix(stats, resolved.role, resolved.engine) } } };
     },
   },
 
@@ -171,7 +208,7 @@ const OPERATIONS = {
         return { output, report, filename: `${baseName(filename, 'model')}-ktx2.glb`, contentType: 'model/gltf-binary', summary: { textures: textures.length, bytesBefore: bytes.byteLength, bytesAfter: output.byteLength, warnings: warnings.length } };
       }
       const info = sniffImage(bytes);
-      if (!info || !['image/png', 'image/jpeg'].includes(info.mime)) throw new ApiError(415, 'unsupported_input', 'Send a PNG, JPEG or GLB.');
+      if (!info || !['image/png', 'image/jpeg', 'image/webp'].includes(info.mime)) throw new ApiError(415, 'unsupported_input', 'Send a PNG, JPEG, WebP or GLB.');
       const mode = params.mode && params.mode !== 'auto' ? params.mode : bool(params.normalMap, false) ? 'uastc' : 'etc1s';
       const r = await encodeKtx2(bytes, { mode, normalMap: bool(params.normalMap, false), srgb: !bool(params.linear, bool(params.normalMap, false)), mipmaps: bool(params.mipmaps, true), quality: params.quality ? Number(params.quality) : undefined, maxSize });
       const report = { kind: 'image', mode, width: r.width, height: r.height, mipmaps: bool(params.mipmaps, true), bytesBefore: bytes.byteLength, bytesAfter: r.bytes.byteLength, gpuMemoryBytes: Math.round(r.width * r.height * (mode === 'uastc' ? 1 : 0.5) * (bool(params.mipmaps, true) ? 4 / 3 : 1)) };
@@ -185,13 +222,14 @@ const OPERATIONS = {
       const maxSize = Number(params.maxSize || 1024);
       if (!Number.isInteger(maxSize) || maxSize < 16 || maxSize > 4096) throw new ApiError(400, 'invalid_max_size', 'maxSize must be a whole number from 16 to 4096.');
       const powerOfTwo = bool(params.powerOfTwo, true);
-      const image = decodeImage(bytes);
+      const image = await decodeImage(bytes);
       const format = params.format ? `image/${params.format.toLowerCase().replace('jpg', 'jpeg')}` : image.mime;
-      if (format !== 'image/png' && format !== 'image/jpeg') throw new ApiError(400, 'invalid_format', 'format must be png or jpeg.');
+      if (!['image/png', 'image/jpeg', 'image/webp'].includes(format)) throw new ApiError(400, 'invalid_format', 'format must be png, jpeg or webp.');
       const size = fitSize(image.width, image.height, maxSize, powerOfTwo);
-      const output = encodeImage(resize(image, size.width, size.height), format, { quality: Number(params.quality) || 88 });
+      const output = await encodeAnyImage(resize(image, size.width, size.height), format, { quality: Number(params.quality) || 88, lossless: bool(params.lossless, false) });
       const report = { from: { width: image.width, height: image.height, bytes: bytes.byteLength }, to: { ...size, bytes: output.byteLength, format }, powerOfTwo };
-      return { output, report, filename: `${baseName(filename, 'texture')}-${size.width}x${size.height}.${format === 'image/png' ? 'png' : 'jpg'}`, contentType: format, summary: report };
+      const ext = { 'image/png': 'png', 'image/jpeg': 'jpg', 'image/webp': 'webp' }[format];
+      return { output, report, filename: `${baseName(filename, 'texture')}-${size.width}x${size.height}.${ext}`, contentType: format, summary: report };
     },
   },
 
@@ -200,6 +238,14 @@ const OPERATIONS = {
     async run(bytes, params, filename) {
       const { output, report } = await buildIconPack(bytes, params);
       return { output, report, filename: `${baseName(filename, 'app')}-icons.zip`, contentType: 'application/zip', summary: { platforms: report.platforms, files: report.fileCount, warnings: report.warnings.length } };
+    },
+  },
+
+  'app-assets': {
+    engine: '2d',
+    async run(bytes, params, filename) {
+      const { output, report } = await buildIconPack(bytes, { ...params, platforms: params.platforms || 'ios,android,watchos' });
+      return { output, report, filename: `${baseName(filename, 'app')}-app-assets.zip`, contentType: 'application/zip', summary: { platforms: report.platforms, files: report.fileCount, warnings: report.warnings.length } };
     },
   },
 
@@ -212,8 +258,12 @@ const OPERATIONS = {
   },
 };
 
-// Path -> operation. The short /2d and /3d paths from the first release stay as aliases.
+// Path -> operation. The product paths come first; the /3d, /ios and short /2d
+// paths from earlier releases stay as aliases so existing integrations keep working.
 const ROUTES = {
+  '/api/v1/check': 'audit',
+  '/api/v1/game-ready': 'game-ready',
+  '/api/v1/app-assets': 'app-assets',
   '/api/v1/3d/audit': 'audit',
   '/api/v1/3d/inspect': 'audit',
   '/api/v1/3d/optimize': 'optimize',
@@ -229,6 +279,9 @@ const ROUTES = {
   '/api/v1/ios/xcassets': 'xcassets',
   '/api/v1/2d/xcassets': 'xcassets',
 };
+
+/** Product names accepted as a batch `operation`. */
+const BATCH_ALIASES = { check: 'audit' };
 
 const tooLarge = (maxBytes) => new ApiError(413, 'file_too_large', `Uploads on your plan are limited to ${Math.round(maxBytes / 1048576)} MB.`);
 
@@ -287,7 +340,7 @@ async function runScreenshots(request, env, track) {
     const zip = await JSZip.loadAsync(files[0].bytes);
     inputs = [];
     for (const f of Object.values(zip.files).sort((a, b) => a.name.localeCompare(b.name))) {
-      if (!f.dir && /\.(png|jpe?g)$/i.test(f.name) && !f.name.startsWith('__MACOSX/')) inputs.push({ bytes: await f.async('uint8array'), filename: f.name });
+      if (!f.dir && /\.(png|jpe?g|webp)$/i.test(f.name) && !f.name.startsWith('__MACOSX/')) inputs.push({ bytes: await f.async('uint8array'), filename: f.name });
     }
   }
   const { output, report } = await buildScreenshots(inputs, params);
@@ -297,7 +350,7 @@ async function runScreenshots(request, env, track) {
 }
 
 const BATCH_MAX_FILES = 50;
-const BATCH_EXT = /\.(glb|gltf|obj|fbx|png|jpe?g)$/i;
+const BATCH_EXT = /\.(glb|gltf|obj|fbx|png|jpe?g|webp)$/i;
 
 /**
  * Runs one operation over many files: several multipart "files" fields or
@@ -308,7 +361,7 @@ const BATCH_EXT = /\.(glb|gltf|obj|fbx|png|jpe?g)$/i;
 async function runBatch(request, env, track) {
   const account = await authenticate(request, env);
   const { files, params } = await readUploads(request, account.plan.batchMaxMB * 1048576);
-  const opName = String(params.operation || '');
+  const opName = BATCH_ALIASES[String(params.operation || '')] ?? String(params.operation || '');
   const op = OPERATIONS[opName];
   if (!op) throw new ApiError(400, 'invalid_operation', `operation must be one of: ${Object.keys(OPERATIONS).join(', ')}.`);
 
@@ -320,7 +373,7 @@ async function runBatch(request, env, track) {
       if (!f.dir && BATCH_EXT.test(f.name) && !f.name.startsWith('__MACOSX/')) items.push({ bytes: await f.async('uint8array'), filename: f.name });
     }
   }
-  if (!items.length) throw new ApiError(400, 'empty_batch', 'No processable files found (GLB, glTF, OBJ, FBX, PNG or JPEG).');
+  if (!items.length) throw new ApiError(400, 'empty_batch', 'No processable files found (GLB, glTF, OBJ, FBX, PNG, JPEG or WebP).');
   if (items.length > BATCH_MAX_FILES) throw new ApiError(400, 'batch_too_large', `A batch can hold up to ${BATCH_MAX_FILES} files; split larger jobs across several requests.`);
 
   if (op.engine !== 'any' && !account.plan.engines.includes(op.engine)) throw new ApiError(403, 'engine_not_in_plan', `Your ${account.plan.name} plan does not include the ${op.engine.toUpperCase()} engine.`);
@@ -369,9 +422,9 @@ async function route(request, env, track) {
   const method = request.method;
 
   if (path === '/api/v1' && method === 'GET') {
-    return json({ name: 'AssetBench Cloud API', version: 'v1', docs: `${url.origin}/docs/`, auth: 'Authorization: Bearer abk_live_...', products: PRODUCTS });
+    return json({ name: 'AssetBench Cloud API', version: 'v1', docs: `${url.origin}/docs/`, auth: 'Authorization: Bearer abk_live_...', products: PRODUCTS, advanced: ADVANCED_ENDPOINTS });
   }
-  if (path === '/api/v1/pricing' && method === 'GET') return json({ currency: 'GBP', plans: publicPlans(env), products: PRODUCTS });
+  if (path === '/api/v1/pricing' && method === 'GET') return json({ currency: 'GBP', plans: publicPlans(env), products: PRODUCTS, advanced: ADVANCED_ENDPOINTS });
   if (path === '/api/v1/targets' && method === 'GET') return json({ targets: TARGETS });
   if (path === '/api/v1/formats' && method === 'GET') return json({ conversions: CONVERSIONS, screenshots: SCREENSHOT_SIZES, ktx2Modes: ['auto', 'etc1s', 'uastc'] });
   if (path === '/api/v1/devices' && method === 'GET') {
@@ -422,7 +475,7 @@ async function route(request, env, track) {
   }
 
   if (ROUTES[path]) return runSingle(request, env, ROUTES[path], track);
-  if (path === '/api/v1/ios/screenshots') return runScreenshots(request, env, track);
+  if (path === '/api/v1/app-assets/screenshots' || path === '/api/v1/ios/screenshots') return runScreenshots(request, env, track);
   if (path === '/api/v1/batch') return runBatch(request, env, track);
 
   throw new ApiError(404, 'not_found', `No endpoint ${method} ${path}. See GET /api/v1 for the list.`);

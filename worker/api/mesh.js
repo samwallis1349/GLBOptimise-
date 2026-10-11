@@ -6,7 +6,7 @@ import { LOD_CHAIN_PRESETS } from '../../src/tools/generate-lods/presets.js';
 import { ApiError } from './http.js';
 import { analyseGlb, evaluate, readDocument, writeDocument } from './glb.js';
 import { compileIntent } from './intent.js';
-import { decodeImage, encodeImage, fitSize, resize } from './images.js';
+import { DECODABLE, decodeImage, encodeAnyImage, fitSize, resize } from './images.js';
 
 /**
  * 3D engine for the API. Geometry reduction is the site's own Reduce Polys
@@ -54,9 +54,33 @@ export function resolveSettings(params, beforeStats) {
 }
 
 /** Downscales embedded PNG/JPEG textures to fit maxSize, snapping to powers of two. */
+/** Material slots whose texture is seen as colour; every other slot holds data (normals, roughness, AO…). */
+const COLOUR_SLOTS = new Set(['baseColorTexture', 'emissiveTexture', 'sheenColorTexture', 'specularColorTexture', 'diffuseTexture']);
+
+/** Every material slot (core and extension) each texture is used in, read from the property graph. */
+export function textureSlots(document) {
+  const graph = document.getGraph();
+  const slots = new Map();
+  for (const texture of document.getRoot().listTextures()) {
+    slots.set(texture, new Set(graph.listParentEdges(texture).map((edge) => edge.getName()).filter((name) => /Texture$/.test(name))));
+  }
+  return slots;
+}
+
+/** True when lossy compression would damage the texture: normal or packed data maps. */
+export function isDataTexture(slots) {
+  return [...slots].some((slot) => !COLOUR_SLOTS.has(slot));
+}
+
+/**
+ * Shrinks textures to `maxSize` (and to powers of two) in their own format:
+ * PNG stays PNG, JPEG stays JPEG, WebP stays WebP. WebP normal and data maps
+ * are written lossless, so lighting and packed channels are not damaged.
+ */
 export async function downscaleTextures(document, maxSize, warnings) {
   const changed = [];
   if (!maxSize) return changed;
+  const slots = textureSlots(document);
   for (const texture of document.getRoot().listTextures()) {
     const mime = texture.getMimeType();
     const size = texture.getSize();
@@ -65,18 +89,20 @@ export async function downscaleTextures(document, maxSize, warnings) {
     const [w, h] = size;
     const npot = (w & (w - 1)) || (h & (h - 1));
     if (Math.max(w, h) <= maxSize && !npot) continue;
-    if (mime !== 'image/png' && mime !== 'image/jpeg') {
-      warnings.push(`Texture "${texture.getName() || texture.getURI() || 'unnamed'}" is ${mime}; only PNG and JPEG textures are resized.`);
+    const label = texture.getName() || texture.getURI() || 'unnamed';
+    if (!DECODABLE.has(mime)) {
+      warnings.push(`Texture "${label}" is ${mime}, which is already GPU-compressed or not supported; it was left at ${w}x${h}.`);
       continue;
     }
     try {
       const target = fitSize(w, h, maxSize, true);
       if (target.width === w && target.height === h) continue;
-      const out = encodeImage(resize(decodeImage(bytes), target.width, target.height), mime);
+      const lossless = isDataTexture(slots.get(texture) || new Set());
+      const out = await encodeAnyImage(resize(await decodeImage(bytes), target.width, target.height), mime, { lossless });
       texture.setImage(out);
-      changed.push({ name: texture.getName() || null, from: `${w}x${h}`, to: `${target.width}x${target.height}` });
+      changed.push({ name: texture.getName() || null, format: mime.replace('image/', ''), from: `${w}x${h}`, to: `${target.width}x${target.height}`, ...(mime === 'image/webp' ? { lossless } : {}) });
     } catch (err) {
-      warnings.push(`Texture "${texture.getName() || 'unnamed'}" was left unchanged: ${err?.message || 'resize failed'}.`);
+      warnings.push(`Texture "${label}" was left unchanged: ${err?.message || 'resize failed'}.`);
     }
   }
   return changed;

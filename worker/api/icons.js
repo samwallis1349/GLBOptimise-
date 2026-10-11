@@ -69,7 +69,7 @@ export async function buildIconPack(bytes, params) {
   if (!(adaptiveScale >= 0.4 && adaptiveScale <= 1)) throw new ApiError(400, 'invalid_adaptive_scale', 'adaptiveScale must be between 0.4 and 1.');
 
   const warnings = [];
-  let master = decodeImage(bytes);
+  let master = await decodeImage(bytes);
   if (Math.min(master.width, master.height) < 512) throw new ApiError(422, 'image_too_small', `The master icon is ${master.width}x${master.height}; it must be at least 512x512 (1024x1024 recommended).`);
   if (master.width !== master.height) {
     warnings.push(`The image was ${master.width}x${master.height}; it was centre-cropped to a square.`);

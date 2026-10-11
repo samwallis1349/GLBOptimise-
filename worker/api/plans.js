@@ -1,11 +1,17 @@
 /**
- * AssetBench Cloud API plans. Prices are display-only: billing is not wired
- * to Lemon Squeezy yet, so paid keys are minted by the owner (POST
- * /api/v1/auth/keys with the API_ADMIN_KEY secret) after a sale.
+ * AssetBench Cloud API plans. Each paid plan is a Lemon Squeezy product with
+ * licence keys on, and the licence key is the API key (worker/api/billing.js).
+ *
+ *   Free        100 operations a month, one key per network.
+ *   All Access  the site's £25/month subscription; the API is included.
+ *   Studio      £99/month for teams that need 5,000 operations.
  *
  * `engines` gates which endpoint families a key may call (texture
  * endpoints work with either); `quota` is operations per calendar month
- * (UTC), or lifetime for the trial. One processed file = one operation.
+ * (UTC). One processed file = one operation. Upload caps stay at or under
+ * 100 MB: Cloudflare rejects larger request bodies, and a Worker has about
+ * 128 MB of memory, which the heaviest jobs on the biggest files can exhaust. `legacy` plans are kept only so
+ * keys sold under them keep working; they are never listed.
  */
 export const PLANS = {
   // The free plan keeps the id 'trial' so keys issued before launch stay valid.
@@ -18,65 +24,70 @@ export const PLANS = {
     engines: ['2d', '3d'],
     maxUploadMB: 25,
     batchMaxMB: 40,
-    summary: 'All seven APIs, 100 operations a month, free during launch. One key per network.',
+    summary: 'Every API, 100 operations a month. Checks are free and unlimited. One key per network.',
   },
-  studio2d: {
-    id: 'studio2d',
-    name: '2D Studio',
-    price: { amount: 29, currency: 'GBP', interval: 'month' },
-    quota: 150,
-    period: 'month',
-    engines: ['2d'],
-    maxUploadMB: 25,
-    batchMaxMB: 40,
-    summary: 'iOS asset generation (icons, xcassets, store screenshots), KTX2 and texture resizing, batch.',
-  },
-  studio3d: {
-    id: 'studio3d',
-    name: '3D Studio',
-    price: { amount: 79, currency: 'GBP', interval: 'month' },
-    quota: 150,
-    period: 'month',
-    engines: ['3d'],
-    maxUploadMB: 25,
-    batchMaxMB: 40,
-    summary: 'GLB optimisation and game-ready packs, audits, LODs, format conversion, KTX2, batch.',
-  },
-  all: {
-    id: 'all',
-    name: 'All-Access Cloud',
-    price: { amount: 99, currency: 'GBP', interval: 'month' },
-    quota: 400,
+  allaccess: {
+    id: 'allaccess',
+    name: 'All Access',
+    price: { amount: 25, currency: 'GBP', interval: 'month' },
+    quota: 1000,
     period: 'month',
     engines: ['2d', '3d'],
-    maxUploadMB: 25,
-    batchMaxMB: 40,
-    summary: 'All seven APIs with a shared monthly pool. Best value.',
+    maxUploadMB: 50,
+    batchMaxMB: 100,
+    summary: 'Included with the All Access subscription: every website tool, plus the API. Your All Access licence key is your API key.',
     bestValue: true,
+  },
+  // Id 'all' is kept from the first release so keys minted on it stay valid.
+  all: {
+    id: 'all',
+    name: 'Studio',
+    price: { amount: 99, currency: 'GBP', interval: 'month' },
+    quota: 5000,
+    period: 'month',
+    engines: ['2d', '3d'],
+    maxUploadMB: 100,
+    batchMaxMB: 100,
+    summary: 'For studios running whole asset libraries through the API every month.',
+  },
+  studio2d: {
+    id: 'studio2d', name: '2D Studio', legacy: true,
+    price: { amount: 29, currency: 'GBP', interval: 'month' }, quota: 150, period: 'month', engines: ['2d'], maxUploadMB: 25, batchMaxMB: 40,
+    summary: 'Retired plan, kept so existing keys work.',
+  },
+  studio3d: {
+    id: 'studio3d', name: '3D Studio', legacy: true,
+    price: { amount: 79, currency: 'GBP', interval: 'month' }, quota: 150, period: 'month', engines: ['3d'], maxUploadMB: 25, batchMaxMB: 40,
+    summary: 'Retired plan, kept so existing keys work.',
   },
 };
 
-/** The seven products in the package, in the order the docs present them. */
+/** The three things the API sells, in the order the docs present them. */
 export const PRODUCTS = [
-  { id: 'optimise', name: 'GLB Optimisation API', blurb: 'Upload a model; get back a compressed, reduced GLB, or a full game-ready pack fitted to a device and engine.', endpoints: ['POST /api/v1/3d/optimize', 'POST /api/v1/3d/reduce', 'POST /api/v1/3d/game-ready'] },
-  { id: 'batch', name: 'Batch Asset Processing API', blurb: 'Run any operation over up to 50 models or textures in one request (send several files or one ZIP).', endpoints: ['POST /api/v1/batch'] },
-  { id: 'ktx2', name: 'KTX2 Texture API', blurb: 'PNG, JPEG or every texture inside a GLB to GPU-compressed KTX2 (Basis Universal ETC1S / UASTC).', endpoints: ['POST /api/v1/textures/ktx2'] },
-  { id: 'audit', name: '3D Asset Audit API', blurb: 'File size, triangles, draw calls, texture memory, animation data and a mobile-readiness score per device class.', endpoints: ['POST /api/v1/3d/audit'] },
-  { id: 'convert', name: '3D Format Conversion API', blurb: 'FBX, OBJ and glTF to GLB; GLB to glTF or OBJ.', endpoints: ['POST /api/v1/3d/convert'] },
-  { id: 'lods', name: 'LOD Generation API', blurb: 'Level-of-detail chains for game engines and mobile games.', endpoints: ['POST /api/v1/3d/lods'] },
-  { id: 'ios', name: 'iOS Asset Generation API', blurb: 'App icons, store screenshot sizes and ready-to-import .xcassets packages.', endpoints: ['POST /api/v1/ios/app-icons', 'POST /api/v1/ios/xcassets', 'POST /api/v1/ios/screenshots'] },
+  { id: 'check', name: 'Check a model', free: true, blurb: 'Send a GLB and get a score for every device class, which phones and headsets can run it, and what to fix first. Free.', endpoints: ['POST /api/v1/check'] },
+  { id: 'game-ready', name: 'Make it game-ready', blurb: 'One call returns an engine-ready ZIP: optimised GLB, LOD chain, collision mesh, optional KTX2 textures and import notes for Unity, Unreal, Godot, Roblox or the web.', endpoints: ['POST /api/v1/game-ready'] },
+  { id: 'app-assets', name: 'App store assets', blurb: 'One square image becomes every app icon (Xcode AppIcon.appiconset, Android, watchOS, Play Store). Your screenshots become every store size.', endpoints: ['POST /api/v1/app-assets', 'POST /api/v1/app-assets/screenshots'] },
+];
+
+/** Single steps for developers who want one part of the pipeline on its own. */
+export const ADVANCED_ENDPOINTS = [
+  'POST /api/v1/3d/reduce',
+  'POST /api/v1/3d/optimize',
+  'POST /api/v1/3d/lods',
+  'POST /api/v1/3d/convert',
+  'POST /api/v1/textures/ktx2',
+  'POST /api/v1/textures/resize',
+  'POST /api/v1/batch',
 ];
 
 /**
- * Plans for display. Paid plans are hidden unless API_PAID_PLANS is "on"
- * (free launch); their Lemon Squeezy billing keeps working either way.
- * Checkout links come from the API_LS_CHECKOUTS var: {"studio2d":"https://…", …}.
+ * Plans for display: every plan except retired ones.
+ * Checkout links come from the API_LS_CHECKOUTS var: {"allaccess":"https://…", …}.
  */
 export function publicPlans(env = {}) {
   let checkouts = {};
   try { checkouts = typeof env.API_LS_CHECKOUTS === 'string' ? JSON.parse(env.API_LS_CHECKOUTS) : env.API_LS_CHECKOUTS || {}; } catch { checkouts = {}; }
-  const paid = env.API_PAID_PLANS === 'on';
-  return Object.values(PLANS).filter((p) => paid || p.price.amount === 0).map(({ id, name, price, quota, period, engines, maxUploadMB, batchMaxMB, summary, bestValue }) => ({
+  return Object.values(PLANS).filter((p) => !p.legacy).map(({ id, name, price, quota, period, engines, maxUploadMB, batchMaxMB, summary, bestValue }) => ({
     id, name, price, quota, period, engines, maxUploadMB, batchMaxMB, summary, bestValue: Boolean(bestValue),
     checkoutUrl: /^https:\/\/[\w.-]+\.lemonsqueezy\.com\//.test(checkouts[id] || '') ? checkouts[id] : null,
   }));

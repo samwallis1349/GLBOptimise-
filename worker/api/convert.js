@@ -2,7 +2,7 @@ import JSZip from 'jszip';
 import { Document, Logger } from '@gltf-transform/core';
 import { ApiError } from './http.js';
 import { getIO, readDocument, splitGlb } from './glb.js';
-import { sniffImage } from './images.js';
+import { decodeImage, encodeImage, sniffImage } from './images.js';
 
 /**
  * Format conversion, DOM-free:
@@ -127,6 +127,15 @@ async function glbToObj(bytes, name) {
   const matNames = new Map();
   const texFiles = new Map();
   const warnings = [];
+  // MTL files only reference PNG/JPEG reliably, so WebP textures are rewritten as lossless PNG.
+  for (const texture of root.listTextures()) {
+    if (texture.getMimeType() !== 'image/webp' || !texture.getImage()) continue;
+    try {
+      texture.setImage(encodeImage(await decodeImage(texture.getImage()), 'image/png')).setMimeType('image/png');
+    } catch (err) {
+      warnings.push(`A WebP texture could not be converted to PNG (${err?.message || 'decode failed'}) and was left out.`);
+    }
+  }
   const texFile = (texture) => {
     if (!texture) return null;
     if (!texFiles.has(texture)) {

@@ -23,14 +23,14 @@
   "limits": { "cpu_ms": 300000 },
   "vars": {
     "TRIAL_GENERATION": "2026-10-reset-1",
-    // Cloud API billing. Lemon Squeezy product id -> plan (studio2d | studio3d | all),
-    // one subscription product per plan, each with license keys enabled.
-    "API_LS_PRODUCTS": { "1426380": "studio2d", "1426381": "studio3d", "1426376": "all" },
-    // Plan -> Lemon Squeezy checkout link, shown as Subscribe buttons on /docs.
+    // Cloud API billing. Lemon Squeezy product id -> plan, each product with licence keys on.
+    // 1420844 is the site's All Access subscription: the API comes included.
+    // 1430376 is the £99/month Studio plan (5,000 operations).
+    "API_LS_PRODUCTS": { "1420844": "allaccess", "1430376": "all" },
+    // Plan -> Lemon Squeezy checkout link, shown as buttons on /docs.
     "API_LS_CHECKOUTS": {
-      "studio2d": "https://workbenchlabs.lemonsqueezy.com/checkout/buy/de4a98c1-b7f1-499b-9330-549bf7d486f8",
-      "studio3d": "https://workbenchlabs.lemonsqueezy.com/checkout/buy/d4687935-d6b6-44a2-b7f4-2cf2096130fd",
-      "all": "https://workbenchlabs.lemonsqueezy.com/checkout/buy/8725d2e5-7bd4-49d9-9755-af6b3fd9c18a"
+      "allaccess": "https://workbenchlabs.lemonsqueezy.com/checkout/buy/3d09253a-bc8b-44a4-853f-5882dc964807",
+      "all": "https://workbenchlabs.lemonsqueezy.com/checkout/buy/c65fbf3e-dc6d-43a6-9280-1013e0c36a31"
     }
   },
   // Trial start times keyed by a salted hash of the visitor's IP.

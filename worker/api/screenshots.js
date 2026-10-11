@@ -68,7 +68,7 @@ export async function buildScreenshots(inputs, params) {
   const files = [];
   const warnings = [];
   for (let i = 0; i < inputs.length; i += 1) {
-    const image = flatten(decodeImage(inputs[i].bytes), bg);
+    const image = flatten(await decodeImage(inputs[i].bytes), bg);
     const landscape = image.width > image.height;
     const base = `${String(i + 1).padStart(2, '0')}_${String(inputs[i].filename || 'screenshot').split(/[\\/]/).pop().replace(/\.[^.]+$/, '').replace(/[^\w-]+/g, '_').slice(0, 40)}`;
     for (const id of devices) {
