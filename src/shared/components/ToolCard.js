@@ -34,7 +34,7 @@ import { iconSvg } from '../utils/icons.js';
  * in their own order), and `featured` renders the double-width variant
  * using the tool's wide `banner` artwork. `headline` renders a full-row
  * card with the artwork (wide `banner` when the tool has one, else the
- * square thumbnail) beside the body, for the one tool pinned above the grid.
+ * square thumbnail) beside the body, for the most-used tool at the top of a grid.
  *
  * @param {import('../config/tools.js').TOOLS[number]} tool
  * @param {{ index?: number, featured?: boolean, headline?: boolean }} [options]
@@ -64,7 +64,7 @@ export function ToolCard(tool, { index: displayIndex, featured = false, headline
           : iconSvg(tool.icon, { class: 'tool-card__visual-icon' })
       }
       <span class="tool-card__scan" aria-hidden="true"></span>
-      <span class="tool-card__index">${wide || headline ? 'New · ' : ''}#${index}</span>
+      <span class="tool-card__index">${headline ? 'Most used · ' : wide ? 'New · ' : ''}#${index}</span>
     </div>
 
     <div class="tool-card__body">

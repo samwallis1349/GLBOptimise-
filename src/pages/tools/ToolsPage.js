@@ -1,4 +1,4 @@
-import { HEADLINE_TOOL, PINNED_TOOLS, getOrderedTools } from '../../shared/config/tools.js';
+import { getOrderedTools } from '../../shared/config/tools.js';
 import { ToolCard } from '../../shared/components/ToolCard.js';
 import { cachedUsageCounts, fetchUsageCounts, rankByUsage } from '../../services/UsageService.js';
 
@@ -19,11 +19,9 @@ export function render(container) {
   const grid = document.createElement('div');
   grid.className = 'tool-grid';
   const fill = (counts) => {
-    // Headline row: Asset Pipeline, full width.
-    // Row 1: Pinned blue mobile tools.
-    // Row 2: Top 4 most-used tools on the bench.
-    const ranked = rankByUsage(getOrderedTools(), counts, PINNED_TOOLS);
-    grid.replaceChildren(...ranked.map((tool, i) => ToolCard(tool, { index: i + 1, headline: tool.id === HEADLINE_TOOL })));
+    // Ranked purely by site-wide usage; the most-used tool gets the full-width card.
+    const ranked = rankByUsage(getOrderedTools(), counts);
+    grid.replaceChildren(...ranked.map((tool, i) => ToolCard(tool, { index: i + 1, headline: i === 0 })));
   };
   fill(cachedUsageCounts());
   fetchUsageCounts().then((counts) => grid.isConnected && fill(counts));

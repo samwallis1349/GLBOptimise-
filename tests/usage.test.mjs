@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import worker from '../worker/index.js';
-import { TOOLS, HEADLINE_TOOL, PINNED_MOBILE_TOOLS, PINNED_TOOLS, getOrderedTools } from '../src/shared/config/tools.js';
+import { TOOLS, POPULARITY_ORDER, getOrderedTools } from '../src/shared/config/tools.js';
 import { placeAtRowStart, placePairTogether, rankByUsage } from '../src/services/UsageService.js';
 
 function memoryKv() {
@@ -58,30 +58,28 @@ test('placePairTogether keeps a pair side by side, starting on an even column', 
   assert.deepEqual(ids(placePairTogether(even, ['p', 'q'])), ['a', 'b', 'p', 'q', 'c']);
 });
 
-test('PINNED_MOBILE_TOOLS pins all 4 mobile tools to the top row', () => {
-  const ranked = rankByUsage(TOOLS, { 'thumbnail-maker': 999 }, PINNED_MOBILE_TOOLS);
-  assert.deepEqual(ranked.slice(0, 4).map((t) => t.id), PINNED_MOBILE_TOOLS);
-  assert.equal(ranked[4].id, 'thumbnail-maker');
-});
-
 test('only mobile app dev tools have blue cardTheme', () => {
   const blueTools = TOOLS.filter((t) => t.cardTheme === 'blue').map((t) => t.id);
-  assert.deepEqual(blueTools, PINNED_MOBILE_TOOLS);
+  assert.deepEqual(blueTools, ['app-icon-generator', 'app-store-screenshot-generator', 'xcassets-generator', 'mobile-ready-checker']);
 });
 
-test('Asset Pipeline leads the grid, then the mobile row, even against heavy usage', () => {
-  const ranked = rankByUsage(getOrderedTools(), { 'thumbnail-maker': 999 }, PINNED_TOOLS);
-  assert.equal(HEADLINE_TOOL, 'asset-pipeline');
-  assert.deepEqual(ranked.slice(0, 5).map((t) => t.id), PINNED_TOOLS);
-  assert.equal(ranked[5].id, 'thumbnail-maker');
+test('POPULARITY_ORDER lists every tool exactly once', () => {
+  assert.equal(new Set(POPULARITY_ORDER).size, POPULARITY_ORDER.length);
+  assert.deepEqual([...POPULARITY_ORDER].sort(), TOOLS.map((t) => t.id).sort());
 });
 
-test('row 2 contains the top 4 most used tools', () => {
-  // The headline card takes its own full-width row, so card rows start at index 1.
-  const ranked = rankByUsage(getOrderedTools(), {}, PINNED_TOOLS);
-  assert.deepEqual(
-    ranked.slice(5, 9).map((t) => t.id),
-    ['line-studio', 'glb-builder', 'ktx2-texture-encoder', 'generate-lods'],
-  );
+test('the most-used tool leads the grid, and a new leader takes over', () => {
+  const ids = (counts) => rankByUsage(getOrderedTools(), counts).map((t) => t.id);
+  const before = ids({ 'line-studio': 21, 'glb-builder': 14, 'pack-pbr': 3 });
+  assert.deepEqual(before.slice(0, 3), ['line-studio', 'glb-builder', 'pack-pbr']);
+  // Pack PBR overtakes: it moves to the top and everything else shifts down one.
+  const after = ids({ 'line-studio': 21, 'glb-builder': 14, 'pack-pbr': 30 });
+  assert.deepEqual(after.slice(0, 3), ['pack-pbr', 'line-studio', 'glb-builder']);
+  assert.deepEqual(after.filter((id) => id !== 'pack-pbr'), before.filter((id) => id !== 'pack-pbr'));
 });
 
+test('with no counts yet, grids follow POPULARITY_ORDER', () => {
+  const live = getOrderedTools().filter((t) => t.status !== 'coming-soon').map((t) => t.id);
+  assert.deepEqual(rankByUsage(getOrderedTools(), {}).map((t) => t.id).slice(0, live.length), live);
+  assert.equal(getOrderedTools()[0].id, POPULARITY_ORDER[0]);
+});
