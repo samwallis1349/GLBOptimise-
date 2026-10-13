@@ -1,6 +1,6 @@
 /**
  * Re-renders the store art for a Reduce Polys edition: three 1280x800
- * screenshots and the 440x280 promo tile (plus a 300x300 store logo for
+ * screenshots, the 440x280 promo tile and the 1400x560 marquee (plus a 300x300 store logo for
  * Edge), into this folder (Chrome) or store/edge/ (Edge). Builds the
  * extension, drives its real panel in headless Chrome (with stand-ins for
  * chrome.* APIs) to capture the panel shots, renders the model before and
@@ -156,6 +156,7 @@ try {
     ['s2', 'screenshot-2-reduce.png', 1280, 800],
     ['s3', 'screenshot-3-free-check.png', 1280, 800],
     ['tile', 'promo-tile-440x280.png', 440, 280],
+    ['marquee', 'marquee-1400x560.png', 1400, 560],
   ]) {
     const page = await open(`${base}/store-art.html?shot=${shot}&deal=${deal}`, w, h, 1);
     await page.waitFor("document.title === 'ready'");

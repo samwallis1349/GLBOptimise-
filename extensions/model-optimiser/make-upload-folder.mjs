@@ -70,6 +70,7 @@ await put(SHOTS, join(STORE, 'screenshot-1-before-after.png'), '1 - before and a
 await put(SHOTS, join(STORE, 'screenshot-2-reduce.png'), '2 - reduce panel.png');
 await put(SHOTS, join(STORE, 'screenshot-3-free-check.png'), '3 - free check.png');
 await put('4 - Small promo tile 440x280', join(STORE, 'promo-tile-440x280.png'), 'promo-tile-440x280.png');
+if (!EDGE) await put('6 - Marquee promo tile 1400x560', join(STORE, 'marquee-1400x560.png'), 'marquee-1400x560.png');
 
 await text('Name.txt', edition.name);
 await text('Short description.txt', edition.description);
@@ -131,7 +132,8 @@ Dashboard: https://chrome.google.com/webstore/devconsole
    - Store icon:       "2 - Store icon 128x128\\icon-128.png"
    - Screenshots:      the three files in "3 - Screenshots", in order 1, 2, 3
    - Small promo tile: "4 - Small promo tile 440x280\\promo-tile-440x280.png"
-   - Website:          https://www.assetbench.co.uk/reduce-polys
+   - Marquee tile:     "6 - Marquee promo tile 1400x560\\marquee-1400x560.png"
+   - Website:         https://www.assetbench.co.uk/reduce-polys
    - Support:          https://www.assetbench.co.uk/contact
 
 3. Privacy practices tab: follow "${TEXT}\\Privacy practices tab.txt"

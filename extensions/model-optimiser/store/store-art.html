@@ -1,7 +1,7 @@
 <!doctype html>
 <!--
   Chrome Web Store art for Reduce Polys, captured by render-store-art.mjs:
-  ?shot=s1|s2|s3 (1280x800) or tile (440x280). Expects, next to it: the
+  ?shot=s1|s2|s3 (1280x800), tile (440x280) or marquee (1400x560). Expects, next to it: the
   built extension's icons/, panel screenshots rp-reduced.png and rp-check.png,
   models before.glb / after.glb, and three.js under build/ and jsm/.
   The pricing line on s2 comes from ?deal=.
@@ -37,6 +37,13 @@
   #tile .logo img { width: 54px; height: 54px; }
   #tile h1 { font-size: 46px; margin: 16px 0 8px; }
   #tile p.sub { font-size: 20px; }
+  #marquee { grid-template-columns: 500px 1fr; gap: 44px; padding: 56px 60px; align-items: center; }
+  #marquee h1 { font-size: 72px; margin: 22px 0 14px; }
+  #marquee p.sub { font-size: 23px; }
+  #marquee ul.ticks { font-size: 19px; margin-top: 22px; gap: 10px; }
+  #marquee .pair { height: 448px; margin: 0; gap: 22px; }
+  #marquee .tag { font-size: 26px; left: 18px; top: 14px; }
+  #marquee .tag small { font-size: 14px; }
 </style></head>
 <body>
 <section class="shot" id="s1">
@@ -82,16 +89,34 @@
   <p class="sub">GLB polygon reducer that runs in your browser.</p>
 </section>
 
+<section class="shot" id="marquee">
+  <div>
+    <div class="logo"><img src="icons/icon-128.png" alt="">AssetBench</div>
+    <h1>Reduce <span>Polys</span></h1>
+    <p class="sub">Cut <span id="mCut">75%</span> of a GLB's triangles in your browser and keep the look.</p>
+    <ul class="ticks">
+      <li>Textures and materials kept</li>
+      <li>Nothing uploaded</li>
+      <li class="deal"></li>
+    </ul>
+  </div>
+  <div class="pair">
+    <div class="card"><canvas id="mBefore"></canvas><div class="tag"><span id="mTrisBefore"></span> <small>triangles · original</small></div></div>
+    <div class="card after"><canvas id="mAfter"></canvas><div class="tag"><span id="mTrisAfter"></span> <small>triangles · reduced</small></div></div>
+  </div>
+</section>
+
 <script type="module">
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 const q = new URLSearchParams(location.search);
 const which = q.get('shot') || 's1';
-const [w, h] = which === 'tile' ? [440, 280] : [1280, 800];
+const [w, h] = { tile: [440, 280], marquee: [1400, 560] }[which] || [1280, 800];
 document.body.style.setProperty('--w', w + 'px');
 document.body.style.setProperty('--h', h + 'px');
 document.getElementById(which).classList.add('on');
 document.getElementById('deal').textContent = q.get('deal') || '';
+for (const el of document.querySelectorAll('.deal')) el.textContent = q.get('deal') || '';
 
 async function render(canvasId, file) {
   const canvas = document.getElementById(canvasId);
@@ -130,6 +155,13 @@ if (which === 's1') {
   document.getElementById('trisBefore').textContent = before.toLocaleString('en-GB');
   document.getElementById('trisAfter').textContent = after.toLocaleString('en-GB');
   document.getElementById('cut').textContent = `${Math.round((1 - after / before) * 100)}%`;
+}
+if (which === 'marquee') {
+  const before = await render('mBefore', 'before.glb');
+  const after = await render('mAfter', 'after.glb');
+  document.getElementById('mTrisBefore').textContent = before.toLocaleString('en-GB');
+  document.getElementById('mTrisAfter').textContent = after.toLocaleString('en-GB');
+  document.getElementById('mCut').textContent = `${Math.round((1 - after / before) * 100)}%`;
 }
 document.title = 'ready';
 </script>
