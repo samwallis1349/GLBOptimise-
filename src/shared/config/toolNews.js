@@ -9,7 +9,7 @@ export const TOOL_NEWS = {
     date: 'October 2026',
     title: 'iOS 18 Dark & Tinted Mode Icons + AI Prompt Crafter',
     content:
-      'Added automatic Apple Squircle clipping, Dark and Tinted icon previews, and 1-click Xcode AppIcon.appiconset export with complete Contents.json manifests. Android mipmap packages and Unity/Godot game sprite sheets now export at zero quality loss.',
+      'Added automatic Apple Squircle clipping, Dark and Tinted icon previews, and 1-click Xcode AppIcon.appiconset export with complete Contents.json manifests. Android mipmap packages and Unity/Godot game sprite sheets export from the same 1024×1024 master.',
     proTipTitle: 'Apple App Store Icon Guidelines',
     proTip:
       'Always design on a 1024×1024 flat canvas without pre-rounded corners. Apple applies the continuous curve squircle mask and drop shadow automatically upon App Store ingestion.',
@@ -51,7 +51,7 @@ export const TOOL_NEWS = {
   'line-studio': {
     version: 'v1.8 Update',
     date: 'October 2026',
-    title: 'Neural Line Smoothing & Vector Clean Trace',
+    title: 'Line Smoothing & Vector Clean Trace',
     content:
       'Turn rough scanned sketches and coloring book pages into immaculate, smooth vector strokes. Automatically joins broken line gaps, normalizes line weights, and strips dirty paper backgrounds with instant SVG and transparent PNG export.',
     proTipTitle: 'Crisp Vector Cleanliness',
@@ -251,10 +251,10 @@ export const TOOL_NEWS = {
     date: 'October 2026',
     title: 'Keyframe Decimation & Curve Resampling',
     content:
-      'Reduce redundant keyframe tracks from Mixamo or mocap data with tolerance-based curve fitting, cutting animation payload sizes by up to 80%.',
+      'Reduce redundant keyframe tracks from Mixamo or mocap data with tolerance-based curve fitting, often cutting animation data substantially.',
     proTipTitle: 'Linear vs Spline Keyframes',
     proTip:
-      'Constant-interval 60fps raw mocap data contains massive redundancy. Curve fitting eliminates 70% of redundant keyframes without any noticeable animation drift.',
+      'Constant-interval 60fps raw mocap data contains massive redundancy. Curve fitting removes keyframes that add nothing to the motion; check the before-and-after playback for drift on fast or subtle movements.',
     relatedTools: ['strip-animations', 'animation-inspector', 'rig-inspector'],
   },
   'rig-inspector': {

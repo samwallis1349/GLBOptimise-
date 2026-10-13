@@ -14,7 +14,7 @@ test('index.html homepage tags match HOME_SEO', () => {
 
 test('tool pages get their own title, description, canonical and crawlable summary', () => {
   const html = renderPage(indexHtml, '/line-studio');
-  assert.match(html, /<title>Line Studio — Free Colouring Page &amp; Line Art Cleaner \| Asset Bench<\/title>/);
+  assert.match(html, /<title>Line Art Cleaner — Colouring Pages to PNG &amp; SVG \| Asset Bench<\/title>/);
   assert.match(html, /<link rel="canonical" href="https:\/\/www\.assetbench\.co\.uk\/line-studio"/);
   assert.match(html, /property="og:image"\s+content="https:\/\/www\.assetbench\.co\.uk\/thumbnails\/line-studio\.webp"/);
   assert.match(html, /<h1>Line Studio<\/h1>/);

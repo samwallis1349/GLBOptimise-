@@ -49,9 +49,9 @@ export const TOOLS = [
     icon: 'smartphone',
     thumbnail: '/thumbnails/app-icon-generator.webp',
     seo: {
-      title: 'iOS App Icon Generator — AI Prompt Crafter & Multi-Platform Export | Asset Bench',
+      title: 'App Icon Generator — iOS, Android & Game UI Icons | Asset Bench',
       description:
-        'Craft optimized Midjourney, DALL-E, and Flux AI prompts or upload an icon. Export Xcode-ready AppIcon.appiconset with Contents.json, Android mipmaps, Play Store assets, and Unity/Godot game sprite sheets free in your browser.',
+        'Make an app icon from your artwork or a built-in sample, or write an AI image prompt for Midjourney, DALL-E or Flux. Export an Xcode AppIcon.appiconset, Android mipmaps and game UI sprite sheets.',
     },
     cardTheme: 'blue',
     features: [
@@ -71,9 +71,9 @@ export const TOOLS = [
     icon: 'smartphone',
     thumbnail: '/thumbnails/app-store-screenshot-generator.webp',
     seo: {
-      title: 'App Store Screenshot Generator — Titanium Mockups & Marketing Slides | Asset Bench',
+      title: 'App Store Screenshot Generator — iPhone Frames, 6.9" | Asset Bench',
       description:
-        'Generate App Store Connect screenshots in browser. Realistic iPhone frames, gradient backgrounds, bold marketing typography, and multi-display export.',
+        'Turn app screenshots into App Store marketing slides: iPhone 16 Pro frames, gradient backgrounds and headlines. Export 6.9" (1320×2868) and 6.5" PNGs, up to 5 slides as a ZIP.',
     },
     cardTheme: 'blue',
     features: [
@@ -93,9 +93,9 @@ export const TOOLS = [
     icon: 'package-open',
     thumbnail: '/thumbnails/xcassets-generator.webp',
     seo: {
-      title: 'XCAssets Generator — Xcode Asset Catalog & Retina Slicer | Asset Bench',
+      title: 'Xcode Asset Catalog Generator — @1x @2x @3x | Asset Bench',
       description:
-        'Convert SVGs and PNGs into Xcode Assets.xcassets catalogs with @1x, @2x, @3x retina slicing, Dark Mode pairs, and valid Apple Contents.json manifests.',
+        'Turn SVGs and PNGs into an Xcode Assets.xcassets catalog with @1x, @2x and @3x slices, Dark Mode pairs and Contents.json. Download as a ZIP with SwiftUI and UIKit snippets.',
     },
     cardTheme: 'blue',
     features: [
@@ -114,6 +114,11 @@ export const TOOLS = [
     keywords: ['sprites', 'alpha', 'cutout', 'background remover', 'sprite sheet cutter', 'trim'],
     icon: 'image-down',
     thumbnail: '/thumbnails/alpha-cutout.webp',
+    seo: {
+      title: 'Remove Background & Split Sprite Sheets — PNG | Asset Bench',
+      description:
+        'Remove a solid or gradient background from sprites, icons and effects, clean up the edges, and split a sprite sheet into separate transparent PNG frames. Runs in your browser.',
+    },
     features: [
       { icon: 'scan', label: 'Auto detect' },
       { icon: 'grid', label: 'Sprite sheets' },
@@ -131,9 +136,9 @@ export const TOOLS = [
     icon: 'image-down',
     thumbnail: '/thumbnails/line-studio.webp',
     seo: {
-      title: 'Line Studio — Free Colouring Page & Line Art Cleaner | Asset Bench',
+      title: 'Line Art Cleaner — Colouring Pages to PNG & SVG | Asset Bench',
       description:
-        'Clean up fine line art and colouring book pages free in your browser. Turn rough, broken lines smooth at an even line weight, join gaps, remove the white background and export a transparent PNG or SVG.',
+        'Clean up line art and colouring book pages: smooth rough lines to an even weight, join small gaps, remove the white background and export a transparent PNG or traced SVG.',
     },
     features: [
       { icon: 'wand-2', label: 'Smooth lines' },
@@ -151,6 +156,11 @@ export const TOOLS = [
     keywords: ['isometric', 'sprite sheet', 'eight directions', 'orthographic'],
     icon: 'camera',
     thumbnail: '/thumbnails/model-to-isometric.webp',
+    seo: {
+      title: '3D Model to Isometric Sprites — 8 Directions | Asset Bench',
+      description:
+        'Render a GLB or FBX model as eight consistent isometric sprites, with animation frames per direction, lighting and transparent backgrounds. Download PNGs or a sprite sheet ZIP.',
+    },
     features: [
       { icon: 'camera', label: '8 views' },
       { icon: 'image-down', label: 'PNG + ZIP' },
@@ -192,9 +202,9 @@ export const TOOLS = [
     // Wide art for the full-width headline card (2.5:1).
     banner: '/thumbnails/asset-pipeline-wide.webp',
     seo: {
-      title: 'Asset Pipeline — Batch GLB Optimiser with LODs, Texture Compression & Validation | Asset Bench',
+      title: 'Batch GLB Optimiser — LODs, KTX2 & Validation | Asset Bench',
       description:
-        'Optimise a whole folder of GLB and glTF models in your browser: polygon reduction, per-role texture resizing and KTX2/WebP compression, LOD chains, budgets, validation, reports and one ZIP download. Presets for Unity, Unreal, Godot, three.js, mobile and VR.',
+        'Optimise a whole folder of GLB and glTF models at once: polygon reduction, texture resizing, KTX2 or WebP compression, LOD chains, budgets and validation, with one ZIP out.',
     },
     features: [
       { icon: 'layers', label: 'Whole folders' },
@@ -299,6 +309,11 @@ export const TOOLS = [
     keywords: ['clips', 'clean up', 'delete animation', 'rig', 'keyframes'],
     icon: 'film-off',
     thumbnail: '/thumbnails/strip-animations.webp',
+    seo: {
+      title: 'Remove Animations from GLB — Delete Unused Clips | Asset Bench',
+      description:
+        'See every animation clip in a GLB or glTF, remove the ones you don’t need, and spot empty or duplicate clips. Download a smaller model with only the animations you keep.',
+    },
     features: [
       { icon: 'film-off', label: 'Cut clips' },
       { icon: 'shrink', label: 'Smaller' },
@@ -315,6 +330,11 @@ export const TOOLS = [
     keywords: ['keyframes', 'curve', 'compress animation', 'clips'],
     icon: 'activity',
     thumbnail: '/thumbnails/animation-optimiser.webp',
+    seo: {
+      title: 'GLB Animation Optimiser — Reduce Keyframes | Asset Bench',
+      description:
+        'Shrink GLB and glTF animation data by removing redundant keyframes, with a lossless mode and stronger presets. Compare before and after, and see how much each clip saves.',
+    },
     features: [
       { icon: 'shrink', label: 'Fewer keys' },
       { icon: 'shield', label: 'Motion' },
@@ -328,10 +348,15 @@ export const TOOLS = [
     id: 'pack-pbr',
     name: 'Pack PBR',
     route: '/pack-pbr',
-    description: 'Pack PBR maps into efficient channel textures.',
+    description: 'Pack PBR maps into one channel-packed texture, or generate a full PBR set from a single image.',
     keywords: ['metalness', 'roughness', 'ao', 'orm', 'channel packing'],
     icon: 'layers-3',
     thumbnail: '/thumbnails/pack-pbr.webp',
+    seo: {
+      title: 'ORM Texture Packer & Image to PBR Maps | Asset Bench',
+      description:
+        'Pack ambient occlusion, roughness and metallic maps into one ORM texture (or a Unity HDRP mask), or generate a full PBR map set from a single surface image. Runs in your browser.',
+    },
     features: [
       { icon: 'layers-3', label: 'ORM pack' },
       { icon: 'image-down', label: 'Fewer maps' },
@@ -415,6 +440,11 @@ export const TOOLS = [
     keywords: ['loose parts', 'by material', 'separate', 'break apart', 'export objects', 'part splitter', 'explode', 'fbx', 'obj', 'gltf'],
     icon: 'git-branch',
     thumbnail: '/thumbnails/model-splitter.webp',
+    seo: {
+      title: 'Split a 3D Model Into Parts — GLB, FBX, OBJ | Asset Bench',
+      description:
+        'Split a GLB, glTF, FBX or OBJ model by loose parts, materials or objects, set each part’s pivot, and export them as separate GLB or glTF files. Keeps rigs and animations.',
+    },
     features: [
       { icon: 'git-branch', label: 'Split' },
       { icon: 'package-open', label: 'Per part' },
@@ -454,6 +484,11 @@ export const TOOLS = [
     keywords: ['mobile', 'phone', 'performance', 'budget', 'vr', 'quest', 'draw calls', 'triangles', 'texture memory', 'check', 'game ready'],
     icon: 'smartphone',
     thumbnail: '/thumbnails/mobile-ready-checker.webp',
+    seo: {
+      title: 'Mobile Ready Checker — GLB Poly & Texture Budgets | Asset Bench',
+      description:
+        'Check a GLB against budgets for mobile games, standalone VR and web 3D viewers: triangles, texture memory and draw calls, with a score and a link to the tool that fixes each problem.',
+    },
     cardTheme: 'blue',
     features: [
       { icon: 'smartphone', label: 'Phone & VR' },
@@ -471,6 +506,11 @@ export const TOOLS = [
     keywords: ['diff', 'before after', 'side by side', 'versus', 'regression', 'slider'],
     icon: 'columns-2',
     thumbnail: '/thumbnails/asset-compare.webp',
+    seo: {
+      title: 'Compare Two GLB Models — Side by Side & Stats | Asset Bench',
+      description:
+        'Compare two 3D models side by side or with a slider, with a stat-by-stat diff of triangles, textures, materials and animations. Check an optimised model against the original.',
+    },
     features: [
       { icon: 'columns-2', label: 'Compare' },
       { icon: 'gauge', label: 'Stat diff' },
@@ -487,6 +527,11 @@ export const TOOLS = [
     keywords: ['audit', 'batch', 'summary', 'export csv', 'score', 'budget', 'library', 'pdf'],
     icon: 'file-text',
     thumbnail: '/thumbnails/asset-report.webp',
+    seo: {
+      title: '3D Asset Library Audit — Batch GLB Report & CSV | Asset Bench',
+      description:
+        'Audit a whole folder of GLB and glTF models: scores, platform budgets, errors and thumbnails for every asset. Export the report as CSV or JSON, or print it as a PDF.',
+    },
     features: [
       { icon: 'file-text', label: 'Audit' },
       { icon: 'grid', label: 'Batch' },
@@ -504,6 +549,11 @@ export const TOOLS = [
     keywords: ['skeleton', 'joints', 'weights', 'skin', 'rigging'],
     icon: 'bone',
     thumbnail: '/thumbnails/rig-inspector.webp',
+    seo: {
+      title: 'Rig Inspector — Check GLB Bones & Skin Weights | Asset Bench',
+      description:
+        'Inspect the skeleton of a GLB or glTF: bone hierarchy, joint weights and skinning. Finds unweighted and misnormalised vertices and duplicate joint names before you ship.',
+    },
     features: [
       { icon: 'bone', label: 'Joints' },
       { icon: 'search', label: 'Weights' },
@@ -520,6 +570,11 @@ export const TOOLS = [
     keywords: ['clips', 'preview', 'playback', 'timeline'],
     icon: 'play-circle',
     thumbnail: '/thumbnails/animation-inspector.webp',
+    seo: {
+      title: 'GLB Animation Viewer — Clips, Curves & Loops | Asset Bench',
+      description:
+        'Play and scrub the animation clips in a GLB or glTF, view each node’s curves, and check whether clips loop cleanly. Flags empty tracks and other common animation issues.',
+    },
     features: [
       { icon: 'play-circle', label: 'Preview' },
       { icon: 'activity', label: 'Curves' },
@@ -532,10 +587,15 @@ export const TOOLS = [
     id: 'thumbnail-maker',
     name: 'Thumbnail Maker',
     route: '/thumbnail-maker',
-    description: 'Create thumbnails from GLBs and FBXs.',
+    description: 'Render thumbnails, sprite sheets and catalogues from GLB, glTF and FBX models.',
     keywords: ['preview image', 'render', 'icon', 'snapshot'],
     icon: 'camera',
     thumbnail: '/thumbnails/thumbnail-maker.webp',
+    seo: {
+      title: '3D Model Thumbnail Generator — GLB & FBX to PNG | Asset Bench',
+      description:
+        'Render thumbnails for a batch of GLB, glTF and FBX models, then download them as PNGs, a sprite sheet or a printable asset catalogue. Runs in your browser.',
+    },
     features: [
       { icon: 'camera', label: 'Renders' },
       { icon: 'image-down', label: 'PNG out' },
