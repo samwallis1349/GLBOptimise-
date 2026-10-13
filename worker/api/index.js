@@ -416,6 +416,19 @@ function summarizeAudit(report) {
   return { triangles: report.stats.triangles, score: report.evaluation.score, verdict: report.evaluation.verdict };
 }
 
+/** Methods each fixed-path endpoint in route() answers, for 405 replies. */
+const FIXED_METHODS = {
+  '/api/v1': 'GET',
+  '/api/v1/pricing': 'GET',
+  '/api/v1/targets': 'GET',
+  '/api/v1/formats': 'GET',
+  '/api/v1/devices': 'GET',
+  '/api/v1/auth/keys': 'POST or DELETE',
+  '/api/v1/auth/me': 'GET',
+  '/api/v1/track': 'POST',
+  '/api/v1/stats': 'GET',
+};
+
 async function route(request, env, track) {
   const url = new URL(request.url);
   const path = url.pathname.replace(/\/+$/, '') || '/';
@@ -478,6 +491,8 @@ async function route(request, env, track) {
   if (path === '/api/v1/app-assets/screenshots' || path === '/api/v1/ios/screenshots') return runScreenshots(request, env, track);
   if (path === '/api/v1/batch') return runBatch(request, env, track);
 
+  // A real endpoint asked with the wrong method (e.g. a browser GET of a POST-only path) is a 405, not a 404.
+  if (FIXED_METHODS[path]) throw new ApiError(405, 'method_not_allowed', `${path} takes ${FIXED_METHODS[path]}, not ${method}. See GET /api/v1 for the list.`);
   throw new ApiError(404, 'not_found', `No endpoint ${method} ${path}. See GET /api/v1 for the list.`);
 }
 

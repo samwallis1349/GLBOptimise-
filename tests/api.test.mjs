@@ -49,6 +49,16 @@ test('pricing, targets and intent are public', async () => {
   assert.equal(intent.target, 'web');
 });
 
+test('a real endpoint asked with the wrong method is a 405, an unknown path a 404', async () => {
+  const { call } = setup();
+  for (const path of ['/api/v1/auth/keys', '/api/v1/track']) {
+    const res = await call(path);
+    assert.equal(res.status, 405, path);
+    assert.equal((await res.json()).error.code, 'method_not_allowed');
+  }
+  assert.equal((await call('/api/v1/nope')).status, 404);
+});
+
 test('one working free key per network, never a paid plan without the owner key', async () => {
   const { call } = setup();
   const req = (ip, body = {}) => call('/api/v1/auth/keys', { method: 'POST', headers: { 'CF-Connecting-IP': ip, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
