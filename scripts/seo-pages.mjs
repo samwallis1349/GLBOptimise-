@@ -17,6 +17,8 @@ import { readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { TOOLS } from '../src/shared/config/tools.js';
 import { SITE_URL, SITE_NAME, STATIC_PAGES, pageSeo } from '../src/shared/config/seo.js';
+import { getToolGuide } from '../src/shared/config/toolGuides.js';
+import { toolGuideMarkup } from '../src/shared/components/ToolGuide.js';
 
 const LIVE = new Set(['available', 'beta']);
 
@@ -55,6 +57,7 @@ export function renderPage(indexHtml, path) {
         <h1>${esc(seo.name ?? SITE_NAME)}</h1>
         <p>${esc(seo.description)}</p>
         ${tool?.features?.length ? `<ul>${tool.features.map((f) => `<li>${esc(f.label)}</li>`).join('')}</ul>` : ''}
+        ${tool && getToolGuide(tool.id) ? toolGuideMarkup(getToolGuide(tool.id)) : ''}
         <p><a href="/tools">All ${SITE_NAME} tools</a></p>
         ${links ? `<ul>${links}</ul>` : ''}
       </main>

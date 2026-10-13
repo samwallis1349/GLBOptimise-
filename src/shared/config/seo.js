@@ -17,9 +17,9 @@ const DEFAULT_IMAGE = `${SITE_URL}/branding/asset-bench-logo.svg`;
 /** Must match the homepage tags in index.html. */
 export const HOME_SEO = {
   path: '/',
-  title: 'Asset Bench — Free browser-based 3D asset optimisation tools',
+  title: 'Asset Bench — Browser-based 3D asset optimisation tools',
   description:
-    'Free browser-based tools to optimise, compress, inspect and convert 3D assets (GLB/glTF) for games and realtime apps. Reduce polys, compress textures, generate LODs and more — nothing ever leaves your device.',
+    'Browser-based tools to optimise, compress, inspect and convert 3D assets (GLB/glTF) for games and realtime apps. Reduce polys, compress textures, generate LODs and more — nothing ever leaves your device.',
 };
 
 /** Non-tool pages, in sitemap order. */
@@ -28,7 +28,7 @@ export const STATIC_PAGES = [
   {
     path: '/tools',
     name: 'All Tools',
-    title: `All Tools — Free browser-based asset tools | ${SITE_NAME}`,
+    title: `All Tools — Browser-based asset tools | ${SITE_NAME}`,
     description:
       'Every Asset Bench tool in one place: optimise GLBs, reduce polys, compress textures, clean up line art, make sprites and thumbnails — free in your browser, nothing uploaded.',
     changefreq: 'weekly',
@@ -90,8 +90,8 @@ export function toolSeo(tool) {
   return {
     path: tool.route,
     name: tool.name,
-    title: tool.seo?.title ?? `${tool.name} — Free in-browser tool | ${SITE_NAME}`,
-    description: tool.seo?.description ?? `${tool.description} Free, in your browser — nothing is uploaded.`,
+    title: tool.seo?.title ?? `${tool.name} — Runs in your browser, no upload | ${SITE_NAME}`,
+    description: tool.seo?.description ?? `${tool.description} Runs in your browser — nothing is uploaded.`,
     image: tool.thumbnail ? `${SITE_URL}${tool.thumbnail}` : DEFAULT_IMAGE,
   };
 }

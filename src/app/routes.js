@@ -4,6 +4,7 @@ import { Paywall } from '../shared/components/Paywall.js';
 import { ToolOffer } from '../shared/components/ToolOffer.js';
 import { ExtensionBar } from '../shared/components/ExtensionBar.js';
 import { ToolNews } from '../shared/components/ToolNews.js';
+import { ToolGuide } from '../shared/components/ToolGuide.js';
 import { AdSenseAd } from '../shared/components/AdSenseAd.js';
 import { initTrial } from '../services/TrialService.js';
 import { recordToolOpen } from '../services/UsageService.js';
@@ -37,6 +38,9 @@ async function mountTool(tool, container, params) {
   if (offer) container.prepend(offer);
   const extension = ExtensionBar(tool);
   if (extension) container.prepend(extension);
+  // How-to guide and FAQs, then editorial news and pro tips
+  const guide = ToolGuide(tool);
+  if (guide) container.append(guide);
   // Editorial news, updates, and pro tips for this tool
   const news = ToolNews(tool);
   if (news) container.append(news);

@@ -168,6 +168,11 @@ export const TOOLS = [
     keywords: ['compress', 'shrink', 'draco', 'meshopt', 'file size'],
     icon: 'package-open',
     thumbnail: '/thumbnails/optimise-glb.webp',
+    seo: {
+      title: 'Compress GLB Online — Draco, Meshopt & Textures | Asset Bench',
+      description:
+        'Compress GLB and glTF files in your browser: Draco or Meshopt geometry compression, texture downscaling and cleanup in one pass, with a before-and-after preview. Nothing is uploaded.',
+    },
     features: [
       { icon: 'shrink', label: 'Smaller' },
       { icon: 'shield', label: 'Quality' },
@@ -207,6 +212,11 @@ export const TOOLS = [
     keywords: ['decimate', 'simplify', 'triangles', 'polygons', 'lod', 'mesh'],
     icon: 'shrink',
     thumbnail: '/thumbnails/reduce-polys.webp',
+    seo: {
+      title: 'Reduce Polygon Count of GLB Models Online | Asset Bench',
+      description:
+        'Lower the triangle count of GLB and glTF models while keeping UVs, normals and material edges intact. Presets or a custom target, wireframe preview, and nothing is uploaded.',
+    },
     features: [
       { icon: 'shrink', label: 'Low tris' },
       { icon: 'shield', label: 'Keep form' },
@@ -223,6 +233,11 @@ export const TOOLS = [
     keywords: ['ktx2', 'basis', 'jpeg', 'png', 'webp', 'image', 'resolution'],
     icon: 'image-down',
     thumbnail: '/thumbnails/compress-textures.webp',
+    seo: {
+      title: 'Compress GLB Textures — KTX2, WebP, AVIF & JPEG | Asset Bench',
+      description:
+        'Resize and re-encode the textures inside GLB and glTF models: 4K to 256, as KTX2 (ETC1S/UASTC), WebP, AVIF, JPEG or PNG. The quickest way to shrink a model, all in your browser.',
+    },
     features: [
       { icon: 'image-down', label: 'Smaller' },
       { icon: 'shield', label: 'Detail' },
@@ -262,6 +277,11 @@ export const TOOLS = [
     keywords: ['lod', 'detail', 'distance', 'performance', 'mesh'],
     icon: 'layers',
     thumbnail: '/thumbnails/generate-lods.webp',
+    seo: {
+      title: 'Generate LODs for GLB Models Online | Asset Bench',
+      description:
+        'Create LOD0–LOD3 levels of detail from one GLB or glTF model for Unity, Unreal and Three.js. Preview each level, then download one or all as a ZIP. Runs in your browser.',
+    },
     features: [
       { icon: 'layers', label: 'Multi-LOD' },
       { icon: 'gauge', label: 'Faster' },
@@ -328,6 +348,11 @@ export const TOOLS = [
     keywords: ['downscale', 'resolution', 'image'],
     icon: 'maximize-2',
     thumbnail: '/thumbnails/texture-resizer.webp',
+    seo: {
+      title: 'Batch Texture Resizer — 4K, 2K, 1K to WebP/PNG | Asset Bench',
+      description:
+        'Resize up to 40 PNG, JPEG or WebP textures at once to 4K, 2K, 1K, 512 or a custom size, and save as WebP, PNG or JPEG. Power-of-two presets for games. Runs in your browser.',
+    },
     features: [
       { icon: 'maximize-2', label: 'Smaller' },
       { icon: 'shield', label: 'Detail' },
@@ -346,6 +371,11 @@ export const TOOLS = [
     keywords: ['fbx', 'obj', 'gltf', 'glb', 'usd', 'usdz', 'stl', 'ply', 'dae', 'collada', '3mf', '3ds', 'pmx', 'vox', 'x3d', 'vrml', 'format', 'model convertor', 'model converter'],
     icon: 'refresh-cw',
     thumbnail: '/thumbnails/convert-files.webp',
+    seo: {
+      title: '3D Model Converter — FBX, OBJ, STL to GLB Online | Asset Bench',
+      description:
+        'Convert 3D models between 24 input and 14 output formats, including FBX to GLB, OBJ to GLB, DAE, STL, PLY and 3MF. Runs in your browser, so your files are never uploaded.',
+    },
     features: [
       { icon: 'refresh-cw', label: 'Formats' },
       { icon: 'package-open', label: 'GLB out' },
@@ -362,6 +392,11 @@ export const TOOLS = [
     keywords: ['arranger', 'arrange', 'combine', 'join', 'assemble', 'scene build', 'layout', 'place', 'level', 'merge'],
     icon: 'package-plus',
     thumbnail: '/thumbnails/glb-builder.webp',
+    seo: {
+      title: 'Merge GLB Files Online — Combine Models Into One | Asset Bench',
+      description:
+        'Place GLB, glTF and FBX models on a ground plane, move, rotate and scale them, and export one merged GLB scene. No Blender needed, and nothing is uploaded.',
+    },
     // Double-width artwork for the featured slot on the All Tools page.
     banner: '/thumbnails/glb-builder-wide.webp',
     features: [
@@ -398,6 +433,11 @@ export const TOOLS = [
     keywords: ['inspect', 'debug', 'structure', 'validate', 'json', 'scene graph', 'hierarchy', 'wireframe', 'uv', 'check'],
     icon: 'search',
     thumbnail: '/thumbnails/inspect-glb.webp',
+    seo: {
+      title: 'GLB Viewer & Inspector — See What Makes a GLB Big | Asset Bench',
+      description:
+        'Open a GLB or glTF and explore its scene tree, meshes, materials, textures, animations and size breakdown. Check Draco, Meshopt and KTX2 extensions. In your browser, no upload.',
+    },
     features: [
       { icon: 'search', label: 'Structure' },
       { icon: 'file-text', label: 'Report' },
