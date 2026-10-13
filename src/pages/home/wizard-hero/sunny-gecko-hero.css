@@ -88,3 +88,34 @@
 @media (prefers-reduced-motion: reduce) {
   .sunny-hero__glow { opacity: .18; }
 }
+
+/* Shown over the still when Sunny didn't start by himself (reduced motion, Data Saver, failed load). */
+.sunny-hero__play {
+  position: absolute;
+  z-index: 2;
+  left: 50%;
+  bottom: 16px;
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 16px;
+  border: 1px solid #ffbd43;
+  border-radius: 999px;
+  background: rgba(16, 18, 15, .82);
+  color: #ffbd43;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.sunny-hero__play:hover,
+.sunny-hero__play:focus-visible {
+  background: #ffbd43;
+  color: #10120f;
+}
+
+.sunny-hero__play[hidden] {
+  display: none;
+}

@@ -47,12 +47,14 @@ export function SunnyGeckoHero() {
         <img src="/hero/sunny-poster.png" width="1240" height="1069" decoding="async" fetchpriority="high"
           alt="Sunny the gecko, a cartoon lizard in sunglasses, a Hawaiian shirt and red trainers, walking with his tongue out">
       </picture>
+      <button type="button" class="sunny-hero__play" data-el="play" hidden><span aria-hidden="true">▶</span> Watch Sunny walk</button>
     </div>
     <p class="sunny-hero__caption">Sunny the Gecko <span>·</span> always exploring</p>
   `;
 
   const stage = section.querySelector('[data-el="stage"]');
   const poster = section.querySelector('[data-el="poster"]');
+  const play = section.querySelector('[data-el="play"]');
 
   function mount() {
     let disposed = false;
@@ -68,13 +70,26 @@ export function SunnyGeckoHero() {
       poster.hidden = false;
     };
 
+    // When Sunny stays still (reduced motion, Data Saver, or a failed load),
+    // the visitor can still choose to start him.
+    const offerPlay = (label) => {
+      play.lastChild.textContent = ` ${label}`;
+      play.hidden = false;
+    };
+    play.onclick = () => {
+      play.hidden = true;
+      start();
+    };
+
     const still = reasonToStayStill();
     if (still) {
       stage.dataset.mode = `still: ${still}`;
-      return () => {};
+      if (still !== 'no WebGL') offerPlay('Watch Sunny walk');
+    } else {
+      start();
     }
 
-    (async () => {
+    async function start() {
       try {
         const [THREE, { GLTFLoader }, { MeshoptDecoder }] = await Promise.all([
           import('three'),
@@ -179,10 +194,12 @@ export function SunnyGeckoHero() {
         if (disposed) return;
         console.warn('Sunny stays still: the 3D version could not load.', error);
         stage.dataset.mode = 'still: load failed';
+        renderer?.dispose();
         renderer?.domElement.remove();
         showStill();
+        offerPlay('Try again');
       }
-    })();
+    }
 
     return () => {
       disposed = true;
