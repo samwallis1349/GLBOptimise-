@@ -285,14 +285,14 @@ test('intent compiler maps plain English to budgets', () => {
   assert.equal(compileIntent('web viewer, no compression').compress, false);
 });
 
-test('sales webhook records paid orders', async () => {
+test('sales webhook records paid orders (Lemon Squeezy totals are in pence)', async () => {
   const env = { TRIALS: memoryKv(), LEMONSQUEEZY_WEBHOOK_SECRET: 'whsec' };
-  const body = JSON.stringify({ meta: { event_name: 'order_created' }, data: { id: '42', attributes: { first_order_item: { product_id: 1420844 }, test_mode: false, status: 'paid', total: 9.99, currency: 'gbp', created_at: '2026-10-09T00:00:00Z' } } });
+  const body = JSON.stringify({ meta: { event_name: 'order_created' }, data: { id: '42', attributes: { first_order_item: { product_id: 1420844 }, test_mode: false, status: 'paid', total: 2500, currency: 'gbp', created_at: '2026-10-09T00:00:00Z' } } });
   const key = await crypto.subtle.importKey('raw', new TextEncoder().encode('whsec'), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
   const sig = [...new Uint8Array(await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(body)))].map((b) => b.toString(16).padStart(2, '0')).join('');
   const res = await worker.fetch(new Request('https://www.assetbench.co.uk/api/sales-webhook', { method: 'POST', headers: { 'X-Signature': sig }, body }), env, {});
   assert.equal(res.status, 200);
-  assert.deepEqual(JSON.parse(env.TRIALS.store.get('site-sale:42').value), { productId: 1420844, cents: 999, currency: 'GBP', createdAt: '2026-10-09T00:00:00Z' });
+  assert.deepEqual(JSON.parse(env.TRIALS.store.get('site-sale:42').value), { productId: 1420844, cents: 2500, currency: 'GBP', createdAt: '2026-10-09T00:00:00Z' });
 });
 
 test('game-ready runs the pipeline and returns an engine pack', async () => {

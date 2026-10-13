@@ -85,6 +85,7 @@ export function WizardHero() {
     let zoom = 1;
     let wire = false;
     let lastState = null;
+    let atMinimumDetail = false;
     let statusTimer = 0;
 
     const setStatus = (text, { transient = false } = {}) => {
@@ -146,7 +147,6 @@ export function WizardHero() {
     setZoom(1);
 
     let textureRequest = 0;
-    let atMinimumDetail = false;
     async function chooseTextures(key) {
       const request = ++textureRequest;
       checkTextures(key);

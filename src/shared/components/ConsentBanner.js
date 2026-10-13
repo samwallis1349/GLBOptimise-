@@ -3,10 +3,10 @@ import { ADSENSE_ENABLED } from '../config/ads.js';
 import { getConsent, setConsent } from '../../services/ConsentService.js';
 
 /**
- * Small, non-blocking privacy notice fixed to the bottom of the screen.
+ * Small, non-blocking privacy toast in the bottom-left corner.
  *
- * Shown until the visitor makes a choice, then never again (unless the
- * consent version changes). The footer's "Privacy choices" link reopens it
+ * Shown until the visitor makes a choice (the ✕ keeps the defaults), then
+ * never again (unless the consent version changes). The footer's "Privacy choices" link reopens it
  * straight into the settings view. It never covers the page: while it's
  * open the page gets matching bottom padding, so everything can still be
  * scrolled into view and used. There's no backdrop and no focus trap, and
@@ -39,14 +39,13 @@ function save(choices) {
 
 function noticeView() {
   return `
-    <h2 class="consent__title" id="consent-title">Privacy choices</h2>
-    <p class="consent__text">
-      Cloudflare visitor statistics run by default to help improve ${APP_NAME}. They use no cookies or browser
-      storage. You can switch analytics off at any time. Advertising is off. <a href="/privacy">Privacy policy</a>
+    <p class="consent__text" id="consent-title">
+      ${APP_NAME} uses cookieless visitor stats. <a href="/privacy">Privacy</a>
     </p>
     <div class="consent__actions">
-      <button type="button" class="btn btn--secondary consent__btn" data-consent="reject">Turn analytics off</button>
-      <button type="button" class="btn btn--secondary consent__btn" data-consent="settings">Privacy settings</button>
+      <button type="button" class="consent__link" data-consent="reject">Opt out</button>
+      <button type="button" class="consent__link" data-consent="settings">Settings</button>
+      <button type="button" class="consent__dismiss" data-consent="ok" aria-label="OK, dismiss">✕</button>
     </div>`;
 }
 
@@ -92,7 +91,8 @@ function mount(view) {
 
     root.addEventListener('click', (event) => {
       const action = event.target.closest('[data-consent]')?.dataset.consent;
-      if (action === 'reject') save({ analytics: false, advertising: false });
+      if (action === 'ok') save({ analytics: true, advertising: false });
+      else if (action === 'reject') save({ analytics: false, advertising: false });
       else if (action === 'settings') {
         render('settings');
         root.querySelector('input')?.focus();

@@ -4,7 +4,7 @@ import { ALL_TOOLS_FREE, TRIAL_DAYS, freeDaysRemaining, hasAccess, isFreePeriodA
 import { initTrial } from '../src/services/TrialService.js';
 import worker from '../worker/index.js';
 
-test('trial ends at exactly 72 hours and blocks unlicensed access', async () => {
+test('trial ends at exactly 96 hours and blocks unlicensed access', async () => {
   const originalNow = Date.now;
   const originalFetch = globalThis.fetch;
   const originalStorage = globalThis.localStorage;
@@ -21,9 +21,9 @@ test('trial ends at exactly 72 hours and blocks unlicensed access', async () => 
 
   try {
     await initTrial();
-    assert.equal(TRIAL_DAYS, 3);
-    assert.equal(trialEndsAt(), start + 72 * 60 * 60 * 1000);
-    assert.equal(freeDaysRemaining(), 3);
+    assert.equal(TRIAL_DAYS, 4);
+    assert.equal(trialEndsAt(), start + 96 * 60 * 60 * 1000);
+    assert.equal(freeDaysRemaining(), 4);
     now = trialEndsAt() - 1;
     assert.equal(isFreePeriodActive(), true);
     assert.equal(hasAccess(), true);

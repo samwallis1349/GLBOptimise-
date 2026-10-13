@@ -1,6 +1,5 @@
 import { getToolNews } from '../config/toolNews.js';
 import { getToolById } from '../config/tools.js';
-import { TRIPO_AFFILIATE_URL } from '../config/affiliates.js';
 import { iconSvg } from '../utils/icons.js';
 
 /**
@@ -48,16 +47,16 @@ export function ToolNews(tool) {
         <p class="tool-news__card-text">${news.proTip}</p>
       </article>
 
-      <!-- Card 3: AI Model Generation Partner (Tripo 3D) -->
+      <!-- Card 3: AssetBench API -->
       <article class="tool-news__card tool-news__card--partner">
         <div class="tool-news__card-header">
-          <span class="tool-news__tag tool-news__tag--partner">${iconSvg('wand-2', { class: 'tool-news__tag-icon' })} AI 3D Partner</span>
+          <span class="tool-news__tag tool-news__tag--partner">${iconSvg('zap', { class: 'tool-news__tag-icon' })} AssetBench API</span>
         </div>
-        <h3 class="tool-news__card-title">Generate 3D Assets with Tripo AI</h3>
-        <p class="tool-news__card-text">Turn text prompts or 2D concept images into textured 3D models in seconds, then drop them into AssetBench to optimize and inspect.</p>
+        <h3 class="tool-news__card-title">Run AssetBench From Your Own Code</h3>
+        <p class="tool-news__card-text">Check a GLB against phones, Quest and the web, then make it game-ready in one call: fewer polygons, WebP or KTX2 textures and LODs. 100 free operations a month, included with All Access.</p>
         <div class="tool-news__card-action">
-          <a class="btn btn--secondary tool-news__partner-btn" href="${TRIPO_AFFILIATE_URL}" target="_blank" rel="noopener noreferrer">
-            Try Tripo AI <span aria-hidden="true">→</span>
+          <a class="btn btn--secondary tool-news__partner-btn" href="/docs/">
+            Try the API Free <span aria-hidden="true">→</span>
           </a>
         </div>
       </article>

@@ -2,12 +2,12 @@ import { hasStoredLicense, hasToolLicense } from '../../services/LicenseService.
 import { trialStartedAt } from '../../services/TrialService.js';
 
 /**
- * Every visitor gets TRIAL_DAYS of full access from their first visit, then
- * every 'available'/'beta' tool needs an All Access subscription key (or a
- * lifetime key bought before subscriptions, which keeps working). The
- * trial clock itself lives in services/TrialService.js.
+ * Every visitor gets TRIAL_DAYS of full access from their first visit without
+ * needing to go onto Lemon Squeezy or enter card details. After 4 days, tools
+ * are locked out until payment. The trial clock itself lives in
+ * services/TrialService.js.
  */
-export const TRIAL_DAYS = 3;
+export const TRIAL_DAYS = 4;
 
 /**
  * Temporary: unlocks every tool for everyone and covers the welcome popup with
@@ -23,11 +23,11 @@ export const DONATE_URL = 'https://www.paypal.com/ncp/payment/SUD2ZPA339KCY';
 export const PRICE_LABEL = '£25/month';
 
 /**
- * Free trial on the Lemon Squeezy subscription itself (card taken at checkout,
- * first charge after this many days). Separate from the on-site TRIAL_DAYS,
- * which needs no card. Must match the product's trial setting in Lemon Squeezy.
+ * Free trial days on the Lemon Squeezy checkout itself. Set to 0 because the
+ * 4-day free trial is handled entirely on-site without requiring Lemon Squeezy;
+ * once the trial ends, customers are locked out until payment.
  */
-export const SUBSCRIPTION_TRIAL_DAYS = 3;
+export const SUBSCRIPTION_TRIAL_DAYS = 0;
 
 export const CHECKOUT_URL = 'https://workbenchlabs.lemonsqueezy.com/checkout/buy/3d09253a-bc8b-44a4-853f-5882dc964807';
 

@@ -1,5 +1,5 @@
 import { TOOLS } from '../config/tools.js';
-import { ALL_TOOLS_FREE, CHECKOUT_URL, PRICE_LABEL, SUBSCRIPTION_TRIAL_DAYS, freeDaysRemaining, hasAccess, isFreePeriodActive } from '../config/billing.js';
+import { ALL_TOOLS_FREE, CHECKOUT_URL, PRICE_LABEL, freeDaysRemaining, hasAccess, isFreePeriodActive } from '../config/billing.js';
 import { hasStoredLicense } from '../../services/LicenseService.js';
 import { navigate } from '../../app/router.js';
 import { iconSvg } from '../utils/icons.js';
@@ -143,7 +143,7 @@ function toolCardHtml(tool) {
 }
 
 const ACTIONS = {
-  buy: () => `<a class="promo-bot__action promo-bot__action--primary" href="${CHECKOUT_URL}" target="_blank" rel="noopener">Try All Access free for ${SUBSCRIPTION_TRIAL_DAYS} days</a>`,
+  buy: () => `<a class="promo-bot__action promo-bot__action--primary" href="${CHECKOUT_URL}" target="_blank" rel="noopener">Get All Access — ${PRICE_LABEL}</a>`,
   pricing: () => '<button type="button" class="promo-bot__action" data-nav="/pricing">See pricing</button>',
   search: () => '<button type="button" class="promo-bot__action" data-search>Search all tools</button>',
 };

@@ -1278,9 +1278,21 @@
   margin-bottom: var(--space-5);
 }
 
-/* "Just this tool" sits tight under the lifetime button, with its note below. */
-.paywall__buy:has(+ .paywall__single) {
+/* "Compare plans" and "Just this tool" sit tight under the subscribe button. */
+.paywall__buy:has(+ .paywall__pricing-link) {
   margin-bottom: var(--space-2);
+}
+
+.paywall__pricing-link {
+  display: block;
+  margin-bottom: var(--space-5);
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.paywall__pricing-link:has(+ .paywall__single) {
+  margin-bottom: var(--space-3);
 }
 
 .paywall__single {
@@ -1926,6 +1938,51 @@
   cursor: pointer;
 }
 
+/* Notice view: a one-line toast in the corner rather than a panel. */
+.consent[data-view="notice"] {
+  left: var(--space-4);
+  transform: none;
+  width: auto;
+  max-width: calc(100% - 2 * var(--space-4));
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: 6px 6px 6px var(--space-3);
+  border-radius: 999px;
+  font-size: 12px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+}
+
+.consent[data-view="notice"] .consent__actions {
+  margin-top: 0;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.consent__link,
+.consent__dismiss {
+  background: none;
+  border: 0;
+  font: inherit;
+  color: var(--text-primary);
+  cursor: pointer;
+  border-radius: 999px;
+  padding: 4px 8px;
+}
+
+.consent__link:hover,
+.consent__dismiss:hover {
+  background: var(--border);
+}
+
+.consent__dismiss {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  color: var(--text-muted);
+}
+
 /* #app, not body: reset.css gives body a fixed 100% height. */
 html.has-consent-notice #app {
   padding-bottom: var(--consent-offset, 0px);
@@ -1941,6 +1998,11 @@ html.has-consent-notice .promo-bot {
     width: calc(100% - 2 * var(--space-2));
   }
 
+  .consent[data-view="notice"] {
+    left: var(--space-2);
+    max-width: calc(100% - 2 * var(--space-2));
+  }
+
   .consent__btn {
     flex: 1 1 0;
     min-height: 44px;
@@ -1949,7 +2011,7 @@ html.has-consent-notice .promo-bot {
 }
 
 /* ==========================================================================
-   Welcome Modal (Tripo 3D Affiliate)
+   Welcome modal shell (used by the API launch modal)
    ========================================================================== */
 .welcome-modal-overlay {
   position: fixed;
@@ -1988,32 +2050,6 @@ html.has-consent-notice .promo-bot {
 
 .welcome-modal-overlay--open .welcome-modal {
   transform: scale(1) translateY(0);
-}
-
-.welcome-modal__link {
-  display: block;
-  position: relative;
-  width: 100%;
-  border-radius: 16px;
-  overflow: hidden;
-  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.85), 0 0 36px rgba(255, 181, 71, 0.22);
-  text-decoration: none;
-  cursor: pointer;
-  line-height: 0;
-  transition: transform 200ms ease, box-shadow 200ms ease;
-}
-
-.welcome-modal__link:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 28px 76px rgba(0, 0, 0, 0.9), 0 0 48px rgba(255, 181, 71, 0.35);
-}
-
-.welcome-modal__img {
-  width: 100%;
-  height: auto;
-  max-height: 84vh;
-  object-fit: contain;
-  display: block;
 }
 
 .welcome-modal__close {

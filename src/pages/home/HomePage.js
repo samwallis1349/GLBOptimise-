@@ -9,6 +9,7 @@ import { SunnyGeckoHero } from './wizard-hero/SunnyGeckoHero.js';
 import { DONATE_URL } from '../../shared/config/billing.js';
 import { AdSenseAd } from '../../shared/components/AdSenseAd.js';
 import { HomeBannerPost } from '../../shared/components/HomeBannerPost.js';
+import { VsCodeApi } from './vscode-api/VsCodeApi.js';
 
 const BENEFITS = [
   { icon: 'zap', title: 'Works in browser', desc: 'Your files stay on your device' },
@@ -31,6 +32,7 @@ export function render(container) {
     WorkbenchIntro(),
     ToolsBlock(),
     ...(ad ? [ad] : []),
+    VsCodeApi(),
     HomeBannerPost(),
     SupportPanel(),
     CTAPanel()

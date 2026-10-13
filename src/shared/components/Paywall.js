@@ -1,4 +1,4 @@
-import { LICENSE_MACHINE_LIMIT, PRICE_LABEL, SUBSCRIPTION_TRIAL_DAYS, MY_ORDERS_URL, TRIAL_DAYS, hasAccess } from '../config/billing.js';
+import { CHECKOUT_URL, LICENSE_MACHINE_LIMIT, PRICE_LABEL, MY_ORDERS_URL, TRIAL_DAYS, hasAccess } from '../config/billing.js';
 import { TOOL_DEVICE_LIMIT, TOOL_PRICE_LABEL, toolProduct } from '../config/toolProducts.js';
 import { TOOLS } from '../config/tools.js';
 import { LicenseActivationForm } from './LicenseActivationForm.js';
@@ -22,10 +22,11 @@ export function Paywall({ tool, onUnlock }) {
   panel.innerHTML = `
     <h1 class="tool-page__title">Your ${TRIAL_DAYS}-day free trial has ended</h1>
     <p class="tool-page__description">
-      ${tool.name}, and every other Asset Bench tool, needs an All Access subscription to keep using.
+      ${tool.name}, and every other Asset Bench tool, is locked until payment. Subscribe to All Access to continue using all tools.
     </p>
-    <div class="paywall__price">${PRICE_LABEL} <span class="text-muted">first ${SUBSCRIPTION_TRIAL_DAYS} days free · every tool · ${LICENSE_MACHINE_LIMIT} machines · cancel any time</span></div>
-    <a class="btn btn--primary paywall__buy" href="/pricing">View pricing and buy</a>
+    <div class="paywall__price">${PRICE_LABEL} <span class="text-muted">every tool · ${LICENSE_MACHINE_LIMIT} machines · cancel any time</span></div>
+    <a class="btn btn--primary paywall__buy" href="${CHECKOUT_URL}" target="_blank" rel="noopener">Subscribe to All Access — ${PRICE_LABEL}</a>
+    <a class="paywall__pricing-link" href="/pricing">Compare plans</a>
     ${single ? `
       <a class="btn btn--secondary paywall__buy paywall__single" href="${single.checkoutUrl}" target="_blank" rel="noopener">
         Just ${tool.name} — ${TOOL_PRICE_LABEL}

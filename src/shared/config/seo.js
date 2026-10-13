@@ -47,7 +47,7 @@ export const STATIC_PAGES = [
     path: '/pricing',
     name: 'Pricing',
     title: `Pricing — All Access £25/month | ${SITE_NAME}`,
-    description: 'All Access unlocks every current and future Asset Bench tool for £25 a month. Try every tool free for 3 days first.',
+    description: 'All Access unlocks every current and future Asset Bench tool for £25 a month. Try every tool free for 4 days first.',
     changefreq: 'monthly',
     priority: '0.6',
   },

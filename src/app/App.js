@@ -12,7 +12,6 @@ import { initLayoutEditor } from '../editor/LayoutEditor.js';
 import { initCommandPalette } from '../shared/effects/CommandPalette.js';
 import { initPromoBot } from '../shared/effects/PromoBot.js';
 import { initConsentBanner } from '../shared/components/ConsentBanner.js';
-import { initWelcomeModal } from '../shared/components/WelcomeModal.js';
 import { initApiLaunchModal } from '../shared/components/ApiLaunchModal.js';
 import { initAnalytics } from '../services/AnalyticsService.js';
 import { hasAccess, trialEndsAt } from '../shared/config/billing.js';
@@ -56,9 +55,7 @@ export function App(rootEl) {
   // router's DOM, reachable from any page.
   initCommandPalette();
 
-  // Welcome modal showcasing 3D AI generator partner
-  initWelcomeModal();
-  // Free API announcement: a later visit than the Tripo modal, never both at once.
+  // Free API announcement, once per visitor.
   initApiLaunchModal();
 
   // The banner and Bench Bot both quote days left, so they wait for the

@@ -1,5 +1,5 @@
 import { APP_NAME, OPERATOR_NAME } from '../../shared/config/app.js';
-import { ALL_TOOLS_FREE, PRICE_LABEL, SUBSCRIPTION_TRIAL_DAYS, LICENSE_MACHINE_LIMIT, TRIAL_DAYS } from '../../shared/config/billing.js';
+import { ALL_TOOLS_FREE, PRICE_LABEL, LICENSE_MACHINE_LIMIT, TRIAL_DAYS } from '../../shared/config/billing.js';
 import { TOOL_DEVICE_LIMIT, TOOL_PRICE_LABEL, TOOL_PRODUCTS } from '../../shared/config/toolProducts.js';
 
 const UPDATED = '10 October 2026';
@@ -51,16 +51,15 @@ export function render(container) {
 
       <h2>Trial and licences</h2>
       <p>
-        Every tool is unlocked for ${TRIAL_DAYS} days from your first visit.
-        One trial is available per visitor. After the trial, the tools need a
+        Every tool is unlocked for ${TRIAL_DAYS} days from your first visit without
+        requiring a payment card, account, or registration. One trial is available per
+        visitor. After the ${TRIAL_DAYS}-day trial, the tools are locked until you purchase a
         licence.
         ${ALL_TOOLS_FREE ? 'At the moment, every tool is temporarily unlocked for everyone; this may end at any time, after which the trial and licence rules apply.' : ''}
       </p>
       <p>
         All Access is a subscription of ${PRICE_LABEL}, billed monthly
-        through our payment provider until you cancel. A new subscription
-        starts with a ${SUBSCRIPTION_TRIAL_DAYS}-day free trial; you are first
-        charged when it ends unless you cancel before then. Its licence key
+        through our payment provider until you cancel. Its licence key
         unlocks every current and future ${APP_NAME} tool in the browser on
         up to ${LICENSE_MACHINE_LIMIT} machines, with no account needed. You
         can cancel at any time; access continues until the end of the period

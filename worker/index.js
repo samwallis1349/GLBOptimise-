@@ -195,7 +195,7 @@ async function handleSalesWebhook(request, env) {
   const attributes = order?.attributes ?? {};
   const orderProductId = Number(attributes.first_order_item?.product_id);
   if ((orderProductId !== LICENSE_PRODUCT_ID && orderProductId !== SINGLE_TOOL_PRODUCT_ID) || attributes.test_mode || attributes.status !== 'paid') return json({ ok: true, ignored: true });
-  const totalCents = Math.round(Number(attributes.total) * 100);
+  const totalCents = Math.round(Number(attributes.total)); // Lemon Squeezy sends totals in the smallest unit already (pence)
   const currency = String(attributes.currency ?? '').toUpperCase();
   if (!order?.id || !Number.isFinite(totalCents) || totalCents < 0 || !/^[A-Z]{3}$/.test(currency)) return json({ error: 'Invalid order data' }, 400);
   const sale = { productId: orderProductId, cents: totalCents, currency, createdAt: attributes.created_at ?? new Date().toISOString() };
@@ -254,7 +254,7 @@ async function handleStats(request, env) {
     today: byDay.get(dayOf(now)) ?? 0,
     last7: since(7 * DAY_MS),
     last30: since(30 * DAY_MS),
-    active: since(3 * DAY_MS), // trials still running (3-day trial)
+    active: since(4 * DAY_MS), // trials still running (4-day trial)
     days,
     undated: unknown,
     sales: { count: saleCount, amounts: [...sales].map(([currency, cents]) => ({ currency, cents })) },

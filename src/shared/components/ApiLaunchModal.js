@@ -1,6 +1,4 @@
 const DISMISSED_KEY = 'assetbench_api_launch_v1';
-// The Tripo welcome modal owns a visitor's first visit; this one waits until that has been seen.
-const TRIPO_DISMISSED_KEY = 'assetbench_welcome_tripo_v1';
 
 const PRODUCTS = [
   ['GLB optimisation', 'one call makes a model game-ready for a phone, Quest or the web'],
@@ -30,18 +28,11 @@ export function trackApiEvent(event) {
   } catch {}
 }
 
-/**
- * Announces the free Cloud API once per visitor, on a later visit than the
- * Tripo welcome modal so nobody gets two popups in one go.
- */
+/** Announces the free Cloud API once per visitor. */
 export function initApiLaunchModal() {
   if (typeof window === 'undefined') return;
   if (location.pathname.startsWith('/docs')) return;
   if (seen(DISMISSED_KEY)) return;
-  // Tripo was not dismissed on an earlier visit: it is this visit's popup.
-  try { if (!localStorage.getItem(TRIPO_DISMISSED_KEY)) return; } catch { return; }
-  // Dismissed only this session (sessionStorage set too): still this visit's popup slot.
-  try { if (sessionStorage.getItem(TRIPO_DISMISSED_KEY)) return; } catch {}
 
   setTimeout(() => {
     if (document.querySelector('.welcome-modal-overlay')) return;
@@ -60,7 +51,7 @@ export function openApiLaunchModal() {
     <div class="welcome-modal api-launch">
       <button class="welcome-modal__close" type="button" aria-label="Close">✕</button>
       <div class="api-launch__card">
-        <span class="api-launch__badge">New · In construction · Free</span>
+        <span class="api-launch__badge">New · Free to try</span>
         <h2 class="api-launch__title" id="api-launch-title">The AssetBench API</h2>
         <p class="api-launch__lede">Everything AssetBench does, from your own code. Built for mobile game and app developers.</p>
         <ul class="api-launch__list">
@@ -119,7 +110,7 @@ export function openApiPanel() {
   overlay.innerHTML = `
     <div class="api-panel">
       <div class="api-panel__bar">
-        <span class="api-panel__title">AssetBench API <span class="api-panel__tag">In construction · Free</span></span>
+        <span class="api-panel__title">AssetBench API <span class="api-panel__tag">New · Free to try</span></span>
         <a class="api-panel__full" href="/docs/" target="_blank" rel="noopener">Open full page ↗</a>
         <button class="api-panel__close" type="button" aria-label="Close">✕</button>
       </div>

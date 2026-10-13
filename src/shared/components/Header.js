@@ -60,7 +60,7 @@ export function Header() {
   const tryApi = document.createElement('button');
   tryApi.type = 'button';
   tryApi.className = 'ab-header__try-api';
-  tryApi.innerHTML = 'Try API <span class="ab-header__try-api-tag">In construction · Free</span>';
+  tryApi.innerHTML = 'Try API <span class="ab-header__try-api-tag">New · Free</span>';
   tryApi.addEventListener('click', () => openApiPanel());
 
   right.append(tryApi, tagline, themeToggle);

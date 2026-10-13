@@ -1,4 +1,4 @@
-import { PLANS } from './plans.js';
+import { PLANS, publicPlans } from './plans.js';
 import { ApiError, sha256Hex } from './http.js';
 import { LICENSE_KEY_PATTERN, activateFromLicense } from './billing.js';
 
@@ -171,7 +171,11 @@ export async function assertCanRun(env, account, engine) {
   }
   const quota = await quotaStatus(env, account);
   if (quota.remaining <= 0) {
-    throw new ApiError(429, 'quota_exhausted', `You have used all ${quota.limit} operations for this ${account.plan.period === 'lifetime' ? 'trial' : 'month'}.`, quota);
+    // Point at the next plan up while the buyer is most ready to pay.
+    const next = publicPlans(env).find((p) => p.quota > account.plan.quota && p.checkoutUrl);
+    const upgrade = next ? { plan: next.id, name: next.name, quota: next.quota, price: next.price, checkoutUrl: next.checkoutUrl } : null;
+    const tail = upgrade ? ` Get ${upgrade.quota.toLocaleString('en-GB')} a month with ${upgrade.name} (£${upgrade.price.amount}/${upgrade.price.interval}): ${upgrade.checkoutUrl}` : '';
+    throw new ApiError(429, 'quota_exhausted', `You have used all ${quota.limit} operations for this ${account.plan.period === 'lifetime' ? 'trial' : 'month'}.${tail}`, { ...quota, upgrade });
   }
   return quota;
 }

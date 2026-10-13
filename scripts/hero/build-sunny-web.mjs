@@ -1,7 +1,7 @@
 // Builds the web copy of Sunny the Gecko for the homepage hero from the
 // source GLB. Run whenever the source model changes:
 //
-//   node scripts/hero/build-sunny-web.mjs [public/hero/sunny-gecko.glb]
+//   node scripts/hero/build-sunny-web.mjs [scripts/hero/source/sunny-gecko.glb]
 //
 // Output: public/hero/sunny-gecko-web.glb. The source stores its colour map as
 // WebP without EXT_texture_webp (only three.js tolerates that, and Safari
@@ -22,7 +22,7 @@ import { MeshoptDecoder, MeshoptEncoder } from 'meshoptimizer';
 import sharp from 'sharp';
 import { reducePolys } from '../../src/tools/reduce-polys/ReducePolysEngine.js';
 
-const src = resolve(process.argv[2] ?? 'public/hero/sunny-gecko.glb');
+const src = resolve(process.argv[2] ?? 'scripts/hero/source/sunny-gecko.glb');
 const out = resolve('public/hero/sunny-gecko-web.glb');
 const KEEP_CLIP = /walk/i;
 const TEXTURE_SIZE = 1024;

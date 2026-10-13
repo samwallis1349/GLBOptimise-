@@ -1,0 +1,351 @@
+/* "Try the free API in Visual Studio Code" homepage feature. */
+.vsapi {
+  --vs-blue: #3b9eff;
+  --vs-cyan: var(--cat-cyan);
+  --vs-violet: var(--cat-purple);
+  --vs-editor: #0d1117;
+  --vs-chrome: #161b22;
+  margin-block: 56px;
+}
+
+.vsapi__frame {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+  gap: 40px;
+  align-items: center;
+  padding: 44px;
+  border-radius: var(--radius-lg);
+  background:
+    radial-gradient(120% 90% at 0% 0%, rgba(59, 158, 255, 0.16), transparent 55%),
+    radial-gradient(100% 80% at 100% 100%, rgba(180, 138, 255, 0.16), transparent 60%),
+    var(--panel);
+  isolation: isolate;
+  overflow: hidden;
+}
+
+/* Animated gradient border. */
+.vsapi__frame::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  padding: 1px;
+  border-radius: inherit;
+  background: conic-gradient(from var(--vsapi-angle, 0deg), var(--vs-blue), var(--vs-cyan), var(--vs-violet), var(--vs-blue));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: vsapi-spin 6s linear infinite;
+  z-index: -1;
+}
+
+@property --vsapi-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
+@keyframes vsapi-spin {
+  to { --vsapi-angle: 360deg; }
+}
+
+.vsapi__grid-bg {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-size: 28px 28px;
+  mask-image: radial-gradient(80% 70% at 30% 40%, #000, transparent);
+}
+
+.vsapi__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(77, 216, 224, 0.4);
+  background: rgba(77, 216, 224, 0.08);
+  color: var(--vs-cyan);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.vsapi__pulse {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--vs-cyan);
+  box-shadow: 0 0 0 0 rgba(77, 216, 224, 0.6);
+  animation: vsapi-pulse 1.8s ease-out infinite;
+}
+
+@keyframes vsapi-pulse {
+  70% { box-shadow: 0 0 0 10px rgba(77, 216, 224, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(77, 216, 224, 0); }
+}
+
+.vsapi__title {
+  margin: 16px 0 12px;
+  font-size: clamp(1.7rem, 3.4vw, 2.5rem);
+  line-height: 1.12;
+  color: var(--text-primary);
+}
+
+.vsapi__title-glow {
+  background: linear-gradient(90deg, var(--vs-blue), var(--vs-cyan), var(--vs-violet));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 0 18px rgba(59, 158, 255, 0.35));
+}
+
+.vsapi__lede {
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin: 0 0 18px;
+}
+
+.vsapi__points {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 24px;
+  display: grid;
+  gap: 8px;
+}
+
+.vsapi__points li {
+  position: relative;
+  padding-left: 24px;
+  color: var(--text-primary);
+  font-size: 0.95rem;
+}
+
+.vsapi__points li::before {
+  content: '✓';
+  position: absolute;
+  left: 0;
+  color: var(--success);
+  font-weight: 700;
+}
+
+/* Editor window. */
+.vsapi__window {
+  min-width: 0;
+  border-radius: var(--radius-md);
+  background: var(--vs-editor);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55), 0 0 40px rgba(59, 158, 255, 0.15);
+  overflow: hidden;
+  transform: perspective(1400px) rotateY(-4deg);
+  transition: transform 400ms ease;
+}
+
+.vsapi__window:hover {
+  transform: perspective(1400px) rotateY(0deg);
+}
+
+.vsapi__titlebar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: var(--vs-chrome);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.vsapi__dots {
+  display: inline-flex;
+  gap: 6px;
+}
+
+.vsapi__dots i {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: #ff5f57;
+}
+
+.vsapi__dots i:nth-child(2) { background: #febc2e; }
+.vsapi__dots i:nth-child(3) { background: #28c840; }
+
+.vsapi__window-name {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.vsapi__tabs {
+  display: flex;
+  background: var(--vs-chrome);
+  overflow-x: auto;
+}
+
+.vsapi__tab {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  padding: 8px 16px;
+  border: 0;
+  border-top: 2px solid transparent;
+  border-right: 1px solid rgba(255, 255, 255, 0.05);
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.vsapi__tab-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.vsapi__tab-file {
+  font-size: 0.7rem;
+  opacity: 0.75;
+}
+
+.vsapi__tab[aria-selected='true'] {
+  background: var(--vs-editor);
+  color: var(--text-primary);
+  border-top-color: var(--vs-blue);
+}
+
+.vsapi__tab:focus-visible,
+.vsapi__copy:focus-visible {
+  outline: 2px solid var(--vs-cyan);
+  outline-offset: -2px;
+}
+
+.vsapi__body {
+  padding: 18px;
+}
+
+.vsapi__hint {
+  margin: 0 0 14px;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+}
+
+.vsapi__step + .vsapi__step {
+  margin-top: 14px;
+}
+
+.vsapi__step-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.vsapi__step-num {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(59, 158, 255, 0.18);
+  color: var(--vs-blue);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.vsapi__step-title {
+  flex: 1;
+  color: var(--text-primary);
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.vsapi__copy {
+  padding: 4px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(59, 158, 255, 0.45);
+  background: rgba(59, 158, 255, 0.1);
+  color: var(--vs-blue);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.vsapi__copy:hover {
+  background: rgba(59, 158, 255, 0.22);
+}
+
+.vsapi__copy.is-copied {
+  border-color: rgba(95, 206, 143, 0.5);
+  background: rgba(95, 206, 143, 0.14);
+  color: var(--success);
+}
+
+.vsapi__code {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  color: #c9e4ff;
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  font-size: 0.8rem;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.vsapi__statusbar {
+  display: flex;
+  gap: 16px;
+  padding: 4px 14px;
+  background: #007acc;
+  color: #fff;
+  font-size: 0.72rem;
+}
+
+@media (max-width: 900px) {
+  .vsapi__frame {
+    grid-template-columns: 1fr;
+    padding: 28px 20px;
+    gap: 28px;
+  }
+
+  .vsapi__window,
+  .vsapi__window:hover {
+    transform: none;
+  }
+}
+
+@media (max-width: 520px) {
+  .vsapi__frame {
+    padding: 22px 16px;
+  }
+
+  .vsapi__body {
+    padding: 14px;
+  }
+
+  .vsapi__tab {
+    padding: 8px 12px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vsapi__frame::before,
+  .vsapi__pulse {
+    animation: none;
+  }
+
+  .vsapi__window {
+    transform: none;
+    transition: none;
+  }
+}

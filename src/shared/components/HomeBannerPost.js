@@ -3,14 +3,14 @@ import { iconSvg } from '../utils/icons.js';
 const BANNER_API = '/api/banner';
 
 const DEFAULT_BANNER = {
-  name: 'default',
-  badge: 'COMMUNITY & NEWS',
-  title: 'Transform 3D Assets & App Graphics in Seconds',
-  text: 'From AI 3D model generation to polygon reduction, texture encoding, and iOS App Store assets — AssetBench runs entirely inside your browser with zero upload waiting.',
+  name: 'api-launch',
+  badge: 'NEW · ASSETBENCH API',
+  title: 'Make Every 3D Model Game-Ready From Your Own Code',
+  text: 'One call checks a GLB against phones, Quest and the web. One more makes it game-ready: fewer polygons, WebP or KTX2 textures and LODs. App icons and store screenshots too. 100 free operations a month, and included with All Access.',
   mediaType: 'image',
-  mediaUrl: '/images/tripo-promo.webp',
-  linkUrl: '/tools',
-  linkText: 'Explore All Tools →',
+  mediaUrl: '/images/api-promo.webp',
+  linkUrl: '/docs/',
+  linkText: 'Try the API Free →',
   updatedAt: Date.now(),
 };
 

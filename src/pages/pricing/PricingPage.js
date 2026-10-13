@@ -3,7 +3,6 @@ import {
   DISCOUNT_CODE,
   LICENSE_MACHINE_LIMIT,
   PRICE_LABEL,
-  SUBSCRIPTION_TRIAL_DAYS,
   MY_ORDERS_URL,
   TRIAL_DAYS,
   isFreePeriodActive,
@@ -101,13 +100,11 @@ function buyPanel(onChange) {
   panel.innerHTML = `
     <p><strong>All Access — ${PRICE_LABEL} for every Asset Bench tool.</strong></p>
     <p class="text-secondary" style="margin-top: var(--space-3);">
-      Every tool is free for ${TRIAL_DAYS} days from your first visit. After that,
-      subscribe and your license key is emailed to you straight away — no
-      credits, no account. One key unlocks every current and future tool on up
-      to ${LICENSE_MACHINE_LIMIT} machines while your subscription is active.
-      Your subscription starts with ${SUBSCRIPTION_TRIAL_DAYS} more days free —
-      cancel before then and you won't be charged. Cancel any time from Lemon
-      Squeezy My Orders.
+      Every tool is free for ${TRIAL_DAYS} days from your first visit — no card required,
+      no account needed. Try everything unrestricted right in your browser. After ${TRIAL_DAYS} days,
+      tools are locked until payment. Subscribe to All Access and your licence key is emailed to you straight
+      away. One key unlocks every current and future tool on up to ${LICENSE_MACHINE_LIMIT} machines while
+      your subscription is active. Cancel any time from Lemon Squeezy My Orders.
     </p>
     <p class="text-secondary" style="margin-top: var(--space-3);">
       <strong>Never left owing.</strong> If a payment fails, it's retried for a
@@ -130,7 +127,7 @@ function buyPanel(onChange) {
       </div>
     </div>
     <a class="btn btn--primary" style="margin-top: var(--space-4); width: 100%;" href="${CHECKOUT_URL}" target="_blank" rel="noopener">
-      Start ${SUBSCRIPTION_TRIAL_DAYS}-day free trial — then ${PRICE_LABEL}
+      ${free ? `Get All Access — ${PRICE_LABEL}` : `Unlock every tool — ${PRICE_LABEL}`}
     </a>
     ${refundNoticeHtml()}
     <p class="text-secondary" style="margin-top: var(--space-5);">
@@ -176,7 +173,7 @@ export async function render(container) {
     <div class="pricing-page__header">
       <h1 class="tool-page__title">Pricing</h1>
       <p class="tool-page__description">
-        ${!license && free ? `Your free trial has ${days} day${days === 1 ? '' : 's'} left.` : 'One subscription. Every tool.'}
+        ${!license && free ? `Your free trial has ${days} day${days === 1 ? '' : 's'} left.` : !license ? `Your ${TRIAL_DAYS}-day free trial has ended. Subscribe to unlock all tools.` : 'One subscription. Every tool.'}
       </p>
     </div>
   `;
