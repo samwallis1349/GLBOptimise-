@@ -75,7 +75,7 @@ export const TOOL_NEWS = {
     date: 'October 2026',
     title: 'Basis Universal UASTC & ETC1S GPU Compression',
     content:
-      'Transcode standard PNG and JPG textures directly inside GLBs into GPU-native KTX2 Basis Universal formats. Shrinks runtime VRAM consumption by up to 80% with zero WebGL decompression hit on mobile phones and VR headsets.',
+      'Transcode standard PNG and JPG textures directly inside GLBs into GPU-native KTX2 Basis Universal formats. The textures stay compressed in GPU memory instead of unpacking to full size, which matters most on mobile phones and VR headsets.',
     proTipTitle: 'VRAM vs Disk Size',
     proTip:
       'PNG and JPG files decompress to raw uncompressed RGBA in GPU memory (a 2K texture takes 16MB of VRAM). KTX2 stays compressed in VRAM, taking only 2.7MB, preventing mobile browser tab crashes.',

@@ -250,14 +250,14 @@ export const TOOLS = [
     id: 'ktx2-texture-encoder',
     name: 'KTX2 Texture Encoder',
     route: '/ktx2-texture-encoder',
-    description: 'KTX2 Texture Encoder fixes heavy game textures that crash or slow mobiles. It shrinks graphics memory up to 80%, free, right in your browser.',
+    description: 'Convert PNG, JPEG and WebP textures, or the textures inside a GLB, to GPU-compressed KTX2 for phones, VR and the web.',
     keywords: ['ktx2', 'basis', 'basis universal', 'gpu memory', 'vram', 'texture compression', 'mobile', 'phone', 'vr', 'quest', 'glb', 'png', 'jpg', 'webp', 'uastc', 'etc1s'],
     icon: 'shrink',
     thumbnail: '/thumbnails/ktx2-texture-encoder.webp',
     seo: {
-      title: 'KTX2 Texture Encoder — Free Online KTX2 / Basis Converter | Asset Bench',
+      title: 'PNG to KTX2 Converter — Basis ETC1S & UASTC, No Upload | Asset Bench',
       description:
-        'KTX2 Texture Encoder fixes heavy game textures that crash or slow mobiles. It shrinks graphics memory up to 80%, free, right in your browser.',
+        'Convert PNG, JPEG and WebP images to KTX2 (Basis Universal ETC1S or UASTC) with mipmaps, or compress the textures inside a GLB. Batch files, download as ZIP. Runs in your browser.',
     },
     // Card-only re-tint: this card swaps the site's gold for silver.
     cardTheme: 'silver',
