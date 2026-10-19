@@ -594,6 +594,7 @@ export const TOOLS = [
     keywords: ['character', 'fbx to glb', 'mixamo', 'rig', 'skeleton', 'animation', 'idle', 'walk', 'run', 'three.js', 'isometric', 'npc', 'agent'],
     icon: 'bone',
     thumbnail: '/thumbnails/character-workshop.webp',
+    banner: '/thumbnails/character-workshop-wide.webp',
     seo: {
       title: 'Character Workshop — Preview, Validate & Export GLB Characters | Asset Bench',
       description:

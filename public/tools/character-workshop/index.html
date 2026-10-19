@@ -3,6 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- Embedded at /character-workshop: index its content as part of that page, not as a page of its own. -->
+<meta name="robots" content="noindex, indexifembedded">
 <title>Character Workshop</title>
 <script>
   if (window.top === window.self && !window.location.search.includes('standalone=true')) {
@@ -48,6 +50,7 @@
         <span class="hint">For glTF/OBJ/FBX with separate textures, select all files together.</span>
       </div>
       <input type="file" id="fileInput" multiple hidden>
+      <button class="link sample-link" data-sample>No file to hand? Load the sample robot</button>
       <div id="charInfo" hidden>
         <div class="file-row">
           <div class="file-name" id="fileName">—</div>
@@ -60,6 +63,13 @@
         <details class="fold">
           <summary>Format limitations</summary>
           <ul class="limits" id="formatLimits"></ul>
+        </details>
+        <details class="fold bones" id="boneFold" hidden>
+          <summary>Bones <span class="count" id="boneCount">0</span></summary>
+          <input type="search" id="boneSearch" placeholder="Filter bones…" aria-label="Filter bones" spellcheck="false">
+          <ul class="bone-tree" id="boneTree"></ul>
+          <p class="muted small" id="boneEmpty" hidden>No bone matches that filter.</p>
+          <p class="muted small">Click a bone to mark it in the viewport.</p>
         </details>
       </div>
       <details class="fold" id="formatTable">
@@ -79,6 +89,7 @@
       <p class="muted small" id="packHelp">Load a rigged character first. Packs are GLB or FBX files using the same bone names — e.g. Mixamo downloads ("Without Skin") for a Mixamo-rigged character.</p>
       <div id="packResult"></div>
       <h3 class="sub">Playback</h3>
+      <label class="row toggle"><span>Play in place<small>Removes root motion so walks and runs loop on the spot</small></span><input type="checkbox" id="inPlacePreview" disabled></label>
       <label class="row"><span>Cross-fade when switching</span>
         <select id="crossFade"><option value="0">Off</option><option value="0.15">0.15 s</option><option value="0.25" selected>0.25 s</option><option value="0.5">0.5 s</option></select>
       </label>
@@ -115,10 +126,16 @@
           <div class="sub between"><span>Clips to include</span><span><button class="link" id="clipsAll">All</button> · <button class="link" id="clipsNone">None (static pose)</button></span></div>
           <ul class="picks" id="clipPickList"></ul>
         </div>
+        <div id="agentOpts">
+          <div class="sub">Game agent</div>
+          <label class="row toggle"><span>Rename clips to categories<small id="renameHelp">Clips matched to Idle, Walk, Run… are exported under those names.</small></span><input type="checkbox" id="exportRename"></label>
+          <label class="row toggle"><span>In place (no root motion)<small>Keeps the hips' vertical bob; removes travel</small></span><input type="checkbox" id="exportInPlace"></label>
+        </div>
         <label class="row toggle"><span>Bake display scale &amp; rotation<small>Adds a root node; bones are not changed</small></span><input type="checkbox" id="bakeDisplay"></label>
         <div class="sub">Conversion summary</div>
         <ul class="limits" id="conversionSummary"></ul>
         <button class="btn btn-primary btn-wide" id="exportBtn">Export GLB</button>
+        <button class="btn btn-wide" id="thumbBtn">Save square thumbnail (PNG)</button>
         <div id="exportResult"></div>
       </div>
     </section>
@@ -133,18 +150,25 @@
           <button class="seg-btn" data-view="isometric">Isometric</button>
         </div>
         <button class="icon-btn toggle-btn" id="skelBtn" title="Show skeleton" aria-pressed="false"><svg viewBox="0 0 24 24"><circle cx="12" cy="4.5" r="1.8"/><path d="M12 6.5v7M7.5 9h9M12 13.5l-3.5 6.5M12 13.5l3.5 6.5"/></svg></button>
+        <button class="icon-btn" id="snapBtn" title="Save viewport as PNG" disabled><svg viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg></button>
         <button class="icon-btn" id="frameBtn" title="Frame model (F)"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/><circle cx="12" cy="12" r="2.5"/></svg></button>
         <button class="icon-btn" id="resetCamBtn" title="Reset camera"><svg viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.4-5.7M4 4v4h4"/></svg></button>
       </div>
     </div>
     <div class="vp" id="viewportWrap">
       <canvas id="canvas" aria-label="3D viewport"></canvas>
+      <div class="kbd-hint" aria-hidden="true"><kbd>Space</kbd> play <kbd>←</kbd><kbd>→</kbd> frame <kbd>F</kbd> frame model <kbd>I</kbd> isometric <kbd>S</kbd> skeleton</div>
+      <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
       <div class="overlay" id="overlay">
         <div class="ov-card" id="ovIdle">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4M7 9l5-5 5 5M5 20h14"/></svg>
           <strong>Drop a character here</strong>
           <span>GLB · glTF · FBX · OBJ · STL · PLY · DAE · 3MF · USDZ</span>
-          <button class="btn" id="browseBtn">Browse files</button>
+          <div class="ov-actions">
+            <button class="btn btn-primary" id="browseBtn">Browse files</button>
+            <button class="btn" data-sample>Try the sample robot</button>
+          </div>
+          <span class="ov-foot">Sample: RobotExpressive by Tomás Laulhé, CC0. Your files never leave this device.</span>
         </div>
         <div class="ov-card" id="ovLoading" hidden><div class="spinner"></div><strong id="loadingText">Loading…</strong></div>
         <div class="ov-card is-error" id="ovError" hidden>
@@ -182,7 +206,10 @@
       <span class="muted small hide-sm">Passing checks are not a guarantee of game readiness.</span>
     </button>
     <button class="btn btn-primary" id="footExport" disabled>Export GLB</button>
-    <div class="val-drawer" id="valDrawer" hidden><ul class="checks" id="checkList"></ul></div>
+    <div class="val-drawer" id="valDrawer" hidden>
+      <div class="drawer-head"><span class="val-label">Validation details</span><button class="icon-btn" id="valClose" title="Close (Esc)" aria-label="Close validation details"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+      <ul class="checks" id="checkList"></ul>
+    </div>
   </footer>
 </div>
 

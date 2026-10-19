@@ -81,6 +81,7 @@ export class Viewport {
   tick() {
     const delta = Math.min(this.clock.getDelta(), 0.1);
     for (const fn of this.frameHooks) fn(delta);
+    this.updateBoneMarker();
     this.controls.update();
     this.renderer.render(this.scene, this.camera);
   }
@@ -122,6 +123,7 @@ export class Viewport {
   /** Detaches the model; the caller disposes it (see dispose.js). */
   clearModel() {
     this.removeSkeletonHelper();
+    this.clearBoneHighlight();
     if (this.model) this.display.remove(this.model);
     this.model = null;
   }
@@ -138,6 +140,41 @@ export class Viewport {
     this.skeletonHelper.material.transparent = true;
     this.skeletonHelper.renderOrder = 10;
     this.scene.add(this.skeletonHelper);
+  }
+
+  /** Marks one bone with a small always-on-top ring that follows it while animating. */
+  highlightBone(bone) {
+    this.clearBoneHighlight();
+    if (!bone) return;
+    const r = Math.max(this.radius * 0.035, 1e-4);
+    const marker = new THREE.Mesh(
+      new THREE.SphereGeometry(1, 16, 12),
+      new THREE.MeshBasicMaterial({ color: 0xffffff, depthTest: false, transparent: true, opacity: 0.9, wireframe: true }),
+    );
+    marker.renderOrder = 20;
+    marker.name = 'CW_BoneMarker';
+    marker.userData.bone = bone;
+    marker.userData.size = r;
+    this.boneMarker = marker;
+    this.scene.add(marker);
+    this.updateBoneMarker();
+  }
+
+  updateBoneMarker() {
+    const m = this.boneMarker;
+    if (!m) return;
+    const bone = m.userData.bone;
+    if (!bone.parent) { this.clearBoneHighlight(); return; }
+    bone.getWorldPosition(m.position);
+    m.scale.setScalar(m.userData.size);
+  }
+
+  clearBoneHighlight() {
+    if (!this.boneMarker) return;
+    this.scene.remove(this.boneMarker);
+    this.boneMarker.geometry.dispose();
+    this.boneMarker.material.dispose();
+    this.boneMarker = null;
   }
 
   removeSkeletonHelper() {
@@ -235,13 +272,27 @@ export class Viewport {
     this.setMode(this.mode);
   }
 
-  snapshot(type = 'image/png') {
+  /** Renders the current view to a PNG blob; `square` crops to the centre for thumbnails. */
+  snapshot({ square = false, hideHelpers = true } = {}) {
+    const hidden = [];
+    if (hideHelpers) for (const o of [this.grid, this.skeletonHelper, this.boneMarker]) if (o?.visible) { o.visible = false; hidden.push(o); }
     this.renderer.render(this.scene, this.camera);
-    return this.canvas.toDataURL(type);
+    let source = this.canvas;
+    if (square) {
+      const s = Math.min(this.canvas.width, this.canvas.height);
+      const c = document.createElement('canvas');
+      c.width = c.height = s;
+      c.getContext('2d').drawImage(this.canvas, (this.canvas.width - s) / 2, (this.canvas.height - s) / 2, s, s, 0, 0, s, s);
+      source = c;
+    }
+    for (const o of hidden) o.visible = true;
+    return new Promise((resolve, reject) => source.toBlob((b) => (b ? resolve(b) : reject(new Error('Could not capture the viewport.'))), 'image/png'));
   }
 
   dispose() {
     this.running = false;
+    this.clearBoneHighlight();
+    this.removeSkeletonHelper();
     this.renderer.setAnimationLoop(null);
     this.resizeObserver.disconnect();
     this.controls.dispose();

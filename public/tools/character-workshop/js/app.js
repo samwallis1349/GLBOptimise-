@@ -6,6 +6,7 @@
  *   animation.js playback controller and category suggestions
  *   validate.js  PASS / WARNING / FAIL checks
  *   export.js    export + round-trip verification
+ *   agent.js     in-place clips and category names for game agents
  */
 import { Viewport } from './viewport.js';
 import { ADAPTERS, ACCEPT, UserError, badgeFor, loadAnimationFile, loadFiles } from './formats.js';
@@ -14,12 +15,20 @@ import { AnimationController, CATEGORIES, suggestCategories } from './animation.
 import { validateAsset, summarise } from './validate.js';
 import { availableTargets, downloadBlob, exportAsset, sanitiseFileName, verifyExport, TARGETS } from './export.js';
 import { disposeObject } from './dispose.js';
-import { $, el, formatBytes, formatSeconds, statRows, statusPill, ICONS } from './ui.js';
+import { exportClipList, makeInPlace } from './agent.js';
+import { $, el, formatBytes, formatSeconds, statRows, statusPill, toast, ICONS } from './ui.js';
+
+const SAMPLE = { url: new URL('../samples/robot-expressive.glb', import.meta.url).href, name: 'RobotExpressive.glb' };
 
 const DEFAULT_SETTINGS = { scale: 1, rotationX: 0, rotationY: 0, groundFeet: true, shadows: true, grid: true, background: 'charcoal', skeleton: false };
 
 const viewport = new Viewport($('canvas'));
 const anim = new AnimationController();
+anim.playableFor = (clip) => {
+  if (!asset?.inPlace) return clip;
+  if (!asset.inPlaceCache.has(clip)) asset.inPlaceCache.set(clip, makeInPlace(clip, asset.root).clip);
+  return asset.inPlaceCache.get(clip) ?? clip;
+};
 viewport.onFrame((dt) => { anim.update(dt); updateTransportTime(); });
 
 /** Everything about the current asset. Replaced wholesale on each import. */
@@ -64,13 +73,30 @@ for (const t of dropTargets) {
   t.addEventListener('dragleave', () => t.classList.remove('is-over'));
   t.addEventListener('drop', (e) => {
     e.preventDefault();
+    e.stopPropagation();
     t.classList.remove('is-over');
     if (e.dataTransfer?.files?.length) importFiles(e.dataTransfer.files);
   });
 }
-// Dropping anywhere else must not navigate the frame away.
+// Files dropped anywhere else on the page are imported too (and never navigate the frame away).
 window.addEventListener('dragover', (e) => e.preventDefault());
-window.addEventListener('drop', (e) => e.preventDefault());
+window.addEventListener('drop', (e) => {
+  e.preventDefault();
+  if (e.dataTransfer?.files?.length) importFiles(e.dataTransfer.files);
+});
+
+async function loadSample() {
+  overlay('loading', { text: 'Loading the sample robot…' });
+  try {
+    const res = await fetch(SAMPLE.url);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const blob = await res.blob();
+    await importFiles([new File([blob], SAMPLE.name, { type: 'model/gltf-binary' })]);
+  } catch (error) {
+    overlay('error', { title: 'The sample could not be loaded', detail: `${error.message}. Check that samples/robot-expressive.glb sits next to this tool.` });
+  }
+}
+document.querySelectorAll('[data-sample]').forEach((b) => b.addEventListener('click', loadSample));
 
 let importToken = 0;
 async function importFiles(fileList) {
@@ -90,6 +116,7 @@ async function importFiles(fileList) {
   try {
     setAsset(loaded);
     overlay('none');
+    toast(`Loaded ${loaded.source.fileName}`);
   } catch (error) {
     console.error(error);
     overlay('error', { title: 'The file loaded but could not be displayed', detail: String(error?.message || error) });
@@ -120,6 +147,10 @@ function setAsset(loaded) {
     exportSel: new Set(clips.filter((c) => c.tracks.length > 0)),
     target: 'glb',
     lastExport: null,
+    inPlace: false,
+    inPlaceCache: new Map(),
+    renameOnExport: false,
+    selectedBone: null,
   };
   viewport.setModel(root);
   anim.attach(root, clips, restPose);
@@ -177,7 +208,45 @@ function renderCharacter() {
   if (a.status === 'experimental') noteEls.push(`${a.label} support is experimental — check the preview carefully.`);
   $('importNotes').replaceChildren(...noteEls.map((n) => el('p', { class: 'note', text: n })));
   $('formatLimits').replaceChildren(...a.limitations.map((l) => el('li', { text: l })));
+  renderBones();
 }
+
+// ---------------------------------------------------------------- bone inspector
+function boneRows() {
+  const rows = [];
+  const skin = new Set();
+  asset.root.traverse((o) => { if (o.isSkinnedMesh) o.skeleton?.bones.forEach((b) => b && skin.add(b)); });
+  const walk = (node, depth) => {
+    if (node.isBone) rows.push({ bone: node, depth, skinned: skin.has(node), children: node.children.filter((c) => c.isBone).length });
+    for (const c of node.children) walk(c, node.isBone ? depth + 1 : depth);
+  };
+  walk(asset.root, 0);
+  return rows;
+}
+
+function renderBones() {
+  const fold = $('boneFold');
+  if (!asset || !asset.stats.hasSkeleton) { fold.hidden = true; viewport.clearBoneHighlight(); return; }
+  fold.hidden = false;
+  const rows = boneRows();
+  $('boneCount').textContent = rows.length;
+  const q = $('boneSearch').value.trim().toLowerCase();
+  const shown = q ? rows.filter((r) => r.bone.name.toLowerCase().includes(q)) : rows;
+  $('boneTree').replaceChildren(...shown.slice(0, 500).map((r) => {
+    const item = el('li', { class: `bone${asset.selectedBone === r.bone ? ' is-selected' : ''}`, style: `--depth:${q ? 0 : Math.min(r.depth, 14)}`, title: r.bone.name },
+      el('span', { class: 'bone-name', text: r.bone.name || '(unnamed bone)' }),
+      r.skinned ? null : el('span', { class: 'tag', text: 'not skinned', title: 'No skinned mesh uses this bone' }),
+      r.children ? el('span', { class: 'bone-kids', text: r.children }) : null);
+    item.addEventListener('click', () => {
+      asset.selectedBone = asset.selectedBone === r.bone ? null : r.bone;
+      viewport.highlightBone(asset.selectedBone);
+      renderBones();
+    });
+    return item;
+  }));
+  $('boneEmpty').hidden = shown.length > 0;
+}
+$('boneSearch').addEventListener('input', () => asset && renderBones());
 
 function renderFormatTable() {
   const statusText = { tested: 'Tested', static: 'Static mesh', experimental: 'Experimental', unsupported: 'Explained only' };
@@ -209,7 +278,7 @@ function renderClips() {
     const isCurrent = anim.current?.clip === clip;
     const playing = isCurrent && anim.playing;
     const cat = categoryOf(clip);
-    const item = el('li', { class: `clip${asset.selected === clip ? ' is-selected' : ''}`, 'data-clip': clip.name, role: 'option', 'aria-selected': String(asset.selected === clip) },
+    const item = el('li', { class: `clip${asset.selected === clip ? ' is-selected' : ''}${isCurrent ? ' is-current' : ''}`, 'data-clip': clip.name, role: 'option', 'aria-selected': String(asset.selected === clip) },
       el('button', { class: 'play', title: playing ? 'Pause' : 'Play', 'aria-label': `${playing ? 'Pause' : 'Play'} ${clip.name}`, html: playing ? ICONS.pause : ICONS.play,
         onclick: (e) => { e.stopPropagation(); if (asset.selected !== clip) selectClip(clip, { autoplay: true }); else { anim.toggle(clip); } } }),
       el('div', { class: 'clip-text' },
@@ -219,6 +288,7 @@ function renderClips() {
           meta.source !== 'embedded' ? el('span', { class: 'tag', text: 'pack' }) : null,
           cat ? el('span', { class: 'tag', text: cat }) : null)),
       el('span', { class: 'clip-dur', text: `${formatSeconds(clip.duration)}s` }),
+      isCurrent ? el('div', { class: 'clip-progress', 'aria-hidden': 'true' }, el('i')) : null,
       el('button', { class: `loop${meta.loop ? ' is-on' : ''}`, title: meta.loop ? 'Looping — click to play once' : 'Plays once — click to loop', 'aria-pressed': String(meta.loop), html: ICONS.loop,
         onclick: (e) => { e.stopPropagation(); meta.loop = !meta.loop; if (anim.current?.clip === clip) anim.setLoop(meta.loop); renderClips(); renderTransport(); } }),
     );
@@ -263,6 +333,8 @@ function updateTransportTime(force = false) {
   const t = anim.current ? Math.min(anim.time, d) : 0;
   if (!scrubbing) scrub.value = String(t);
   $('timeLabel').textContent = `${formatSeconds(t)} / ${formatSeconds(d)} s`;
+  const bar = document.querySelector('.clip.is-current .clip-progress i');
+  if (bar) bar.style.width = `${d ? (t / d) * 100 : 0}%`;
 }
 playBtn.addEventListener('click', () => anim.toggle(asset?.selected));
 stopBtn.addEventListener('click', () => anim.stop());
@@ -282,19 +354,61 @@ scrub.addEventListener('input', () => {
 scrub.addEventListener('change', () => { scrubbing = false; });
 speed.addEventListener('change', () => anim.setSpeed(Number(speed.value)));
 $('crossFade').addEventListener('change', (e) => { anim.crossFade = Number(e.target.value); });
+function setInPlace(on) {
+  if (!asset) return;
+  asset.inPlace = on;
+  $('inPlacePreview').checked = on;
+  $('exportInPlace').checked = on;
+  anim.refresh();
+  if (on && asset.selected) {
+    const r = makeInPlace(asset.selected, asset.root);
+    toast(r.clip ? `In place: root motion removed from ${r.node.name || 'the root'}` : `"${asset.selected.name}" has no root motion to remove`);
+  }
+}
+$('inPlacePreview').addEventListener('change', (e) => setInPlace(e.target.checked));
+$('exportInPlace').addEventListener('change', (e) => setInPlace(e.target.checked));
+$('exportRename').addEventListener('change', (e) => { if (asset) { asset.renameOnExport = e.target.checked; renderExport(); } });
+$('thumbBtn').addEventListener('click', () => saveSnapshot(true));
 
 // ---------------------------------------------------------------- camera
-document.querySelectorAll('[data-view]').forEach((b) => b.addEventListener('click', () => {
-  document.querySelectorAll('[data-view]').forEach((x) => x.classList.toggle('is-on', x === b));
-  viewport.setMode(b.dataset.view);
-}));
+document.querySelectorAll('[data-view]').forEach((b) => b.addEventListener('click', () => setView(b.dataset.view)));
 $('frameBtn').addEventListener('click', () => viewport.frame());
 $('resetCamBtn').addEventListener('click', () => viewport.resetCamera());
+function setView(mode) {
+  document.querySelectorAll('[data-view]').forEach((x) => x.classList.toggle('is-on', x.dataset.view === mode));
+  viewport.setMode(mode);
+}
+function step(dir) {
+  if (!asset?.selected) return;
+  if (anim.current?.clip !== asset.selected) anim.play(asset.selected);
+  anim.pause();
+  const d = anim.duration || 1;
+  anim.seek(((anim.time + dir / 30) % d + d) % d);
+}
 window.addEventListener('keydown', (e) => {
-  if (e.target.closest('input, select, textarea')) return;
+  if (e.target.closest('input, select, textarea') || e.ctrlKey || e.metaKey || e.altKey) return;
+  const k = e.key.toLowerCase();
   if (e.code === 'Space' && asset?.clips.length) { e.preventDefault(); anim.toggle(asset.selected); }
-  if (e.key === 'f' || e.key === 'F') viewport.frame();
+  else if (k === 'f') viewport.frame();
+  else if (k === 'i') setView(viewport.mode === 'isometric' ? 'perspective' : 'isometric');
+  else if (k === 's' && asset) $('skelBtn').click();
+  else if (e.key === 'ArrowRight' && asset?.clips.length) { e.preventDefault(); step(1); }
+  else if (e.key === 'ArrowLeft' && asset?.clips.length) { e.preventDefault(); step(-1); }
+  else if (e.key === 'Escape') closeDrawer();
 });
+$('snapBtn').addEventListener('click', () => saveSnapshot(false));
+async function saveSnapshot(square) {
+  if (!asset) return;
+  try {
+    const blob = await viewport.snapshot({ square });
+    const base = asset.loaded.source.fileName.replace(/\.[^.]+$/, '');
+    const name = `${base}${square ? '-thumbnail' : ''}.png`;
+    downloadBlob(blob, name);
+    toast(`Saved ${name}`);
+  } catch (error) {
+    toast(String(error.message || error), 'error');
+  }
+}
 
 // ---------------------------------------------------------------- categories + packs
 function renderCategories() {
@@ -311,6 +425,7 @@ function renderCategories() {
       asset.assigned[cat.id] = select.value === '' ? null : clips[Number(select.value)];
       renderCategories();
       renderClips();
+      renderExport();
     });
     return el('li', { class: `cat${clip ? '' : ' is-missing'}` },
       el('div', { class: 'cat-top' },
@@ -320,6 +435,8 @@ function renderCategories() {
       select,
       clip ? null : el('div', { class: 'help', text: `No clip is named like "${cat.label}". Import an animation pack containing one, or assign a clip you know is a ${cat.label.toLowerCase()} animation.` }));
   }));
+  $('inPlacePreview').disabled = !asset || !clips.length;
+  $('inPlacePreview').checked = !!asset?.inPlace;
   const canPack = !!asset && asset.stats.hasSkeleton;
   $('packBtn').disabled = !canPack;
   $('packHelp').textContent = !asset ? 'Load a rigged character first. Packs are GLB or FBX files using the same bone names — e.g. Mixamo downloads ("Without Skin") for a Mixamo-rigged character.'
@@ -427,6 +544,17 @@ $('skelBtn').addEventListener('click', () => { settingInputs.skeleton.checked = 
 $('resetSettings').addEventListener('click', () => { writeSettings(DEFAULT_SETTINGS); applySettings({ reframe: true }); });
 
 // ---------------------------------------------------------------- export
+function categoryMapping() {
+  const m = {};
+  for (const c of CATEGORIES) { const clip = asset.assigned[c.id] ?? asset.categories[c.id]?.clip; if (clip) m[c.id] = clip; }
+  return m;
+}
+
+function plannedExportClips() {
+  const selected = asset.clips.filter((c) => asset.exportSel.has(c));
+  return exportClipList(selected, { mapping: categoryMapping(), rename: asset.renameOnExport, inPlace: asset.inPlace, root: asset.root });
+}
+
 function renderExport() {
   $('exportEmpty').hidden = !!asset;
   $('exportForm').hidden = !asset;
@@ -454,8 +582,15 @@ function renderExport() {
     const b = trackBinding(clip, asset.root);
     const box = el('input', { type: 'checkbox', checked: asset.exportSel.has(clip) });
     box.addEventListener('change', () => { if (box.checked) asset.exportSel.add(clip); else asset.exportSel.delete(clip); updateExportButton(); });
-    return el('li', {}, el('label', {}, box, el('span', { text: clip.name }), el('span', { class: 'bind', text: `${b.bound}/${b.total}` })));
+    const cats = asset.renameOnExport ? CATEGORIES.filter((c) => categoryMapping()[c.id] === clip).map((c) => c.label) : [];
+    return el('li', {}, el('label', {}, box, el('span', { text: clip.name }), cats.length ? el('span', { class: 'tag', text: `→ ${cats.join(', ')}` }) : null, el('span', { class: 'bind', text: `${b.bound}/${b.total}` })));
   }));
+  const hasMapping = Object.keys(categoryMapping()).length > 0;
+  $('agentOpts').hidden = !spec.animation || !asset.clips.length;
+  $('exportRename').disabled = !hasMapping;
+  $('exportRename').checked = asset.renameOnExport && hasMapping;
+  $('exportInPlace').checked = asset.inPlace;
+  $('renameHelp').textContent = hasMapping ? 'Clips matched to Idle, Walk, Run… on the Animations tab are exported under those names.' : 'No clips are matched to a category yet (Animations tab).';
   const conv = [];
   const a = asset.loaded.source.adapter;
   conv.push(`${a.label} → ${spec.ext.toUpperCase()}. The source file is not modified.`);
@@ -469,7 +604,7 @@ function renderExport() {
 function updateExportButton() {
   if (!asset) return;
   const spec = TARGETS[asset.target];
-  const n = spec.animation ? asset.clips.filter((c) => asset.exportSel.has(c)).length : 0;
+  const n = spec.animation ? plannedExportClips().clips.length : 0;
   $('exportBtn').textContent = `Export ${spec.ext.toUpperCase()}${spec.animation && asset.clips.length ? ` (${n} clip${n === 1 ? '' : 's'})` : ''}`;
   $('footExport').textContent = `Export ${spec.ext.toUpperCase()}`;
 }
@@ -486,17 +621,21 @@ $('exportBtn').addEventListener('click', async () => {
   const label = btn.textContent;
   btn.textContent = 'Exporting…';
   try {
-    const clips = current.clips.filter((c) => current.exportSel.has(c));
+    const plan = plannedExportClips();
+    const clips = plan.clips;
     const out = await exportAsset({
       model: current.root, restPose: current.restPose, clips, target: current.target,
       fileName: $('exportName').value, displayTransform: $('bakeDisplay').checked ? viewport.settings : null,
     });
     let verification = null, verifyError = null;
     try { verification = await verifyExport(out); } catch (error) { verifyError = String(error?.message || error); }
-    current.lastExport = { ...out, verification, verifyError };
+    current.lastExport = { ...out, verification, verifyError, agentReport: plan.report };
+    const worstFail = verification?.checks.some((c) => c.status === 'fail');
+    toast(verification ? (worstFail ? `${out.fileName} exported, but the round-trip check found differences` : `${out.fileName} exported and verified`) : `${out.fileName} exported; reload check failed`, worstFail || !verification ? 'error' : 'ok');
   } catch (error) {
     console.error(error);
     current.lastExport = { error: String(error?.message || error) };
+    toast('Export failed', 'error');
   } finally {
     btn.disabled = false;
     btn.textContent = label;
@@ -515,6 +654,7 @@ function renderExportResult() {
     el('div', { class: 'result-head' }, el('strong', { text: r.fileName, title: r.fileName }), el('span', { class: 'clip-dur', text: formatBytes(r.size) })),
     el('div', {}, statusPill(worst), ' ', el('span', { class: 'muted small', text: v ? 'File generated and reloaded for a round-trip check.' : `File generated, but reloading it failed: ${r.verifyError}` })),
     v ? el('table', { class: 'rt' }, el('tbody', {}, ...v.checks.map((c) => el('tr', {}, el('td', { text: c.label }), el('td', { text: String(c.expected) }), el('td', { text: String(c.actual) }), el('td', {}, statusPill(c.status)))))) : null,
+    r.agentReport?.length ? el('details', { class: 'fold', open: true }, el('summary', { text: `Game-agent changes (${r.agentReport.length})` }), el('ul', { class: 'limits' }, ...r.agentReport.map((w) => el('li', { text: w })))) : null,
     r.warnings.length ? el('details', { class: 'fold', open: true }, el('summary', { text: `Exporter messages (${r.warnings.length})` }), el('ul', { class: 'limits' }, ...r.warnings.map((w) => el('li', { text: w })))) : null,
     el('button', { class: 'btn btn-primary btn-wide', text: `Save ${r.fileName}`, onclick: () => downloadBlob(r.blob, r.fileName) }),
   ));
@@ -539,8 +679,11 @@ $('valToggle').addEventListener('click', () => {
   $('valDrawer').hidden = !open;
   $('valToggle').setAttribute('aria-expanded', String(open));
 });
+function closeDrawer() { $('valDrawer').hidden = true; $('valToggle').setAttribute('aria-expanded', 'false'); }
+$('valClose').addEventListener('click', closeDrawer);
 
 function renderAll() {
+  $('snapBtn').disabled = !asset;
   renderCharacter();
   renderClips();
   renderTransport();

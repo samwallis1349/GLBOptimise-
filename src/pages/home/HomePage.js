@@ -134,8 +134,9 @@ function ToolsBlock() {
   const grid = document.createElement('div');
   grid.className = 'tool-grid';
   const fill = (counts) => {
-    // Ranked purely by site-wide usage; the most-used tool gets the full-width card.
-    const tools = rankByUsage(getOrderedTools(), counts);
+    // Character Workshop takes the full-width card and Line Studio leads the
+    // normal cards; everything after them is ranked by site-wide usage.
+    const tools = rankByUsage(getOrderedTools(), counts, ['character-workshop', 'line-studio']);
     grid.replaceChildren(...tools.map((tool, index) => ToolCard(tool, { index: index + 1, headline: index === 0 })));
   };
   fill(cachedUsageCounts());

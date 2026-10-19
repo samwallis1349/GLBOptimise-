@@ -40,6 +40,19 @@ export function statRows(container, rows) {
   container.replaceChildren(...rows.flatMap(([k, v]) => [el('dt', { text: k }), el('dd', { text: v })]));
 }
 
+let toastTimer = 0;
+/** Brief status message at the bottom of the viewport. kind: 'ok' | 'error' | 'info'. */
+export function toast(message, kind = 'info') {
+  let box = document.getElementById('toast');
+  if (!box) return;
+  box.textContent = message;
+  box.dataset.kind = kind;
+  box.hidden = false;
+  box.classList.remove('is-out');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { box.classList.add('is-out'); toastTimer = setTimeout(() => { box.hidden = true; }, 250); }, kind === 'error' ? 5200 : 2600);
+}
+
 export const ICONS = {
   play: '<svg viewBox="0 0 24 24"><path d="M7 4.5v15l12-7.5z"/></svg>',
   pause: '<svg viewBox="0 0 24 24"><path d="M7 4h3.5v16H7zM13.5 4H17v16h-3.5z"/></svg>',

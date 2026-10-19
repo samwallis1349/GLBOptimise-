@@ -7,6 +7,7 @@ import { AnimationController, suggestCategories } from '../public/tools/characte
 import { ADAPTERS, adapterFor, badgeFor, pickPrimary } from '../public/tools/character-workshop/js/formats.js';
 import { availableTargets, exportAsset, sanitiseFileName, verifyExport } from '../public/tools/character-workshop/js/export.js';
 import { disposeObject } from '../public/tools/character-workshop/js/dispose.js';
+import { exportClipList, makeInPlace } from '../public/tools/character-workshop/js/agent.js';
 
 // GLTFExporter reads Blobs with FileReader, which Node does not provide.
 globalThis.FileReader ??= class {
@@ -157,4 +158,30 @@ test('disposing a model releases its geometry and materials', () => {
   mesh.material.addEventListener('dispose', () => disposed++);
   disposeObject(root);
   assert.equal(disposed, 2);
+});
+
+test('in-place removes horizontal root travel but keeps the vertical bob', () => {
+  const { root } = makeRiggedCharacter();
+  const walk = new THREE.AnimationClip('Walk', 1, [
+    new THREE.VectorKeyframeTrack('Hips.position', [0, 0.5, 1], [0, 0, 0, 0, 0.05, 0.6, 0, 0, 1.2]),
+  ]);
+  const r = makeInPlace(walk, root);
+  assert.equal(r.node.name, 'Hips');
+  assert.ok(r.distance > 1);
+  const v = r.clip.tracks[0].values;
+  assert.deepEqual([v[3], v[5], v[6], v[8]], [0, 0, 0, 0], 'x/z frozen at the first frame');
+  assert.ok(Math.abs(v[4] - 0.05) < 1e-6, 'vertical bob kept');
+  assert.ok(Math.abs(walk.tracks[0].values[8] - 1.2) < 1e-6, 'source clip untouched');
+  const idle = new THREE.AnimationClip('Idle', 1, [new THREE.VectorKeyframeTrack('Hips.position', [0, 1], [0, 0, 0, 0, 0.02, 0])]);
+  assert.equal(makeInPlace(idle, root).clip, null, 'nothing to remove');
+});
+
+test('category rename exports clips under unique category names', () => {
+  const { clips } = makeRiggedCharacter();
+  const [idle, walk, wave] = clips;
+  const { clips: out, report } = exportClipList(clips, { mapping: { idle, walk, think: wave, wave }, rename: true });
+  assert.deepEqual(out.map((c) => c.name), ['Idle', 'Walk', 'Wave', 'Think']);
+  assert.deepEqual(report, ['"Walk_Cycle" exported as "Walk".', '"Wave" exported as "Think".']);
+  assert.equal(wave.name, 'Wave', 'originals keep their names');
+  assert.deepEqual(exportClipList(clips).clips.map((c) => c.name), ['Idle', 'Walk_Cycle', 'Wave']);
 });

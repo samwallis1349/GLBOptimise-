@@ -50,6 +50,9 @@ export class AnimationController {
     this.crossFade = 0.25;
     this.playing = false;
     this.listeners = new Set();
+    /** Maps a library clip to the clip actually played (e.g. an in-place copy). */
+    this.playableFor = (clip) => clip;
+    this.played = new Set();
   }
 
   attach(root, clips, restPose) {
@@ -73,13 +76,14 @@ export class AnimationController {
   detach() {
     if (this.mixer) {
       this.mixer.stopAllAction();
-      for (const clip of this.clips) this.mixer.uncacheClip(clip);
+      for (const clip of new Set([...this.clips, ...this.played])) this.mixer.uncacheClip(clip);
       if (this.root) this.mixer.uncacheRoot(this.root);
     }
     this.mixer = null;
     this.root = null;
     this.restPose = null;
     this.clips = [];
+    this.played.clear();
     this.current = null;
     this.fading = [];
     this.playing = false;
@@ -98,7 +102,9 @@ export class AnimationController {
       this.emit();
       return;
     }
-    const action = this.mixer.clipAction(clip);
+    const playable = this.playableFor(clip) ?? clip;
+    this.played.add(playable);
+    const action = this.mixer.clipAction(playable);
     action.reset();
     this.applyLoop(action);
     action.enabled = true;
@@ -119,6 +125,25 @@ export class AnimationController {
     });
     this.current = { clip, action };
     this.playing = true;
+    this.emit();
+  }
+
+  /** Re-binds the current clip (after playableFor changes), keeping its time and state. */
+  refresh() {
+    if (!this.current) return;
+    const { clip, action } = this.current;
+    const time = action.time, wasPlaying = this.playing;
+    action.stop();
+    for (const a of this.fading) a.stop();
+    this.fading = [];
+    this.current = null;
+    const fade = this.crossFade;
+    this.crossFade = 0;
+    this.play(clip);
+    this.crossFade = fade;
+    this.current.action.time = time;
+    if (!wasPlaying) { this.current.action.paused = true; this.playing = false; }
+    this.mixer.update(0);
     this.emit();
   }
 
@@ -190,7 +215,7 @@ export class AnimationController {
   /** Number of actions currently influencing bones (used by tests). */
   activeActionCount() {
     if (!this.mixer) return 0;
-    return this.clips.filter((c) => this.mixer.existingAction(c)?.isRunning()).length;
+    return this.mixer._actions.filter((a) => a.isRunning()).length;
   }
 
   get time() { return this.current?.action.time ?? 0; }
