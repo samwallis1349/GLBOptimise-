@@ -32,6 +32,34 @@ function setMeta(html, attr, key, value) {
   return html.replace(re, `$1${esc(value)}$2`);
 }
 
+/**
+ * index.html's SoftwareApplication JSON-LD describes the whole site. Left as
+ * is, every tool page would tell Google it's "Asset Bench" at "/", so tool
+ * pages get their own entry, keeping the site's offer and linking back to it.
+ */
+const JSON_LD_RE = /(<script type="application\/ld\+json">)([\s\S]*?)(<\/script>)/;
+function setToolJsonLd(html, tool, seo) {
+  const match = html.match(JSON_LD_RE);
+  if (!match) throw new Error('seo-pages: application/ld+json not found in index.html');
+  const site = JSON.parse(match[2]);
+  const data = {
+    '@context': 'https://schema.org',
+    '@type': 'SoftwareApplication',
+    name: tool.name,
+    applicationCategory: site.applicationCategory,
+    operatingSystem: site.operatingSystem,
+    description: seo.description,
+    url: seo.url,
+    image: seo.image,
+    ...(tool.keywords?.length ? { keywords: tool.keywords.join(', ') } : {}),
+    offers: site.offers,
+    isPartOf: { '@type': 'WebSite', name: SITE_NAME, url: `${SITE_URL}/` },
+  };
+  // "<" escaped so a description can never close the script tag.
+  const json = JSON.stringify(data, null, 2).replace(/</g, '\\u003c');
+  return html.replace(JSON_LD_RE, () => `${match[1]}\n${json}\n    ${match[3]}`);
+}
+
 /** Returns index.html rewritten for one route (a tool or a STATIC_PAGES entry). */
 export function renderPage(indexHtml, path) {
   const seo = pageSeo(path);
@@ -47,6 +75,7 @@ export function renderPage(indexHtml, path) {
   html = setMeta(html, 'name', 'twitter:description', seo.description);
   html = setMeta(html, 'name', 'twitter:image', seo.image);
   if (tool?.thumbnail) html = setMeta(html, 'name', 'twitter:card', 'summary_large_image');
+  if (tool) html = setToolJsonLd(html, tool, seo);
 
   // Tool pages link their category neighbours; the rest link every live tool.
   const links = TOOLS.filter((t) => t !== tool && LIVE.has(t.status) && (!tool || t.category === tool.category))
@@ -106,7 +135,7 @@ const PAGE_SOURCES = {
 };
 const sourcesFor = (path, tool) =>
   tool
-    ? [`src/tools/${tool.id}`, `public/thumbnails/${tool.id}.webp`, `public/thumbnails/${tool.id}-wide.webp`]
+    ? [`src/tools/${tool.id}`, `public/tools/${tool.id}`, `public/thumbnails/${tool.id}.webp`, `public/thumbnails/${tool.id}-wide.webp`]
     : PAGE_SOURCES[path] ?? [`src/pages${path}`];
 
 /**

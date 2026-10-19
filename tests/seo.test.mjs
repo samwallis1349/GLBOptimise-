@@ -48,3 +48,30 @@ test('the 404 page is the app shell, noindex, with no canonical', () => {
   assert.ok(!html.includes('rel="canonical"'));
   assert.ok(html.includes('<div id="app"></div>'));
 });
+
+test('tool pages carry their own SoftwareApplication JSON-LD, not the homepage one', () => {
+  for (const tool of TOOLS) {
+    const html = renderPage(indexHtml, tool.route);
+    const blocks = [...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)];
+    assert.equal(blocks.length, 1, tool.id);
+    const data = JSON.parse(blocks[0][1]);
+    assert.equal(data.name, tool.name, tool.id);
+    assert.equal(data.url, `https://www.assetbench.co.uk${tool.route}`, tool.id);
+    assert.ok(data.offers, tool.id);
+  }
+});
+
+test('embedded tool pages under /tools/ are noindex so they never compete with their route', async () => {
+  const { readdir } = await import('node:fs/promises');
+  const dir = new URL('../public/tools/', import.meta.url);
+  for (const id of await readdir(dir)) {
+    const html = await readFile(new URL(`${id}/index.html`, dir), 'utf8').catch(() => null);
+    if (html) assert.match(html, /<meta name="robots" content="noindex, indexifembedded">/, id);
+  }
+});
+
+test('sitemap dates embedded tools from public/tools too', () => {
+  const seen = [];
+  renderSitemap({ lastmod: (paths) => { seen.push(paths); return null; } });
+  assert.ok(seen.some((p) => p.includes('public/tools/character-workshop')));
+});
