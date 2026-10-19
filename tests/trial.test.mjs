@@ -63,13 +63,15 @@ test('worker preserves the earliest trial start for an IP', async () => {
     now += 4 * 86_400_000;
     const second = await worker.fetch(request(now), env);
     assert.equal((await second.json()).startedAt, start);
+    const poisoned = await worker.fetch(request(1), env);
+    assert.equal((await poisoned.json()).startedAt, start, 'client-supplied ancient timestamp cannot poison IP trial');
     assert.equal(records.size, 1);
   } finally {
     Date.now = originalNow;
   }
 });
 
-test('device fingerprint prevents trial reset when IP changes via VPN', async () => {
+test('a new visitor whose device looks like an earlier one still gets a fresh trial', async () => {
   const originalNow = Date.now;
   const start = Date.UTC(2026, 8, 30, 12);
   let now = start;
@@ -89,15 +91,16 @@ test('device fingerprint prevents trial reset when IP changes via VPN', async ()
     body: JSON.stringify({ startedAt, deviceId: devId }),
   });
   try {
-    // Visitor on original IP (home network) starts trial
+    // First visitor starts a trial.
     const first = await worker.fetch(req('198.51.100.7', null, deviceId), env);
     assert.equal((await first.json()).startedAt, start);
 
-    // 4 days later: visitor switches to a VPN (new IP) and opens Incognito (no startedAt sent)
+    // 4 days later a different person on another network, with the same phone
+    // model (an old client still sending the same fingerprint), arrives fresh.
     now += 4 * 86_400_000;
-    const vpnVisit = await worker.fetch(req('203.0.113.99', null, deviceId), env);
-    // Worker recognises device fingerprint and returns original start time
-    assert.equal((await vpnVisit.json()).startedAt, start);
+    const stranger = await worker.fetch(req('203.0.113.99', null, deviceId), env);
+    assert.equal((await stranger.json()).startedAt, now);
+    assert.ok(![...records.keys()].some((key) => key.startsWith('device:')));
   } finally {
     Date.now = originalNow;
   }

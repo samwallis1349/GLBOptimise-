@@ -3,8 +3,8 @@
 export const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-api-key',
-  'Access-Control-Expose-Headers': 'Content-Disposition, X-AssetBench-Summary, X-Quota-Remaining, X-Quota-Limit',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-api-key, x-filename',
+  'Access-Control-Expose-Headers': 'Content-Disposition, X-AssetBench-Summary, X-Quota-Remaining, X-Quota-Limit, X-Quota-Reset, Retry-After',
 };
 
 export class ApiError extends Error {
@@ -16,6 +16,16 @@ export class ApiError extends Error {
   }
 }
 
+export function quotaHeaders(quota) {
+  if (!quota || quota.limit == null) return {};
+  const headers = {
+    'X-Quota-Limit': String(quota.limit),
+    'X-Quota-Remaining': String(quota.remaining),
+  };
+  if (quota.resetsAt) headers['X-Quota-Reset'] = String(quota.resetsAt);
+  return headers;
+}
+
 export function json(body, status = 200, extraHeaders = {}) {
   return new Response(JSON.stringify(body, null, 2), {
     status,
@@ -25,7 +35,15 @@ export function json(body, status = 200, extraHeaders = {}) {
 
 export function errorResponse(err) {
   if (err instanceof ApiError) {
-    return json({ error: { code: err.code, message: err.message, ...(err.details ? { details: err.details } : {}) } }, err.status);
+    const extra = {};
+    if (err.status === 429 && err.details?.limit != null) {
+      Object.assign(extra, quotaHeaders(err.details));
+      if (err.details.resetsAt) {
+        const retrySec = Math.max(1, Math.ceil((Date.parse(err.details.resetsAt) - Date.now()) / 1000));
+        if (Number.isFinite(retrySec)) extra['Retry-After'] = String(retrySec);
+      }
+    }
+    return json({ error: { code: err.code, message: err.message, ...(err.details ? { details: err.details } : {}) } }, err.status, extra);
   }
   console.error('[api/v1] unhandled', err);
   return json({ error: { code: 'internal_error', message: 'Processing failed unexpectedly.' } }, 500);
@@ -33,7 +51,7 @@ export function errorResponse(err) {
 
 /** JSON in a header must be ASCII: escape everything outside it. */
 export function asciiJson(value) {
-  return JSON.stringify(value).replace(/[\u007f-￿]/g, (c) => `\\u${c.charCodeAt(0).toString(16).padStart(4, '0')}`);
+  return JSON.stringify(value).replace(/[\u007f-\uffff]/g, (c) => `\\u${c.charCodeAt(0).toString(16).padStart(4, '0')}`);
 }
 
 export function fileResponse(bytes, { filename, contentType, summary, quota }) {
@@ -42,12 +60,9 @@ export function fileResponse(bytes, { filename, contentType, summary, quota }) {
     'Content-Disposition': `attachment; filename="${filename.replace(/[^\w.-]+/g, '_')}"`,
     'Cache-Control': 'no-store',
     ...CORS_HEADERS,
+    ...quotaHeaders(quota),
   };
   if (summary) headers['X-AssetBench-Summary'] = asciiJson(summary);
-  if (quota) {
-    headers['X-Quota-Limit'] = String(quota.limit);
-    headers['X-Quota-Remaining'] = String(quota.remaining);
-  }
   return new Response(bytes, { status: 200, headers });
 }
 

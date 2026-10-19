@@ -3,16 +3,15 @@
  *  - Browser localStorage (`assetbench_trial_v2`)
  *  - Browser IndexedDB (`assetbench_meta` store)
  *  - Worker IP-keyed KV record (`trial:<hash>`)
- *  - Worker Hardware/Device-fingerprint KV record (`device:<hash>`)
  *
- * The earliest anchor wins, so neither clearing storage, using Incognito,
- * nor switching networks/VPNs alone can restart the trial.
+ * The earliest anchor wins, so neither clearing storage nor switching
+ * networks alone can restart the trial. There is deliberately no hardware
+ * fingerprint: identical phones and laptops share one, which handed new
+ * visitors a stranger's start date and an already-expired trial.
  *
  * initTrial() runs once at startup; everything else reads the cached value
  * synchronously afterwards.
  */
-
-import { getDeviceFingerprint } from './DeviceFingerprint.js';
 
 const STORAGE_KEY = 'assetbench_trial_v2';
 const TRIAL_API = '/api/trial';
@@ -86,14 +85,10 @@ function writeIdbStart(value) {
 
 async function fetchServerStart(localStart) {
   try {
-    const deviceId = await getDeviceFingerprint().catch(() => null);
-    const body = { startedAt: localStart };
-    if (deviceId) body.deviceId = deviceId;
-
     const response = await fetch(TRIAL_API, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
+      body: JSON.stringify({ startedAt: localStart }),
     });
     if (!response.ok) return null;
     const data = await response.json();

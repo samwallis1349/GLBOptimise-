@@ -25,13 +25,12 @@
 
 import { TOOLS } from '../src/shared/config/tools.js';
 import { handleApiV1 } from './api/index.js';
-import { handleApiBillingEvent } from './api/billing.js';
+import { handleApiBillingEvent, isApiProduct } from './api/billing.js';
 
 const TOOL_IDS = new Set(TOOLS.map((tool) => tool.id));
 const USAGE_PREFIX = 'usage:';
 const USAGE_CACHE_SECONDS = 300;
 const TRIAL_PREFIX = 'trial:';
-const DEVICE_PREFIX = 'device:';
 const SITE_SALE_PREFIX = 'site-sale:';
 const LICENSE_PRODUCT_ID = 1420844;
 const SINGLE_TOOL_PRODUCT_ID = 1420925;
@@ -58,39 +57,49 @@ function ipKeySource(ip) {
   return `${groups.slice(0, 4).join(':')}::/64`;
 }
 
-async function hashIp(ip, salt) {
-  const bytes = new TextEncoder().encode(`${salt}|${ipKeySource(ip)}`);
-  const digest = await crypto.subtle.digest('SHA-256', bytes);
-  return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, '0')).join('');
+async function sha256Bytes(text) {
+  return new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(String(text))));
 }
 
-async function hashDevice(deviceId, salt) {
-  const bytes = new TextEncoder().encode(`${salt}|${deviceId}`);
-  const digest = await crypto.subtle.digest('SHA-256', bytes);
-  return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, '0')).join('');
+async function hashKey(key, salt) {
+  const digest = await sha256Bytes(`${salt}|${key}`);
+  return [...digest].map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+async function hashIp(ip, salt) {
+  return hashKey(ipKeySource(ip), salt);
+}
+
+async function timingSafeEqual(a, b) {
+  if (typeof a !== 'string' || typeof b !== 'string' || !a || !b) return false;
+  const [da, db] = await Promise.all([sha256Bytes(a), sha256Bytes(b)]);
+  let diff = a.length ^ b.length;
+  for (let i = 0; i < da.length; i += 1) diff |= da[i] ^ db[i];
+  return diff === 0;
 }
 
 function json(body, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: JSON_HEADERS });
 }
 
+const MIN_TRIAL_EPOCH = Date.UTC(2026, 0, 1);
+const TRIAL_WINDOW_MS = 4 * DAY_MS;
+const MAX_CLIENT_AGE_MS = 365 * DAY_MS;
+
 async function handleTrial(request, env) {
   if (request.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
 
   const now = Date.now();
+  const minValid = Math.max(MIN_TRIAL_EPOCH, now - MAX_CLIENT_AGE_MS);
   const body = await request.json().catch(() => ({}));
   const clientStart = Number(body?.startedAt);
-  const validClientStart = Number.isFinite(clientStart) && clientStart > 0 && clientStart <= now ? clientStart : null;
-
-  // Validate device fingerprint (64-character hex string)
-  const rawDeviceId = typeof body?.deviceId === 'string' ? body.deviceId.trim().toLowerCase() : null;
-  const validDeviceId = rawDeviceId && /^[a-f0-9]{64}$/.test(rawDeviceId) ? rawDeviceId : null;
+  const validClientStart = Number.isFinite(clientStart) && clientStart >= minValid && clientStart <= now ? clientStart : null;
 
   // Read cookie backup if present
   const cookieHeader = request.headers.get('Cookie') || '';
   const cookieMatch = cookieHeader.match(/(?:^|;\s*)__ab_trial=([0-9]+)/);
   const cookieStart = cookieMatch ? Number(cookieMatch[1]) : null;
-  const validCookieStart = Number.isFinite(cookieStart) && cookieStart > 0 && cookieStart <= now ? cookieStart : null;
+  const validCookieStart = Number.isFinite(cookieStart) && cookieStart >= minValid && cookieStart <= now ? cookieStart : null;
 
   const ip = request.headers.get('CF-Connecting-IP');
   const salt = env.TRIAL_SALT || 'assetbench-trial';
@@ -106,24 +115,20 @@ async function handleTrial(request, env) {
   const ipKey = `${trialPrefix(env)}${await hashIp(ip, salt)}`;
   const storedIpStart = Number(await env.TRIALS.get(ipKey)) || null;
 
-  let storedDevStart = null;
-  let devKey = null;
-  if (validDeviceId) {
-    devKey = `${DEVICE_PREFIX}${await hashDevice(validDeviceId, salt)}`;
-    storedDevStart = Number(await env.TRIALS.get(devKey)) || null;
-  }
+  // Only allow an active (non-expired) client/cookie timestamp to backdate a
+  // shared network IP record, preventing an attacker from sending { startedAt: 1 }
+  // to expire the trial for everyone on the same office/VPN/carrier subnet.
+  const activeClientStart = validClientStart && validClientStart >= now - TRIAL_WINDOW_MS ? validClientStart : null;
+  const activeCookieStart = validCookieStart && validCookieStart >= now - TRIAL_WINDOW_MS ? validCookieStart : null;
+  const ipStart = Math.min(...[storedIpStart, activeCookieStart, activeClientStart, now].filter(Boolean));
 
-  // Earliest anchor wins: IP store, Device store, Cookie, LocalStorage, or Now
-  const startedAt = Math.min(...[storedIpStart, storedDevStart, validCookieStart, validClientStart, now].filter(Boolean));
-
-  if (startedAt !== storedIpStart) {
+  if (ipStart !== storedIpStart) {
     // No expiry: one trial per visitor, ever.
-    await env.TRIALS.put(ipKey, String(startedAt), { metadata: { startedAt } });
+    await env.TRIALS.put(ipKey, String(ipStart), { metadata: { startedAt: ipStart } });
   }
 
-  if (devKey && startedAt !== storedDevStart) {
-    await env.TRIALS.put(devKey, String(startedAt), { metadata: { startedAt } });
-  }
+  // Earliest anchor wins for this visitor: IP store, cookie, localStorage, or now.
+  const startedAt = Math.min(...[ipStart, validCookieStart, validClientStart, now].filter(Boolean));
 
   const res = json({ startedAt, now });
   res.headers.set('Set-Cookie', `__ab_trial=${startedAt}; Path=/; Max-Age=315360000; SameSite=Lax; Secure`);
@@ -194,7 +199,8 @@ async function handleSalesWebhook(request, env) {
   const order = payload.data;
   const attributes = order?.attributes ?? {};
   const orderProductId = Number(attributes.first_order_item?.product_id);
-  if ((orderProductId !== LICENSE_PRODUCT_ID && orderProductId !== SINGLE_TOOL_PRODUCT_ID) || attributes.test_mode || attributes.status !== 'paid') return json({ ok: true, ignored: true });
+  const isKnownProduct = orderProductId === LICENSE_PRODUCT_ID || orderProductId === SINGLE_TOOL_PRODUCT_ID || isApiProduct(env, orderProductId);
+  if (!isKnownProduct || attributes.test_mode || attributes.status !== 'paid') return json({ ok: true, ignored: true });
   const totalCents = Math.round(Number(attributes.total)); // Lemon Squeezy sends totals in the smallest unit already (pence)
   const currency = String(attributes.currency ?? '').toUpperCase();
   if (!order?.id || !Number.isFinite(totalCents) || totalCents < 0 || !/^[A-Z]{3}$/.test(currency)) return json({ error: 'Invalid order data' }, 400);
@@ -207,7 +213,9 @@ async function handleSalesWebhook(request, env) {
 async function handleStats(request, env) {
   if (!env.STATS_KEY) return json({ error: 'Not found' }, 404); // disabled until the secret is set
   if (request.method !== 'GET') return json({ error: 'Method not allowed' }, 405);
-  if (request.headers.get('Authorization') !== `Bearer ${env.STATS_KEY}`) return json({ error: 'Unauthorized' }, 401);
+  if (!(await timingSafeEqual(request.headers.get('Authorization') || '', `Bearer ${env.STATS_KEY}`))) {
+    return json({ error: 'Unauthorized' }, 401);
+  }
   if (!env.TRIALS) return json({ ok: true, total: 0, days: [] });
 
   const now = Date.now();
@@ -242,7 +250,7 @@ async function handleStats(request, env) {
     const page = await env.TRIALS.list({ prefix: SITE_SALE_PREFIX, cursor: saleCursor });
     for (const { name } of page.keys) {
       const sale = await env.TRIALS.get(name, 'json');
-      if (sale?.productId !== LICENSE_PRODUCT_ID && sale?.productId !== SINGLE_TOOL_PRODUCT_ID) continue;
+      if (sale?.productId !== LICENSE_PRODUCT_ID && sale?.productId !== SINGLE_TOOL_PRODUCT_ID && !isApiProduct(env, sale?.productId)) continue;
       saleCount++;
       sales.set(sale.currency, (sales.get(sale.currency) ?? 0) + Number(sale.cents ?? 0));
     }
@@ -267,10 +275,10 @@ async function handleToolBinding(request, env) {
   const body = await request.json().catch(() => ({}));
   const rawKey = String(body?.key ?? '').trim().toLowerCase();
   const toolId = body?.toolId;
-  if (!rawKey) return json({ error: 'Missing key' }, 400);
+  if (!rawKey || rawKey.length > 256) return json({ error: 'Missing key' }, 400);
   if (!env.TRIALS) return json({ ok: true, toolId: toolId ?? null });
 
-  const kvKey = `bound-tool:${await hashIp(rawKey, env.TRIAL_SALT || 'assetbench-binding')}`;
+  const kvKey = `bound-tool:${await hashKey(rawKey, env.TRIAL_SALT || 'assetbench-binding')}`;
   const existing = await env.TRIALS.get(kvKey);
   if (existing) {
     return json({ ok: true, toolId: existing });
@@ -285,15 +293,29 @@ async function handleToolBinding(request, env) {
 const BANNER_PREFIX = 'banner:';
 const BANNER_ACTIVE_KEY = 'banner_active:current';
 
-function isBannerAuthorized(request, env) {
-  const secret = env.BANNER_SECRET;
-  if (!secret) return true; // Simple route: open for external programs unless BANNER_SECRET is configured
+function sanitizeBannerUrl(raw) {
+  const s = String(raw ?? '').trim().slice(0, 1024);
+  if (!s) return '';
+  if (s.startsWith('/') && !s.startsWith('//')) return s;
+  try {
+    const u = new URL(s);
+    if (u.protocol === 'https:' || u.protocol === 'http:') return s;
+  } catch { /* reject malformed or dangerous schemes like javascript: */ }
+  return '';
+}
+
+async function isBannerAuthorized(request, env) {
+  const secret = env.BANNER_SECRET || env.API_ADMIN_KEY || env.STATS_KEY;
+  if (!secret) return true; // Simple route: open in local dev/test unless an admin secret is configured
   const authHeader = request.headers.get('Authorization');
-  if (authHeader && (authHeader === `Bearer ${secret}` || authHeader === secret)) return true;
+  if (authHeader && ((await timingSafeEqual(authHeader, `Bearer ${secret}`)) || (await timingSafeEqual(authHeader, secret)))) {
+    return true;
+  }
   const keyHeader = request.headers.get('x-api-key') || request.headers.get('x-banner-key');
-  if (keyHeader && keyHeader === secret) return true;
+  if (keyHeader && (await timingSafeEqual(keyHeader, secret))) return true;
   const url = new URL(request.url);
-  if (url.searchParams.get('key') === secret) return true;
+  const queryKey = url.searchParams.get('key');
+  if (queryKey && (await timingSafeEqual(queryKey, secret))) return true;
   return false;
 }
 
@@ -344,7 +366,7 @@ async function handleBanner(request, env) {
 
   // POST /api/banner/active — switch active banner by name
   if (pathname === '/api/banner/active' && request.method === 'POST') {
-    if (!isBannerAuthorized(request, env)) return json({ error: 'Unauthorized' }, 401);
+    if (!(await isBannerAuthorized(request, env))) return json({ error: 'Unauthorized' }, 401);
     if (!env.TRIALS) return json({ error: 'KV unavailable' }, 503);
     const body = await request.json().catch(() => ({}));
     const targetName = String(body?.name ?? '').trim().toLowerCase();
@@ -359,7 +381,7 @@ async function handleBanner(request, env) {
 
   // DELETE /api/banner — delete a named banner
   if (pathname === '/api/banner' && request.method === 'DELETE') {
-    if (!isBannerAuthorized(request, env)) return json({ error: 'Unauthorized' }, 401);
+    if (!(await isBannerAuthorized(request, env))) return json({ error: 'Unauthorized' }, 401);
     if (!env.TRIALS) return json({ error: 'KV unavailable' }, 503);
     const body = await request.json().catch(() => ({}));
     const targetName = String(url.searchParams.get('name') || body?.name || '').trim().toLowerCase();
@@ -387,27 +409,27 @@ async function handleBanner(request, env) {
 
   // POST /api/banner — create or update a banner post
   if (request.method === 'POST') {
-    if (!isBannerAuthorized(request, env)) return json({ error: 'Unauthorized' }, 401);
+    if (!(await isBannerAuthorized(request, env))) return json({ error: 'Unauthorized' }, 401);
     if (!env.TRIALS) return json({ error: 'KV unavailable' }, 503);
     const body = await request.json().catch(() => ({}));
 
     const rawName = String(body?.name ?? body?.id ?? 'featured').trim().toLowerCase();
-    const cleanName = rawName.replace(/[^a-z0-9_-]/g, '-') || 'featured';
+    const cleanName = rawName.replace(/[^a-z0-9_-]/g, '-').slice(0, 80) || 'featured';
 
-    const mediaUrl = String(body?.mediaUrl || body?.videoUrl || body?.imageUrl || '').trim();
+    const mediaUrl = sanitizeBannerUrl(body?.mediaUrl || body?.videoUrl || body?.imageUrl || '');
     const mediaType = body?.mediaType === 'video' || body?.mediaType === 'image'
       ? body.mediaType
       : detectMediaType(mediaUrl);
 
     const record = {
       name: cleanName,
-      title: String(body?.title || 'Featured Announcement').trim(),
-      text: String(body?.text || body?.description || '').trim(),
-      badge: String(body?.badge || 'UPDATE').trim(),
+      title: String(body?.title || 'Featured Announcement').trim().slice(0, 200),
+      text: String(body?.text || body?.description || '').trim().slice(0, 1000),
+      badge: String(body?.badge || 'UPDATE').trim().slice(0, 40),
       mediaUrl,
       mediaType,
-      linkUrl: String(body?.linkUrl || body?.url || '').trim(),
-      linkText: String(body?.linkText || body?.ctaText || 'Learn More →').trim(),
+      linkUrl: sanitizeBannerUrl(body?.linkUrl || body?.url || ''),
+      linkText: String(body?.linkText || body?.ctaText || 'Learn More →').trim().slice(0, 80),
       updatedAt: Date.now(),
     };
 
@@ -431,6 +453,84 @@ async function handleBanner(request, env) {
   return json({ error: 'Method not allowed' }, 405);
 }
 
+async function handleIllustrationEnquiry(request, env) {
+  if (request.method === 'OPTIONS') {
+    return new Response(null, {
+      status: 204,
+      headers: JSON_HEADERS,
+    });
+  }
+  if (request.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
+
+  const body = await request.json().catch(() => ({}));
+  const name = String(body?.name ?? '').trim().slice(0, 200);
+  const email = String(body?.email ?? '').trim().slice(0, 254);
+  const projectType = String(body?.projectType ?? '').trim().slice(0, 120);
+  const budget = String(body?.budget ?? '').trim().slice(0, 120);
+  const description = String(body?.description ?? '').trim().slice(0, 5000);
+
+  if (!name || !email || !description) {
+    return json({ error: 'Missing required fields (name, email, description)' }, 400);
+  }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return json({ error: 'Invalid email address' }, 400);
+  }
+
+  const record = {
+    name,
+    email,
+    projectType,
+    budget,
+    description,
+    source: String(body?.source ?? 'illustration.assetbench.co.uk').slice(0, 120),
+    ip: request.headers.get('CF-Connecting-IP') || 'unknown',
+    submittedAt: new Date().toISOString(),
+  };
+
+  if (env.TRIALS) {
+    const suffix = crypto.randomUUID ? crypto.randomUUID().slice(0, 8) : Math.random().toString(36).slice(2, 10);
+    const key = `illustration-enquiry:${Date.now()}-${suffix}`;
+    await env.TRIALS.put(key, JSON.stringify(record), { metadata: { name, email, projectType, budget, submittedAt: record.submittedAt } });
+  }
+
+  return json({
+    ok: true,
+    message: 'Thank you! Your project enquiry has been received. I will be in touch shortly.',
+    enquiry: { name, projectType, budget },
+  });
+}
+
+/**
+ * Email list (homepage free-model download). POST {email, source} saves one
+ * record per address in KV (subscriber:<email>); signing up again only
+ * refreshes it. GET with the STATS_KEY bearer exports the list as CSV.
+ */
+const SUBSCRIBER_PREFIX = 'subscriber:';
+async function handleSubscribe(request, env) {
+  if (request.method === 'GET') {
+    if (!env.STATS_KEY) return json({ error: 'Not found' }, 404);
+    if (!(await timingSafeEqual(request.headers.get('Authorization') || '', `Bearer ${env.STATS_KEY}`))) {
+      return json({ error: 'Unauthorized' }, 401);
+    }
+    const rows = [['email', 'source', 'subscribed_at']];
+    let cursor;
+    do {
+      const page = env.TRIALS ? await env.TRIALS.list({ prefix: SUBSCRIBER_PREFIX, cursor }) : { keys: [], list_complete: true };
+      for (const { name, metadata } of page.keys) rows.push([name.slice(SUBSCRIBER_PREFIX.length), metadata?.source || '', metadata?.at || '']);
+      cursor = page.list_complete ? null : page.cursor;
+    } while (cursor);
+    const csv = rows.map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
+    return new Response(csv, { headers: { 'Content-Type': 'text/csv; charset=utf-8', 'Cache-Control': 'no-store' } });
+  }
+  if (request.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
+  const body = await request.json().catch(() => ({}));
+  const email = String(body?.email ?? '').trim().toLowerCase().slice(0, 254);
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return json({ error: 'Invalid email address' }, 400);
+  const record = { email, source: String(body?.source ?? 'site').slice(0, 60), at: new Date().toISOString() };
+  if (env.TRIALS) await env.TRIALS.put(`${SUBSCRIBER_PREFIX}${email}`, JSON.stringify(record), { metadata: { source: record.source, at: record.at } });
+  return json({ ok: true });
+}
+
 export default {
   async fetch(request, env, ctx) {
     const { pathname } = new URL(request.url);
@@ -439,6 +539,8 @@ export default {
     if (pathname === '/api/tool-binding') return handleToolBinding(request, env);
     if (pathname === '/api/stats') return handleStats(request, env);
     if (pathname === '/api/sales-webhook') return handleSalesWebhook(request, env);
+    if (pathname === '/api/illustration-enquiry') return handleIllustrationEnquiry(request, env);
+    if (pathname === '/api/subscribe') return handleSubscribe(request, env);
     if (pathname === '/api/banner' || pathname === '/api/banners' || pathname === '/api/banner/active') {
       return handleBanner(request, env);
     }

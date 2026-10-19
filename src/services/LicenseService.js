@@ -1,4 +1,4 @@
-import { LICENSE_MACHINE_LIMIT, LICENSE_PRODUCT_ID, LICENSE_STORE_ID } from '../shared/config/billing.js';
+import { LICENSE_MACHINE_LIMIT, LICENSE_PRODUCT_ID, LICENSE_STORE_ID, TEAM_PRODUCT_ID } from '../shared/config/billing.js';
 import { SINGLE_TOOL_PRODUCT_ID, TOOL_PRODUCTS } from '../shared/config/toolProducts.js';
 import { TOOLS, getToolById, getToolByRoute } from '../shared/config/tools.js';
 
@@ -12,7 +12,7 @@ import { TOOLS, getToolById, getToolByRoute } from '../shared/config/tools.js';
  * activation limit (LICENSE_MACHINE_LIMIT); deactivateLicense() frees it
  * again so the buyer can move to a new machine.
  *
- * Single-tool £5 keys (shared/config/toolProducts.js) unlock just that tool
+ * Single-tool £2.99 keys (shared/config/toolProducts.js) unlock just that tool
  * in this browser. They're stored separately, per tool, and never count as
  * the lifetime license.
  */
@@ -96,9 +96,9 @@ async function postForm(action, params) {
   return { ok: response.ok, data };
 }
 
-/** True if the key was issued for the Asset Bench All Access product, not some other Lemon Squeezy store. */
+/** True if the key was issued for Asset Bench All Access or Team, not some other Lemon Squeezy store. */
 function isOurProduct(meta) {
-  return meta?.store_id === LICENSE_STORE_ID && meta?.product_id === LICENSE_PRODUCT_ID;
+  return meta?.store_id === LICENSE_STORE_ID && (meta?.product_id === LICENSE_PRODUCT_ID || meta?.product_id === TEAM_PRODUCT_ID);
 }
 
 function isSingleToolProduct(meta) {

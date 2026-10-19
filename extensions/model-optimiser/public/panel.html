@@ -9,6 +9,7 @@
   <header class="top">
     <img src="icons/icon-32.png" alt="" width="20" height="20">
     <h1 id="heading">Model <span>Optimiser</span></h1>
+    <span class="credits" id="credits" hidden></span>
   </header>
 
   <label class="drop" id="drop" tabindex="0">
@@ -78,21 +79,22 @@
     <p class="note">Encoding is thorough, so this can take a minute on big textures.</p>
   </section>
 
+  <button type="button" id="run" class="btn primary run" disabled>Choose a model first</button>
+
+  <p id="status" role="status" aria-live="polite"></p>
+  <div id="result" hidden></div>
+
   <section class="lock" id="lock" hidden>
     <p><strong id="lockTitle">Unlock this tool</strong></p>
-    <a class="btn primary" id="buyTool" target="_blank" rel="noopener">Unlock for £5</a>
+    <p class="reset" id="resetIn" hidden></p>
+    <a class="btn primary" id="buyTool" target="_blank" rel="noopener">Unlock for £2.99</a>
     <a class="btn" id="buyAll" target="_blank" rel="noopener">Every tool with All Access</a>
-    <p class="small">Paid already? Paste the licence key from your receipt email.</p>
+    <p class="small">Already paid? Paste the licence key from your receipt email.</p>
     <div class="row">
       <input type="text" id="keyInput" placeholder="Licence key" autocomplete="off" spellcheck="false" aria-label="Licence key">
       <button type="button" id="activate">Unlock</button>
     </div>
   </section>
-
-  <button type="button" id="run" class="btn primary run" disabled>Choose a model first</button>
-
-  <p id="status" role="status" aria-live="polite"></p>
-  <div id="result" hidden></div>
 
   <footer>
     <span id="keysInfo"></span>

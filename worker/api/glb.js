@@ -5,14 +5,14 @@ import { ApiError } from './http.js';
 import { sniffImage } from './images.js';
 
 /**
- * Server-side glTF helpers: one shared IO with the Meshopt codecs, and a
+ * Server-side glTF helpers: one shared IO with Meshopt and Draco codecs, and a
  * raw-JSON analysis ported from the Mobile Ready Checker
  * (public/tools/mobile-ready-checker/index.html) so the API and the site
  * judge models against the same budgets.
  *
- * Draco: the browser tools decode Draco via a script that needs eval, which
- * Workers forbid, so Draco-compressed input can be inspected but not
- * re-processed. Output compression is Meshopt (same choice as Optimise GLB).
+ * Draco-compressed inputs are decoded via the Worker-compatible Draco Wasm
+ * build (see scripts/vendor-draco.mjs) and stripped of the Draco extension
+ * on read so output models can be written uncompressed or with Meshopt.
  */
 
 let ioPromise = null;
@@ -29,14 +29,25 @@ export function getIO() {
   return ioPromise;
 }
 
+// Draco (draco_decoder wasm, ./draco.js) is plugged in by the Worker entry
+// point, worker/api/index.js. The browser Asset Pipeline shares this module,
+// and importing draco.js here would pull the wasm into the site bundle.
+let dracoDecoderLoader = null;
+export function registerDracoDecoder(loader) { dracoDecoderLoader = loader; }
+
 export async function readDocument(bytes) {
   const { json } = splitGlb(bytes);
-  if ((json.extensionsUsed || []).includes('KHR_draco_mesh_compression')) {
-    throw new ApiError(415, 'draco_input', 'Draco-compressed models can be inspected but not processed by the API yet. Export without Draco (or with Meshopt) and try again.');
-  }
   const io = await getIO();
+  if ((json.extensionsUsed || []).includes('KHR_draco_mesh_compression')) {
+    if (!dracoDecoderLoader) {
+      throw new ApiError(415, 'draco_compressed', 'This GLB uses Draco compression (KHR_draco_mesh_compression), which is not available in this context.');
+    }
+    io.registerDependencies({ 'draco3d.decoder': await dracoDecoderLoader() });
+  }
   try {
-    return await io.readBinary(bytes);
+    const document = await io.readBinary(bytes);
+    document.getRoot().listExtensionsUsed().find((e) => e.extensionName === 'KHR_draco_mesh_compression')?.dispose();
+    return document;
   } catch (err) {
     throw new ApiError(422, 'unreadable_model', `The model could not be read (${err?.message || 'invalid GLB'}).`);
   }

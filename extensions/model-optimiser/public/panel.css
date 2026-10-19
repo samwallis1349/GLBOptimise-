@@ -27,6 +27,17 @@ body {
 .top { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
 h1 { margin: 0; font-size: 16px; letter-spacing: -0.01em; }
 h1 span { color: var(--accent); }
+.credits {
+  margin-left: auto;
+  padding: 2px 8px;
+  border: 1px solid rgba(95, 206, 143, 0.4);
+  border-radius: 999px;
+  color: var(--ok);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.credits.is-empty { border-color: rgba(255, 122, 107, 0.4); color: var(--bad); }
 
 p { margin: 0 0 10px; }
 small, .small, .note { display: block; color: var(--muted); font-size: 11px; }
@@ -98,6 +109,7 @@ button:disabled { opacity: 0.45; cursor: default; }
   background: rgba(255, 181, 71, 0.05);
 }
 .lock .btn { display: block; margin-bottom: 6px; }
+.lock .reset { color: var(--muted); font-variant-numeric: tabular-nums; }
 .row { display: flex; gap: 6px; margin-top: 6px; }
 .row input {
   flex: 1;

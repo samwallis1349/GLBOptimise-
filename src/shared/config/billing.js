@@ -19,8 +19,8 @@ export const ALL_TOOLS_FREE = false;
 /** PayPal donation page, offered in the free-tools popup and the footer. */
 export const DONATE_URL = 'https://www.paypal.com/ncp/payment/SUD2ZPA339KCY';
 
-/** All Access: monthly subscription to every tool. Keys stop validating once the subscription ends. */
-export const PRICE_LABEL = '£25/month';
+/** All Access: monthly subscription to every tool + the Cloud API (1,000 operations/month). Keys stop validating once the subscription ends. */
+export const PRICE_LABEL = '£10/month';
 
 /**
  * Free trial days on the Lemon Squeezy checkout itself. Set to 0 because the
@@ -34,9 +34,20 @@ export const CHECKOUT_URL = 'https://workbenchlabs.lemonsqueezy.com/checkout/buy
 export const DISCOUNT_CODE = 'G0MTE1NA';
 
 /**
+ * Team: every tool + 5,000 Cloud API operations/month on one key for a studio.
+ * It is the Lemon Squeezy product the API calls Studio (worker/api/plans.js
+ * `all`; API_LS_CHECKOUTS in wrangler.jsonc), and LicenseService also accepts
+ * its keys for the browser tools.
+ */
+export const TEAM_PRODUCT_ID = 1430376;
+export const TEAM_PRICE_LABEL = '£99/month';
+export const TEAM_MACHINES = 25;
+export const TEAM_CHECKOUT_URL = 'https://workbenchlabs.lemonsqueezy.com/checkout/buy/c65fbf3e-dc6d-43a6-9280-1013e0c36a31';
+
+/**
  * Lemon Squeezy IDs for the All Access product (formerly the £9.99 lifetime
- * product; its old one-off keys stay valid) — keys from any other
- * store/product are rejected.
+ * product; its old one-off keys stay valid). Team keys (TEAM_PRODUCT_ID) are
+ * accepted too; keys from any other store/product are rejected.
  */
 export const LICENSE_STORE_ID = 480634;
 export const LICENSE_PRODUCT_ID = 1420844;

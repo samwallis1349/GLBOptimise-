@@ -5,15 +5,16 @@ import { cachedUsageCounts, fetchUsageCounts, rankByUsage } from '../../services
 import { initCursorSpotlight } from '../../shared/effects/CursorSpotlight.js';
 import { iconSvg } from '../../shared/utils/icons.js';
 import { openCommandPalette } from '../../shared/effects/CommandPalette.js';
-import { SunnyGeckoHero } from './wizard-hero/SunnyGeckoHero.js';
-import { DONATE_URL } from '../../shared/config/billing.js';
+import { ColossusHero } from './wizard-hero/ColossusHero.js';
+import { DONATE_URL, PRICE_LABEL, TEAM_PRICE_LABEL } from '../../shared/config/billing.js';
+import { TOOL_PRICE_LABEL } from '../../shared/config/toolProducts.js';
 import { AdSenseAd } from '../../shared/components/AdSenseAd.js';
 import { HomeBannerPost } from '../../shared/components/HomeBannerPost.js';
 import { VsCodeApi } from './vscode-api/VsCodeApi.js';
 
 const BENEFITS = [
   { icon: 'zap', title: 'Works in browser', desc: 'Your files stay on your device' },
-  { icon: 'shield', title: 'Fast & private', desc: 'No uploads' },
+  { icon: 'shield', title: 'One subscription', desc: `Every tool for ${PRICE_LABEL}` },
   { icon: 'gamepad', title: 'Game ready', desc: 'Perfect for Three.js, Unity, Unreal' },
   { icon: 'grid', title: `${TOOLS.length} focused tools`, desc: 'Everything you need in one place' },
 ];
@@ -23,17 +24,18 @@ const LIVE_STATUSES = new Set(['available', 'beta']);
 export function render(container) {
   container.innerHTML = '';
 
-  const heroVisual = SunnyGeckoHero();
-  // The one homepage ad sits after the tool grid, well clear of the hero and
-  // its buttons. AdSenseAd() returns null when ads are off, so nothing renders.
+  const heroVisual = ColossusHero();
+  // The one homepage ad sits below the API section, clear of the hero and the
+  // pricing strip. AdSenseAd() returns null when ads are off, so nothing renders.
   const ad = AdSenseAd({ placement: 'homepage' });
   container.append(
     HeroSection(heroVisual.element),
     WorkbenchIntro(),
     ToolsBlock(),
-    ...(ad ? [ad] : []),
+    PricingStrip(),
     VsCodeApi(),
     HomeBannerPost(),
+    ...(ad ? [ad] : []),
     SupportPanel(),
     CTAPanel()
   );
@@ -82,6 +84,7 @@ function HeroSection(wizardEl) {
     <div class="hero-split__actions">
       <a class="btn btn--primary" href="/tools">Explore Tools →</a>
       <a class="btn btn--secondary" href="/optimise-glb">${iconSvg('package-open')} Optimise a GLB</a>
+      <button type="button" class="hero-split__free">Free 3D model ↓</button>
     </div>
     <div class="hero-benefits">
       ${BENEFITS.map(
@@ -97,6 +100,11 @@ function HeroSection(wizardEl) {
     </div>
   `;
   content.querySelector('.hero-finder__search').addEventListener('click', () => openCommandPalette());
+  content.querySelector('.hero-split__free').addEventListener('click', () => {
+    const form = document.getElementById('free-model');
+    form?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    form?.querySelector('input')?.focus({ preventScroll: true });
+  });
 
   hero.append(content, wizardEl);
   return hero;
@@ -135,6 +143,22 @@ function ToolsBlock() {
   section.appendChild(grid);
 
   return section;
+}
+
+/** The three ways to pay, straight after the tools, linking to the full pricing page. */
+function PricingStrip() {
+  const strip = document.createElement('section');
+  strip.className = 'pricing-strip container';
+  strip.dataset.layoutEditable = '';
+  strip.dataset.layoutId = 'home-pricing-strip';
+  strip.dataset.layoutName = 'Pricing Strip';
+  strip.innerHTML = `
+    <a class="pricing-strip__item" href="/pricing"><span>Free trial</span><b>£0</b><small>every tool, no card</small></a>
+    <a class="pricing-strip__item" href="/pricing"><span>Single tool</span><b>${TOOL_PRICE_LABEL}</b><small>pay once</small></a>
+    <a class="pricing-strip__item pricing-strip__item--featured" href="/pricing"><span>All Access</span><b>${PRICE_LABEL}</b><small>every tool + the API</small></a>
+    <a class="pricing-strip__item" href="/pricing"><span>Team</span><b>${TEAM_PRICE_LABEL}</b><small>25 machines + 5,000 API ops</small></a>
+  `;
+  return strip;
 }
 
 /** Generic donate ask between the tools and the closing CTA. */

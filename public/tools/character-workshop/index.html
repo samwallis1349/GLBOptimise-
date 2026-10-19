@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Character Workshop</title>
+<script>
+  if (window.top === window.self && !window.location.search.includes('standalone=true')) {
+    const h = window.location.hostname;
+    if (h.includes('assetbench') || h.includes('workers.dev') || h === 'localhost' || h === '127.0.0.1') {
+      window.location.replace('/character-workshop');
+    }
+  }
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap">
+<link rel="stylesheet" href="./character-workshop.css">
+</head>
+<body>
+<div class="app" id="app">
+  <nav class="nav" aria-label="Workshop sections">
+    <div class="brand" title="Character Workshop">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="5" r="2.4"/><path d="M12 8v7M8 10.5h8M12 15l-3 6M12 15l3 6"/></svg>
+    </div>
+    <button class="nav-btn is-active" data-panel="character" aria-pressed="true">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="7" r="3.5"/><path d="M5 21c0-4 3-6.5 7-6.5s7 2.5 7 6.5"/></svg><span>Character</span>
+    </button>
+    <button class="nav-btn" data-panel="animations" aria-pressed="false">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M10 9.5v5l4.5-2.5z"/></svg><span>Animations</span>
+    </button>
+    <button class="nav-btn" data-panel="settings" aria-pressed="false">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg><span>Settings</span>
+    </button>
+    <button class="nav-btn" data-panel="export" aria-pressed="false">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg><span>Export</span>
+    </button>
+  </nav>
+
+  <aside class="side" aria-live="polite">
+    <!-- Character -->
+    <section class="panel" data-panel="character">
+      <header class="panel-head"><h2>Character</h2></header>
+      <div class="drop" id="dropZone" tabindex="0" role="button" aria-label="Import a character file">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4M7 9l5-5 5 5M5 20h14"/></svg>
+        <strong>Import character</strong>
+        <span>Drop or browse — GLB, glTF, FBX, OBJ, STL…</span>
+        <span class="hint">For glTF/OBJ/FBX with separate textures, select all files together.</span>
+      </div>
+      <input type="file" id="fileInput" multiple hidden>
+      <div id="charInfo" hidden>
+        <div class="file-row">
+          <div class="file-name" id="fileName">—</div>
+          <span class="badge" id="formatBadge">—</span>
+        </div>
+        <dl class="stats" id="statsList"></dl>
+        <h3 class="sub">Import summary</h3>
+        <dl class="stats" id="importSummary"></dl>
+        <div id="importNotes"></div>
+        <details class="fold">
+          <summary>Format limitations</summary>
+          <ul class="limits" id="formatLimits"></ul>
+        </details>
+      </div>
+      <details class="fold" id="formatTable">
+        <summary>Supported formats</summary>
+        <table class="fmt"><thead><tr><th>Format</th><th>Rig</th><th>Anim</th><th>Status</th></tr></thead><tbody id="formatRows"></tbody></table>
+      </details>
+    </section>
+
+    <!-- Animations -->
+    <section class="panel" data-panel="animations" hidden>
+      <header class="panel-head"><h2>Animation categories</h2></header>
+      <p class="muted small">Matched from clip names only. Nothing is relabelled or invented; mapping is a preview aid and clip names are exported unchanged.</p>
+      <ul class="cats" id="categoryList"></ul>
+      <h3 class="sub">Add animations</h3>
+      <button class="btn btn-wide" id="packBtn" disabled>Import animation pack…</button>
+      <input type="file" id="packInput" accept=".glb,.gltf,.fbx" hidden>
+      <p class="muted small" id="packHelp">Load a rigged character first. Packs are GLB or FBX files using the same bone names — e.g. Mixamo downloads ("Without Skin") for a Mixamo-rigged character.</p>
+      <div id="packResult"></div>
+      <h3 class="sub">Playback</h3>
+      <label class="row"><span>Cross-fade when switching</span>
+        <select id="crossFade"><option value="0">Off</option><option value="0.15">0.15 s</option><option value="0.25" selected>0.25 s</option><option value="0.5">0.5 s</option></select>
+      </label>
+    </section>
+
+    <!-- Settings -->
+    <section class="panel" data-panel="settings" hidden>
+      <header class="panel-head"><h2>Display settings</h2></header>
+      <p class="muted small">Applied to a display wrapper, never to the model's own nodes or bones.</p>
+      <label class="row"><span>Display scale</span><input type="number" id="setScale" min="0.0001" step="0.01" value="1"></label>
+      <div class="chips"><button class="chip" data-scale="0.01">×0.01 (cm→m)</button><button class="chip" data-scale="1">×1</button><button class="chip" data-scale="100">×100</button></div>
+      <label class="row"><span>Rotation X</span>
+        <select id="setRotX"><option value="-90">−90° (Z-up fix)</option><option value="0" selected>0°</option><option value="90">90°</option></select></label>
+      <label class="row"><span>Rotation Y</span>
+        <select id="setRotY"><option value="0" selected>0°</option><option value="90">90°</option><option value="180">180°</option><option value="270">270°</option></select></label>
+      <label class="row toggle"><span>Ground feet</span><input type="checkbox" id="setGround" checked></label>
+      <label class="row toggle"><span>Shadows</span><input type="checkbox" id="setShadows" checked></label>
+      <label class="row toggle"><span>Grid</span><input type="checkbox" id="setGrid" checked></label>
+      <label class="row toggle"><span>Show skeleton</span><input type="checkbox" id="setSkeleton"></label>
+      <label class="row"><span>Background</span>
+        <select id="setBg"><option value="charcoal" selected>Charcoal</option><option value="black">Black</option><option value="grey">Grey</option><option value="light">Light</option></select></label>
+      <button class="btn btn-wide" id="resetSettings">Reset to defaults</button>
+    </section>
+
+    <!-- Export -->
+    <section class="panel" data-panel="export" hidden>
+      <header class="panel-head"><h2>Export</h2></header>
+      <p class="muted small" id="exportEmpty">Import a character to export it. The source file is never modified.</p>
+      <div id="exportForm" hidden>
+        <label class="row col"><span>File name</span><input type="text" id="exportName" spellcheck="false"></label>
+        <div class="sub">Format</div>
+        <div class="targets" id="targetList"></div>
+        <div id="clipPick">
+          <div class="sub between"><span>Clips to include</span><span><button class="link" id="clipsAll">All</button> · <button class="link" id="clipsNone">None (static pose)</button></span></div>
+          <ul class="picks" id="clipPickList"></ul>
+        </div>
+        <label class="row toggle"><span>Bake display scale &amp; rotation<small>Adds a root node; bones are not changed</small></span><input type="checkbox" id="bakeDisplay"></label>
+        <div class="sub">Conversion summary</div>
+        <ul class="limits" id="conversionSummary"></ul>
+        <button class="btn btn-primary btn-wide" id="exportBtn">Export GLB</button>
+        <div id="exportResult"></div>
+      </div>
+    </section>
+  </aside>
+
+  <main class="stage">
+    <div class="stage-head">
+      <div class="title"><span id="stageName">No character loaded</span><span class="badge" id="stageBadge" hidden></span></div>
+      <div class="tools">
+        <div class="seg" role="group" aria-label="Camera">
+          <button class="seg-btn is-on" data-view="perspective">Perspective</button>
+          <button class="seg-btn" data-view="isometric">Isometric</button>
+        </div>
+        <button class="icon-btn toggle-btn" id="skelBtn" title="Show skeleton" aria-pressed="false"><svg viewBox="0 0 24 24"><circle cx="12" cy="4.5" r="1.8"/><path d="M12 6.5v7M7.5 9h9M12 13.5l-3.5 6.5M12 13.5l3.5 6.5"/></svg></button>
+        <button class="icon-btn" id="frameBtn" title="Frame model (F)"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/><circle cx="12" cy="12" r="2.5"/></svg></button>
+        <button class="icon-btn" id="resetCamBtn" title="Reset camera"><svg viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.4-5.7M4 4v4h4"/></svg></button>
+      </div>
+    </div>
+    <div class="vp" id="viewportWrap">
+      <canvas id="canvas" aria-label="3D viewport"></canvas>
+      <div class="overlay" id="overlay">
+        <div class="ov-card" id="ovIdle">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4M7 9l5-5 5 5M5 20h14"/></svg>
+          <strong>Drop a character here</strong>
+          <span>GLB · glTF · FBX · OBJ · STL · PLY · DAE · 3MF · USDZ</span>
+          <button class="btn" id="browseBtn">Browse files</button>
+        </div>
+        <div class="ov-card" id="ovLoading" hidden><div class="spinner"></div><strong id="loadingText">Loading…</strong></div>
+        <div class="ov-card is-error" id="ovError" hidden>
+          <strong id="errorTitle">Could not load</strong>
+          <span id="errorDetail"></span>
+          <button class="btn" id="errorDismiss">Dismiss</button>
+        </div>
+      </div>
+    </div>
+    <div class="transport" id="transport">
+      <button class="icon-btn" id="playBtn" title="Play / pause (Space)" disabled><svg viewBox="0 0 24 24" class="i-play"><path d="M7 4.5v15l12-7.5z"/></svg><svg viewBox="0 0 24 24" class="i-pause"><path d="M7 4h3.5v16H7zM13.5 4H17v16h-3.5z"/></svg></button>
+      <button class="icon-btn" id="stopBtn" title="Stop and reset to rest pose" disabled><svg viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="1"/></svg></button>
+      <button class="icon-btn toggle-btn is-on" id="loopBtn" title="Loop" aria-pressed="true" disabled><svg viewBox="0 0 24 24"><path d="M17 3l3 3-3 3M4 11V9a3 3 0 0 1 3-3h13M7 21l-3-3 3-3M20 13v2a3 3 0 0 1-3 3H4"/></svg></button>
+      <input type="range" id="scrub" min="0" max="1" step="0.001" value="0" disabled aria-label="Timeline">
+      <span class="time" id="timeLabel">0.00 / 0.00 s</span>
+      <select id="speed" title="Playback speed" disabled><option value="0.25">0.25×</option><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="1.5">1.5×</option><option value="2">2×</option></select>
+    </div>
+  </main>
+
+  <aside class="clips">
+    <header class="panel-head"><h2>Animations</h2><span class="count" id="clipCount">0</span></header>
+    <ul class="clip-list" id="clipList"></ul>
+    <div class="empty" id="clipEmpty">
+      <strong>No animations</strong>
+      <span id="clipEmptyText">Import a rigged GLB or FBX to see its clips here.</span>
+    </div>
+  </aside>
+
+  <footer class="foot">
+    <button class="val-sum" id="valToggle" aria-expanded="false" disabled>
+      <span class="val-label">Validation</span>
+      <span class="pill pass" id="valPass">0 PASS</span>
+      <span class="pill warn" id="valWarn">0 WARNING</span>
+      <span class="pill fail" id="valFail">0 FAIL</span>
+      <span class="muted small hide-sm">Passing checks are not a guarantee of game readiness.</span>
+    </button>
+    <button class="btn btn-primary" id="footExport" disabled>Export GLB</button>
+    <div class="val-drawer" id="valDrawer" hidden><ul class="checks" id="checkList"></ul></div>
+  </footer>
+</div>
+
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"}}</script>
+<script type="module" src="./js/app.js"></script>
+</body>
+</html>

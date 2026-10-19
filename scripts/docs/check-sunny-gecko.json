@@ -1,0 +1,238 @@
+{
+  "stats": {
+    "fileBytes": 14932448,
+    "triangles": 83701,
+    "vertices": 80157,
+    "drawCalls": 1,
+    "materials": 1,
+    "transparentMaterials": 0,
+    "meshCount": 1,
+    "meshes": [
+      {
+        "name": "output_unwrapped",
+        "triangles": 83701,
+        "drawCalls": 1
+      }
+    ],
+    "textures": [
+      {
+        "name": "texture_0",
+        "width": 2048,
+        "height": 2048,
+        "mimeType": "image/webp",
+        "gpuMemoryBytes": 22369621,
+        "slots": [
+          "baseColor"
+        ]
+      },
+      {
+        "name": "texture_0_metallic_roughness",
+        "width": 2048,
+        "height": 2048,
+        "mimeType": "image/png",
+        "gpuMemoryBytes": 22369621,
+        "slots": [
+          "metallicRoughness"
+        ]
+      },
+      {
+        "name": "normal",
+        "width": 2048,
+        "height": 2048,
+        "mimeType": "image/png",
+        "gpuMemoryBytes": 22369621,
+        "slots": [
+          "normal"
+        ]
+      }
+    ],
+    "textureMemoryBytes": 67108864,
+    "largestTexture": 2048,
+    "nonPowerOfTwoTextures": 0,
+    "unmeasuredTextures": 0,
+    "skins": 1,
+    "maxBonesPerSkin": 28,
+    "animations": 3,
+    "animationBytes": 29992,
+    "nonTrianglePrimitives": 0,
+    "compression": {
+      "draco": false,
+      "meshopt": true,
+      "ktx2": false,
+      "webp": false
+    }
+  },
+  "resolved": {
+    "role": "character",
+    "device": "mid",
+    "engine": "unity"
+  },
+  "notes": [],
+  "evaluation": {
+    "target": "character/mid",
+    "targetName": "Character on a mid-range phone (Unity)",
+    "score": 53,
+    "verdict": "not-ready",
+    "checks": [
+      {
+        "key": "triangles",
+        "name": "Triangles",
+        "value": 83701,
+        "budget": 20000,
+        "fix": [
+          "3d/optimize",
+          "3d/lods"
+        ],
+        "ratio": 4.185,
+        "status": "fail"
+      },
+      {
+        "key": "drawCalls",
+        "name": "Draw calls",
+        "value": 1,
+        "budget": 3,
+        "fix": [
+          "merge meshes in your DCC tool"
+        ],
+        "ratio": 0.333,
+        "status": "pass"
+      },
+      {
+        "key": "materials",
+        "name": "Materials",
+        "value": 1,
+        "budget": 3,
+        "fix": [
+          "merge materials / atlas textures"
+        ],
+        "ratio": 0.333,
+        "status": "pass"
+      },
+      {
+        "key": "textureMemory",
+        "name": "Texture memory (bytes)",
+        "value": 67108864,
+        "budget": 12582912,
+        "fix": [
+          "3d/optimize maxTextureSize"
+        ],
+        "ratio": 5.333,
+        "status": "fail"
+      },
+      {
+        "key": "largestTexture",
+        "name": "Largest texture (px)",
+        "value": 2048,
+        "budget": 1024,
+        "fix": [
+          "3d/optimize maxTextureSize"
+        ],
+        "ratio": 2,
+        "status": "fail"
+      },
+      {
+        "key": "fileSize",
+        "name": "File size (bytes)",
+        "value": 14932448,
+        "budget": 5242880,
+        "fix": [
+          "3d/optimize"
+        ],
+        "ratio": 2.848,
+        "status": "fail"
+      },
+      {
+        "key": "bones",
+        "name": "Bones per skeleton",
+        "value": 28,
+        "budget": 75,
+        "fix": [
+          "reduce the rig in your DCC tool"
+        ],
+        "ratio": 0.373,
+        "status": "pass"
+      },
+      {
+        "key": "animation",
+        "name": "Animation data (bytes)",
+        "value": 29992,
+        "budget": 4194304,
+        "fix": [
+          "strip unused clips"
+        ],
+        "ratio": 0.007,
+        "status": "pass"
+      },
+      {
+        "key": "transparency",
+        "name": "Blended materials",
+        "value": 0,
+        "budget": 1,
+        "fix": [
+          "use alpha cutout (MASK) where possible"
+        ],
+        "ratio": 0,
+        "status": "pass"
+      },
+      {
+        "key": "meshCompression",
+        "name": "Mesh compression",
+        "value": 1,
+        "budget": 1,
+        "fix": [
+          "3d/optimize compress=true"
+        ],
+        "ratio": 0,
+        "status": "pass"
+      },
+      {
+        "key": "powerOfTwo",
+        "name": "Power-of-two textures",
+        "value": 0,
+        "budget": 0,
+        "fix": [
+          "3d/optimize maxTextureSize"
+        ],
+        "ratio": 0,
+        "status": "pass"
+      }
+    ]
+  },
+  "devices": {
+    "role": "character",
+    "results": [
+      {
+        "device": "low",
+        "name": "Low-end phone",
+        "triangleBudget": 10000,
+        "maxTexture": 512,
+        "score": 53,
+        "verdict": "not-ready"
+      },
+      {
+        "device": "mid",
+        "name": "Mid-range phone",
+        "triangleBudget": 20000,
+        "maxTexture": 1024,
+        "score": 53,
+        "verdict": "not-ready"
+      },
+      {
+        "device": "high",
+        "name": "High-end phone",
+        "triangleBudget": 40000,
+        "maxTexture": 2048,
+        "score": 59,
+        "verdict": "not-ready"
+      },
+      {
+        "device": "quest",
+        "name": "Standalone VR",
+        "triangleBudget": 15000,
+        "maxTexture": 1024,
+        "score": 53,
+        "verdict": "not-ready"
+      }
+    ]
+  }
+}

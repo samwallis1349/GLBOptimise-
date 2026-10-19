@@ -1,8 +1,9 @@
 import JSZip from 'jszip';
-import { ApiError, CORS_HEADERS, errorResponse, fileResponse, json, toBase64 } from './http.js';
+import { ApiError, CORS_HEADERS, errorResponse, fileResponse, json, quotaHeaders, toBase64 } from './http.js';
 import { ADVANCED_ENDPOINTS, PRODUCTS, publicPlans } from './plans.js';
 import { assertCanRun, authenticate, chargeOperation, isAdmin, mintKey, quotaStatus, revokeKey } from './keys.js';
-import { analyseGlb, evaluate, readDocument, TARGETS, writeDocument } from './glb.js';
+import { analyseGlb, evaluate, readDocument, registerDracoDecoder, TARGETS, writeDocument } from './glb.js';
+import { getDracoDecoder } from './draco.js';
 import { compileIntent } from './intent.js';
 import { generateLodChain, optimizeGlb, reduceGlb } from './mesh.js';
 import { buildIconPack } from './icons.js';
@@ -12,6 +13,7 @@ import { decodeWebp, encodeWebp } from './webp.js';
 import { convert, CONVERSIONS } from './convert.js';
 import { buildScreenshots, SCREENSHOT_SIZES } from './screenshots.js';
 import { bump, PAGE_EVENTS, readStats } from './stats.js';
+import { buildOpenApiSpec } from './openapi.js';
 
 /**
  * AssetBench Cloud: /api/v1/*. Three products on one key (see PRODUCTS in
@@ -27,6 +29,7 @@ import { bump, PAGE_EVENTS, readStats } from './stats.js';
  */
 
 registerWebpCodec({ decode: decodeWebp, encode: encodeWebp });
+registerDracoDecoder(getDracoDecoder);
 
 const baseName = (filename, fallback) => String(filename || fallback).split(/[\\/]/).pop().replace(/\.[^.]+$/, '').replace(/[^\w.-]+/g, '_').slice(0, 80) || fallback;
 const bool = (v, fallback) => (v === undefined || v === '' ? fallback : !['false', '0', 'no', 'off'].includes(String(v).toLowerCase()));
@@ -285,7 +288,125 @@ const BATCH_ALIASES = { check: 'audit' };
 
 const tooLarge = (maxBytes) => new ApiError(413, 'file_too_large', `Uploads on your plan are limited to ${Math.round(maxBytes / 1048576)} MB.`);
 
-/** Reads every uploaded file (multipart fields "file"/"files", or the raw body) plus options. */
+/** Reads a ReadableStream or body into a Uint8Array while enforcing `maxBytes` on the fly. */
+async function readBoundedBytes(source, maxBytes) {
+  const declared = Number(source.headers?.get('Content-Length'));
+  if (declared && declared > maxBytes) throw tooLarge(maxBytes);
+  if (!source.body || typeof source.body.getReader !== 'function') {
+    const bytes = new Uint8Array(await source.arrayBuffer());
+    if (bytes.byteLength > maxBytes) throw tooLarge(maxBytes);
+    return bytes;
+  }
+  const reader = source.body.getReader();
+  const chunks = [];
+  let total = 0;
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      if (!value || !value.byteLength) continue;
+      total += value.byteLength;
+      if (total > maxBytes) {
+        await reader.cancel().catch(() => {});
+        throw tooLarge(maxBytes);
+      }
+      chunks.push(value);
+    }
+  } finally {
+    reader.releaseLock?.();
+  }
+  if (chunks.length === 1) return chunks[0];
+  const out = new Uint8Array(total);
+  let offset = 0;
+  for (const c of chunks) {
+    out.set(c, offset);
+    offset += c.byteLength;
+  }
+  return out;
+}
+
+/** Rejects non-HTTP(S) schemes and private/loopback/link-local addresses to prevent SSRF. */
+function parseSafeRemoteUrl(raw) {
+  let u;
+  try { u = new URL(String(raw || '').trim()); } catch { throw new ApiError(400, 'invalid_url', 'Pass a valid HTTP(S) URL.'); }
+  if (u.protocol !== 'https:' && u.protocol !== 'http:') {
+    throw new ApiError(400, 'invalid_url', 'Only http:// and https:// URLs are supported.');
+  }
+  const host = u.hostname.toLowerCase().replace(/^\[|\]$/g, '');
+  if (
+    !host ||
+    host === 'localhost' ||
+    host.endsWith('.localhost') ||
+    host.endsWith('.local') ||
+    host.endsWith('.internal') ||
+    host === '0.0.0.0' ||
+    host === '::1' ||
+    host === '::' ||
+    /^127\./.test(host) ||
+    /^10\./.test(host) ||
+    /^192\.168\./.test(host) ||
+    /^169\.254\./.test(host) ||
+    /^172\.(1[6-9]|2\d|3[0-1])\./.test(host) ||
+    /^(fc|fd)[0-9a-f]{2}:/i.test(host) ||
+    /^fe[89ab][0-9a-f]:/i.test(host)
+  ) {
+    throw new ApiError(400, 'invalid_url', 'Private, loopback, and internal network URLs are not allowed.');
+  }
+  return u;
+}
+
+async function fetchRemoteFile(rawUrl, maxBytes, fallbackFilename = null) {
+  const target = parseSafeRemoteUrl(rawUrl);
+  let res;
+  try {
+    res = await fetch(target.href, { redirect: 'follow', headers: { 'User-Agent': 'AssetBench-Cloud-API/1.1' } });
+  } catch (err) {
+    throw new ApiError(422, 'unreachable_url', `Could not fetch ${target.hostname} (${err?.message || 'network error'}).`);
+  }
+  if (!res.ok) {
+    throw new ApiError(422, 'unreachable_url', `Remote URL returned HTTP ${res.status}.`);
+  }
+  if (res.url) parseSafeRemoteUrl(res.url);
+  const bytes = await readBoundedBytes(res, maxBytes);
+  const urlFilename = decodeURIComponent(target.pathname.split('/').pop() || '').trim() || null;
+  return { bytes, filename: fallbackFilename || urlFilename };
+}
+
+/**
+ * Safely unpacks matching entries from a ZIP archive while enforcing an
+ * uncompressed byte ceiling to block ZIP decompression bombs.
+ */
+async function extractZipItems(zipBytes, filterFn, maxBytes) {
+  const zip = await JSZip.loadAsync(zipBytes).catch(() => {
+    throw new ApiError(422, 'unreadable_zip', 'The ZIP could not be opened.');
+  });
+  const entries = Object.values(zip.files).filter((f) => !f.dir && !f.name.startsWith('__MACOSX/'));
+  if (entries.length > 200) {
+    throw new ApiError(413, 'zip_too_large', 'ZIP archive contains more than 200 files.');
+  }
+  const maxUncompressed = Math.max(maxBytes * 2, 100 * 1048576);
+  const items = [];
+  let totalBytes = 0;
+  for (const f of entries.sort((a, b) => a.name.localeCompare(b.name))) {
+    if (!filterFn(f.name)) continue;
+    const declaredSize = Number(f._data?.uncompressedSize) || 0;
+    if (declaredSize > maxUncompressed || totalBytes + declaredSize > maxUncompressed) {
+      throw new ApiError(413, 'zip_too_large', `Uncompressed ZIP contents exceed the ${Math.round(maxUncompressed / 1048576)} MB limit.`);
+    }
+    const bytes = await f.async('uint8array');
+    totalBytes += bytes.byteLength;
+    if (totalBytes > maxUncompressed) {
+      throw new ApiError(413, 'zip_too_large', `Uncompressed ZIP contents exceed the ${Math.round(maxUncompressed / 1048576)} MB limit.`);
+    }
+    items.push({ bytes, filename: f.name });
+  }
+  return items;
+}
+
+/**
+ * Reads every uploaded file (multipart fields "file"/"files", raw binary body,
+ * or remote URL via ?url=... / JSON {"url": "..."}) plus options.
+ */
 async function readUploads(request, maxBytes) {
   if (request.method !== 'POST') throw new ApiError(405, 'method_not_allowed', 'Use POST with the file in the body.');
   const url = new URL(request.url);
@@ -293,26 +414,69 @@ async function readUploads(request, maxBytes) {
   const declared = Number(request.headers.get('Content-Length'));
   if (declared && declared > maxBytes + 64 * 1024) throw tooLarge(maxBytes);
   const files = [];
-  const type = request.headers.get('Content-Type') || '';
+  const remoteUrls = [];
+  if (params.url) remoteUrls.push(params.url);
+
+  const type = (request.headers.get('Content-Type') || '').toLowerCase();
   if (type.startsWith('multipart/form-data')) {
     const form = await request.formData();
     for (const [k, v] of form.entries()) {
-      if (typeof v === 'string') params[k] = v;
-      else if (k === 'file' || k === 'files') files.push({ bytes: new Uint8Array(await v.arrayBuffer()), filename: v.name || null });
+      if (typeof v === 'string') {
+        if (k === 'url' || k === 'urls') remoteUrls.push(v);
+        else params[k] = v;
+      } else if (k === 'file' || k === 'files') {
+        files.push({ bytes: new Uint8Array(await v.arrayBuffer()), filename: v.name || null });
+      }
     }
-    if (!files.length) throw new ApiError(400, 'missing_file', 'Attach the file in a form field named "file".');
+    if (!files.length && !remoteUrls.length) throw new ApiError(400, 'missing_file', 'Attach the file in a form field named "file" (or pass a "url").');
   } else {
-    const bytes = new Uint8Array(await request.arrayBuffer());
-    files.push({ bytes, filename: params.filename || request.headers.get('x-filename') || null });
+    const bytes = await readBoundedBytes(request, maxBytes);
+    // Check if the caller sent a JSON request body containing { url } / { urls } + options
+    // (taking care never to mistake a JSON .gltf model with an "asset" property for a URL payload).
+    let handledAsJsonUrl = false;
+    if (bytes.byteLength > 0 && bytes.byteLength <= 65536 && (type.startsWith('application/json') || params.url)) {
+      try {
+        const parsed = JSON.parse(new TextDecoder().decode(bytes));
+        if (parsed && typeof parsed === 'object' && !Array.isArray(parsed) && !parsed.asset) {
+          if (typeof parsed.url === 'string') remoteUrls.push(parsed.url);
+          if (Array.isArray(parsed.urls)) {
+            for (const u of parsed.urls) if (typeof u === 'string') remoteUrls.push(u);
+          }
+          for (const [k, v] of Object.entries(parsed)) {
+            if (k !== 'url' && k !== 'urls' && v !== undefined && v !== null && params[k] === undefined) {
+              params[k] = String(v);
+            }
+          }
+          handledAsJsonUrl = true;
+        }
+      } catch { /* not a JSON body */ }
+    }
+    if (!handledAsJsonUrl && bytes.byteLength > 0) {
+      files.push({ bytes, filename: params.filename || request.headers.get('x-filename') || null });
+    }
   }
-  if (files.some((f) => !f.bytes.byteLength)) throw new ApiError(400, 'missing_file', 'The upload is empty. Send the file as the body or as multipart field "file".');
+
+  if (!files.length && remoteUrls.length) {
+    if (remoteUrls.length > BATCH_MAX_FILES) {
+      throw new ApiError(400, 'batch_too_large', `A batch can hold up to ${BATCH_MAX_FILES} files; split larger jobs across several requests.`);
+    }
+    const explicitFilename = remoteUrls.length === 1 ? (params.filename || request.headers.get('x-filename') || null) : null;
+    for (const u of remoteUrls) {
+      files.push(await fetchRemoteFile(u, maxBytes, explicitFilename));
+    }
+  }
+
+  if (!files.length || files.some((f) => !f.bytes.byteLength)) {
+    throw new ApiError(400, 'missing_file', 'The upload is empty. Send the file as the body, as multipart field "file", or pass a "url".');
+  }
   if (files.reduce((t, f) => t + f.bytes.byteLength, 0) > maxBytes) throw tooLarge(maxBytes);
   return { files, params };
 }
 
 function respond({ output, filename, contentType, summary, report, quota, params, jsonOnly }) {
-  if (jsonOnly) return json({ ok: true, ...report, ...(quota ? { quota } : {}) });
-  if (params.output === 'json') return json({ ok: true, report, quota, file: { name: filename, contentType, bytes: output.byteLength, base64: toBase64(output) } });
+  const extraHeaders = quotaHeaders(quota);
+  if (jsonOnly) return json({ ok: true, ...report, ...(quota ? { quota } : {}) }, 200, extraHeaders);
+  if (params.output === 'json') return json({ ok: true, report, quota, file: { name: filename, contentType, bytes: output.byteLength, base64: toBase64(output) } }, 200, extraHeaders);
   return fileResponse(output, { filename, contentType, summary, quota });
 }
 
@@ -334,14 +498,11 @@ async function runSingle(request, env, opName, track) {
 async function runScreenshots(request, env, track) {
   const account = await authenticate(request, env);
   await assertCanRun(env, account, '2d');
-  const { files, params } = await readUploads(request, account.plan.maxUploadMB * 1048576);
+  const maxBytes = account.plan.maxUploadMB * 1048576;
+  const { files, params } = await readUploads(request, maxBytes);
   let inputs = files;
   if (files.length === 1 && files[0].bytes[0] === 0x50 && files[0].bytes[1] === 0x4b) {
-    const zip = await JSZip.loadAsync(files[0].bytes);
-    inputs = [];
-    for (const f of Object.values(zip.files).sort((a, b) => a.name.localeCompare(b.name))) {
-      if (!f.dir && /\.(png|jpe?g|webp)$/i.test(f.name) && !f.name.startsWith('__MACOSX/')) inputs.push({ bytes: await f.async('uint8array'), filename: f.name });
-    }
+    inputs = await extractZipItems(files[0].bytes, (name) => /\.(png|jpe?g|webp)$/i.test(name), maxBytes);
   }
   const { output, report } = await buildScreenshots(inputs, params);
   track('op:screenshots');
@@ -360,18 +521,15 @@ const BATCH_EXT = /\.(glb|gltf|obj|fbx|png|jpe?g|webp)$/i;
  */
 async function runBatch(request, env, track) {
   const account = await authenticate(request, env);
-  const { files, params } = await readUploads(request, account.plan.batchMaxMB * 1048576);
+  const maxBytes = account.plan.batchMaxMB * 1048576;
+  const { files, params } = await readUploads(request, maxBytes);
   const opName = BATCH_ALIASES[String(params.operation || '')] ?? String(params.operation || '');
   const op = OPERATIONS[opName];
   if (!op) throw new ApiError(400, 'invalid_operation', `operation must be one of: ${Object.keys(OPERATIONS).join(', ')}.`);
 
   let items = files;
   if (files.length === 1 && files[0].bytes[0] === 0x50 && files[0].bytes[1] === 0x4b && opName !== 'convert') {
-    const zip = await JSZip.loadAsync(files[0].bytes).catch(() => { throw new ApiError(422, 'unreadable_zip', 'The ZIP could not be opened.'); });
-    items = [];
-    for (const f of Object.values(zip.files).sort((a, b) => a.name.localeCompare(b.name))) {
-      if (!f.dir && BATCH_EXT.test(f.name) && !f.name.startsWith('__MACOSX/')) items.push({ bytes: await f.async('uint8array'), filename: f.name });
-    }
+    items = await extractZipItems(files[0].bytes, (name) => BATCH_EXT.test(name), maxBytes);
   }
   if (!items.length) throw new ApiError(400, 'empty_batch', 'No processable files found (GLB, glTF, OBJ, FBX, PNG, JPEG or WebP).');
   if (items.length > BATCH_MAX_FILES) throw new ApiError(400, 'batch_too_large', `A batch can hold up to ${BATCH_MAX_FILES} files; split larger jobs across several requests.`);
@@ -406,9 +564,9 @@ async function runBatch(request, env, track) {
   const quota = op.free || !ok ? await quotaStatus(env, account) : await chargeOperation(env, account, ok);
   const report = { operation: opName, total: items.length, succeeded: ok, failed: items.length - ok, charged: op.free ? 0 : ok, files: manifest };
   zip.file('manifest.json', JSON.stringify(report, null, 2));
-  if (op.json) return json({ ok: true, ...report, quota });
+  if (op.json) return json({ ok: true, ...report, quota }, 200, op.free ? {} : quotaHeaders(quota));
   const output = await zip.generateAsync({ type: 'uint8array', compression: 'STORE' });
-  return respond({ output, report, quota, params, filename: `batch-${opName}.zip`, contentType: 'application/zip', summary: { operation: opName, total: items.length, succeeded: ok, failed: items.length - ok } });
+  return respond({ output, report, quota: op.free ? undefined : quota, params, filename: `batch-${opName}.zip`, contentType: 'application/zip', summary: { operation: opName, total: items.length, succeeded: ok, failed: items.length - ok } });
 }
 
 function summarizeAudit(report) {
@@ -419,6 +577,7 @@ function summarizeAudit(report) {
 /** Methods each fixed-path endpoint in route() answers, for 405 replies. */
 const FIXED_METHODS = {
   '/api/v1': 'GET',
+  '/api/v1/openapi.json': 'GET',
   '/api/v1/pricing': 'GET',
   '/api/v1/targets': 'GET',
   '/api/v1/formats': 'GET',
@@ -435,7 +594,18 @@ async function route(request, env, track) {
   const method = request.method;
 
   if (path === '/api/v1' && method === 'GET') {
-    return json({ name: 'AssetBench Cloud API', version: 'v1', docs: `${url.origin}/docs/`, auth: 'Authorization: Bearer abk_live_...', products: PRODUCTS, advanced: ADVANCED_ENDPOINTS });
+    return json({
+      name: 'AssetBench Cloud API',
+      version: 'v1',
+      docs: `${url.origin}/docs/`,
+      openapi: `${url.origin}/api/v1/openapi.json`,
+      auth: 'Authorization: Bearer abk_live_...',
+      products: PRODUCTS,
+      advanced: ADVANCED_ENDPOINTS,
+    });
+  }
+  if (path === '/api/v1/openapi.json' && method === 'GET') {
+    return json(buildOpenApiSpec(url.origin, env));
   }
   if (path === '/api/v1/pricing' && method === 'GET') return json({ currency: 'GBP', plans: publicPlans(env), products: PRODUCTS, advanced: ADVANCED_ENDPOINTS });
   if (path === '/api/v1/targets' && method === 'GET') return json({ targets: TARGETS });
@@ -472,7 +642,8 @@ async function route(request, env, track) {
   if (path === '/api/v1/auth/me' && method === 'GET') {
     const account = await authenticate(request, env);
     const { name, engines, maxUploadMB, batchMaxMB } = account.plan;
-    return json({ ok: true, plan: { id: account.plan.id, name, engines, maxUploadMB, batchMaxMB }, label: account.record.label, createdAt: account.record.createdAt, quota: await quotaStatus(env, account) });
+    const quota = await quotaStatus(env, account);
+    return json({ ok: true, plan: { id: account.plan.id, name, engines, maxUploadMB, batchMaxMB }, label: account.record.label, createdAt: account.record.createdAt, quota }, 200, quotaHeaders(quota));
   }
 
   if (path === '/api/v1/track' && method === 'POST') {

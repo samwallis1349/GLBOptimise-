@@ -32,7 +32,7 @@ export async function decodeWebp(bytes) {
   const module = await decoder;
   const result = module.decode(bytes);
   if (!result) throw new Error('WebP decoding failed');
-  return { width: result.width, height: result.height, data: new Uint8ClampedArray(result.data.buffer, result.data.byteOffset, result.data.byteLength) };
+  return { width: result.width, height: result.height, data: new Uint8ClampedArray(result.data) };
 }
 
 /**

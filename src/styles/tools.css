@@ -26,6 +26,97 @@
   flex-shrink: 0;
 }
 
+.tool-offer__trial {
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.tool-offer__trial a {
+  color: inherit;
+}
+
+/* "Try it on the Colossus" above 3D tools (SampleModel.js). */
+.sample-model {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  max-width: 1200px;
+  margin: var(--space-4) auto 0;
+  padding: var(--space-2) var(--space-4);
+  border: 1px dashed rgba(255, 181, 71, 0.4);
+  border-radius: 10px;
+  font-size: 14px;
+}
+
+.sample-model img {
+  object-fit: contain;
+}
+
+.sample-model span {
+  flex: 1 1 260px;
+  color: var(--text-secondary);
+}
+
+.sample-model strong {
+  color: var(--text-primary, #fff);
+}
+
+/* "What next?" under a tool (ToolNextSteps.js). */
+.tool-next {
+  max-width: 1200px;
+  margin: var(--space-6) auto 0;
+  padding: 0 var(--space-4);
+}
+
+.tool-next__title {
+  margin: 0 0 var(--space-3);
+  font-size: 20px;
+}
+
+.tool-next__list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--space-3);
+}
+
+.tool-next__item,
+.tool-next__api {
+  display: grid;
+  gap: 4px;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  font-size: 13px;
+  text-decoration: none;
+  transition: border-color .15s ease;
+}
+
+.tool-next__item:hover,
+.tool-next__api:hover {
+  border-color: var(--accent);
+}
+
+.tool-next__item b,
+.tool-next__api b {
+  color: var(--accent);
+  font-size: 15px;
+}
+
+.tool-next__api {
+  margin-top: var(--space-3);
+}
+
+@media (max-width: 640px) {
+  .sample-model,
+  .tool-next {
+    margin-inline: 16px;
+  }
+}
+
 .tool-offer__actions {
   display: flex;
   align-items: center;

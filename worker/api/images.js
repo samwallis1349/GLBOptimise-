@@ -178,38 +178,66 @@ function weights(srcSize, dstSize) {
   return list;
 }
 
-/** Separable resample in premultiplied float space. */
+/**
+ * Separable resample in premultiplied float space.
+ * Uses a sliding row cache instead of full-image Float32Array planes so a
+ * 4096x4096 resize needs <1 MB of scratch RAM instead of ~512 MB (keeping
+ * well inside the 128 MB Cloudflare Worker heap limit).
+ */
 export function resize(image, width, height) {
   if (width === image.width && height === image.height) return image;
   const { width: sw, height: sh, data } = image;
-  const pre = new Float32Array(sw * sh * 4);
-  for (let i = 0; i < data.length; i += 4) {
-    const a = data[i + 3] / 255;
-    pre[i] = data[i] * a; pre[i + 1] = data[i + 1] * a; pre[i + 2] = data[i + 2] * a; pre[i + 3] = data[i + 3];
-  }
   const wx = weights(sw, width);
   const wy = weights(sh, height);
-  const tmp = new Float32Array(width * sh * 4);
-  for (let y = 0; y < sh; y += 1) {
+  const rowCache = new Map();
+
+  function resampleRow(sy) {
+    const row = new Float32Array(width * 4);
+    const rowOff = sy * sw * 4;
     for (let x = 0; x < width; x += 1) {
       const { idx, w } = wx[x];
       let r = 0, g = 0, b = 0, a = 0;
       for (let k = 0; k < idx.length; k += 1) {
-        const s = (y * sw + idx[k]) * 4;
-        r += pre[s] * w[k]; g += pre[s + 1] * w[k]; b += pre[s + 2] * w[k]; a += pre[s + 3] * w[k];
+        const s = rowOff + idx[k] * 4;
+        const sa = data[s + 3];
+        const scaleA = sa / 255;
+        const wk = w[k];
+        r += data[s] * scaleA * wk;
+        g += data[s + 1] * scaleA * wk;
+        b += data[s + 2] * scaleA * wk;
+        a += sa * wk;
       }
-      const d = (y * width + x) * 4;
-      tmp[d] = r; tmp[d + 1] = g; tmp[d + 2] = b; tmp[d + 3] = a;
+      const d = x * 4;
+      row[d] = r; row[d + 1] = g; row[d + 2] = b; row[d + 3] = a;
     }
+    return row;
   }
+
   const out = new Uint8ClampedArray(width * height * 4);
   for (let y = 0; y < height; y += 1) {
     const { idx, w } = wy[y];
+    const minS = idx[0];
+    for (const cachedS of rowCache.keys()) {
+      if (cachedS < minS) rowCache.delete(cachedS);
+    }
+    const rows = idx.map((sy) => {
+      let row = rowCache.get(sy);
+      if (!row) {
+        row = resampleRow(sy);
+        rowCache.set(sy, row);
+      }
+      return row;
+    });
     for (let x = 0; x < width; x += 1) {
+      const rx = x * 4;
       let r = 0, g = 0, b = 0, a = 0;
-      for (let k = 0; k < idx.length; k += 1) {
-        const s = (idx[k] * width + x) * 4;
-        r += tmp[s] * w[k]; g += tmp[s + 1] * w[k]; b += tmp[s + 2] * w[k]; a += tmp[s + 3] * w[k];
+      for (let k = 0; k < rows.length; k += 1) {
+        const row = rows[k];
+        const wk = w[k];
+        r += row[rx] * wk;
+        g += row[rx + 1] * wk;
+        b += row[rx + 2] * wk;
+        a += row[rx + 3] * wk;
       }
       const d = (y * width + x) * 4;
       const alpha = a / 255;

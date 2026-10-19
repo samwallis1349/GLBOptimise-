@@ -126,29 +126,13 @@ td code,p code{font:12px var(--mono);color:var(--accent-hi)}
 .chipstat{position:absolute;background:rgba(11,12,14,.82);backdrop-filter:blur(8px);border:1px solid var(--line2);border-radius:12px;padding:9px 12px;font-size:11.5px;color:var(--muted);line-height:1.35}
 .chipstat b{display:block;font:800 17px var(--display);color:var(--ink)}
 .chipstat b i{font-style:normal;color:var(--ok);font-size:13px;margin-left:4px}
-.result-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:20px;align-items:start}
-.compare{position:relative;aspect-ratio:1;border-radius:14px;overflow:hidden;border:1px solid var(--line);background:#0B0C0E;user-select:none;touch-action:none}
-.compare img{position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none}
-.compare .after{clip-path:inset(0 0 0 var(--pos,50%))}
-.compare .handle{position:absolute;top:0;bottom:0;left:var(--pos,50%);width:2px;background:var(--accent-hi);transform:translateX(-1px);pointer-events:none}
-.compare .handle::after{content:"⇆";position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:34px;height:34px;border-radius:50%;background:var(--silver);color:var(--accent-ink);display:grid;place-items:center;font-weight:800}
-.compare .lbl{position:absolute;top:12px;font:700 10.5px var(--body);letter-spacing:.14em;text-transform:uppercase;background:rgba(11,12,14,.8);border:1px solid var(--line2);border-radius:999px;padding:4px 10px;color:var(--ink)}
-.compare input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:ew-resize;margin:0}
-.seg{display:inline-flex;border:1px solid var(--line2);border-radius:10px;overflow:hidden;margin-bottom:12px}
-.seg button{border:0;border-radius:0;padding:8px 14px;background:var(--tile);color:var(--muted)}
-.seg button[aria-pressed=true]{background:var(--accent);color:var(--accent-ink)}
-.numbers{display:grid;gap:10px}
-.num-row{background:var(--tile);border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:flex;justify-content:space-between;align-items:baseline;gap:10px}
-.num-row span{color:var(--muted);font-size:12.5px}
-.num-row b{font:800 18px var(--display);color:var(--ink);white-space:nowrap}
-.num-row b s{color:var(--dim);font-weight:600;font-size:14px;text-decoration:none}
-.num-row b i{font-style:normal;color:var(--ok);font-size:13px;margin-left:6px}
+.check-shot{display:block;width:100%;height:auto;border-radius:14px;margin:14px 0}
 .banner{margin-top:18px;border-radius:20px;padding:34px 24px;text-align:center;border:1px solid var(--line2);background:radial-gradient(ellipse at 50% 0%,#23262d 0%,#111214 70%)}
 .banner h2{font:800 clamp(24px,4vw,34px) var(--display);margin:0 0 8px}
 .banner p{color:var(--muted);margin:0 auto;max-width:56ch}
 .banner .cta{justify-content:center}
 @media (max-width:860px){
-  .hero,.result-grid{grid-template-columns:1fr}
+  .hero{grid-template-columns:1fr}
   .hero-art{max-width:460px;width:100%;margin:0 auto}
 }
 @media (max-width:760px){
@@ -165,7 +149,7 @@ td code,p code{font:12px var(--mono);color:var(--accent-hi)}
 <div class="wrap">
   <div class="top">
     <a class="brand" href="/">Asset Bench</a>
-    <a href="/api/v1">GET /api/v1 →</a>
+    <div class="row" style="gap:14px"><a href="/api/v1/openapi.json">OpenAPI 3.1</a><a href="/api/v1">GET /api/v1 →</a></div>
   </div>
 
   <header class="hero">
@@ -175,7 +159,7 @@ td code,p code{font:12px var(--mono);color:var(--accent-hi)}
       <p class="lede">Send a 3D model or an app icon, get back files ready for your game engine or the app stores. Lighter models for Unity, Unreal, Godot, Roblox and the web, and every app icon and screenshot size, in one request. Nothing to install.</p>
       <div class="cta">
         <a class="btn primary" href="#key-h">Try it free →</a>
-        <a class="btn" href="https://workbenchlabs.lemonsqueezy.com/checkout/buy/3d09253a-bc8b-44a4-853f-5882dc964807" target="_blank" rel="noopener">Get All Access <small>£25/month</small></a>
+        <a class="btn" href="https://workbenchlabs.lemonsqueezy.com/checkout/buy/3d09253a-bc8b-44a4-853f-5882dc964807" target="_blank" rel="noopener">Get All Access <small>£10/month</small></a>
       </div>
       <div class="trust"><span>Free key in one click</span><span>No card needed</span><span>Files never stored</span></div>
     </div>
@@ -206,36 +190,10 @@ td code,p code{font:12px var(--mono);color:var(--accent-hi)}
   </section>
 
   <section class="card" aria-labelledby="real-h">
-    <h2 id="real-h">A real model, one request</h2>
-    <p class="sub">A rigged cartoon character (sunny-gecko.glb, 14.2 MB) sent to <code>/api/v1/game-ready</code> as a character for a mid-range phone in Unity. Drag the slider: it looks the same, with a quarter of the triangles.</p>
-    <div class="result-grid">
-      <div>
-        <div class="seg" role="group" aria-label="View">
-          <button type="button" data-view="wire" aria-pressed="true">Wireframe</button>
-          <button type="button" data-view="shaded" aria-pressed="false">Textured</button>
-        </div>
-        <div class="compare" id="compare">
-          <img id="cmpBefore" src="/docs/img/gecko-before-wire.webp" width="720" height="720" alt="Before: the original mesh, densely packed with triangles" loading="lazy">
-          <img id="cmpAfter" class="after" src="/docs/img/gecko-after-wire.webp" width="720" height="720" alt="After: the optimised mesh with far fewer triangles" loading="lazy">
-          <span class="lbl" style="left:12px">Before</span><span class="lbl" style="right:12px">After</span>
-          <span class="handle" aria-hidden="true"></span>
-          <input type="range" min="0" max="100" value="50" aria-label="Compare before and after">
-        </div>
-      </div>
-      <div class="numbers">
-        <div class="num-row"><span>Triangles</span><b><s>83,701 →</s> 21,781<i>−74%</i></b></div>
-        <div class="num-row"><span>File size</span><b><s>14.2 MB →</s> 4.3 MB<i>−70%</i></b></div>
-        <div class="num-row"><span>Texture memory on the phone</span><b><s>64 MB →</s> 16 MB<i>−75%</i></b></div>
-        <div class="num-row"><span>Levels of detail</span><b>4.5 · 1.4 · 0.45 MB</b></div>
-        <div class="num-row"><span>Pivot</span><b>Feet on the ground</b></div>
-        <div class="num-row"><span>Also in the ZIP</span><b>Unity import notes</b></div>
-        <pre>curl -X POST https://www.assetbench.co.uk/api/v1/game-ready \
-  -H "Authorization: Bearer YOUR_KEY" \
-  -F "file=@sunny-gecko.glb" -F "role=character" \
-  -F "device=mid" -F "engine=unity" -o pack.zip</pre>
-        <p class="sub" style="margin:0">Add <code>ktx2=true</code> and it drops to 2.1 MB with 4 MB of texture memory, scoring mobile-ready on a mid-range phone, at some cost to texture sharpness.</p>
-      </div>
-    </div>
+    <h2 id="real-h">What a check tells you</h2>
+    <p class="sub">A rigged cartoon character (sunny-gecko.glb, 14.2 MB) sent to <code>/api/v1/check</code> as a character for a mid-range phone in Unity. This is the real response, trimmed, with what each value means. Checks are free.</p>
+    <img class="check-shot" src="/docs/img/check-response.webp" width="1720" height="1230" loading="lazy" alt="The JSON response from /api/v1/check for sunny-gecko.glb: stats (14.9 MB file, 83,701 triangles, 1 draw call, 64 MB texture memory, largest texture 2048 px), an evaluation scoring 53 out of 100 and not ready for a mid-range phone, with triangles and texture memory failing their budgets and draw calls passing, and scores for low-end, mid-range and high-end phones and standalone VR.">
+    <pre>curl -X POST https://www.assetbench.co.uk/api/v1/check   -H "Authorization: Bearer YOUR_KEY"   -F "file=@sunny-gecko.glb" -F "role=character"   -F "device=mid" -F "engine=unity"</pre>
   </section>
 
   <section class="card" aria-labelledby="pkg-h">
@@ -284,7 +242,7 @@ td code,p code{font:12px var(--mono);color:var(--accent-hi)}
 
   <section class="card" aria-labelledby="plans-h">
     <h2 id="plans-h">Pricing</h2>
-    <p class="sub">Start free. The API comes included with the £25/month All Access subscription, and studios that need 5,000 operations a month move to Studio. One operation = one processed file (a game-ready pack, icon pack or screenshot set counts once; a batch counts each file). Checks are always free.</p>
+    <p class="sub">Start free. The API comes included with the £10/month All Access subscription (every website tool + 1,000 API operations/month), and studios that need 5,000 operations a month move to Studio. One operation = one processed file (a game-ready pack, icon pack or screenshot set counts once; a batch counts each file). Checks are always free.</p>
     <div class="grid" id="plans"><p class="sub">Loading…</p></div>
     <p class="sub" id="paidNote" style="margin-top:14px" hidden>After subscribing, Lemon Squeezy emails you a licence key: use it as your API key. All Access subscribers use the same key for the website tools and the API. Manage or cancel any time from your Lemon Squeezy receipt.</p>
     <p class="sub" id="manualNote" style="margin-top:14px">Need more than 5,000 operations a month? Email <a href="mailto:Workbench5@gmail.com">Workbench5@gmail.com</a>, and tell us what you're building.</p>
@@ -472,7 +430,7 @@ td code,p code{font:12px var(--mono);color:var(--accent-hi)}
     <h2 id="faq-h">Questions</h2>
     <details><summary>What is an API, in plain English?</summary><p>A way for programs to talk to each other. Instead of opening a website and clicking, your script (or this page) sends a file to an address like <code>/api/v1/game-ready</code> and gets the finished files back. The key is like a password that says the request is yours.</p></details>
     <details><summary>Do you keep my files?</summary><p>No. Each file is processed in memory and sent straight back; nothing is saved on our side. We only count how many operations each key has used.</p></details>
-    <details><summary>Which files can I send?</summary><p>3D: GLB, glTF, OBJ and FBX (FBX and OBJ are converted to GLB first), including models with WebP textures. Images: PNG, JPEG and WebP. Up to 25 MB per file on Free, 50 MB on All Access and 100 MB on Studio. Draco-compressed GLBs can be checked but not processed yet.</p></details>
+    <details><summary>Which files can I send?</summary><p>3D: GLB, glTF, OBJ and FBX (FBX and OBJ are converted to GLB first), including Draco- and Meshopt-compressed GLBs and models with WebP textures. Images: PNG, JPEG and WebP. Up to 25 MB per file on Free, 50 MB on All Access and 100 MB on Studio. You can upload files directly or pass a public <code>url</code>.</p></details>
     <details><summary>What counts as an operation?</summary><p>One processed file. A game-ready pack, an icon set or a set of screenshots each count once, however many files come back. Checks are free and never count.</p></details>
     <details><summary>I already pay for All Access. Do I need anything else?</summary><p>No. Your All Access licence key is also your API key, with 1,000 operations a month. Paste it into the key box below.</p></details>
     <details><summary>What happens if I run out?</summary><p>Requests return a clear "quota used up" message until the month resets. Nothing is charged automatically; you can move to Studio for 5,000 a month.</p></details>
@@ -483,13 +441,13 @@ td code,p code{font:12px var(--mono);color:var(--accent-hi)}
     <p>Get a free key, send your first model and see the result. Checks are free forever. When you need more, the API comes with All Access.</p>
     <div class="cta">
       <a class="btn primary" href="#key-h">Get a free API key →</a>
-      <a class="btn" href="https://workbenchlabs.lemonsqueezy.com/checkout/buy/3d09253a-bc8b-44a4-853f-5882dc964807" target="_blank" rel="noopener">Get All Access <small>£25/month</small></a>
+      <a class="btn" href="https://workbenchlabs.lemonsqueezy.com/checkout/buy/3d09253a-bc8b-44a4-853f-5882dc964807" target="_blank" rel="noopener">Get All Access <small>£10/month</small></a>
     </div>
   </section>
 
   <section class="card" aria-labelledby="ref-h">
     <h2 id="ref-h">Reference</h2>
-    <p class="sub">Send files as <code>multipart/form-data</code> (field <code>file</code>, options as fields) or as the raw body with options in the query string. Responses are the file itself, with a JSON summary in the <code>X-AssetBench-Summary</code> header and your quota in <code>X-Quota-Remaining</code>. Add <code>?output=json</code> to get the full report with the file base64-encoded.</p>
+    <p class="sub">Send files as <code>multipart/form-data</code> (field <code>file</code>, options as fields), as the raw body with options in the query string, or pass a remote file URL via <code>?url=https://…</code> or JSON <code>{"url":"https://…"}</code>. Responses are the file itself, with a JSON summary in <code>X-AssetBench-Summary</code> and your quota in <code>X-Quota-Remaining</code>, <code>X-Quota-Limit</code> and <code>X-Quota-Reset</code>. Add <code>?output=json</code> to get the full report with the file base64-encoded.</p>
     <div class="tbl"><table>
       <thead><tr><th>Endpoint</th><th>Options</th><th>Returns</th></tr></thead>
       <tbody>
@@ -501,7 +459,7 @@ td code,p code{font:12px var(--mono);color:var(--accent-hi)}
         <tr><td><span class="m">POST</span> <code>/api/v1/app-assets</code></td><td><code>platforms</code> ios,android,watchos (default: all three) · <code>background</code> · <code>adaptiveScale</code></td><td>ZIP: <code>AppIcon.appiconset</code> + <code>Contents.json</code>, Android mipmaps + adaptive icons, Play Store 512.</td></tr>
         <tr><td><span class="m">POST</span> <code>/api/v1/app-assets/screenshots</code></td><td>1–10 images (or a ZIP) · <code>devices</code> iphone-6.9,iphone-6.5,iphone-5.5,ipad-13,ipad-12.9,android-phone,android-tablet · <code>fit</code> cover|contain · <code>background</code> · <code>format</code> jpeg|png</td><td>ZIP: one folder per device, sized exactly, opaque.</td></tr>
         <tr><td colspan="3"><b>Many files at once</b></td></tr>
-        <tr><td><span class="m">POST</span> <code>/api/v1/batch</code></td><td><code>operation</code> (<code>check</code>, <code>game-ready</code>, <code>app-assets</code> or any advanced step) + that operation's options · files as several <code>files</code> fields or one ZIP</td><td>ZIP: <code>results/&lt;file&gt;/…</code> + <code>manifest.json</code> (JSON for audit). Up to 50 files per request.</td></tr>
+        <tr><td><span class="m">POST</span> <code>/api/v1/batch</code></td><td><code>operation</code> (<code>check</code>, <code>game-ready</code>, <code>app-assets</code> or any advanced step) + that operation's options · files as several <code>files</code> fields, one ZIP, or JSON <code>{"urls":[…]}</code></td><td>ZIP: <code>results/&lt;file&gt;/…</code> + <code>manifest.json</code> (JSON for audit). Up to 50 files per request.</td></tr>
         <tr><td colspan="3"><b>Advanced: single steps</b></td></tr>
         <tr><td><span class="m">POST</span> <code>/api/v1/3d/optimize</code></td><td><code>target</code> (plain English ok) · <code>ratio</code> 0–1 · <code>maxTextureSize</code> · <code>compress</code> · <code>lockBorder</code> · <code>ktx2</code></td><td>Optimised <code>.glb</code>; with <code>output=json</code>, a before/after report.</td></tr>
         <tr><td><span class="m">POST</span> <code>/api/v1/3d/reduce</code></td><td><code>ratio</code> 0–1 (default 0.5) or <code>triangles</code> (target count, wins over ratio) · <code>lockBorder</code> · <code>error</code> 0–1 (quality cap; default loosens up to 0.1 as needed to hit the target) · <code>acrossSeams</code> auto|true|false (collapse across UV seams when a model won't reduce otherwise; auto = untextured models only, since it stretches textures)</td><td>Reduced <code>.glb</code>, geometry only (textures and compression untouched); with <code>output=json</code>, triangle counts before/after. Free.</td></tr>
@@ -511,12 +469,12 @@ td code,p code{font:12px var(--mono);color:var(--accent-hi)}
         <tr><td><span class="m">POST</span> <code>/api/v1/ios/xcassets</code></td><td>as app-icons, iOS by default</td><td>ZIP with the Xcode asset catalog.</td></tr>
         <tr><td colspan="3"><b>Also</b></td></tr>
         <tr><td><span class="m">POST</span> <code>/api/v1/textures/resize</code></td><td><code>maxSize</code> · <code>powerOfTwo</code> · <code>format</code> png|jpeg|webp · <code>quality</code> · <code>lossless</code></td><td>Resized image.</td></tr>
-        <tr><td><span class="m">GET</span> <code>/api/v1/auth/me</code> · <code>/pricing</code> · <code>/devices</code> · <code>/formats</code> · <code>/intent?target=…</code></td><td></td><td>Quota; plans and products; device budgets; formats and sizes; how a plain-English target compiles.</td></tr>
+        <tr><td><span class="m">GET</span> <code>/api/v1/auth/me</code> · <code>/openapi.json</code> · <code>/pricing</code> · <code>/devices</code> · <code>/formats</code> · <code>/intent?target=…</code></td><td></td><td>Quota; OpenAPI 3.1 spec; plans and products; device budgets; formats and sizes; how a plain-English target compiles.</td></tr>
               <tr><td colspan="3" class="sub">Older paths still work: <code>/3d/audit</code>, <code>/3d/inspect</code>, <code>/3d/game-ready</code>, <code>/ios/app-icons</code>, <code>/ios/screenshots</code>, <code>/2d/…</code>.</td></tr>
 </tbody>
     </table></div>
     <h3 style="margin-top:18px">Errors</h3>
-    <p class="sub" style="margin:0">Errors are JSON: <code>{"error":{"code":"quota_exhausted","message":"…"}}</code>. Status codes: 400 bad option · 401 missing/invalid key · 403 engine not in plan · 413 file too large · 415 wrong file type (Draco-compressed GLBs can be audited but not processed yet) · 422 unreadable file · 429 quota used up.</p>
+    <p class="sub" style="margin:0">Errors are JSON: <code>{"error":{"code":"quota_exhausted","message":"…"}}</code>. Status codes: 400 bad option · 401 missing/invalid key · 403 engine not in plan · 413 file too large · 415 wrong file type · 422 unreadable file · 429 quota used up (includes <code>Retry-After</code> and quota headers).</p>
   </section>
 </div>
 
@@ -565,19 +523,6 @@ $('btnMe').addEventListener('click', async () => {
   const j = await res.json();
   setStatus('keyStatus', 'ok', `${j.plan.name}: ${j.quota.remaining} of ${j.quota.limit} operations left${j.quota.resetsAt ? ', resets ' + j.quota.resetsAt.slice(0, 10) : ''}.`);
 });
-
-// Before/after slider for the real-result section.
-{
-  const box = $('compare');
-  const range = box.querySelector('input');
-  range.addEventListener('input', () => box.style.setProperty('--pos', range.value + '%'));
-  const views = { wire: ['gecko-before-wire', 'gecko-after-wire'], shaded: ['gecko-before', 'gecko-after'] };
-  document.querySelectorAll('[data-view]').forEach((b) => b.addEventListener('click', () => {
-    document.querySelectorAll('[data-view]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
-    const [before, after] = views[b.dataset.view];
-    $('cmpBefore').src = `/docs/img/${before}.webp`; $('cmpAfter').src = `/docs/img/${after}.webp`;
-  }));
-}
 
 // Small line drawings for the product cards (colours come from CSS).
 const ART = {

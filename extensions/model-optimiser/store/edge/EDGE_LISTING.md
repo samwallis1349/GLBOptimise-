@@ -21,20 +21,20 @@ Dashboard: Microsoft Partner Center → Edge → Extensions (https://partner.mic
 > • Polygon reduction with meshoptimizer, the simplifier used across the games industry
 > • Textures, materials, UVs and normals kept
 > • "Reduce across UV seams" for AI-generated and scanned models that barely reduce otherwise
-> • A model check: triangles, draw calls, texture memory, and a score for low, mid and high-end phones and Quest VR, for Unity, Unreal, Godot, Roblox or the web
+> • A model check: triangles, draw calls, texture memory, and a score for how well it will run on low, mid and high-end phones and VR headsets
 >
 > PRIVATE BY DESIGN
 > Your models are processed on your own computer. Nothing is uploaded.
 >
 > PRICE
-> The model check is free. Reducing is a £3 one-off unlock, no subscription. Already have AssetBench All Access or a Reduce Polys key from our website? It unlocks it too.
+> The model check is free, and you get 5 free reduces every day. Unlimited reducing is a £3 one-off unlock, no subscription. Already have AssetBench All Access or a Reduce Polys key from our website? It unlocks it too.
 >
 > GOOD FOR
-> Mobile and web games, three.js and Babylon.js scenes, AR product viewers, VR, and taming heavy models from Meshy, Tripo and other AI 3D generators.
+> Making 3D models light enough for mobile games, websites and VR.
 >
 > More free 3D tools at https://www.assetbench.co.uk
 
-**Short description** comes from the package: Cut the triangle count of GLB models in your browser. Free model check, £3 one-off unlock. Files never leave your computer.
+**Short description** comes from the package: Cut GLB triangle counts in your browser. Free model check, 5 free reduces a day, £3 for unlimited. Files never leave your computer.
 
 **Search terms** (up to 7)
 
@@ -69,4 +69,4 @@ Visibility: Public. Markets: all markets.
 
 ## Notes for certification
 
-No sign-in. To test: click the toolbar icon to open the sidebar panel and drop any .glb model (for example https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/DamagedHelmet/glTF-Binary/DamagedHelmet.glb). The Check tab is free and scores the model. Reduce is a £3 unlock: paste this test licence key into the Reduce tab and click Unlock: TEST-KEY-GOES-HERE. Then choose Keep triangles, click Reduce, and Download. Models are processed locally; the only network calls are the licence check to api.lemonsqueezy.com and www.assetbench.co.uk. Permissions: sidePanel (the UI), storage (licence key and last settings), downloads (saving the result). WebAssembly (meshoptimizer) is bundled, hence wasm-unsafe-eval in the CSP.
+No sign-in. To test: click the toolbar icon to open the sidebar panel and drop any .glb model (for example https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/DamagedHelmet/glTF-Binary/DamagedHelmet.glb). The Check tab is free and scores the model. Reduce runs free 5 times a day, then needs the £3 unlock: paste this test licence key into the Reduce tab and click Unlock: TEST-KEY-GOES-HERE. Then choose Keep triangles, click Reduce, and Download. Models are processed locally; the only network calls are the licence check to api.lemonsqueezy.com and www.assetbench.co.uk. Permissions: sidePanel (the UI), storage (licence key, last settings and the day's free-run count), downloads (saving the result). WebAssembly (meshoptimizer) is bundled, hence wasm-unsafe-eval in the CSP.

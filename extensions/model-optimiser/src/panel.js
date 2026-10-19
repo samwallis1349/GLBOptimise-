@@ -1,12 +1,14 @@
 import { CHECKOUT_URL, PRICE_LABEL } from '../../../src/shared/config/billing.js';
 import { SINGLE_TOOL_CHECKOUT_URL, TOOL_PRICE_LABEL, TOOL_PRODUCTS } from '../../../src/shared/config/toolProducts.js';
 import { activateKey, isUnlocked, revalidate, SITE_TOOL } from './licensing.js';
+import { fmtCountdown, msUntilReset, QUOTA_KEY, runsUsed, spendRun, utcDay } from './quota.js';
 
 // Set at build time from editions.js: which tools this store product has.
 const EDITION = __EDITION__;
 
 const FREE = new Set(EDITION.free);
 const PRICE = EDITION.price || TOOL_PRICE_LABEL;
+const DAILY_FREE = EDITION.dailyFree || 0;
 
 const $ = (id) => document.getElementById(id);
 const LICENSES = 'licenses';
@@ -18,6 +20,9 @@ let licenses = [];
 let tool = EDITION.firstTool;
 let model = null; // { name, bytes, size }
 let busy = false;
+let used = 0; // free runs used today (src/quota.js)
+let usedDay = utcDay();
+let countdown = 0;
 
 const fmtBytes = (b) => (b >= 1048576 ? `${(b / 1048576).toFixed(2)} MB` : `${Math.max(1, Math.round(b / 1024))} KB`);
 const fmtInt = (n) => Number(n).toLocaleString('en-GB');
@@ -47,6 +52,28 @@ function process(toolId, params) {
   });
 }
 
+// ---------------------------------------------------------------- quota
+// A paid tool this browser hasn't unlocked still runs DAILY_FREE times a day.
+const owned = (id) => isUnlocked(id, licenses, FREE);
+
+function freeLeft() {
+  if (usedDay !== utcDay()) {
+    used = 0;
+    usedDay = utcDay();
+  }
+  return Math.max(0, DAILY_FREE - used);
+}
+
+async function loadQuota() {
+  used = await runsUsed(chrome.storage.local);
+  usedDay = utcDay();
+}
+
+function tick() {
+  if (freeLeft()) return render(); // midnight UTC passed
+  $('resetIn').textContent = `Resets in ${fmtCountdown(msUntilReset())}`;
+}
+
 // ---------------------------------------------------------------- view
 function render() {
   document.querySelectorAll('[role=tab]').forEach((tab) => {
@@ -57,11 +84,24 @@ function render() {
   });
   document.querySelectorAll('.tool').forEach((section) => { section.hidden = section.dataset.panel !== tool; });
 
-  const unlocked = isUnlocked(tool, licenses, FREE);
+  const unlocked = owned(tool);
+  const left = freeLeft();
+  const runnable = unlocked || left > 0;
+  $('credits').hidden = unlocked || !DAILY_FREE;
+  $('credits').textContent = `${left}/${DAILY_FREE} free today`;
+  $('credits').classList.toggle('is-empty', !left);
+
   $('lock').hidden = unlocked;
+  $('resetIn').hidden = runnable;
+  clearInterval(countdown);
+  if (!runnable && DAILY_FREE) {
+    tick();
+    countdown = setInterval(tick, 1000);
+  }
   if (!unlocked) {
     const siteTool = SITE_TOOL[tool];
-    $('lockTitle').textContent = `Unlock ${TOOL_NAMES[tool]}`;
+    $('lockTitle').textContent = !DAILY_FREE ? `Unlock ${TOOL_NAMES[tool]}`
+      : left ? `Unlimited ${TOOL_NAMES[tool]}` : `You've used your ${DAILY_FREE} free runs for today`;
     $('buyTool').textContent = `Unlock ${TOOL_NAMES[tool]} for ${PRICE}`;
     $('buyTool').href = EDITION.checkoutUrl || TOOL_PRODUCTS[siteTool]?.checkoutUrl || SINGLE_TOOL_CHECKOUT_URL;
     $('buyAll').textContent = `Every tool with All Access, ${PRICE_LABEL}`;
@@ -69,7 +109,7 @@ function render() {
   }
 
   const run = $('run');
-  run.hidden = !unlocked;
+  run.hidden = !runnable;
   run.disabled = busy || !model;
   run.textContent = busy ? 'Working…' : model ? RUN_LABELS[tool] : 'Choose a model first';
 
@@ -163,14 +203,19 @@ function paramsFor(toolId) {
 }
 
 async function run() {
-  if (!model || busy || !isUnlocked(tool, licenses, FREE)) return;
+  if (!model || busy || !(owned(tool) || freeLeft())) return;
   const toolId = tool;
+  const metered = !owned(toolId);
   busy = true;
   $('result').hidden = true;
   status(toolId === 'compress' ? 'Encoding textures… this can take a minute.' : 'Working…');
   render();
   try {
     const result = await process(toolId, paramsFor(toolId));
+    if (metered) {
+      used = await spendRun(chrome.storage.local);
+      usedDay = utcDay();
+    }
     showResult(toolId, result);
     status(result.output ? 'Done. Download it below.' : 'Done.', 'ok');
   } catch (err) {
@@ -208,7 +253,7 @@ async function activate() {
   licenses = [...licenses.filter((l) => l.key !== result.license.key), result.license];
   await chrome.storage.local.set({ [LICENSES]: licenses });
   $('keyInput').value = '';
-  const unlockedHere = isUnlocked(tool, licenses, FREE);
+  const unlockedHere = owned(tool);
   status(
     result.license.scope === 'all' ? 'All Access active: every tool is unlocked.'
       : unlockedHere ? `${TOOL_NAMES[tool]} unlocked.` : 'That key unlocks a different tool, so it was saved for that one.',
@@ -263,6 +308,7 @@ document.title = EDITION.shortName;
 
 const stored = await chrome.storage.local.get([LICENSES, SETTINGS]);
 licenses = stored[LICENSES] || [];
+await loadQuota();
 for (const [id, value] of Object.entries(stored[SETTINGS] || {})) {
   const el = $(id);
   if (!el) continue;
@@ -271,6 +317,11 @@ for (const [id, value] of Object.entries(stored[SETTINGS] || {})) {
 }
 $('keepLabel').textContent = `${$('keep').value}%`;
 render();
+
+// Free runs spent in another window's panel (or reset from DevTools).
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area === 'local' && changes[QUOTA_KEY]) loadQuota().then(render);
+});
 
 // Drop refunded or cancelled keys in the background; offline keeps them.
 if (licenses.length) {

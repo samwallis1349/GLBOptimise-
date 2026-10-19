@@ -5,6 +5,8 @@ import { analyseGlb } from '../worker/api/glb.js';
 import { sphereGlb } from './helpers/apiFixtures.mjs';
 import { runTool, TOOL_IDS } from '../extensions/model-optimiser/src/engine.js';
 import { activateKey, isUnlocked, revalidate, SITE_TOOL } from '../extensions/model-optimiser/src/licensing.js';
+import { fmtCountdown, msUntilReset, runsUsed, spendRun, utcDay } from '../extensions/model-optimiser/src/quota.js';
+import { EDITIONS } from '../extensions/model-optimiser/editions.js';
 import { LICENSE_PRODUCT_ID, LICENSE_STORE_ID } from '../src/shared/config/billing.js';
 import { SINGLE_TOOL_PRODUCT_ID } from '../src/shared/config/toolProducts.js';
 
@@ -115,4 +117,26 @@ test('the Add to Chrome bar stays hidden until a store URL is set', async () => 
   assert.equal(chromeExtensionFor('reduce-polys').name, 'Reduce Polys');
   assert.equal(chromeExtensionFor('optimise-glb'), null);
   CHROME_EXTENSIONS['reduce-polys'].url = saved;
+});
+
+test('Model Optimiser: free daily runs reset at midnight UTC', async () => {
+  const data = {};
+  const storage = { get: async (key) => ({ [key]: data[key] }), set: async (items) => Object.assign(data, items) };
+  const evening = Date.UTC(2026, 9, 13, 23, 59, 59);
+  const nextMorning = Date.UTC(2026, 9, 14, 0, 0, 1);
+
+  assert.equal(utcDay(evening), '2026-10-13');
+  assert.equal(await runsUsed(storage, evening), 0);
+  assert.equal(await spendRun(storage, evening), 1);
+  assert.equal(await spendRun(storage, evening), 2);
+  assert.deepEqual(data.quota, { dailyRunsCount: 2, lastResetDay: '2026-10-13' });
+  assert.equal(await runsUsed(storage, nextMorning), 0);
+  assert.equal(await spendRun(storage, nextMorning), 1);
+
+  assert.equal(msUntilReset(evening), 1000);
+  assert.equal(fmtCountdown(msUntilReset(evening)), '00:00:01');
+  assert.equal(fmtCountdown(msUntilReset(Date.UTC(2026, 9, 13, 0, 0, 0))), '24:00:00');
+  assert.equal(fmtCountdown(5 * 3600_000 + 7 * 60_000 + 9_500), '05:07:10');
+
+  for (const edition of Object.values(EDITIONS)) assert.equal(edition.dailyFree, 5);
 });

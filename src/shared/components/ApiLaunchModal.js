@@ -1,4 +1,4 @@
-const DISMISSED_KEY = 'assetbench_api_launch_v1';
+const DISMISSED_KEY = 'assetbench_api_launch_v2';
 
 const PRODUCTS = [
   ['GLB optimisation', 'one call makes a model game-ready for a phone, Quest or the web'],
@@ -51,9 +51,9 @@ export function openApiLaunchModal() {
     <div class="welcome-modal api-launch">
       <button class="welcome-modal__close" type="button" aria-label="Close">✕</button>
       <div class="api-launch__card">
-        <span class="api-launch__badge">New · Free to try</span>
+        <span class="api-launch__badge">New · Free to try · Included in All Access (£10/m)</span>
         <h2 class="api-launch__title" id="api-launch-title">The AssetBench API</h2>
-        <p class="api-launch__lede">Everything AssetBench does, from your own code. Built for mobile game and app developers.</p>
+        <p class="api-launch__lede">Everything AssetBench does, from your own code. 100 free operations/month, or 1,000/month included with the £10/m All Access subscription.</p>
         <ul class="api-launch__list">
           ${PRODUCTS.map(([name, what]) => `<li><b>${name}</b><span>${what}</span></li>`).join('')}
         </ul>

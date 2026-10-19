@@ -5,6 +5,12 @@
   "name": "glboptimise",
   "compatibility_date": "2026-09-22",
   "main": "worker/index.js",
+  "routes": [
+    { "pattern": "illustrator.assetbench.co.uk", "custom_domain": true },
+    { "pattern": "illustration.assetbench.co.uk", "custom_domain": true },
+    { "pattern": "www.assetbench.co.uk", "custom_domain": true },
+    { "pattern": "assetbench.co.uk", "custom_domain": true }
+  ],
   "assets": {
     "directory": "./dist",
     "binding": "ASSETS",

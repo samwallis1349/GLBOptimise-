@@ -2,11 +2,11 @@ import { TOOL_DEVICE_LIMIT, TOOL_PRICE_LABEL, toolProduct } from '../config/tool
 import { hasStoredLicense, hasToolLicense } from '../../services/LicenseService.js';
 import { refundNoticeShortHtml } from './RefundNotice.js';
 import { LicenseActivationForm } from './LicenseActivationForm.js';
-import { hasAccess } from '../config/billing.js';
+import { PRICE_LABEL, freeDaysRemaining, hasAccess, isFreePeriodActive } from '../config/billing.js';
 import { TOOLS } from '../config/tools.js';
 
 /**
- * Slim bar above a tool offering just that tool for £5 — the key from the
+ * Slim bar above a tool offering just that tool for £2.99 — the key from the
  * receipt email unlocks it in the browser on the buyer's phone and computer.
  * Renders nothing until the tool's product is configured in
  * shared/config/toolProducts.js, or when the visitor already owns it.
@@ -15,10 +15,13 @@ export function ToolOffer(tool) {
   const product = toolProduct(tool.id);
   if (!product || hasStoredLicense() || hasToolLicense(tool.id)) return null;
 
+  // During the free trial, lead with how long is left.
+  const days = isFreePeriodActive() ? freeDaysRemaining() : 0;
   const bar = document.createElement('aside');
   bar.className = 'tool-offer';
   bar.innerHTML = `
     <span class="tool-offer__text">
+      ${days ? `<span class="tool-offer__trial">${days} day${days === 1 ? '' : 's'} left of your free trial. Keep this tool, or get <a href="/pricing">every tool for ${PRICE_LABEL}</a>.</span>` : ''}
       <strong>Keep ${tool.name} for ${TOOL_PRICE_LABEL}</strong>
       <span class="text-secondary">One-time · works in your browser on up to ${TOOL_DEVICE_LIMIT} devices, phone included · nothing to install</span>
       <span class="tool-offer__refund">${refundNoticeShortHtml()}</span>

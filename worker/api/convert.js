@@ -32,13 +32,29 @@ export function detectFormat(bytes, filename) {
 const decoder = new TextDecoder();
 const baseOf = (path) => path.split(/[\\/]/).pop();
 
+const MAX_UNZIP_BYTES = 100 * 1048576;
+const MAX_UNZIP_ENTRIES = 200;
+
 async function unzipEntries(bytes) {
   let zip;
   try { zip = await JSZip.loadAsync(bytes); } catch { throw new ApiError(422, 'unreadable_zip', 'The ZIP could not be opened.'); }
   const entries = new Map();
+  let totalBytes = 0;
   for (const file of Object.values(zip.files)) {
     if (file.dir || file.name.startsWith('__MACOSX/')) continue;
-    entries.set(file.name, await file.async('uint8array'));
+    if (entries.size >= MAX_UNZIP_ENTRIES) {
+      throw new ApiError(413, 'zip_too_large', `ZIP archives for conversion are limited to ${MAX_UNZIP_ENTRIES} files.`);
+    }
+    const declaredSize = Number(file._data?.uncompressedSize) || 0;
+    if (declaredSize > MAX_UNZIP_BYTES || totalBytes + declaredSize > MAX_UNZIP_BYTES) {
+      throw new ApiError(413, 'zip_too_large', 'The uncompressed ZIP contents exceed the 100 MB limit.');
+    }
+    const data = await file.async('uint8array');
+    totalBytes += data.byteLength;
+    if (totalBytes > MAX_UNZIP_BYTES) {
+      throw new ApiError(413, 'zip_too_large', 'The uncompressed ZIP contents exceed the 100 MB limit.');
+    }
+    entries.set(file.name, data);
   }
   return entries;
 }

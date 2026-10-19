@@ -46,8 +46,8 @@ export const STATIC_PAGES = [
   {
     path: '/pricing',
     name: 'Pricing',
-    title: `Pricing — All Access £25/month | ${SITE_NAME}`,
-    description: 'All Access unlocks every current and future Asset Bench tool for £25 a month. Try every tool free for 4 days first.',
+    title: `Pricing — All Access £10/month (Tools + Cloud API) | ${SITE_NAME}`,
+    description: 'All Access unlocks every current and future Asset Bench browser tool plus the Cloud API (1,000 operations/month) for £10 a month. Try free for 4 days first.',
     changefreq: 'monthly',
     priority: '0.6',
   },
@@ -82,6 +82,22 @@ export const STATIC_PAGES = [
     description: 'How Asset Bench handles information: your files stay in your browser, what the free trial, licence checks and visitor statistics use, browser storage, and our plans for advertising.',
     changefreq: 'yearly',
     priority: '0.3',
+  },
+  {
+    path: '/illustration',
+    name: 'Sam — Graphic Design & Illustration',
+    title: 'Sam — Graphic Design, Vector Identity & Illustration',
+    description: 'Original graphic design, logo design, vector identity and visual storytelling for businesses, games and ambitious creative projects.',
+    changefreq: 'weekly',
+    priority: '0.9',
+  },
+  {
+    path: '/illustrator',
+    name: 'Sam — Graphic Design & Illustration',
+    title: 'Sam — Graphic Design, Vector Identity & Illustration',
+    description: 'Original graphic design, logo design, vector identity and visual storytelling for businesses, games and ambitious creative projects.',
+    changefreq: 'weekly',
+    priority: '0.9',
   },
 ];
 

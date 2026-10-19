@@ -1,0 +1,158 @@
+.colossus-hero {
+  width: min(100%, 620px);
+  margin: 0 auto;
+  padding: 10px 3% 18px;
+  color: #f5f1e7;
+}
+
+.colossus-hero__eyebrow {
+  margin: 0 0 8px;
+  color: #ffbd43;
+  text-align: center;
+  font-size: 11px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+}
+
+.colossus-hero__stage {
+  position: relative;
+  width: 100%;
+  min-height: 350px;
+  aspect-ratio: 1.16;
+  overflow: hidden;
+  isolation: isolate;
+  /* Transparent: the Colossus stands straight on the page background. */
+  background: transparent;
+}
+
+.colossus-hero__poster,
+.colossus-hero__poster img,
+.colossus-hero__canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.colossus-hero__poster img {
+  object-fit: contain;
+}
+
+/* display:block above would otherwise override the hidden attribute. */
+.colossus-hero__poster[hidden] {
+  display: none;
+}
+
+/* The live scene fades in over the still once its first frame is drawn. */
+.colossus-hero__canvas {
+  opacity: 0;
+  transition: opacity .5s ease;
+}
+
+.colossus-hero__stage.is-live .colossus-hero__canvas {
+  opacity: 1;
+}
+
+.colossus-hero__caption {
+  margin: 10px 0 0;
+  color: #d3c8ad;
+  text-align: center;
+  font-size: 12px;
+}
+
+.colossus-hero__caption span {
+  padding: 0 5px;
+  color: #ffbd43;
+}
+
+@media (max-width: 800px) {
+  .colossus-hero { padding-inline: 0; }
+  .colossus-hero__stage { min-height: 290px; }
+}
+
+/* Shown over the still when the Colossus didn't start by himself (reduced motion, Data Saver, failed load). */
+.colossus-hero__play {
+  position: absolute;
+  z-index: 2;
+  left: 50%;
+  bottom: 16px;
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 16px;
+  border: 1px solid #ffbd43;
+  border-radius: 999px;
+  background: rgba(16, 18, 15, .82);
+  color: #ffbd43;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.colossus-hero__play:hover,
+.colossus-hero__play:focus-visible {
+  background: #ffbd43;
+  color: #10120f;
+}
+
+.colossus-hero__play[hidden] {
+  display: none;
+}
+
+.colossus-hero__download {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 6px 12px;
+  margin: 12px 0 0;
+  text-align: center;
+}
+
+.colossus-hero__download-note {
+  color: #a99f86;
+  font-size: 12px;
+}
+
+.colossus-hero__canvas {
+  cursor: grab;
+  touch-action: pan-y;
+}
+
+.colossus-hero__canvas:active {
+  cursor: grabbing;
+}
+
+.colossus-hero__proof {
+  margin: 8px 0 0;
+  color: #a99f86;
+  text-align: center;
+  font-size: 12px;
+}
+
+.colossus-hero__proof b {
+  color: #f5f1e7;
+}
+
+.colossus-hero__proof a {
+  color: #ffbd43;
+}
+
+.colossus-hero__download input {
+  flex: 1 1 220px;
+  max-width: 280px;
+  padding: 9px 12px;
+  border: 1px solid #3a3326;
+  border-radius: 8px;
+  background: #12110e;
+  color: #f5f1e7;
+  font: inherit;
+  font-size: 13px;
+}
+
+.colossus-hero__download .colossus-hero__download-note {
+  flex-basis: 100%;
+}

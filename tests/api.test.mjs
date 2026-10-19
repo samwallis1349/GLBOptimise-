@@ -17,6 +17,7 @@ import { memoryKv, pngBytes, sphereGlb } from './helpers/apiFixtures.mjs';
 const wasmFile = (path) => WebAssembly.compile(readFileSync(new URL(`../node_modules/${path}`, import.meta.url)));
 globalThis.__ASSETBENCH_BASIS_WASM__ = await wasmFile('ktx2-encoder/dist/basis/basis_encoder.wasm');
 globalThis.__ASSETBENCH_WEBP_WASM__ = { dec: await wasmFile('@jsquash/webp/codec/dec/webp_dec.wasm'), enc: await wasmFile('@jsquash/webp/codec/enc/webp_enc_simd.wasm') };
+globalThis.__ASSETBENCH_DRACO_WASM__ = await wasmFile('three/examples/jsm/libs/draco/gltf/draco_decoder.wasm');
 globalThis.self ??= globalThis; // the libwebp glue reads self.location; workerd defines self, Node does not
 const { decodeWebp, encodeWebp } = await import('../worker/api/webp.js');
 
@@ -41,7 +42,7 @@ const getSphere = async () => (sphere ??= await sphereGlb(120, { textureSize: [1
 test('pricing, targets and intent are public', async () => {
   const { call } = setup();
   const pricing = await (await call('/api/v1/pricing')).json();
-  assert.deepEqual(pricing.plans.map((p) => [p.id, p.price.amount, p.quota]), [['trial', 0, 100], ['allaccess', 25, 1000], ['all', 99, 5000]], 'retired plans are never listed');
+  assert.deepEqual(pricing.plans.map((p) => [p.id, p.price.amount, p.quota]), [['trial', 0, 100], ['allaccess', 10, 1000], ['all', 99, 5000]], 'retired plans are never listed');
   assert.deepEqual(pricing.products.map((p) => p.id), ['check', 'game-ready', 'app-assets']);
   assert.ok(pricing.advanced.includes('POST /api/v1/3d/reduce'));
   assert.ok((await (await call('/api/v1/targets')).json()).targets.prop);
@@ -270,18 +271,45 @@ test('plans gate engines and quotas', async () => {
   assert.equal((await spent.json()).error.code, 'quota_exhausted');
 });
 
-test('Draco input is inspectable but not processable', async () => {
+test('Draco input is inspectable and decompressed for processing', async () => {
   const { call, mint } = setup();
   const key = await mint('all');
-  const json = new TextEncoder().encode(JSON.stringify({ asset: { version: '2.0' }, extensionsUsed: ['KHR_draco_mesh_compression'], extensionsRequired: ['KHR_draco_mesh_compression'] }).padEnd(120, ' '));
-  const glb = new Uint8Array(12 + 8 + json.length);
+  const bin = Uint8Array.from(Buffer.from('RFJBQ08CAgEBAAAACAwBCwAAA19bCgEBEFUEXOONRgL/AAAAAQABAAkDAAECAQEJAwAAAwEBAQADAwEwARADACSWEwokBAAAAAD/BwAAAAAAvwAAAL8AAAC/AACAPwsGAwEBAQEBQAEA/wAAAH8AAAD/AqFBCAAA', 'base64'));
+  const gltf = {
+    asset: { version: '2.0' },
+    scene: 0,
+    scenes: [{ nodes: [0] }],
+    nodes: [{ mesh: 0 }],
+    meshes: [{ primitives: [{ attributes: { NORMAL: 1, POSITION: 2 }, indices: 0, mode: 4, extensions: { KHR_draco_mesh_compression: { bufferView: 0, attributes: { NORMAL: 0, POSITION: 1 } } } }] }],
+    accessors: [
+      { componentType: 5123, count: 36, type: 'SCALAR' },
+      { componentType: 5126, count: 24, type: 'VEC3', min: [-1, -1, -1], max: [1, 1, 1] },
+      { componentType: 5126, count: 24, type: 'VEC3', min: [-0.5, -0.5, -0.5], max: [0.5, 0.5, 0.5] },
+    ],
+    bufferViews: [{ buffer: 0, byteOffset: 0, byteLength: 118 }],
+    buffers: [{ byteLength: 120 }],
+    extensionsUsed: ['KHR_draco_mesh_compression'],
+    extensionsRequired: ['KHR_draco_mesh_compression'],
+  };
+  let jsonStr = JSON.stringify(gltf);
+  while (jsonStr.length % 4 !== 0) jsonStr += ' ';
+  const json = new TextEncoder().encode(jsonStr);
+  const glb = new Uint8Array(12 + 8 + json.length + 8 + bin.length);
   const dv = new DataView(glb.buffer);
   dv.setUint32(0, 0x46546c67, true); dv.setUint32(4, 2, true); dv.setUint32(8, glb.length, true);
   dv.setUint32(12, json.length, true); dv.setUint32(16, 0x4e4f534a, true); glb.set(json, 20);
-  assert.equal((await call('/api/v1/3d/inspect', { method: 'POST', headers: auth(key), body: glb })).status, 200);
-  const res = await call('/api/v1/3d/optimize', { method: 'POST', headers: auth(key), body: glb });
-  assert.equal(res.status, 415);
-  assert.equal((await res.json()).error.code, 'draco_input');
+  dv.setUint32(20 + json.length, bin.length, true); dv.setUint32(24 + json.length, 0x004e4942, true); glb.set(bin, 28 + json.length);
+
+  const inspectRes = await call('/api/v1/3d/inspect', { method: 'POST', headers: auth(key), body: glb });
+  assert.equal(inspectRes.status, 200);
+  assert.equal((await inspectRes.json()).stats.compression.draco, true);
+
+  const res = await call('/api/v1/3d/optimize?output=json', { method: 'POST', headers: auth(key), body: glb });
+  assert.equal(res.status, 200);
+  const body = await res.json();
+  assert.equal(body.report.before.stats.compression.draco, true);
+  assert.equal(body.report.after.stats.compression.draco, false, 'Draco extension is decoded and replaced with clean/Meshopt output');
+  assert.equal(body.report.after.stats.triangles, 12);
 });
 
 test('intent compiler maps plain English to budgets', () => {
@@ -750,3 +778,141 @@ test('game-ready LODs halve triangles and textures per level', async () => {
   assert.ok(lod1 <= lod0 * 0.5 * 1.25 && lod2 <= lod0 * 0.2 * 1.25, `LODs ${lod0} / ${lod1} / ${lod2}`);
   assert.ok(lods[2].bytes < lods[0].bytes, 'the far LOD file is smaller');
 });
+
+test('OpenAPI 3.1.0 specification endpoint returns machine-readable spec', async () => {
+  const { call } = setup();
+  const res = await call('/api/v1/openapi.json');
+  assert.equal(res.status, 200);
+  const spec = await res.json();
+  assert.equal(spec.openapi, '3.1.0');
+  assert.ok(spec.paths['/api/v1/check']);
+  assert.ok(spec.paths['/api/v1/game-ready']);
+  assert.ok(spec.paths['/api/v1/app-assets']);
+  assert.ok(spec.components.securitySchemes.BearerAuth);
+});
+
+test('quota headers are attached to metered JSON, binary, and 429 responses', async () => {
+  const { call, env, mint } = setup();
+  const key = await mint('trial');
+
+  const meRes = await call('/api/v1/auth/me', { headers: auth(key) });
+  assert.equal(meRes.status, 200);
+  assert.equal(meRes.headers.get('X-Quota-Limit'), '100');
+  assert.equal(meRes.headers.get('X-Quota-Remaining'), '100');
+  assert.ok(meRes.headers.get('X-Quota-Reset')?.endsWith('Z'));
+
+  const optRes = await call('/api/v1/3d/optimize?output=json', { method: 'POST', headers: auth(key), body: await sphereGlb(10) });
+  assert.equal(optRes.status, 200);
+  assert.equal(optRes.headers.get('X-Quota-Limit'), '100');
+  assert.equal(optRes.headers.get('X-Quota-Remaining'), '99');
+  assert.ok(optRes.headers.get('X-Quota-Reset')?.endsWith('Z'));
+
+  const usageKey = [...env.TRIALS.store.keys()].find((k) => k.startsWith('apiuse:'));
+  await env.TRIALS.put(usageKey, '', { metadata: { count: 100 } });
+  const exhausted = await call('/api/v1/2d/resize', { method: 'POST', headers: auth(key), body: pngBytes(32, 32) });
+  assert.equal(exhausted.status, 429);
+  assert.equal(exhausted.headers.get('X-Quota-Limit'), '100');
+  assert.equal(exhausted.headers.get('X-Quota-Remaining'), '0');
+  assert.ok(Number(exhausted.headers.get('Retry-After')) > 0);
+});
+
+test('remote URL inputs work for ?url= and JSON body and block SSRF private addresses', async () => {
+  const { call, mint } = setup();
+  const key = await mint('all');
+  const originalFetch = globalThis.fetch;
+  const samplePng = pngBytes(64, 64);
+
+  globalThis.fetch = async (url) => {
+    const u = new URL(url);
+    if (u.hostname === 'cdn.example.com') {
+      return new Response(samplePng, { status: 200, headers: { 'Content-Type': 'image/png', 'Content-Length': String(samplePng.byteLength) } });
+    }
+    return new Response('not found', { status: 404 });
+  };
+
+  try {
+    const viaQuery = await call('/api/v1/textures/resize?maxSize=32&url=https://cdn.example.com/assets/hero_albedo.png', {
+      method: 'POST',
+      headers: auth(key),
+    });
+    assert.equal(viaQuery.status, 200);
+    assert.deepEqual(JSON.parse(viaQuery.headers.get('X-AssetBench-Summary')).to.width, 32);
+
+    const viaJson = await call('/api/v1/textures/resize?maxSize=16', {
+      method: 'POST',
+      headers: { ...auth(key), 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url: 'https://cdn.example.com/assets/hero_albedo.png' }),
+    });
+    assert.equal(viaJson.status, 200);
+    assert.deepEqual(JSON.parse(viaJson.headers.get('X-AssetBench-Summary')).to.width, 16);
+
+    for (const blockedUrl of [
+      'http://127.0.0.1/secret.png',
+      'http://localhost:8080/secret.png',
+      'http://169.254.169.254/latest/meta-data/',
+      'http://10.0.0.1/internal.png',
+      'http://192.168.1.1/router.png',
+      'https://[::1]/secret.png',
+      'ftp://cdn.example.com/file.png',
+    ]) {
+      const ssrf = await call(`/api/v1/textures/resize?url=${encodeURIComponent(blockedUrl)}`, {
+        method: 'POST',
+        headers: auth(key),
+      });
+      assert.equal(ssrf.status, 400, `SSRF guard should reject ${blockedUrl}`);
+      assert.equal((await ssrf.json()).error.code, 'invalid_url');
+    }
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('ZIP bomb protection rejects archives with too many entries', async () => {
+  const { call, mint } = setup();
+  const key = await mint('all');
+  const zip = new JSZip();
+  for (let i = 0; i < 205; i++) zip.file(`f_${i}.png`, new Uint8Array([1, 2, 3, 4]));
+  const zipBytes = await zip.generateAsync({ type: 'uint8array' });
+  const res = await call('/api/v1/batch?operation=check', {
+    method: 'POST',
+    headers: { ...auth(key), 'Content-Type': 'application/zip' },
+    body: zipBytes,
+  });
+  assert.equal(res.status, 413);
+  assert.equal((await res.json()).error.code, 'zip_too_large');
+});
+
+test('illustration enquiry validates email and tool-binding hashes keys safely', async () => {
+  const { call } = setup();
+  const badEmail = await call('/api/illustration-enquiry', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name: 'Sam', email: 'not-an-email', description: 'A hero illustration' }),
+  });
+  assert.equal(badEmail.status, 400);
+
+  const okEmail = await call('/api/illustration-enquiry', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name: 'Sam', email: 'sam@assetbench.co.uk', description: 'A hero illustration' }),
+  });
+  assert.equal(okEmail.status, 200);
+
+  const bind1 = await call('/api/tool-binding', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ key: 'ABCD-1234-EFGH-5678', toolId: 'inspect-glb' }),
+  });
+  assert.equal(bind1.status, 200);
+  assert.equal((await bind1.json()).toolId, 'inspect-glb');
+
+  // A different key with identical alphanumeric characters in different positions must not collide.
+  const bind2 = await call('/api/tool-binding', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ key: 'ABCD1234-EFGH5678', toolId: 'pack-pbr' }),
+  });
+  assert.equal(bind2.status, 200);
+  assert.equal((await bind2.json()).toolId, 'pack-pbr');
+});
+

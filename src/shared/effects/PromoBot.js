@@ -63,13 +63,13 @@ function isLive(tool) {
 }
 
 function pricePitch() {
-  if (hasStoredLicense()) return "You've got All Access — every tool is unlocked. Thanks for backing Asset Bench!";
+  if (hasStoredLicense()) return "You've got All Access — every tool and the Cloud API are unlocked. Thanks for backing Asset Bench!";
   if (ALL_TOOLS_FREE) return 'Every tool is free for everyone at the moment — no trial, no key needed.';
   if (isFreePeriodActive()) {
     const days = freeDaysRemaining();
-    return `Your free trial has ${days} day${days === 1 ? '' : 's'} left. After that, All Access is ${PRICE_LABEL} for every tool — cancel any time.`;
+    return `Your free trial has ${days} day${days === 1 ? '' : 's'} left. After that, All Access is ${PRICE_LABEL} for every browser tool plus the Cloud API (1,000 ops/mo) — cancel any time.`;
   }
-  return `All Access is ${PRICE_LABEL} for every Asset Bench tool — cancel any time, and your files never leave your browser.`;
+  return `All Access is ${PRICE_LABEL} for every Asset Bench tool plus the Cloud API (1,000 ops/mo) — cancel any time, and browser tools never upload your files.`;
 }
 
 /** Scores tools against the message: goal hints first, then registry text overlap. */

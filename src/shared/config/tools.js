@@ -135,6 +135,7 @@ export const TOOLS = [
     keywords: ['colouring', 'line art', 'smooth lines', 'colouring pages', 'rough to smooth', 'line weight', 'join breaks', 'remove white', 'svg', 'trace', 'vectorise', 'colouring book'],
     icon: 'image-down',
     thumbnail: '/thumbnails/line-studio.webp',
+    banner: '/thumbnails/line-studio-wide.webp',
     seo: {
       title: 'Line Art Cleaner — Colouring Pages to PNG & SVG | Asset Bench',
       description:
@@ -264,6 +265,7 @@ export const TOOLS = [
     keywords: ['ktx2', 'basis', 'basis universal', 'gpu memory', 'vram', 'texture compression', 'mobile', 'phone', 'vr', 'quest', 'glb', 'png', 'jpg', 'webp', 'uastc', 'etc1s'],
     icon: 'shrink',
     thumbnail: '/thumbnails/ktx2-texture-encoder.webp',
+    banner: '/thumbnails/ktx2-texture-encoder-wide.webp',
     seo: {
       title: 'PNG to KTX2 Converter — Basis ETC1S & UASTC, No Upload | Asset Bench',
       description:
@@ -484,6 +486,7 @@ export const TOOLS = [
     keywords: ['mobile', 'phone', 'performance', 'budget', 'vr', 'quest', 'draw calls', 'triangles', 'texture memory', 'check', 'game ready'],
     icon: 'smartphone',
     thumbnail: '/thumbnails/mobile-ready-checker.webp',
+    banner: '/thumbnails/mobile-ready-checker-wide.webp',
     seo: {
       title: 'Mobile Ready Checker — GLB Poly & Texture Budgets | Asset Bench',
       description:
@@ -584,6 +587,27 @@ export const TOOLS = [
     category: 'inspect',
   },
   {
+    id: 'character-workshop',
+    name: 'Character Workshop',
+    route: '/character-workshop',
+    description: 'Import a GLB or FBX character, preview and check its animations and rig, then export a game-ready GLB.',
+    keywords: ['character', 'fbx to glb', 'mixamo', 'rig', 'skeleton', 'animation', 'idle', 'walk', 'run', 'three.js', 'isometric', 'npc', 'agent'],
+    icon: 'bone',
+    thumbnail: '/thumbnails/character-workshop.webp',
+    seo: {
+      title: 'Character Workshop — Preview, Validate & Export GLB Characters | Asset Bench',
+      description:
+        'Import a GLB, glTF or FBX character, play and scrub its animation clips, check the rig, materials and scale, then export a GLB with the clips you choose. Runs in your browser.',
+    },
+    features: [
+      { icon: 'bone', label: 'Rig check' },
+      { icon: 'play-circle', label: 'Clips' },
+      { icon: 'package-open', label: 'GLB out' },
+    ],
+    status: 'beta',
+    category: 'build',
+  },
+  {
     id: 'thumbnail-maker',
     name: 'Thumbnail Maker',
     route: '/thumbnail-maker',
@@ -653,6 +677,7 @@ export const POPULARITY_ORDER = [
   'app-store-screenshot-generator',
   'xcassets-generator',
   'asset-pipeline',
+  'character-workshop',
 ];
 
 export function getOrderedTools() {

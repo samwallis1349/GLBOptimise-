@@ -52,16 +52,33 @@ export function renderPage(indexHtml, path) {
   const links = TOOLS.filter((t) => t !== tool && LIVE.has(t.status) && (!tool || t.category === tool.category))
     .map((t) => `<li><a href="${t.route}">${esc(t.name)}</a></li>`)
     .join('');
-  const summary = `<div id="app">
-      <main>
-        <h1>${esc(seo.name ?? SITE_NAME)}</h1>
-        <p>${esc(seo.description)}</p>
-        ${tool?.features?.length ? `<ul>${tool.features.map((f) => `<li>${esc(f.label)}</li>`).join('')}</ul>` : ''}
-        ${tool && getToolGuide(tool.id) ? toolGuideMarkup(getToolGuide(tool.id)) : ''}
-        <p><a href="/tools">All ${SITE_NAME} tools</a></p>
-        ${links ? `<ul>${links}</ul>` : ''}
-      </main>
-    </div>`;
+  const summary = (path === '/illustration' || path === '/illustrator')
+    ? `<div id="app">
+        <main>
+          <h1>Sam — Graphic Design &amp; Illustration</h1>
+          <p>Original graphic design, logo design, vector identity and visual storytelling for businesses, games and ambitious creative projects.</p>
+          <ul>
+            <li>Brand &amp; Logo Identity Systems</li>
+            <li>Character Illustration</li>
+            <li>Isometric Worlds</li>
+            <li>Brand Illustration</li>
+            <li>Game Art and Assets</li>
+            <li>Editorial Illustration</li>
+            <li>Mascots and Characters</li>
+          </ul>
+          <p><a href="https://illustrator.assetbench.co.uk">Visit Sam — Graphic Design Portfolio</a></p>
+        </main>
+      </div>`
+    : `<div id="app">
+        <main>
+          <h1>${esc(seo.name ?? SITE_NAME)}</h1>
+          <p>${esc(seo.description)}</p>
+          ${tool?.features?.length ? `<ul>${tool.features.map((f) => `<li>${esc(f.label)}</li>`).join('')}</ul>` : ''}
+          ${tool && getToolGuide(tool.id) ? toolGuideMarkup(getToolGuide(tool.id)) : ''}
+          <p><a href="/tools">All ${SITE_NAME} tools</a></p>
+          ${links ? `<ul>${links}</ul>` : ''}
+        </main>
+      </div>`;
   if (!html.includes('<div id="app"></div>')) throw new Error('seo-pages: <div id="app"></div> not found');
   return html.replace('<div id="app"></div>', summary);
 }

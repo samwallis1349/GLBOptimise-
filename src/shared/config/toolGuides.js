@@ -232,6 +232,38 @@ export const TOOL_GUIDES = {
       },
     ],
   },
+
+  'character-workshop': {
+    heading: 'How to prepare a 3D character for a Three.js game',
+    intro: [
+      'Character Workshop loads a GLB, glTF or FBX character, shows its skeleton and animation clips, checks it for common problems and exports a GLB with the clips you choose. OBJ, STL, PLY and 3MF files load as static meshes; Collada and USDZ support is experimental.',
+      'Everything runs in your browser and your original file is never changed. After every export the tool reloads the new GLB and compares it with the original, so you can see that the skeleton, triangles and clips survived.',
+    ],
+    steps: [
+      'Drop a character file (for glTF, OBJ or FBX with separate textures, drop all the files together).',
+      'Play, scrub and loop its clips, and check the Idle, Walk, Run, Sit, Type, Wave and Think categories.',
+      'Fix scale or orientation in Settings if needed, and read the validation results.',
+      'Choose the clips to keep and export a GLB.',
+    ],
+    faqs: [
+      {
+        q: 'Can it convert FBX to GLB?',
+        a: 'Yes, using the three.js FBX loader and glTF exporter. Meshes, skeletons, skin weights, embedded clips and textures are kept; FBX Phong materials are approximated as PBR materials, and the tool says so before you export.',
+      },
+      {
+        q: 'Why does my category say "Animation not available"?',
+        a: 'Clips are only matched by name, so a walk cycle is never labelled as typing. Import an animation pack that uses the same bone names (for example Mixamo clips downloaded without skin), or assign a clip you know is right.',
+      },
+      {
+        q: 'Does passing validation mean my character is game ready?',
+        a: 'No. It means none of the problems the tool can detect were found. Always test the character in your own game.',
+      },
+      {
+        q: 'Can I open .blend files?',
+        a: 'Not in the browser. In Blender use File, Export, glTF 2.0 (.glb) with Animation ticked, then load the GLB here.',
+      },
+    ],
+  },
 };
 
 /** @param {string} toolId */

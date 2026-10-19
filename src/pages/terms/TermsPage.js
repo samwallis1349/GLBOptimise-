@@ -61,9 +61,10 @@ export function render(container) {
         All Access is a subscription of ${PRICE_LABEL}, billed monthly
         through our payment provider until you cancel. Its licence key
         unlocks every current and future ${APP_NAME} tool in the browser on
-        up to ${LICENSE_MACHINE_LIMIT} machines, with no account needed. You
+        up to ${LICENSE_MACHINE_LIMIT} machines, plus the Cloud API (1,000
+        operations per month), with no account needed. You
         can cancel at any time; access continues until the end of the period
-        you have paid for, then the key stops unlocking tools. If a payment
+        you have paid for, then the key stops unlocking tools and the API. If a payment
         fails, our payment provider retries it for a short period; if it
         still fails, the subscription is cancelled automatically, the key
         stops unlocking tools and nothing further is owed. Lifetime

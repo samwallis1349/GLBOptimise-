@@ -7,8 +7,8 @@ Build the upload with `npm run zip:extension` (→ `extensions/assetbench-reduce
 **Name** (from the manifest, 49/75 characters)
 Reduce Polys – GLB Polygon Reducer by AssetBench
 
-**Summary** (from the manifest, 123/132)
-Cut the triangle count of GLB models in your browser. Free model check, £5 one-off unlock. Files never leave your computer.
+**Summary** (from the manifest, 130/132)
+Cut GLB triangle counts in your browser. Free model check, 5 free reduces a day, £2.99 for unlimited. Files stay on your computer.
 
 **Category:** Developer Tools  
 **Language:** English (United Kingdom)
@@ -27,16 +27,16 @@ Cut the triangle count of GLB models in your browser. Free model check, £5 one-
 > • Polygon reduction with meshoptimizer, the simplifier used across the games industry
 > • Textures, materials, UVs and normals kept
 > • "Reduce across UV seams" for AI-generated and scanned models that barely reduce otherwise
-> • Free model check: triangles, draw calls, texture memory, and a score for low, mid and high-end phones and Quest VR, for Unity, Unreal, Godot, Roblox or the web
+> • Free model check: triangles, draw calls, texture memory, and a score for how well it will run on low, mid and high-end phones and VR headsets
 >
 > PRIVATE BY DESIGN
 > Your models are processed on your own computer. Nothing is uploaded. It works offline once unlocked.
 >
 > PRICE
-> The model check is free. Reducing is a £5 one-off unlock, no subscription. Already have AssetBench All Access? Your key unlocks it too.
+> The model check is free, and you get 5 free reduces every day. Unlimited reducing is a £2.99 one-off unlock, no subscription. Already have AssetBench All Access? Your key unlocks it too.
 >
 > GOOD FOR
-> Mobile and web games, three.js and Babylon.js scenes, AR product viewers, VR, and taming heavy models from Meshy, Tripo and other AI 3D generators.
+> Making 3D models light enough for mobile games, websites and VR.
 >
 > More free 3D tools at https://www.assetbench.co.uk
 
@@ -61,10 +61,10 @@ Reduce the polygon count of GLB 3D models, with a free check of how well a model
 **Permission justifications**
 
 - `sidePanel`: the tool's interface is a side panel, so it stays open while the user picks a file.
-- `storage`: remembers the user's licence key and last slider settings on their computer.
+- `storage`: remembers the user's licence key, last slider settings and how many of today's free reduces they've used, on their computer.
 - `downloads`: saves the reduced .glb to the user's Downloads folder.
 - Host `api.lemonsqueezy.com`: checks the licence key the user enters with our payment provider.
-- Host `www.assetbench.co.uk`: links a £5 key to the tool it was bought for (same as our website).
+- Host `www.assetbench.co.uk`: links a £2.99 key to the tool it was bought for (same as our website).
 
 **Remote code:** No. All code ships in the package. WebAssembly (meshoptimizer) is bundled, which is why the CSP has `wasm-unsafe-eval`.
 

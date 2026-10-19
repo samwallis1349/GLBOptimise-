@@ -9,7 +9,7 @@ import { refundNoticeHtml } from './RefundNotice.js';
  * trial has ended and no valid license is stored. The tool's own module is never
  * imported while locked — see app/routes.js. Offers the All Access subscription and,
  * once the tool is on sale by itself (shared/config/toolProducts.js), just
- * this tool for £5.
+ * this tool for £2.99.
  * @param {{ tool: import('../config/tools.js').TOOLS[number], onUnlock: () => void }} options
  */
 export function Paywall({ tool, onUnlock }) {
@@ -22,9 +22,9 @@ export function Paywall({ tool, onUnlock }) {
   panel.innerHTML = `
     <h1 class="tool-page__title">Your ${TRIAL_DAYS}-day free trial has ended</h1>
     <p class="tool-page__description">
-      ${tool.name}, and every other Asset Bench tool, is locked until payment. Subscribe to All Access to continue using all tools.
+      ${tool.name}, and every other Asset Bench tool, is locked until payment. Subscribe to All Access to unlock all browser tools plus the Cloud API.
     </p>
-    <div class="paywall__price">${PRICE_LABEL} <span class="text-muted">every tool · ${LICENSE_MACHINE_LIMIT} machines · cancel any time</span></div>
+    <div class="paywall__price">${PRICE_LABEL} <span class="text-muted">every tool + Cloud API (1,000 ops/mo) · ${LICENSE_MACHINE_LIMIT} machines · cancel any time</span></div>
     <a class="btn btn--primary paywall__buy" href="${CHECKOUT_URL}" target="_blank" rel="noopener">Subscribe to All Access — ${PRICE_LABEL}</a>
     <a class="paywall__pricing-link" href="/pricing">Compare plans</a>
     ${single ? `

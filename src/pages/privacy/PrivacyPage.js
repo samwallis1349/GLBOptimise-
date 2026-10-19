@@ -35,7 +35,6 @@ const sessionHours = Math.round(SESSION_EXPIRY_MS / 3_600_000);
 /** Everything Asset Bench's own code keeps in your browser. [name, kind, purpose, how long] */
 const STORAGE = [
   ['assetbench_trial_v2', 'Local storage', `When your ${TRIAL_DAYS}-day free trial started.`, 'Until you clear it'],
-  ['assetbench_dev_id', 'Local storage', 'A one-way hardware signature hash used to prevent trial abuse.', 'Until you clear it'],
   ['assetbench_license_v1', 'Local storage', 'Your All Access (or lifetime) licence key, its activation ID and whether it was valid when last checked. Only set if you activate a key.', 'Until you remove the key or clear it'],
   ['assetbench_tool_licenses_v1', 'Local storage', 'Single-tool licence keys, as above. Only set if you activate one.', 'Until you remove the key or clear it'],
   ['assetbench_consent_v1', 'Local storage', 'Your privacy choices (Analytics and Advertising on or off), the version of this notice and the date you chose.', 'Until you change it or clear it'],
@@ -179,12 +178,12 @@ export function render(container) {
       <p>
         Every visitor gets a ${TRIAL_DAYS}-day free trial. When you open any page, your browser asks our server
         when your trial started, sending the start time it has saved, if any. To recognise returning visitors fairly, the
-        server turns your IP address (for IPv6, its /64 network prefix) and an anonymous hardware signature into one-way cryptographic hashes.
-        It stores those hashes with your trial start time. Our code does not store your raw IP address or device identity. Your browser also keeps its own copy of the start time.
+        server turns your IP address (for IPv6, its /64 network prefix) into a one-way cryptographic hash.
+        It stores that hash with your trial start time. Our code does not store your raw IP address. Your browser also keeps its own copy of the start time.
       </p>
       <p>
         A hashed IP address can still count as personal information, because it relates to your connection. We use
-        it solely to run the trial fairly, so that switching networks, using VPNs, or clearing browser cache cannot unfairly restart it. We also count how many
+        it solely to run the trial fairly, so that switching networks or clearing browser storage cannot unfairly restart it. We also count how many
         trials start each day, without looking at any IP addresses or hashes.
       </p>
 
@@ -211,6 +210,14 @@ export function render(container) {
         receive or store your card details. As the seller, we can see order information that Lemon Squeezy makes
         available to us, such as your name, email address and what you bought.
         Read ${ext('https://www.lemonsqueezy.com/privacy', 'Lemon Squeezy’s privacy policy')}.
+      </p>
+
+      <h3>Email updates</h3>
+      <p>
+        If you choose to leave your email address when downloading a free model, we store that address, where you
+        signed up and when, on our Cloudflare storage, and use it only to email you about new free models and tool
+        updates. Giving it is optional: the download works without it. To unsubscribe, reply to any of our emails
+        or contact us, and we'll delete your address.
       </p>
 
       <h3>Donations</h3>
@@ -270,7 +277,7 @@ export function render(container) {
         Our browser extension (Reduce Polys, for Chrome and Microsoft Edge) processes your 3D models on your own computer. Models are never
         uploaded to us or anyone else. The extension keeps your licence key and its last settings in Chrome’s
         extension storage on your device. When you enter a key, it is sent to our payment provider, Lemon Squeezy,
-        to check it is valid, and a one-way hash of it is stored on our server so a £5 key stays linked to the
+        to check it is valid, and a one-way hash of it is stored on our server so a £2.99 key stays linked to the
         tool it was bought for. The extension does not use analytics, advertising or cookies, and collects nothing
         else. Removing the extension deletes everything it stored.
       </p>

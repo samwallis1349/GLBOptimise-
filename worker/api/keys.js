@@ -186,5 +186,5 @@ export async function chargeOperation(env, account, count = 1) {
   const key = `${USE_PREFIX}${account.hash}:${period}`;
   const used = (await readUsage(env.TRIALS, account.hash, period)) + count;
   await env.TRIALS.put(key, '', { metadata: { count: used } });
-  return { limit: account.plan.quota, used, remaining: Math.max(0, account.plan.quota - used), period };
+  return { limit: account.plan.quota, used, remaining: Math.max(0, account.plan.quota - used), period, resetsAt: periodResetsAt(account.plan) };
 }

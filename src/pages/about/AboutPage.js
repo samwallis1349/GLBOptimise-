@@ -72,8 +72,8 @@ export function render(container) {
         Many ${APP_NAME} tools can be tried before purchasing access. Every
         tool is unlocked for ${TRIAL_DAYS} days from your first visit. After
         that, an All Access subscription at ${PRICE_LABEL} unlocks
-        every current and future tool on up to ${LICENSE_MACHINE_LIMIT}
-        machines — no account, cancel any time.
+        every current and future browser tool on up to ${LICENSE_MACHINE_LIMIT}
+        machines plus the <a href="/docs/">Cloud API</a> (1,000 operations/month using the same licence key) — no account, cancel any time.
         ${ALL_TOOLS_FREE ? 'At the moment, every tool is temporarily unlocked for everyone.' : ''}
         See <a href="/pricing">pricing</a> for details.
       </p>

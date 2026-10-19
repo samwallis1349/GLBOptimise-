@@ -5,6 +5,8 @@ import { ToolOffer } from '../shared/components/ToolOffer.js';
 import { ExtensionBar } from '../shared/components/ExtensionBar.js';
 import { ToolNews } from '../shared/components/ToolNews.js';
 import { ToolGuide } from '../shared/components/ToolGuide.js';
+import { SampleModel } from '../shared/components/SampleModel.js';
+import { ToolNextSteps } from '../shared/components/ToolNextSteps.js';
 import { AdSenseAd } from '../shared/components/AdSenseAd.js';
 import { initTrial } from '../services/TrialService.js';
 import { recordToolOpen } from '../services/UsageService.js';
@@ -34,10 +36,16 @@ async function mountTool(tool, container, params) {
   if (GATED_STATUSES.has(tool.status)) recordToolOpen(tool.id);
   const mod = await import(`../tools/${tool.id}/index.js`);
   const result = await mod.mount(container, params);
+  // No model to hand? Load the free Colossus into the tool (3D tools only).
+  const sample = SampleModel(tool, container);
+  if (sample) container.prepend(sample);
   const offer = ToolOffer(tool);
   if (offer) container.prepend(offer);
   const extension = ExtensionBar(tool);
   if (extension) container.prepend(extension);
+  // The tools people run next, and the API for doing it in bulk.
+  const next = ToolNextSteps(tool);
+  if (next) container.append(next);
   // How-to guide and FAQs, then editorial news and pro tips
   const guide = ToolGuide(tool);
   if (guide) container.append(guide);
@@ -93,6 +101,13 @@ export const routes = [
   {
     path: '/wizard-compare',
     handler: page('/wizard-compare', () => import('../pages/wizard-compare/WizardComparePage.js')),
+  },
+  {
+    path: '/illustration',
+    handler: async (params, container) => {
+      const { IllustrationApp } = await import('../illustration/IllustrationApp.js');
+      return IllustrationApp(container);
+    },
   },
   ...TOOLS.map((tool) => ({
     path: tool.route,

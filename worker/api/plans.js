@@ -3,7 +3,7 @@
  * licence keys on, and the licence key is the API key (worker/api/billing.js).
  *
  *   Free        100 operations a month, one key per network.
- *   All Access  the site's £25/month subscription; the API is included.
+ *   All Access  the site's £10/month subscription; the API is included.
  *   Studio      £99/month for teams that need 5,000 operations.
  *
  * `engines` gates which endpoint families a key may call (texture
@@ -29,13 +29,13 @@ export const PLANS = {
   allaccess: {
     id: 'allaccess',
     name: 'All Access',
-    price: { amount: 25, currency: 'GBP', interval: 'month' },
+    price: { amount: 10, currency: 'GBP', interval: 'month' },
     quota: 1000,
     period: 'month',
     engines: ['2d', '3d'],
     maxUploadMB: 50,
     batchMaxMB: 100,
-    summary: 'Included with the All Access subscription: every website tool, plus the API. Your All Access licence key is your API key.',
+    summary: 'Included with the £10/month All Access subscription: every website tool, plus 1,000 Cloud API operations/month. Your All Access licence key is your API key.',
     bestValue: true,
   },
   // Id 'all' is kept from the first release so keys minted on it stay valid.

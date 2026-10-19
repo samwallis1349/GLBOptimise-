@@ -9,6 +9,7 @@ const FOOTER_LINKS = [
   { label: 'Pricing', href: '/pricing' },
   { label: 'API', href: '/docs/' },
   { label: 'Contact', href: '/contact' },
+  { label: 'Sam — Graphic Design', href: 'https://illustrator.assetbench.co.uk' },
   { label: 'Privacy', href: '/privacy' },
   { label: 'Terms', href: '/terms' },
   { label: 'Refunds', href: '/refunds' },

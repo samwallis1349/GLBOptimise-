@@ -3,14 +3,15 @@
  * listed: the Chrome Web Store (and Edge Add-ons) refuse several extensions
  * with duplicate functionality from the same developer.
  *
- *   reduce-polys       — Chrome Web Store: free Check + Reduce (£5 unlock).
- *   reduce-polys-edge  — Microsoft Edge Add-ons: free Check + Reduce (£3 unlock),
+ *   reduce-polys       — Chrome Web Store: free Check + Reduce (5 free a day, £2.99 unlock).
+ *   reduce-polys-edge  — Microsoft Edge Add-ons: free Check + Reduce (5 free a day, £3 unlock),
  *                        sold through its own £3 Lemon Squeezy product.
- *   model-optimiser    — all four tools (£5 each), for later.
+ *   model-optimiser    — all four tools (£2.99 each), for later.
  *
- * `free` lists the tools that need no licence. An edition whose tools are all
- * free ships without the licence-check host permissions. `price` and
- * `products` override the site's single-tool price and add Lemon Squeezy
+ * `free` lists the tools that need no licence; `dailyFree` is how many runs
+ * of the others a day anyone gets before the unlock card (src/quota.js).
+ * An edition whose tools are all free ships without the licence-check host
+ * permissions. `price` and `products` override the site's single-tool price and add Lemon Squeezy
  * products ({ productId: siteToolId }) whose keys unlock that tool here, with
  * `checkoutUrl` as the buy link. The shared site product still works too.
  */
@@ -19,20 +20,22 @@ export const EDITIONS = {
     store: 'Chrome Web Store',
     name: 'Reduce Polys – GLB Polygon Reducer by AssetBench',
     shortName: 'Reduce Polys',
-    description: 'Cut the triangle count of GLB models in your browser. Free model check, £5 one-off unlock. Files never leave your computer.',
+    description: 'Cut GLB triangle counts in your browser. Free model check, 5 free reduces a day, £2.99 for unlimited. Files stay on your computer.',
     heading: ['Reduce', 'Polys'],
     tools: ['check', 'reduce'],
     free: ['check'],
+    dailyFree: 5,
     firstTool: 'reduce',
   },
   'reduce-polys-edge': {
     store: 'Microsoft Edge Add-ons',
     name: 'Reduce Polys – GLB Polygon Reducer by AssetBench',
     shortName: 'Reduce Polys',
-    description: 'Cut the triangle count of GLB models in your browser. Free model check, £3 one-off unlock. Files never leave your computer.',
+    description: 'Cut GLB triangle counts in your browser. Free model check, 5 free reduces a day, £3 for unlimited. Files never leave your computer.',
     heading: ['Reduce', 'Polys'],
     tools: ['check', 'reduce'],
     free: ['check'],
+    dailyFree: 5,
     firstTool: 'reduce',
     price: '£3',
     // The £3 "Reduce Polys (Edge)" product in Lemon Squeezy.
@@ -47,6 +50,7 @@ export const EDITIONS = {
     heading: ['Model', 'Optimiser'],
     tools: ['check', 'reduce', 'optimise', 'compress'],
     free: ['check'],
+    dailyFree: 5,
     firstTool: 'check',
   },
 };
