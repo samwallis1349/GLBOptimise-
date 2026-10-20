@@ -11,7 +11,8 @@ export function render(container) {
     <div class="tool-page__header">
       <div>
         <h1 class="tool-page__title">All Tools</h1>
-        <p class="tool-page__description">Every tool on the bench, in one place — most used first.</p>
+        <p class="tool-page__description">Every tool on the bench, in one place — newest first, then most used.</p>
+        <p class="tool-page__note">We made these tools for game devs. Enjoy!</p>
       </div>
     </div>
   `;
@@ -19,8 +20,9 @@ export function render(container) {
   const grid = document.createElement('div');
   grid.className = 'tool-grid';
   const fill = (counts) => {
-    // Ranked purely by site-wide usage; the most-used tool gets the full-width card.
-    const ranked = rankByUsage(getOrderedTools(), counts);
+    // Character Workshop takes the full-width card, as on the homepage;
+    // everything after it is ranked by site-wide usage.
+    const ranked = rankByUsage(getOrderedTools(), counts, ['character-workshop']);
     grid.replaceChildren(...ranked.map((tool, i) => ToolCard(tool, { index: i + 1, headline: i === 0 })));
   };
   fill(cachedUsageCounts());

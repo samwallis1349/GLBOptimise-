@@ -13,8 +13,10 @@ const DAILY_FREE = EDITION.dailyFree || 0;
 const $ = (id) => document.getElementById(id);
 const LICENSES = 'licenses';
 const SETTINGS = 'settings';
-const TOOL_NAMES = { check: 'Mobile Ready Check', reduce: 'Reduce Polys', optimise: 'Optimise GLB', compress: 'Compress Textures' };
-const RUN_LABELS = { check: 'Check model', reduce: 'Reduce', optimise: 'Optimise', compress: 'Compress textures' };
+const TOOL_NAMES = { check: 'Mobile Ready Check', reduce: 'Reduce Polys', optimise: 'Optimise GLB', compress: 'Compress Textures', textures: 'Texture Check', resize: 'Texture Resizer' };
+const RUN_LABELS = { check: 'Check model', reduce: 'Reduce', optimise: 'Optimise', compress: 'Compress textures', textures: 'List textures', resize: 'Resize textures' };
+// Free read-only tools run as soon as a model is chosen.
+const INSTANT = new Set(['check', 'textures']);
 
 let licenses = [];
 let tool = EDITION.firstTool;
@@ -161,6 +163,28 @@ function showResult(toolId, result) {
       score.className = `v-${d.verdict}`;
     }
     box.append(table);
+  } else if (toolId === 'textures') {
+    box.append(list([
+      ['Textures', fmtInt(r.textures.length)],
+      ['GPU memory', fmtBytes(r.textureMemoryBytes)],
+      ['File size', fmtBytes(r.fileBytes)],
+    ]));
+    if (r.textures.length) {
+      const table = document.createElement('table');
+      for (const t of r.textures) {
+        const tr = table.insertRow();
+        tr.insertCell().textContent = t.name;
+        tr.insertCell().textContent = `${t.width}×${t.height} ${String(t.mimeType || '').replace('image/', '')}`;
+        tr.insertCell().textContent = fmtBytes(t.gpuMemoryBytes);
+      }
+      box.append(table);
+    }
+  } else if (toolId === 'resize') {
+    box.append(list([
+      ['Textures resized', fmtInt(r.textures.length)],
+      ['GPU memory', `${fmtBytes(r.memoryBefore)} → ${fmtBytes(r.memoryAfter)}`],
+      ['File size', `${fmtBytes(r.bytesBefore)} → ${fmtBytes(r.bytesAfter)}`],
+    ]));
   } else if (toolId === 'compress') {
     box.append(list([
       ['Textures converted', fmtInt(r.textures.length)],
@@ -199,6 +223,8 @@ function paramsFor(toolId) {
   if (toolId === 'check') return { role: $('role').value, engine: $('engine').value };
   if (toolId === 'reduce') return { keep: Number($('keep').value) / 100, acrossSeams: $('acrossSeams').checked };
   if (toolId === 'optimise') return { target: $('target').value };
+  if (toolId === 'resize') return { maxSize: Number($('resizeTo').value) };
+  if (toolId === 'textures') return {};
   return { maxSize: Number($('maxSize').value) };
 }
 
@@ -235,7 +261,7 @@ async function choose(file) {
   $('result').hidden = true;
   status('');
   render();
-  if (tool === 'check') return run();
+  if (INSTANT.has(tool)) return run();
   // Elsewhere, show the triangle count straight away (the free check, run quietly).
   const current = model;
   process('check', {}).then((r) => {
@@ -291,17 +317,20 @@ drop.addEventListener('drop', (e) => {
 
 // Only controls in this edition's tabs exist, so save whichever are present.
 const remember = () => chrome.storage.local.set({
-  [SETTINGS]: Object.fromEntries(['keep', 'acrossSeams', 'target', 'maxSize', 'role', 'engine']
+  [SETTINGS]: Object.fromEntries(['keep', 'acrossSeams', 'target', 'maxSize', 'resizeTo', 'role', 'engine']
     .map((id) => $(id))
     .filter(Boolean)
     .map((el) => [el.id, el.type === 'checkbox' ? el.checked : el.value])),
 });
 document.querySelectorAll('select, input[type=range], input[type=checkbox]').forEach((el) => el.addEventListener('change', remember));
-$('keep').addEventListener('input', () => { $('keepLabel').textContent = `${$('keep').value}%`; });
+const showKeep = () => { if ($('keep')) $('keepLabel').textContent = `${$('keep').value}%`; };
+$('keep').addEventListener('input', showKeep);
 
 // Edition: only its tabs, its name.
 document.querySelectorAll('[role=tab]').forEach((tab) => { tab.hidden = !EDITION.tools.includes(tab.dataset.tool); });
 document.querySelectorAll('.tool').forEach((section) => { if (!EDITION.tools.includes(section.dataset.panel)) section.remove(); });
+// Tabs in the edition's own order, so its free check can come first.
+for (const id of EDITION.tools) document.querySelector('.tabs').append(document.querySelector(`[role=tab][data-tool="${id}"]`));
 document.querySelector('.tabs').style.setProperty('--tabs', String(EDITION.tools.length));
 $('heading').replaceChildren(`${EDITION.heading[0]} `, Object.assign(document.createElement('span'), { textContent: EDITION.heading[1] }));
 document.title = EDITION.shortName;
@@ -315,7 +344,7 @@ for (const [id, value] of Object.entries(stored[SETTINGS] || {})) {
   if (el.type === 'checkbox') el.checked = Boolean(value);
   else el.value = value;
 }
-$('keepLabel').textContent = `${$('keep').value}%`;
+showKeep();
 render();
 
 // Free runs spent in another window's panel (or reset from DevTools).

@@ -2,7 +2,7 @@
  * Unlocks, using the site's own Lemon Squeezy products (src/shared/config):
  *   - an All Access key (the £10/month subscription, or an old lifetime key)
  *     unlocks every tool;
- *   - a £2.99 single-tool key unlocks one tool. Keys from the shared £2.99 product
+ *   - a 99p single-tool key unlocks one tool. Keys from the shared 99p product
  *     are bound to a tool on first use via /api/tool-binding, the same
  *     binding the website uses, so a key bought on the site works here for
  *     that tool and vice versa.
@@ -15,12 +15,14 @@ import { SINGLE_TOOL_PRODUCT_ID, TOOL_PRODUCTS } from '../../../src/shared/confi
 const LICENSE_API = 'https://api.lemonsqueezy.com/v1/licenses';
 const SITE = 'https://www.assetbench.co.uk';
 
-/** Extension tool -> the site tool whose £2.99 product unlocks it. */
+/** Extension tool -> the site tool whose 99p product unlocks it. */
 export const SITE_TOOL = {
   check: 'mobile-ready-checker',
   reduce: 'reduce-polys',
   optimise: 'optimise-glb',
   compress: 'compress-textures',
+  textures: 'compress-textures',
+  resize: 'texture-resizer',
 };
 export const FREE_TOOLS = new Set(['check']);
 

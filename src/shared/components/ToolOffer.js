@@ -6,7 +6,7 @@ import { PRICE_LABEL, freeDaysRemaining, hasAccess, isFreePeriodActive } from '.
 import { TOOLS } from '../config/tools.js';
 
 /**
- * Slim bar above a tool offering just that tool for £2.99 — the key from the
+ * Slim bar above a tool offering just that tool for 99p — the key from the
  * receipt email unlocks it in the browser on the buyer's phone and computer.
  * Renders nothing until the tool's product is configured in
  * shared/config/toolProducts.js, or when the visitor already owns it.

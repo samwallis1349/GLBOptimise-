@@ -6,8 +6,8 @@ import { iconSvg } from '../utils/icons.js';
  * Renders a single tool card from a tool registry entry
  * (see src/shared/config/tools.js).
  *
- * Anatomy, top to bottom: the tool's own artwork with a numbered pill and a
- * gradient landing into the body, then a two-tone title, a spec line, three
+ * Anatomy, top to bottom: a slim window bar (tool icon, category, numbered
+ * pill), the tool's own artwork inset as a framed preview, then a two-tone title, a spec line, three
  * feature chips, the description, and a footer holding status + the call to
  * action. Everything on the card is derived from the registry entry — there
  * is no per-tool markup anywhere, and nothing here loads an asset the app
@@ -57,6 +57,12 @@ export function ToolCard(tool, { index: displayIndex, featured = false, headline
   const image = wide || headlineBanner ? tool.banner : tool.thumbnail;
 
   card.innerHTML = `
+    <div class="tool-card__bar">
+      ${iconSvg(tool.icon, { class: 'tool-card__bar-icon' })}
+      <span class="tool-card__bar-label">${escapeHtml(category?.label ?? 'Tool')}</span>
+      <span class="tool-card__index">${headline ? 'Most used · ' : wide ? 'New · ' : ''}#${index}</span>
+    </div>
+
     <div class="tool-card__visual${image ? ' tool-card__visual--photo' : ''}">
       ${
         image
@@ -64,7 +70,6 @@ export function ToolCard(tool, { index: displayIndex, featured = false, headline
           : iconSvg(tool.icon, { class: 'tool-card__visual-icon' })
       }
       <span class="tool-card__scan" aria-hidden="true"></span>
-      <span class="tool-card__index">${headline ? 'Most used · ' : wide ? 'New · ' : ''}#${index}</span>
     </div>
 
     <div class="tool-card__body">

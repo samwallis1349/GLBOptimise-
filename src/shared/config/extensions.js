@@ -5,7 +5,7 @@
  * appears.
  */
 export const CHROME_EXTENSIONS = {
-  'reduce-polys': { name: 'Reduce Polys', url: null },
+  'reduce-polys': { name: 'Reduce Polys', url: 'https://chromewebstore.google.com/detail/reduce-polys-%E2%80%93-glb-polygo/naeghdddpphkgjofdejdlnbjcpbkpgda' },
 };
 
 export function chromeExtensionFor(toolId) {

@@ -482,6 +482,7 @@ td code,p code{font:12px var(--mono);color:var(--accent-hi)}
 // Opened inside the site's "Try API" panel: drop the page chrome that panel already provides.
 if (new URLSearchParams(location.search).has('embed')) {
   document.querySelector('.top')?.remove();
+  document.querySelector('[aria-labelledby="real-h"]')?.remove();
   document.body.style.paddingTop = '16px';
 }
 const $ = (id) => document.getElementById(id);

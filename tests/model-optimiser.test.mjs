@@ -16,7 +16,7 @@ let sphere;
 const getSphere = async () => (sphere ??= await sphereGlb(120, { textureSize: [256, 256] }));
 
 test('Model Optimiser: the four tools run locally and return GLBs', async () => {
-  assert.deepEqual(TOOL_IDS, ['check', 'reduce', 'optimise', 'compress']);
+  assert.deepEqual(TOOL_IDS, ['check', 'reduce', 'optimise', 'compress', 'textures', 'resize']);
   const bytes = await getSphere();
 
   const check = await runTool('check', bytes, { role: 'prop' });
@@ -35,6 +35,25 @@ test('Model Optimiser: the four tools run locally and return GLBs', async () => 
   assert.equal(compress.report.textures.length, 1);
 
   await assert.rejects(runTool('reduce', new Uint8Array([1, 2, 3, 4])), /not a binary glTF/);
+});
+
+test('Texture Compressor: the free texture check lists textures; resize shrinks them', async () => {
+  const bytes = await getSphere();
+
+  const textures = await runTool('textures', bytes);
+  assert.equal(textures.output, undefined);
+  assert.equal(textures.report.textures.length, 1);
+  assert.equal(textures.report.textures[0].width, 256);
+
+  const resize = await runTool('resize', bytes, { maxSize: 64 }, 'Sphere.glb');
+  assert.equal(resize.name, 'Sphere-64px.glb');
+  assert.deepEqual(resize.report.textures.map((t) => t.to), ['64x64']);
+  assert.ok(resize.report.memoryAfter < resize.report.memoryBefore);
+  assert.equal(analyseGlb(resize.output).textures[0].width, 64);
+
+  const again = await runTool('resize', resize.output, { maxSize: 64 });
+  assert.equal(again.report.textures.length, 0);
+  assert.match(again.report.warnings[0], /already 64 px or smaller/);
 });
 
 // Lemon Squeezy and the site's tool binding, faked.

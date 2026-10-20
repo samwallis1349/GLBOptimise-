@@ -4,14 +4,18 @@
  *
  *   Chrome Web Store Upload - Reduce Polys v<version>/    (npm run upload:extension)
  *   Edge Add-ons Upload - Reduce Polys v<version>/        (npm run upload:extension:edge)
+ *   Chrome Web Store Upload - <edition> v<version>/       (--edition <id>)
  *
  * Builds the zip first. Listing text comes from store/STORE_LISTING.md
- * (Chrome) or store/edge/EDGE_LISTING.md (Edge); images from the same
- * folders (re-render with npm run store-art:extension[:edge]).
+ * (Reduce Polys), store/edge/EDGE_LISTING.md (Edge) or
+ * store/<edition>/STORE_LISTING.md (every other Chrome edition); images from
+ * the same folders (re-render with npm run store-art:extension[:edge]).
+ * Images a new edition doesn't have yet are listed as still to make.
  *
- *   node extensions/model-optimiser/make-upload-folder.mjs [--edition reduce-polys|reduce-polys-edge]
+ *   node extensions/model-optimiser/make-upload-folder.mjs [--edition <id>]
  */
 import { execFileSync } from 'node:child_process';
+import { existsSync } from 'node:fs';
 import { cp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -23,8 +27,9 @@ const editionAt = process.argv.indexOf('--edition');
 const EDITION_ID = editionAt === -1 ? 'reduce-polys' : process.argv[editionAt + 1];
 const edition = EDITIONS[EDITION_ID];
 const EDGE = EDITION_ID === 'reduce-polys-edge';
-if (!edition || !['reduce-polys', 'reduce-polys-edge'].includes(EDITION_ID)) throw new Error(`No upload folder for edition '${EDITION_ID}'.`);
-const STORE = EDGE ? join(HERE, 'store', 'edge') : join(HERE, 'store');
+if (!edition || EDITION_ID === 'model-optimiser') throw new Error(`No upload folder for edition '${EDITION_ID}'.`);
+const STORE = EDGE ? join(HERE, 'store', 'edge') : EDITION_ID === 'reduce-polys' ? join(HERE, 'store') : join(HERE, 'store', EDITION_ID);
+const WEBSITE = `https://www.assetbench.co.uk${edition.website || '/reduce-polys'}`;
 const LISTING = EDGE ? 'EDGE_LISTING.md' : 'STORE_LISTING.md';
 
 execFileSync(process.execPath, [join(HERE, 'build.mjs'), '--edition', EDITION_ID, '--zip'], { stdio: 'inherit' });
@@ -33,7 +38,9 @@ const { version } = JSON.parse(await readFile(join(HERE, 'dist', EDITION_ID, 'ma
 const OUT = join(ROOT, `${EDGE ? 'Edge Add-ons Upload' : 'Chrome Web Store Upload'} - ${edition.shortName} v${version}`);
 await rm(OUT, { recursive: true, force: true });
 
+const missing = [];
 const put = async (folder, from, name) => {
+  if (!existsSync(from)) return missing.push(`${folder}\\${name}`);
   await mkdir(join(OUT, folder), { recursive: true });
   await cp(from, join(OUT, folder, name));
 };
@@ -66,9 +73,13 @@ const SHOTS = '3 - Screenshots 1280x800 (in this order)';
 await put('1 - Package (upload this zip)', join(ROOT, 'extensions', zipName), zipName);
 if (EDGE) await put('2 - Store logo 300x300', join(STORE, 'store-logo-300x300.png'), 'store-logo-300x300.png');
 else await put('2 - Store icon 128x128', join(HERE, 'public', 'icons', 'icon-128.png'), 'icon-128.png');
-await put(SHOTS, join(STORE, 'screenshot-1-before-after.png'), '1 - before and after.png');
-await put(SHOTS, join(STORE, 'screenshot-2-reduce.png'), '2 - reduce panel.png');
-await put(SHOTS, join(STORE, 'screenshot-3-free-check.png'), '3 - free check.png');
+if (EDITION_ID.startsWith('reduce-polys')) {
+  await put(SHOTS, join(STORE, 'screenshot-1-before-after.png'), '1 - before and after.png');
+  await put(SHOTS, join(STORE, 'screenshot-2-reduce.png'), '2 - reduce panel.png');
+  await put(SHOTS, join(STORE, 'screenshot-3-free-check.png'), '3 - free check.png');
+} else {
+  for (const n of [1, 2, 3]) await put(SHOTS, join(STORE, `screenshot-${n}.png`), `${n}.png`);
+}
 await put('4 - Small promo tile 440x280', join(STORE, 'promo-tile-440x280.png'), 'promo-tile-440x280.png');
 if (!EDGE) await put('6 - Marquee promo tile 1400x560', join(STORE, 'marquee-1400x560.png'), 'marquee-1400x560.png');
 
@@ -100,7 +111,7 @@ Dashboard: https://partner.microsoft.com/dashboard/microsoftedge/overview
    - Category: Developer tools
    - Personal information: No
    - Privacy policy URL: https://www.assetbench.co.uk/privacy
-   - Website: https://www.assetbench.co.uk/reduce-polys
+   - Website: ${WEBSITE}
    - Support contact: https://www.assetbench.co.uk/contact
 
 4. Store listings (English):
@@ -133,23 +144,25 @@ Dashboard: https://chrome.google.com/webstore/devconsole
    - Screenshots:      the three files in "3 - Screenshots", in order 1, 2, 3
    - Small promo tile: "4 - Small promo tile 440x280\\promo-tile-440x280.png"
    - Marquee tile:     "6 - Marquee promo tile 1400x560\\marquee-1400x560.png"
-   - Website:         https://www.assetbench.co.uk/reduce-polys
+   - Website:         ${WEBSITE}
    - Support:          https://www.assetbench.co.uk/contact
 
 3. Privacy practices tab: follow "${TEXT}\\Privacy practices tab.txt"
    Privacy policy URL: https://www.assetbench.co.uk/privacy
 
 4. Distribution tab: follow "${TEXT}\\Distribution tab.txt"
-   (free to install, public, all regions)
+   (contains in-app purchases, public, all regions)
 
 5. Submit for review.
 
 After approval: paste the store URL into src/shared/config/extensions.js
-and deploy, so the Reduce Polys page shows "Add to Chrome".
+and deploy, so the tool's page shows "Add to Chrome".
 
 Rebuild this folder any time with:  npm run upload:extension
 Re-render the screenshots and promo tile:  npm run store-art:extension
 `;
-await writeFile(join(OUT, 'START HERE.txt'), crlf(steps));
+const todo = missing.length ? `\nSTILL TO MAKE before submitting (not in this folder yet):\n${missing.map((m) => `   - ${m}`).join('\n')}\n` : '';
+await writeFile(join(OUT, 'START HERE.txt'), crlf(steps + todo));
+if (missing.length) console.warn(`still to make: ${missing.join(', ')}`);
 
 console.log(`upload folder: ${relative(ROOT, OUT)}`);

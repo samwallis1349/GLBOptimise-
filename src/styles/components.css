@@ -142,16 +142,53 @@
   opacity: 0.6;
 }
 
+/* ---------- Window bar ----------
+   The tool's icon, its category and the index pill, above the artwork. The
+   thumbnails are poster-style art with their own title lockups; framing them
+   as a preview inside an app window is what stops a grid of them reading
+   as a row of banner ads. */
+
+.tool-card__bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 34px;
+  padding: 7px var(--space-3) 7px calc(var(--space-3) + 2px);
+  color: var(--text-muted);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.tool-card__bar-icon {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+  color: var(--card-accent);
+}
+
+.tool-card__bar-label {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* ---------- Visual ---------- */
 
+/* Inset as a framed preview rather than a full-bleed image. */
 .tool-card__visual {
   position: relative;
   aspect-ratio: 1.42 / 1;
   display: flex;
   align-items: center;
   justify-content: center;
+  margin: 0 var(--space-2);
   background: var(--bg-secondary);
-  border-bottom: 1px solid var(--border);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
   color: var(--card-accent);
   overflow: hidden;
 }
@@ -198,7 +235,7 @@
   pointer-events: none;
   z-index: 1;
   background:
-    linear-gradient(to bottom, transparent 58%, rgba(9, 9, 8, 0.55) 84%, var(--panel) 100%),
+    linear-gradient(to bottom, transparent 70%, rgba(9, 9, 8, 0.35) 100%),
     radial-gradient(115% 85% at 50% 45%, transparent 55%, rgba(0, 0, 0, 0.45) 100%);
 }
 
@@ -260,22 +297,17 @@
   }
 }
 
-/* Index pill — dark glass, thin amber edge, muted amber text. */
+/* Index pill, right-aligned in the window bar. */
 .tool-card__index {
-  position: absolute;
-  top: var(--space-2);
-  right: var(--space-2);
-  z-index: 3;
-  padding: 2px 7px;
+  flex-shrink: 0;
+  padding: 1px 6px;
   border-radius: var(--radius-sm);
-  background: rgba(8, 8, 7, 0.72);
-  border: 1px solid rgba(255, 181, 71, 0.3);
+  border: 1px solid rgba(255, 181, 71, 0.25);
   color: rgba(255, 181, 71, 0.72);
-  font-size: 10px;
+  font-size: 9.5px;
   font-weight: 700;
   letter-spacing: 0.06em;
   font-variant-numeric: tabular-nums;
-  backdrop-filter: blur(3px);
 }
 
 /* ---------- Body ---------- */
@@ -402,14 +434,13 @@
   letter-spacing: 0.07em;
 }
 
+/* A quiet link rather than a filled button — the whole card is the link
+   anyway, and a loud button on every card is the most ad-like thing on it. */
 .tool-card__cta {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 5px 11px;
-  border-radius: var(--radius-sm);
-  border: 1px solid rgba(255, 181, 71, 0.35);
-  background: rgba(255, 181, 71, 0.05);
+  padding: 5px 2px;
   color: var(--accent);
   font-size: 11px;
   font-weight: 700;
@@ -428,10 +459,9 @@
   transition: transform 200ms ease;
 }
 
-.tool-card:hover .tool-card__cta {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: #120c02;
+.tool-card:hover .tool-card__cta span {
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 .tool-card:hover .tool-card__arrow {
@@ -441,14 +471,10 @@
 /* Unavailable tools stay premium — quieter artwork and a plain label, not a
    broken-looking button. */
 .tool-card__cta--soon {
-  border-color: var(--border);
-  background: transparent;
   color: var(--text-muted);
 }
 
 .tool-card:hover .tool-card__cta--soon {
-  background: transparent;
-  border-color: var(--border);
   color: var(--text-secondary);
 }
 
@@ -520,17 +546,6 @@
   border-color: rgba(91, 157, 255, 0.22);
 }
 
-.tool-card--blue .tool-card__cta {
-  border-color: rgba(91, 157, 255, 0.35);
-  background: rgba(91, 157, 255, 0.05);
-}
-
-.tool-card--blue:hover .tool-card__cta {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: #06111f;
-}
-
 /* Silver card theme (tool.cardTheme = 'silver') — as the blue theme above,
    in the brushed silver of the tool's own page. */
 .tool-card--silver {
@@ -583,17 +598,6 @@
 
 .tool-card--silver:hover .tool-card__feature {
   border-color: rgba(201, 206, 214, 0.22);
-}
-
-.tool-card--silver .tool-card__cta {
-  border-color: rgba(201, 206, 214, 0.35);
-  background: rgba(201, 206, 214, 0.05);
-}
-
-.tool-card--silver:hover .tool-card__cta {
-  background: linear-gradient(180deg, #f6f7f9 0%, #c9ced6 45%, #9aa0a9 100%);
-  border-color: #c9ced6;
-  color: #0b0c0e;
 }
 
 /* Status badge */
@@ -1693,12 +1697,16 @@
 @media (min-width: 601px) {
   .tool-card--headline {
     flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .tool-card--headline .tool-card__bar {
+    flex: 0 0 100%;
   }
 
   .tool-card--headline .tool-card__visual {
-    flex: 0 0 calc((100% - var(--space-4)) / 2);
-    border-bottom: 0;
-    border-right: 1px solid var(--border);
+    flex: 0 0 calc((100% - var(--space-4)) / 2 - var(--space-2));
+    margin: 0 0 var(--space-2) var(--space-2);
   }
 
   .tool-card--headline .tool-card__body {
@@ -1717,7 +1725,7 @@
 
 @media (min-width: 981px) {
   .tool-card--headline .tool-card__visual {
-    flex-basis: calc((100% - 3 * var(--space-4)) / 4);
+    flex-basis: calc((100% - 3 * var(--space-4)) / 4 - var(--space-2));
   }
 }
 
@@ -1737,15 +1745,15 @@
   }
 
   .tool-card--headline-banner .tool-card__visual {
-    flex: none;
-    border-right: 0;
-    border-bottom: 1px solid var(--border);
+    flex: 0 0 auto;
+    width: calc(100% - 2 * var(--space-2));
+    margin: 0 var(--space-2);
   }
 }
 
 @media (min-width: 981px) {
   .tool-card--headline-banner .tool-card__visual {
-    flex-basis: calc((100% - 3 * var(--space-4)) * 3 / 4 + 2 * var(--space-4));
+    flex-basis: calc((100% - 3 * var(--space-4)) * 3 / 4 + 2 * var(--space-4) - var(--space-2));
   }
 }
 

@@ -167,6 +167,14 @@
   max-width: 560px;
 }
 
+/* A short personal note from us, under the All Tools description. */
+.tool-page__note {
+  margin-top: var(--space-2);
+  color: var(--accent);
+  font-size: 14px;
+  font-style: italic;
+}
+
 .tool-page__layout {
   display: grid;
   grid-template-columns: 1.2fr 0.8fr;

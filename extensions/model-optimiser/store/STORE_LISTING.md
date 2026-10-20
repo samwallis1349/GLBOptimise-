@@ -7,8 +7,8 @@ Build the upload with `npm run zip:extension` (→ `extensions/assetbench-reduce
 **Name** (from the manifest, 49/75 characters)
 Reduce Polys – GLB Polygon Reducer by AssetBench
 
-**Summary** (from the manifest, 130/132)
-Cut GLB triangle counts in your browser. Free model check, 5 free reduces a day, £2.99 for unlimited. Files stay on your computer.
+**Summary** (from the manifest, 128/132)
+Cut GLB triangle counts in your browser. Free model check, 5 free reduces a day, 99p for unlimited. Files stay on your computer.
 
 **Category:** Developer Tools  
 **Language:** English (United Kingdom)
@@ -33,7 +33,7 @@ Cut GLB triangle counts in your browser. Free model check, 5 free reduces a day,
 > Your models are processed on your own computer. Nothing is uploaded. It works offline once unlocked.
 >
 > PRICE
-> The model check is free, and you get 5 free reduces every day. Unlimited reducing is a £2.99 one-off unlock, no subscription. Already have AssetBench All Access? Your key unlocks it too.
+> The model check is free, and you get 5 free reduces every day. Unlimited reducing is a 99p one-off unlock, no subscription. Already have AssetBench All Access? Your key unlocks it too.
 >
 > GOOD FOR
 > Making 3D models light enough for mobile games, websites and VR.
@@ -64,7 +64,7 @@ Reduce the polygon count of GLB 3D models, with a free check of how well a model
 - `storage`: remembers the user's licence key, last slider settings and how many of today's free reduces they've used, on their computer.
 - `downloads`: saves the reduced .glb to the user's Downloads folder.
 - Host `api.lemonsqueezy.com`: checks the licence key the user enters with our payment provider.
-- Host `www.assetbench.co.uk`: links a £2.99 key to the tool it was bought for (same as our website).
+- Host `www.assetbench.co.uk`: links a 99p key to the tool it was bought for (same as our website).
 
 **Remote code:** No. All code ships in the package. WebAssembly (meshoptimizer) is bundled, which is why the CSP has `wasm-unsafe-eval`.
 
@@ -76,4 +76,4 @@ The 3D models never leave the computer, so no "website content" or "user activit
 
 ## Distribution tab
 
-Free to install (payments happen through Lemon Squeezy, not the Web Store). Visibility: Public. Regions: all.
+Payments: **Contains in-app purchases** (the 99p and All Access unlock buttons; checkout is on Lemon Squeezy, and installing is free). Visibility: Public. Regions: All regions.

@@ -5,6 +5,10 @@
  */
 import { runTool } from './engine.js';
 
+// jpeg-js returns its encoded bytes through Node's Buffer once bundled;
+// worker/api/images.js only needs them as a Uint8Array.
+globalThis.Buffer ??= { from: (bytes) => Uint8Array.from(bytes), alloc: (size) => new Uint8Array(size) };
+
 // The KTX2 encoder reads its compiled WebAssembly from this global (see
 // worker/api/ktx2.js); the extension ships the .wasm next to this script.
 async function loadBasis() {

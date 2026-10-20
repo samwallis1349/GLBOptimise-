@@ -9,7 +9,7 @@ import { refundNoticeHtml } from './RefundNotice.js';
  * trial has ended and no valid license is stored. The tool's own module is never
  * imported while locked — see app/routes.js. Offers the All Access subscription and,
  * once the tool is on sale by itself (shared/config/toolProducts.js), just
- * this tool for £2.99.
+ * this tool for 99p.
  * @param {{ tool: import('../config/tools.js').TOOLS[number], onUnlock: () => void }} options
  */
 export function Paywall({ tool, onUnlock }) {

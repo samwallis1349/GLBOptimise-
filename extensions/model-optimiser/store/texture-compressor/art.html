@@ -1,0 +1,121 @@
+<!doctype html>
+<!--
+  Chrome Web Store art for GLB Texture Compressor, captured by render.mjs:
+  ?shot=s1|s2|s3 (1280x800), tile (440x280) or marquee (1400x560). Expects,
+  next to it: the built extension's icons/ and the panel screenshots
+  tc-textures.png, tc-compress.png and tc-resize.png. The numbers come from
+  ?before= / ?after= (GPU memory, MB) and ?deal=.
+-->
+<html><head><meta charset="utf-8">
+<style>
+  :root { --bg: #0b0b0a; --panel: #151513; --text: #f4f1ea; --muted: #a8a49b; --accent: #ffb547; --border: rgba(255,255,255,.1); }
+  * { box-sizing: border-box; margin: 0; }
+  body { width: var(--w); height: var(--h); overflow: hidden; background: radial-gradient(120% 90% at 70% 40%, #1d1710 0%, var(--bg) 60%); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; }
+  .shot { display: none; width: 100%; height: 100%; padding: 64px 72px; }
+  .shot.on { display: grid; }
+  .logo { display: flex; align-items: center; gap: 12px; font-weight: 700; font-size: 22px; color: var(--muted); }
+  .logo img { width: 36px; height: 36px; }
+  h1 { font-size: 64px; line-height: 1.02; letter-spacing: -0.03em; margin: 26px 0 18px; }
+  h1 span { color: var(--accent); }
+  p.sub { font-size: 24px; line-height: 1.35; color: var(--muted); max-width: 30ch; }
+  ul.ticks { list-style: none; padding: 0; margin-top: 28px; display: grid; gap: 12px; font-size: 21px; }
+  ul.ticks li::before { content: '✓'; color: var(--accent); font-weight: 700; margin-right: 12px; }
+  .panelshot { height: 672px; border-radius: 16px; border: 1px solid var(--border); box-shadow: 0 30px 80px rgba(0,0,0,.6), 0 0 60px rgba(255,181,71,.12); justify-self: end; align-self: center; }
+  #s1, #s2, #s3 { grid-template-columns: 1fr auto; align-items: center; gap: 56px; }
+  .meter { margin-top: 34px; display: grid; gap: 14px; max-width: 560px; }
+  .bar { display: grid; grid-template-columns: 110px 1fr auto; align-items: center; gap: 14px; font-size: 19px; color: var(--muted); }
+  .bar i { display: block; height: 22px; border-radius: 6px; background: rgba(255,255,255,.14); }
+  .bar.after i { background: var(--accent); box-shadow: 0 0 30px rgba(255,181,71,.35); }
+  .bar b { color: var(--text); font-size: 22px; min-width: 80px; text-align: right; }
+  .bar.after b { color: var(--accent); }
+  #tile { padding: 34px 36px; align-content: center; }
+  #tile .logo img { width: 54px; height: 54px; }
+  #tile h1 { font-size: 44px; margin: 16px 0 8px; }
+  #tile p.sub { font-size: 20px; }
+  #marquee { grid-template-columns: 1fr auto; gap: 44px; padding: 56px 72px; align-items: center; }
+  #marquee h1 { font-size: 72px; margin: 22px 0 14px; }
+  #marquee p.sub { font-size: 23px; }
+  #marquee ul.ticks { font-size: 19px; margin-top: 22px; gap: 10px; }
+  #marquee .panelshot { height: 448px; }
+</style></head>
+<body>
+<section class="shot" id="s1">
+  <div>
+    <div class="logo"><img src="icons/icon-128.png" alt="">AssetBench · Texture Compressor</div>
+    <h1>Cut texture memory by <span class="cut"></span></h1>
+    <p class="sub">KTX2 textures stay compressed on the GPU, so the same model needs a fraction of the memory.</p>
+    <div class="meter">
+      <div class="bar"><span>Original</span><i class="w-before"></i><b class="mb-before"></b></div>
+      <div class="bar after"><span>KTX2</span><i class="w-after"></i><b class="mb-after"></b></div>
+    </div>
+  </div>
+  <img class="panelshot" src="tc-compress.png" alt="">
+</section>
+
+<section class="shot" id="s2">
+  <div>
+    <div class="logo"><img src="icons/icon-128.png" alt="">AssetBench</div>
+    <h1>Free check:<br><span>what's heavy?</span></h1>
+    <p class="sub">Drop in a GLB and every texture is listed with its size, format and GPU memory.</p>
+    <ul class="ticks">
+      <li>Spot the 4K texture on a small prop</li>
+      <li>Total GPU memory at a glance</li>
+      <li>Free, no account</li>
+    </ul>
+  </div>
+  <img class="panelshot" src="tc-textures.png" alt="">
+</section>
+
+<section class="shot" id="s3">
+  <div>
+    <div class="logo"><img src="icons/icon-128.png" alt="">AssetBench</div>
+    <h1>Resize in<br><span>one click.</span></h1>
+    <p class="sub">Shrinks oversized textures to 2048, 1024, 512 or 256 px. PNG stays PNG, JPEG stays JPEG.</p>
+    <ul class="ticks">
+      <li>Power-of-two sizes for every engine</li>
+      <li>Runs on your computer, nothing uploaded</li>
+      <li class="deal"></li>
+    </ul>
+  </div>
+  <img class="panelshot" src="tc-resize.png" alt="">
+</section>
+
+<section class="shot" id="tile">
+  <div class="logo"><img src="icons/icon-128.png" alt=""></div>
+  <h1>Texture <span>Compressor</span></h1>
+  <p class="sub">Shrink the textures in GLB models, in your browser.</p>
+</section>
+
+<section class="shot" id="marquee">
+  <div>
+    <div class="logo"><img src="icons/icon-128.png" alt="">AssetBench</div>
+    <h1>Texture <span>Compressor</span></h1>
+    <p class="sub">Cut a GLB's texture memory by <span class="cut"></span> with KTX2, right in your browser.</p>
+    <ul class="ticks">
+      <li>Free texture check</li>
+      <li>KTX2 compression and resizing</li>
+      <li class="deal"></li>
+    </ul>
+  </div>
+  <img class="panelshot" src="tc-compress.png" alt="">
+</section>
+
+<script>
+const q = new URLSearchParams(location.search);
+const which = q.get('shot') || 's1';
+const [w, h] = { tile: [440, 280], marquee: [1400, 560] }[which] || [1280, 800];
+document.body.style.setProperty('--w', w + 'px');
+document.body.style.setProperty('--h', h + 'px');
+document.getElementById(which).classList.add('on');
+const before = Number(q.get('before'));
+const after = Number(q.get('after'));
+const set = (sel, fn) => document.querySelectorAll(sel).forEach(fn);
+set('.cut', (el) => { el.textContent = `${Math.round((1 - after / before) * 100)}%`; });
+set('.mb-before', (el) => { el.textContent = `${Math.round(before)} MB`; });
+set('.mb-after', (el) => { el.textContent = `${Math.round(after)} MB`; });
+set('.w-before', (el) => { el.style.width = '100%'; });
+set('.w-after', (el) => { el.style.width = `${(after / before) * 100}%`; });
+set('.deal', (el) => { el.textContent = q.get('deal') || ''; });
+Promise.all([...document.images].map((img) => img.decode().catch(() => {}))).then(() => { document.title = 'ready'; });
+</script>
+</body></html>

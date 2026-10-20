@@ -1,11 +1,11 @@
 /**
- * The extension's four tools, run locally on the same engines as the Cloud
+ * The extension's tools, run locally on the same engines as the Cloud
  * API (worker/api), so results match /api/v1 exactly. DOM-free: bundled into
  * the panel's Web Worker by build.mjs and imported directly by the tests.
  */
 import { analyseGlb, evaluate, readDocument, writeDocument } from '../../../worker/api/glb.js';
 import { deviceMatrix } from '../../../worker/api/gameReady.js';
-import { optimizeGlb, reduceGlb } from '../../../worker/api/mesh.js';
+import { downscaleTextures, optimizeGlb, reduceGlb } from '../../../worker/api/mesh.js';
 import { texturesToKtx2 } from '../../../worker/api/ktx2.js';
 
 export const MAX_INPUT_BYTES = 200 * 1048576;
@@ -42,6 +42,26 @@ const RUNNERS = {
     if (!textures.length) warnings.push('This model has no PNG or JPEG textures to compress.');
     const output = await writeDocument(document);
     return { output, report: { textures, bytesBefore: bytes.byteLength, bytesAfter: output.byteLength, warnings }, name: `${stem(name)}-ktx2.glb` };
+  },
+
+  /** Every texture with its size, format and GPU memory: the texture editions' free check. */
+  async textures(bytes) {
+    const stats = analyseGlb(bytes);
+    return { report: { textures: stats.textures, textureMemoryBytes: stats.textureMemoryBytes, fileBytes: stats.fileBytes } };
+  },
+
+  async resize(bytes, { maxSize = 1024 }, name) {
+    const document = await readDocument(bytes);
+    const warnings = [];
+    const textures = await downscaleTextures(document, Number(maxSize) || 1024, warnings);
+    if (!textures.length && !warnings.length) warnings.push(`Every texture is already ${maxSize} px or smaller.`);
+    const output = await writeDocument(document);
+    const memory = (glb) => analyseGlb(glb).textureMemoryBytes;
+    return {
+      output,
+      report: { textures, bytesBefore: bytes.byteLength, bytesAfter: output.byteLength, memoryBefore: memory(bytes), memoryAfter: memory(output), warnings },
+      name: `${stem(name)}-${maxSize}px.glb`,
+    };
   },
 };
 
