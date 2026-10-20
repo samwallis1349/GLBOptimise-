@@ -12,6 +12,7 @@
  * per-job editions below each own tools no other listing has:
  *
  *   texture-compressor — free texture check, KTX2 compress and resize.
+ *   inspector          — free health check, rig, animation and compare.
  *
  * `free` lists the tools that need no licence; `dailyFree` is how many runs
  * of the others a day anyone gets before the unlock card (src/quota.js).
@@ -70,8 +71,24 @@ export const EDITIONS = {
     firstTool: 'textures',
     website: '/compress-textures',
   },
+  inspector: {
+    store: 'Chrome Web Store',
+    name: 'GLB Inspector – Rig, Animation & Model Checker by AssetBench',
+    shortName: 'GLB Inspector',
+    description: 'Inspect GLB models in your browser: free health check, rig and animation checks, and before/after compare. Files stay local.',
+    heading: ['GLB', 'Inspector'],
+    tools: ['inspect', 'rig', 'animations', 'compare'],
+    free: ['inspect'],
+    dailyFree: 5,
+    firstTool: 'inspect',
+    website: '/inspect-glb',
+  },
 };
 
 export const DEFAULT_EDITION = 'reduce-polys';
 
 export const allFree = (edition) => edition.tools.every((t) => edition.free.includes(t));
+
+/** Tools that hand back a file; an edition without any doesn't ask for the downloads permission. */
+const SAVING_TOOLS = ['reduce', 'optimise', 'compress', 'resize'];
+export const savesFiles = (edition) => edition.tools.some((t) => SAVING_TOOLS.includes(t));

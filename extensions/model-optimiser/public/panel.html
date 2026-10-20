@@ -25,6 +25,10 @@
     <button type="button" role="tab" data-tool="compress" aria-selected="false">Compress</button>
     <button type="button" role="tab" data-tool="textures" aria-selected="false">Textures <em>Free</em></button>
     <button type="button" role="tab" data-tool="resize" aria-selected="false">Resize</button>
+    <button type="button" role="tab" data-tool="inspect" aria-selected="false">Inspect <em>Free</em></button>
+    <button type="button" role="tab" data-tool="rig" aria-selected="false">Rig</button>
+    <button type="button" role="tab" data-tool="animations" aria-selected="false">Anims</button>
+    <button type="button" role="tab" data-tool="compare" aria-selected="false">Compare</button>
   </nav>
 
   <section class="tool" data-panel="check">
@@ -92,6 +96,27 @@
         <option value="2048">2048 px</option><option value="1024" selected>1024 px</option>
         <option value="512">512 px</option><option value="256">256 px</option>
       </select>
+    </label>
+  </section>
+
+  <section class="tool" data-panel="inspect" hidden>
+    <p class="lede">A health score out of 100, what's inside the model, and anything that needs fixing.</p>
+  </section>
+
+  <section class="tool" data-panel="rig" hidden>
+    <p class="lede">Checks the skeleton: joint count, hierarchy, and that every vertex is properly weighted.</p>
+  </section>
+
+  <section class="tool" data-panel="animations" hidden>
+    <p class="lede">Every clip with its length and frame rate, plus loops that pop and keyframes you can cut.</p>
+  </section>
+
+  <section class="tool" data-panel="compare" hidden>
+    <p class="lede">Compare the model above (A) with another version (B). See what changed and what broke.</p>
+    <label class="drop drop--small" id="otherDrop" tabindex="0">
+      <input type="file" id="otherFile" accept=".glb,model/gltf-binary" hidden>
+      <strong id="otherName">Choose model B</strong>
+      <small>e.g. the optimised copy of the same model</small>
     </label>
   </section>
 

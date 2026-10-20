@@ -1,0 +1,107 @@
+<!doctype html>
+<!--
+  Chrome Web Store art for GLB Inspector, captured by render.mjs:
+  ?shot=s1|s2|s3 (1280x800), tile (440x280) or marquee (1400x560). Expects,
+  next to it: the built extension's icons/ and the panel screenshots
+  gi-inspect.png, gi-rig.png, gi-anims.png and gi-compare.png. ?deal= is the
+  pricing line and ?score= the free check's health score.
+-->
+<html><head><meta charset="utf-8">
+<style>
+  :root { --bg: #0b0b0a; --panel: #151513; --text: #f4f1ea; --muted: #a8a49b; --accent: #ffb547; --border: rgba(255,255,255,.1); }
+  * { box-sizing: border-box; margin: 0; }
+  body { width: var(--w); height: var(--h); overflow: hidden; background: radial-gradient(120% 90% at 70% 40%, #1d1710 0%, var(--bg) 60%); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; }
+  .shot { display: none; width: 100%; height: 100%; padding: 64px 72px; }
+  .shot.on { display: grid; }
+  .logo { display: flex; align-items: center; gap: 12px; font-weight: 700; font-size: 22px; color: var(--muted); }
+  .logo img { width: 36px; height: 36px; }
+  h1 { font-size: 64px; line-height: 1.02; letter-spacing: -0.03em; margin: 26px 0 18px; }
+  h1 span { color: var(--accent); }
+  p.sub { font-size: 24px; line-height: 1.35; color: var(--muted); max-width: 30ch; }
+  ul.ticks { list-style: none; padding: 0; margin-top: 28px; display: grid; gap: 12px; font-size: 21px; }
+  ul.ticks li::before { content: '✓'; color: var(--accent); font-weight: 700; margin-right: 12px; }
+  .panelshot { height: 672px; border-radius: 16px; border: 1px solid var(--border); box-shadow: 0 30px 80px rgba(0,0,0,.6), 0 0 60px rgba(255,181,71,.12); justify-self: end; align-self: center; }
+  #s1, #s2 { grid-template-columns: 1fr auto; align-items: center; gap: 56px; }
+  #s3 { grid-template-columns: 1fr auto auto; align-items: center; gap: 28px; }
+  #s3 h1 { font-size: 56px; }
+  #s3 p.sub { font-size: 22px; }
+  #s3 .panelshot { height: 600px; }
+  .score { display: inline-block; margin-top: 30px; padding: 14px 22px; border-radius: 14px; border: 1px solid rgba(255,181,71,.4); font-size: 22px; color: var(--muted); }
+  .score b { font-size: 44px; color: var(--accent); margin-right: 6px; }
+  #tile { padding: 34px 36px; align-content: center; }
+  #tile .logo img { width: 54px; height: 54px; }
+  #tile h1 { font-size: 48px; margin: 16px 0 8px; }
+  #tile p.sub { font-size: 20px; }
+  #marquee { grid-template-columns: 1fr auto; gap: 44px; padding: 56px 72px; align-items: center; }
+  #marquee h1 { font-size: 72px; margin: 22px 0 14px; }
+  #marquee p.sub { font-size: 23px; }
+  #marquee ul.ticks { font-size: 19px; margin-top: 22px; gap: 10px; }
+  #marquee .panelshot { height: 448px; }
+</style></head>
+<body>
+<section class="shot" id="s1">
+  <div>
+    <div class="logo"><img src="icons/icon-128.png" alt="">AssetBench · GLB Inspector</div>
+    <h1>Before and after,<br><span>side by side.</span></h1>
+    <p class="sub">Compare the original with the optimised copy. See what got smaller, and catch anything that broke.</p>
+    <ul class="ticks">
+      <li>Triangles, file size, GPU memory, score</li>
+      <li>Flags lost animations and materials</li>
+      <li class="deal"></li>
+    </ul>
+  </div>
+  <img class="panelshot" src="gi-compare.png" alt="">
+</section>
+
+<section class="shot" id="s2">
+  <div>
+    <div class="logo"><img src="icons/icon-128.png" alt="">AssetBench</div>
+    <h1>Free health check<br><span>for any GLB.</span></h1>
+    <p class="sub">Drop in a model for a score out of 100, what's inside it, and anything that needs fixing.</p>
+    <div class="score"><b class="score-value"></b>/ 100 on the sample model</div>
+  </div>
+  <img class="panelshot" src="gi-inspect.png" alt="">
+</section>
+
+<section class="shot" id="s3">
+  <div>
+    <div class="logo"><img src="icons/icon-128.png" alt="">AssetBench</div>
+    <h1>Rigs and <span>animations</span>, checked.</h1>
+    <p class="sub">Unweighted vertices, broken hierarchies, loops that pop and keyframes you can cut.</p>
+  </div>
+  <img class="panelshot" src="gi-rig.png" alt="">
+  <img class="panelshot" src="gi-anims.png" alt="">
+</section>
+
+<section class="shot" id="tile">
+  <div class="logo"><img src="icons/icon-128.png" alt=""></div>
+  <h1>GLB <span>Inspector</span></h1>
+  <p class="sub">Check models, rigs and animations in your browser.</p>
+</section>
+
+<section class="shot" id="marquee">
+  <div>
+    <div class="logo"><img src="icons/icon-128.png" alt="">AssetBench</div>
+    <h1>GLB <span>Inspector</span></h1>
+    <p class="sub">Health-check any GLB, inspect rigs and animations, and compare versions, right in your browser.</p>
+    <ul class="ticks">
+      <li>Free health check</li>
+      <li>Rig, animation and compare</li>
+      <li class="deal"></li>
+    </ul>
+  </div>
+  <img class="panelshot" src="gi-compare.png" alt="">
+</section>
+
+<script>
+const q = new URLSearchParams(location.search);
+const which = q.get('shot') || 's1';
+const [w, h] = { tile: [440, 280], marquee: [1400, 560] }[which] || [1280, 800];
+document.body.style.setProperty('--w', w + 'px');
+document.body.style.setProperty('--h', h + 'px');
+document.getElementById(which).classList.add('on');
+document.querySelectorAll('.deal').forEach((el) => { el.textContent = q.get('deal') || ''; });
+document.querySelectorAll('.score-value').forEach((el) => { el.textContent = q.get('score') || ''; });
+Promise.all([...document.images].map((img) => img.decode().catch(() => {}))).then(() => { document.title = 'ready'; });
+</script>
+</body></html>

@@ -1,6 +1,5 @@
 import { Primitive } from '@gltf-transform/core';
 import { getBounds, getGLPrimitiveCount, listTextureSlots } from '@gltf-transform/functions';
-import { readGlb, readGltf } from './createIO.js';
 import { runChecks } from './checks.js';
 import { scoreIssues, evaluateBudgets } from './statistics.js';
 
@@ -59,9 +58,13 @@ export async function collectAssets(fileList) {
 }
 
 /**
+ * The browser reader (./createIO.js, with its bundled Draco glue) loads on
+ * first use; the browser extension and tests pass their own `readGlb` instead.
+ *
  * @param {{ name: string, kind: 'glb'|'gltf', main: File, siblings: File[] }} asset
+ * @param {{ readGlb?: (buffer: ArrayBuffer) => Promise<import('@gltf-transform/core').Document> }} [options]
  */
-export async function analyseAsset(asset) {
+export async function analyseAsset(asset, { readGlb } = {}) {
   const started = performance.now();
   let document;
   let rawJson;
@@ -72,9 +75,10 @@ export async function analyseAsset(asset) {
     const buffer = await asset.main.arrayBuffer();
     container = parseGlbContainer(buffer);
     rawJson = container.json;
-    document = await readGlb(buffer);
+    document = await (readGlb ?? (await import('./createIO.js')).readGlb)(buffer);
   } else {
     rawJson = JSON.parse(await asset.main.text());
+    const { readGltf } = await import('./createIO.js');
     const read = await readGltf(asset.main, asset.siblings);
     document = read.document;
     missingResources.push(...read.missing);

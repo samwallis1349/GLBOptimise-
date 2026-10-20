@@ -23,6 +23,10 @@ export const SITE_TOOL = {
   compress: 'compress-textures',
   textures: 'compress-textures',
   resize: 'texture-resizer',
+  inspect: 'inspect-glb',
+  rig: 'rig-inspector',
+  animations: 'animation-inspector',
+  compare: 'asset-compare',
 };
 export const FREE_TOOLS = new Set(['check']);
 

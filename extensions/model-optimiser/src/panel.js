@@ -13,14 +13,17 @@ const DAILY_FREE = EDITION.dailyFree || 0;
 const $ = (id) => document.getElementById(id);
 const LICENSES = 'licenses';
 const SETTINGS = 'settings';
-const TOOL_NAMES = { check: 'Mobile Ready Check', reduce: 'Reduce Polys', optimise: 'Optimise GLB', compress: 'Compress Textures', textures: 'Texture Check', resize: 'Texture Resizer' };
-const RUN_LABELS = { check: 'Check model', reduce: 'Reduce', optimise: 'Optimise', compress: 'Compress textures', textures: 'List textures', resize: 'Resize textures' };
+const TOOL_NAMES = { check: 'Mobile Ready Check', reduce: 'Reduce Polys', optimise: 'Optimise GLB', compress: 'Compress Textures', textures: 'Texture Check', resize: 'Texture Resizer',
+  inspect: 'Inspect GLB', rig: 'Rig Inspector', animations: 'Animation Inspector', compare: 'Asset Compare' };
+const RUN_LABELS = { check: 'Check model', reduce: 'Reduce', optimise: 'Optimise', compress: 'Compress textures', textures: 'List textures', resize: 'Resize textures',
+  inspect: 'Inspect model', rig: 'Inspect rig', animations: 'Inspect animations', compare: 'Compare A with B' };
 // Free read-only tools run as soon as a model is chosen.
-const INSTANT = new Set(['check', 'textures']);
+const INSTANT = new Set(['check', 'textures', 'inspect']);
 
 let licenses = [];
 let tool = EDITION.firstTool;
 let model = null; // { name, bytes, size }
+let other = null; // Compare's model B, same shape
 let busy = false;
 let used = 0; // free runs used today (src/quota.js)
 let usedDay = utcDay();
@@ -112,8 +115,9 @@ function render() {
 
   const run = $('run');
   run.hidden = !runnable;
-  run.disabled = busy || !model;
-  run.textContent = busy ? 'Working…' : model ? RUN_LABELS[tool] : 'Choose a model first';
+  const needsOther = tool === 'compare' && !other;
+  run.disabled = busy || !model || needsOther;
+  run.textContent = busy ? 'Working…' : !model ? 'Choose a model first' : needsOther ? 'Choose model B' : RUN_LABELS[tool];
 
   const paid = licenses.filter((l) => l.scope !== 'all').length;
   const all = licenses.some((l) => l.scope === 'all');
@@ -142,6 +146,19 @@ function warnings(items) {
   return ul;
 }
 
+/** The site analysers' own check lists: { level|severity, text|title }. */
+function checks(items) {
+  const ul = document.createElement('ul');
+  ul.className = 'checks';
+  for (const item of items) {
+    const li = document.createElement('li');
+    li.className = item.level || item.severity || '';
+    li.textContent = item.text || item.title;
+    ul.append(li);
+  }
+  return ul;
+}
+
 function showResult(toolId, result) {
   const box = $('result');
   box.replaceChildren();
@@ -163,6 +180,58 @@ function showResult(toolId, result) {
       score.className = `v-${d.verdict}`;
     }
     box.append(table);
+  } else if (toolId === 'inspect') {
+    const t = r.totals;
+    box.append(list([
+      ['Health', `${r.health.score}/100 · ${r.health.grade} · ${r.health.summary}`],
+      ['Triangles', fmtInt(t.triangles)],
+      ['Draw calls', fmtInt(t.drawCalls)],
+      ['Materials · textures', `${fmtInt(t.materials)} · ${fmtInt(t.textures)}`],
+      ['Animations · joints', `${fmtInt(t.animations)} · ${fmtInt(t.joints)}`],
+      ['File size', fmtBytes(r.fileBytes)],
+      ['GPU memory (est.)', fmtBytes(r.gpuBytes)],
+    ]));
+    box.append(checks(r.issues.length ? r.issues : [{ level: 'ok', text: 'No issues found.' }]));
+  } else if (toolId === 'rig') {
+    if (r.hasRig) {
+      box.append(list([
+        ['Joints', fmtInt(r.joints)],
+        ['Skins', fmtInt(r.skins)],
+        ['Hierarchy depth', fmtInt(r.maxDepth)],
+        ['Skinned vertices', fmtInt(r.skinnedVertices)],
+        ['Root', r.roots.join(', ')],
+      ]));
+    }
+    box.append(checks(r.checks));
+  } else if (toolId === 'animations') {
+    if (r.hasAnimation) {
+      box.append(list([
+        ['Clips', fmtInt(r.clips.length)],
+        ['Tracks', fmtInt(r.tracks)],
+        ['Keyframes', fmtInt(r.keyframes)],
+      ]));
+      const table = document.createElement('table');
+      for (const c of r.clips) {
+        const tr = table.insertRow();
+        tr.insertCell().textContent = c.name;
+        tr.insertCell().textContent = `${c.duration.toFixed(2)} s · ${Math.round(c.frameRate)} fps`;
+        const loop = tr.insertCell();
+        loop.textContent = c.loops === null ? '' : c.loops ? 'loops' : 'pops';
+        loop.className = c.loops === false ? 'v-needs-work' : 'v-mobile-ready';
+      }
+      box.append(table);
+    }
+    box.append(checks(r.checks));
+  } else if (toolId === 'compare') {
+    const verdict = document.createElement('p');
+    verdict.className = `verdict ${r.verdict.tone}`;
+    verdict.textContent = r.verdict.headline;
+    const text = document.createElement('p');
+    text.className = 'small';
+    text.textContent = r.verdict.text;
+    box.append(verdict, text);
+    if (r.changes.length) box.append(list(r.changes.map((c) => [c.label, `${c.a} → ${c.b}`])));
+    if (r.regressions.length) box.append(checks(r.regressions));
   } else if (toolId === 'textures') {
     box.append(list([
       ['Textures', fmtInt(r.textures.length)],
@@ -224,7 +293,8 @@ function paramsFor(toolId) {
   if (toolId === 'reduce') return { keep: Number($('keep').value) / 100, acrossSeams: $('acrossSeams').checked };
   if (toolId === 'optimise') return { target: $('target').value };
   if (toolId === 'resize') return { maxSize: Number($('resizeTo').value) };
-  if (toolId === 'textures') return {};
+  if (['textures', 'inspect', 'rig', 'animations'].includes(toolId)) return {};
+  if (toolId === 'compare') return { other: other.bytes.slice().buffer, otherName: other.name };
   return { maxSize: Number($('maxSize').value) };
 }
 
@@ -267,6 +337,16 @@ async function choose(file) {
   process('check', {}).then((r) => {
     if (model === current) $('fileHint').textContent = `${fmtInt(r.report.stats.triangles)} triangles · ${fmtBytes(file.size)}`;
   }).catch(() => {});
+}
+
+async function chooseOther(file) {
+  if (!file) return;
+  if (!/\.glb$/i.test(file.name)) return status('Choose a .glb file (binary glTF).', 'bad');
+  other = { name: file.name, bytes: new Uint8Array(await file.arrayBuffer()), size: file.size };
+  $('otherName').textContent = `B: ${file.name}`;
+  $('result').hidden = true;
+  status('');
+  render();
 }
 
 async function activate() {
@@ -313,6 +393,23 @@ drop.addEventListener('drop', (e) => {
   e.preventDefault();
   drop.classList.remove('is-over');
   choose(e.dataTransfer.files[0]);
+});
+
+// Compare's second model (B), picked or dropped the same way.
+const otherDrop = $('otherDrop');
+otherDrop.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' || e.key === ' ') {
+    e.preventDefault();
+    $('otherFile').click();
+  }
+});
+$('otherFile').addEventListener('change', (e) => chooseOther(e.target.files[0]));
+otherDrop.addEventListener('dragover', (e) => { e.preventDefault(); otherDrop.classList.add('is-over'); });
+otherDrop.addEventListener('dragleave', () => otherDrop.classList.remove('is-over'));
+otherDrop.addEventListener('drop', (e) => {
+  e.preventDefault();
+  otherDrop.classList.remove('is-over');
+  chooseOther(e.dataTransfer.files[0]);
 });
 
 // Only controls in this edition's tabs exist, so save whichever are present.

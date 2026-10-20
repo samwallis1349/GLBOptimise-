@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { analyseGlb } from '../worker/api/glb.js';
 import { sphereGlb } from './helpers/apiFixtures.mjs';
+import { pipelineIO, skinnedCharacter } from './helpers/pipelineFixtures.mjs';
 import { runTool, TOOL_IDS } from '../extensions/model-optimiser/src/engine.js';
 import { activateKey, isUnlocked, revalidate, SITE_TOOL } from '../extensions/model-optimiser/src/licensing.js';
 import { fmtCountdown, msUntilReset, runsUsed, spendRun, utcDay } from '../extensions/model-optimiser/src/quota.js';
@@ -16,7 +17,7 @@ let sphere;
 const getSphere = async () => (sphere ??= await sphereGlb(120, { textureSize: [256, 256] }));
 
 test('Model Optimiser: the four tools run locally and return GLBs', async () => {
-  assert.deepEqual(TOOL_IDS, ['check', 'reduce', 'optimise', 'compress', 'textures', 'resize']);
+  assert.deepEqual(TOOL_IDS, ['check', 'reduce', 'optimise', 'compress', 'textures', 'resize', 'inspect', 'rig', 'animations', 'compare']);
   const bytes = await getSphere();
 
   const check = await runTool('check', bytes, { role: 'prop' });
@@ -54,6 +55,33 @@ test('Texture Compressor: the free texture check lists textures; resize shrinks 
   const again = await runTool('resize', resize.output, { maxSize: 64 });
   assert.equal(again.report.textures.length, 0);
   assert.match(again.report.warnings[0], /already 64 px or smaller/);
+});
+
+test('GLB Inspector: health check, rig, animations and compare run on the site analysers', async () => {
+  const character = await skinnedCharacter(await pipelineIO());
+
+  const inspect = await runTool('inspect', character, {}, 'Hero.glb');
+  assert.equal(inspect.output, undefined);
+  assert.ok(inspect.report.health.score > 0 && inspect.report.health.score <= 100);
+  assert.equal(inspect.report.totals.joints, 3);
+  assert.equal(inspect.report.totals.animations, 2);
+
+  const rig = await runTool('rig', character);
+  assert.equal(rig.report.hasRig, true);
+  assert.equal(rig.report.joints, 3);
+  assert.ok(rig.report.checks.some((c) => c.level === 'ok'));
+  const noRig = await runTool('rig', await getSphere());
+  assert.equal(noRig.report.hasRig, false);
+
+  const anims = await runTool('animations', character);
+  assert.deepEqual(anims.report.clips.map((c) => c.name), ['Wave', 'Bob']);
+  assert.ok(anims.report.keyframes > 0);
+
+  const lighter = (await runTool('reduce', character, { keep: 0.3 }, 'Hero.glb')).output;
+  const compare = await runTool('compare', character, { other: lighter, otherName: 'Hero-reduced.glb' }, 'Hero.glb');
+  assert.equal(compare.report.verdict.tone, 'better');
+  assert.ok(compare.report.changes.some((c) => c.label === 'Triangles'));
+  await assert.rejects(runTool('compare', character, {}), /second model/);
 });
 
 // Lemon Squeezy and the site's tool binding, faked.

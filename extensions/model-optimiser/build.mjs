@@ -12,7 +12,7 @@ import JSZip from 'jszip';
 import { cp, mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { dirname, join, relative, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { allFree, DEFAULT_EDITION, EDITIONS } from './editions.js';
+import { allFree, DEFAULT_EDITION, EDITIONS, savesFiles } from './editions.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, '..', '..');
@@ -32,6 +32,20 @@ const stubBasisWasm = {
   },
 };
 
+// src/shared/glb/analyseGLB.js loads the site's reader (Draco glue run
+// through new Function, which extension pages forbid) only when no reader is
+// passed; the extension always passes worker/api's, so it is never loaded.
+const stubSiteReader = {
+  name: 'stub-site-reader',
+  setup(b) {
+    b.onResolve({ filter: /^\.\/createIO\.js$/ }, (args) => (/shared[\\/]glb$/.test(args.resolveDir) ? { path: 'site-reader', namespace: 'site-stub' } : undefined));
+    b.onLoad({ filter: /.*/, namespace: 'site-stub' }, () => ({
+      contents: "const no = () => { throw new Error('Not available in the extension.'); }; export const readGlb = no, readGltf = no;",
+      loader: 'js',
+    }));
+  },
+};
+
 await rm(DIST, { recursive: true, force: true });
 await mkdir(DIST, { recursive: true });
 await cp(join(HERE, 'public'), DIST, { recursive: true });
@@ -47,6 +61,8 @@ manifest.description = EDITION.description;
 manifest.action.default_title = EDITION.shortName;
 // Nothing to unlock means no licence checks, so no host permissions to ask for.
 if (allFree(EDITION)) delete manifest.host_permissions;
+// The store rejects permissions an extension never uses.
+if (!savesFiles(EDITION)) manifest.permissions = manifest.permissions.filter((p) => p !== 'downloads');
 if (manifest.description.length > 132) throw new Error('Store descriptions are limited to 132 characters.');
 if (EDITION.price && process.argv.includes('--zip') && (!EDITION.checkoutUrl || !Object.keys(EDITION.products || {}).length)) {
   throw new Error(`${EDITION_ID} sells for ${EDITION.price}: set its products and checkoutUrl in editions.js (its Lemon Squeezy product) before zipping for the store.`);
@@ -62,7 +78,7 @@ await build({
   target: 'chrome116',
   minify: true,
   legalComments: 'none',
-  plugins: [stubBasisWasm],
+  plugins: [stubBasisWasm, stubSiteReader],
   // Dynamic imports on Node-only code paths (glTF-Transform's file IO, the
   // Basis glue's Node loader); never reached in the browser.
   external: ['module', 'node:fs', 'node:path'],

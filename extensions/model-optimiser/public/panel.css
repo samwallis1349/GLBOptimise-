@@ -141,6 +141,18 @@ button:disabled { opacity: 0.45; cursor: default; }
 .v-needs-work { color: var(--warn); }
 .v-not-ready { color: var(--bad); }
 #result ul { margin: 8px 0 0; padding-left: 16px; color: var(--accent); font-size: 11px; }
+#result ul.checks { list-style: none; padding: 0; display: grid; gap: 4px; }
+#result ul.checks li { padding-left: 16px; text-indent: -16px; color: var(--text); }
+#result ul.checks li::before { display: inline-block; width: 16px; text-indent: 0; content: '•'; }
+#result ul.checks .ok::before { content: '✓'; color: var(--ok); }
+#result ul.checks .warn::before, #result ul.checks .warning::before { content: '!'; color: var(--warn); font-weight: 700; }
+#result ul.checks .error::before, #result ul.checks .bad::before { content: '✕'; color: var(--bad); }
+#result ul.checks .info::before { content: 'i'; color: var(--muted); font-style: italic; }
+#result .verdict { margin: 0 0 4px; font-weight: 700; }
+#result .verdict.better { color: var(--ok); }
+#result .verdict.worse { color: var(--bad); }
+#result .verdict + .small { margin-bottom: 8px; }
+.drop--small { margin-top: 8px; padding: 10px; }
 #result .btn { display: block; width: 100%; margin-top: 10px; }
 
 footer {
