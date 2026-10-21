@@ -35,7 +35,7 @@ export const EXPORT_FORMATS = [
   { id: 'glb', label: 'GLB', enabled: true },
   { id: 'gltf', label: 'glTF', enabled: true, note: 'Zipped .gltf with embedded data' },
   { id: 'obj', label: 'OBJ', enabled: true, note: 'Static mesh + MTL, no animation' },
-  { id: 'fbx', label: 'FBX', enabled: false, note: 'FBX export is not available in the browser yet' },
+  { id: 'fbx', label: 'FBX', enabled: true, note: 'Binary FBX 7.4: meshes, materials, embedded textures, rigs and animation' },
 ];
 
 export const SNAP_OPTIONS = {

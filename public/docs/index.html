@@ -113,7 +113,7 @@ td code,p code{font:12px var(--mono);color:var(--accent-hi)}
 .faq summary::before{content:"+ ";color:var(--muted)}
 .faq details[open] summary::before{content:"– "}
 .faq p{margin:8px 0 0;color:var(--muted);max-width:75ch}
-.hero{display:grid;grid-template-columns:1.05fr .95fr;gap:28px;align-items:center;margin:8px 0 6px}
+.hero{display:grid;grid-template-columns:1fr;gap:28px;align-items:center;margin:8px 0 6px}
 .hero h1{font-size:clamp(38px,6.4vw,64px)}
 .cta{display:flex;gap:10px;flex-wrap:wrap;margin-top:22px}
 .btn{display:inline-flex;align-items:center;gap:8px;font:700 14px var(--body);border-radius:12px;padding:13px 20px;text-decoration:none;border:1px solid var(--line2);color:var(--ink);background:var(--tile)}
@@ -121,11 +121,8 @@ td code,p code{font:12px var(--mono);color:var(--accent-hi)}
 .btn small{font:500 12px var(--body);opacity:.75}
 .trust{display:flex;gap:16px;flex-wrap:wrap;margin-top:16px;font-size:12.5px;color:var(--muted)}
 .trust span::before{content:"✓ ";color:var(--ok);font-weight:700}
-.hero-art{position:relative;margin:0;aspect-ratio:1;border-radius:22px;overflow:hidden;border:1px solid var(--line);background:radial-gradient(circle at 50% 42%,#1d2026 0%,#0B0C0E 68%)}
+.hero-art{position:relative;margin:0;aspect-ratio:1200/640;border-radius:22px;overflow:hidden;border:1px solid var(--line);background:radial-gradient(circle at 50% 42%,#1d2026 0%,#0B0C0E 68%)}
 .hero-art img{width:100%;height:100%;object-fit:cover;display:block}
-.chipstat{position:absolute;background:rgba(11,12,14,.82);backdrop-filter:blur(8px);border:1px solid var(--line2);border-radius:12px;padding:9px 12px;font-size:11.5px;color:var(--muted);line-height:1.35}
-.chipstat b{display:block;font:800 17px var(--display);color:var(--ink)}
-.chipstat b i{font-style:normal;color:var(--ok);font-size:13px;margin-left:4px}
 .check-shot{display:block;width:100%;height:auto;border-radius:14px;margin:14px 0}
 .banner{margin-top:18px;border-radius:20px;padding:34px 24px;text-align:center;border:1px solid var(--line2);background:radial-gradient(ellipse at 50% 0%,#23262d 0%,#111214 70%)}
 .banner h2{font:800 clamp(24px,4vw,34px) var(--display);margin:0 0 8px}
@@ -133,7 +130,7 @@ td code,p code{font:12px var(--mono);color:var(--accent-hi)}
 .banner .cta{justify-content:center}
 @media (max-width:860px){
   .hero{grid-template-columns:1fr}
-  .hero-art{max-width:460px;width:100%;margin:0 auto}
+  .hero-art{width:100%}
 }
 @media (max-width:760px){
   .flow{grid-template-columns:1fr 1fr}
@@ -164,9 +161,7 @@ td code,p code{font:12px var(--mono);color:var(--accent-hi)}
       <div class="trust"><span>Free key in one click</span><span>No card needed</span><span>Files never stored</span></div>
     </div>
     <figure class="hero-art">
-      <img src="/docs/img/gecko-after.webp" width="720" height="720" alt="A cartoon gecko character in a Hawaiian shirt, after the API cut it to a quarter of its triangles" fetchpriority="high">
-      <div class="chipstat" style="top:16px;left:16px"><b>21,781<i>−74%</i></b>triangles, from 83,701</div>
-      <div class="chipstat" style="bottom:16px;right:16px"><b>4.3 MB<i>−70%</i></b>file size, from 14.2 MB</div>
+      <img src="/images/api-poster.svg" width="1200" height="640" alt="One API request turns a heavy 3D model into a low-poly, game-ready version with LODs, for phones, Quest and the web, plus every app icon size" fetchpriority="high">
     </figure>
   </header>
 

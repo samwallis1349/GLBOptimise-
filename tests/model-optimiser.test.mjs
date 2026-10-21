@@ -6,7 +6,7 @@ import { sphereGlb } from './helpers/apiFixtures.mjs';
 import { pipelineIO, skinnedCharacter } from './helpers/pipelineFixtures.mjs';
 import { runTool, TOOL_IDS } from '../extensions/model-optimiser/src/engine.js';
 import { activateKey, isUnlocked, revalidate, SITE_TOOL } from '../extensions/model-optimiser/src/licensing.js';
-import { fmtCountdown, msUntilReset, runsUsed, spendRun, utcDay } from '../extensions/model-optimiser/src/quota.js';
+import { runsUsed, spendRun } from '../extensions/model-optimiser/src/quota.js';
 import { EDITIONS } from '../extensions/model-optimiser/editions.js';
 import { LICENSE_PRODUCT_ID, LICENSE_STORE_ID } from '../src/shared/config/billing.js';
 import { SINGLE_TOOL_PRODUCT_ID } from '../src/shared/config/toolProducts.js';
@@ -92,7 +92,7 @@ function fakeServers({ product, bound = null, valid = true }) {
     if (String(url).endsWith('/activate')) {
       return Response.json({ activated: true, instance: { id: 'inst-1' }, meta: { store_id: LICENSE_STORE_ID, product_id: product } });
     }
-    if (String(url).endsWith('/validate')) return Response.json({ valid }, { status: valid ? 200 : 404 });
+    if (String(url).endsWith('/validate')) return Response.json({ valid, meta: { store_id: LICENSE_STORE_ID, product_id: product } }, { status: valid ? 200 : 404 });
     if (String(url).endsWith('/deactivate')) return Response.json({ deactivated: true });
     if (String(url).endsWith('/api/tool-binding')) {
       const { toolId } = JSON.parse(init.body);
@@ -125,13 +125,19 @@ test('Model Optimiser: All Access unlocks everything; a £5 key unlocks the tab 
   assert.equal(elsewhere.license.scope, 'reduce-polys');
   assert.ok(isUnlocked('reduce', [elsewhere.license]));
   assert.ok(!isUnlocked('compress', [elsewhere.license]));
+
+  // In an extension one 99p key unlocks every tool it has.
+  const inspector = ['inspect', 'rig', 'animations', 'compare'];
+  const rig = await activateKey('KEY-RIG', 'rig', fakeServers({ product: SINGLE_TOOL_PRODUCT_ID }));
+  for (const tool of inspector) assert.ok(isUnlocked(tool, [rig.license], new Set(['inspect']), inspector), tool);
+  assert.ok(!isUnlocked('reduce', [rig.license], new Set(['check']), ['check', 'reduce']), 'but not another extension');
 });
 
 test('Model Optimiser: foreign keys are refused and released; refunded keys drop out', async () => {
   const servers = fakeServers({ product: 999 });
   const foreign = await activateKey('KEY-OTHER', 'reduce', servers);
   assert.equal(foreign.ok, false);
-  assert.ok(servers.calls.some((u) => u.endsWith('/deactivate')), 'activation slot is given back');
+  assert.ok(!servers.calls.some((u) => u.endsWith('/activate')), 'extensions never use up a device slot');
 
   const license = { key: 'K', instanceId: 'i', scope: 'all' };
   assert.equal((await revalidate([license], fakeServers({ product: 0, valid: false }))).length, 0);
@@ -145,7 +151,7 @@ test('editions: each has valid tools, and the store description fits', async () 
   assert.deepEqual(EDITIONS['reduce-polys'].tools, ['check', 'reduce']);
   assert.ok(!allFree(EDITIONS['reduce-polys']), 'Chrome: Reduce is paid');
   assert.ok(!allFree(EDITIONS['reduce-polys-edge']), 'Edge: Reduce is paid');
-  assert.equal(EDITIONS['reduce-polys-edge'].price, '£3');
+  assert.ok(Object.values(EDITIONS).every((e) => !e.price && !e.checkoutUrl), 'every edition sells through the shared 99p product');
   for (const [id, e] of Object.entries(EDITIONS)) {
     assert.ok(e.tools.every((t) => TOOL_IDS.includes(t)), id);
     assert.ok(e.tools.includes(e.firstTool), id);
@@ -166,24 +172,26 @@ test('the Add to Chrome bar stays hidden until a store URL is set', async () => 
   CHROME_EXTENSIONS['reduce-polys'].url = saved;
 });
 
-test('Model Optimiser: free daily runs reset at midnight UTC', async () => {
-  const data = {};
-  const storage = { get: async (key) => ({ [key]: data[key] }), set: async (items) => Object.assign(data, items) };
-  const evening = Date.UTC(2026, 9, 13, 23, 59, 59);
-  const nextMorning = Date.UTC(2026, 9, 14, 0, 0, 1);
+test('Model Optimiser: 10 free runs in all, and they never come back', async () => {
+  const area = () => {
+    const data = {};
+    return { data, get: async (key) => ({ [key]: data[key] }), set: async (items) => Object.assign(data, items) };
+  };
+  const local = area();
+  const sync = area();
+  assert.equal(await runsUsed(local, sync), 0);
+  assert.equal(await spendRun(local, sync), 1);
+  assert.equal(await spendRun(local, sync), 2);
+  assert.equal(sync.data.freeRunsUsed, 2);
 
-  assert.equal(utcDay(evening), '2026-10-13');
-  assert.equal(await runsUsed(storage, evening), 0);
-  assert.equal(await spendRun(storage, evening), 1);
-  assert.equal(await spendRun(storage, evening), 2);
-  assert.deepEqual(data.quota, { dailyRunsCount: 2, lastResetDay: '2026-10-13' });
-  assert.equal(await runsUsed(storage, nextMorning), 0);
-  assert.equal(await spendRun(storage, nextMorning), 1);
+  // Reinstalling clears local storage, but sync still remembers.
+  const reinstalled = area();
+  assert.equal(await runsUsed(reinstalled, sync), 2);
+  assert.equal(await spendRun(reinstalled, sync), 3);
 
-  assert.equal(msUntilReset(evening), 1000);
-  assert.equal(fmtCountdown(msUntilReset(evening)), '00:00:01');
-  assert.equal(fmtCountdown(msUntilReset(Date.UTC(2026, 9, 13, 0, 0, 0))), '24:00:00');
-  assert.equal(fmtCountdown(5 * 3600_000 + 7 * 60_000 + 9_500), '05:07:10');
+  // Sync unavailable: local still counts.
+  const broken = { get: async () => { throw new Error('sync off'); }, set: async () => { throw new Error('sync off'); } };
+  assert.equal(await spendRun(local, broken), 3);
 
-  for (const edition of Object.values(EDITIONS)) assert.equal(edition.dailyFree, 5);
+  for (const edition of Object.values(EDITIONS)) assert.equal(edition.freeRuns, 10);
 });

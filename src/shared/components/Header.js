@@ -7,8 +7,10 @@ import { openApiPanel } from './ApiLaunchModal.js';
 
 const NAV_LINKS = [
   { label: 'Tools', path: '/tools' },
+  { label: '2D & Iso', path: '/2d-games' },
   { label: 'About', path: '/about' },
   { label: 'Pricing', path: '/pricing' },
+  { label: 'Media', path: '/media' },
 ];
 
 /** Renders the single shared Asset Bench header, kept in sync with the router. */

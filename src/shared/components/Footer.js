@@ -5,6 +5,7 @@ import { openPrivacyChoices } from './ConsentBanner.js';
 /** Site-wide links: browsing first, then the trust/legal pages. Plain links, so they work without the router. */
 const FOOTER_LINKS = [
   { label: 'Tools', href: '/tools' },
+  { label: '2D & Iso Tools', href: '/2d-games' },
   { label: 'About', href: '/about' },
   { label: 'Pricing', href: '/pricing' },
   { label: 'API', href: '/docs/' },

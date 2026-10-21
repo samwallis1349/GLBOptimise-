@@ -233,6 +233,37 @@ export const TOOL_GUIDES = {
     ],
   },
 
+  'model-to-iso-sprites': {
+    heading: 'How to turn a 3D model into isometric game sprites',
+    intro: [
+      'Model to Iso Sprites renders a GLB, glTF or FBX model with a true 2:1 isometric camera (45° turn, atan(½) tilt) at a fixed scale, so every character, prop and building you make with the same preset matches on the grid.',
+      'Every frame shares one base point: the pixel that sits on the tile centre. You get a sprite sheet PNG, a JSON atlas with frames, anchors and an animations index, and optionally every frame as its own PNG in a ZIP. Everything runs in your browser.',
+    ],
+    steps: [
+      'Drop a model (or try the sample robot) and check its height in metres.',
+      'Pick a project preset (64, 128 or 256 px tiles) and 8, 4 or 1 directions.',
+      'Tick the animations to include, pick 8, 12 or 24 fps and keep "Play in place" on for walk and run cycles.',
+      'Choose a style (clean outline, soft, or pixel art), check the preview next to the reference person and crate, then make the sprites.',
+    ],
+    faqs: [
+      {
+        q: 'Why do my sprites from different models line up?',
+        a: 'The camera angle and the pixels per metre come from the project preset, not from the model, and the base point is always the tile centre under the model. Use the same preset for every asset in a game.',
+      },
+      {
+        q: 'What does loop-safe mean?',
+        a: 'The last frame of a looping clip is the same pose as the first. Loop-safe leaves it out so the animation does not stutter when it wraps round.',
+      },
+      {
+        q: 'Which directions do 4 directions give me?',
+        a: 'The four diagonals (NE, SE, SW, NW), because in 2:1 isometric those run along the tile grid. Your engine can mirror SE/SW for E/W if you need eight.',
+      },
+      {
+        q: 'How do I use the JSON in my engine?',
+        a: 'Each frame lists its rectangle on the sheet and its anchor (the base point in pixels) and pivot (the same point from 0 to 1). The animations block lists the frame names for each clip and direction, with the fps.',
+      },
+    ],
+  },
   'character-workshop': {
     heading: 'How to prepare a 3D character for a Three.js game',
     intro: [

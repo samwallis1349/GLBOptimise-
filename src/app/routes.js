@@ -6,7 +6,9 @@ import { ExtensionBar } from '../shared/components/ExtensionBar.js';
 import { ToolNews } from '../shared/components/ToolNews.js';
 import { ToolGuide } from '../shared/components/ToolGuide.js';
 import { SampleModel } from '../shared/components/SampleModel.js';
+import { FbxBridge } from '../shared/fbx/FbxBridge.js';
 import { ToolNextSteps } from '../shared/components/ToolNextSteps.js';
+import { ToolClip } from '../shared/components/ToolClip.js';
 import { AdSenseAd } from '../shared/components/AdSenseAd.js';
 import { initTrial } from '../services/TrialService.js';
 import { recordToolOpen } from '../services/UsageService.js';
@@ -36,6 +38,9 @@ async function mountTool(tool, container, params) {
   if (GATED_STATUSES.has(tool.status)) recordToolOpen(tool.id);
   const mod = await import(`../tools/${tool.id}/index.js`);
   const result = await mod.mount(container, params);
+  // FBX in, GLB out: FBX files are converted before the tool sees them.
+  const fbx = FbxBridge(tool, container);
+  if (fbx) container.prepend(fbx);
   // No model to hand? Load the free Colossus into the tool (3D tools only).
   const sample = SampleModel(tool, container);
   if (sample) container.prepend(sample);
@@ -43,6 +48,9 @@ async function mountTool(tool, container, params) {
   if (offer) container.prepend(offer);
   const extension = ExtensionBar(tool);
   if (extension) container.prepend(extension);
+  // The tool's 5-second clip, straight under it.
+  const clip = ToolClip(tool);
+  if (clip) container.append(clip);
   // The tools people run next, and the API for doing it in bulk.
   const next = ToolNextSteps(tool);
   if (next) container.append(next);
@@ -75,12 +83,20 @@ export const routes = [
     handler: page('/tools', () => import('../pages/tools/ToolsPage.js')),
   },
   {
+    path: '/2d-games',
+    handler: page('/2d-games', () => import('../pages/game-2d/Game2DPage.js')),
+  },
+  {
     path: '/about',
     handler: page('/about', () => import('../pages/about/AboutPage.js')),
   },
   {
     path: '/pricing',
     handler: page('/pricing', () => import('../pages/pricing/PricingPage.js')),
+  },
+  {
+    path: '/media',
+    handler: page('/media', () => import('../pages/media/MediaPage.js')),
   },
   {
     path: '/contact',

@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import worker from '../worker/index.js';
 import { TOOLS, POPULARITY_ORDER, getOrderedTools } from '../src/shared/config/tools.js';
-import { placeAtRowStart, placePairTogether, rankByUsage } from '../src/services/UsageService.js';
+import { placeAtRowStart, placePairTogether, rankByUsage, rotateRow } from '../src/services/UsageService.js';
 
 function memoryKv() {
   const store = new Map();
@@ -82,4 +82,21 @@ test('with no counts yet, grids follow POPULARITY_ORDER', () => {
   const live = getOrderedTools().filter((t) => t.status !== 'coming-soon').map((t) => t.id);
   assert.deepEqual(rankByUsage(getOrderedTools(), {}).map((t) => t.id).slice(0, live.length), live);
   assert.equal(getOrderedTools()[0].id, POPULARITY_ORDER[0]);
+});
+
+test('rotateRow: the leader stays first, the next row takes turns among the next twelve', () => {
+  const ranked = Array.from({ length: 20 }, (_, i) => ({ id: `t${i}` }));
+  const ids = (turn) => rotateRow(ranked, turn).map((t) => t.id);
+
+  for (const turn of [0, 1, 2, 3, 7]) {
+    const list = ids(turn);
+    assert.equal(list[0], 't0', 'the most-used tool keeps first place');
+    assert.equal(new Set(list).size, 20, 'every tool still appears once');
+    assert.deepEqual(list.slice(13), ranked.slice(13).map((t) => t.id), 'tools below the pool keep their ranks');
+  }
+  assert.deepEqual(ids(0).slice(1, 5), ['t1', 't2', 't3', 't4']);
+  assert.deepEqual(ids(1).slice(1, 5), ['t5', 't6', 't7', 't8']);
+  assert.deepEqual(ids(2).slice(1, 5), ['t9', 't10', 't11', 't12']);
+  assert.deepEqual(ids(3).slice(1, 5), ids(0).slice(1, 5), 'and round again');
+  assert.deepEqual(ids(1).slice(5, 9), ['t1', 't2', 't3', 't4'], 'the rest of the pool follows in rank order');
 });

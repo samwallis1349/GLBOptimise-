@@ -109,7 +109,6 @@ button:disabled { opacity: 0.45; cursor: default; }
   background: rgba(255, 181, 71, 0.05);
 }
 .lock .btn { display: block; margin-bottom: 6px; }
-.lock .reset { color: var(--muted); font-variant-numeric: tabular-nums; }
 .row { display: flex; gap: 6px; margin-top: 6px; }
 .row input {
   flex: 1;

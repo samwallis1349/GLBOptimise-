@@ -788,3 +788,106 @@ main {
     padding: 0 var(--space-4);
   }
 }
+
+/* Header: every label stays on one line. When space runs short, the current
+   tool's name truncates first, then the tagline hides, then gaps tighten
+   (the search box already hides under 980px, the nav under 720px). */
+.ab-header__inner,
+.ab-header__brand,
+.ab-header__nav,
+.ab-header__right,
+.ab-header__search {
+  white-space: nowrap;
+}
+
+.ab-header__brand,
+.ab-header__nav a,
+.ab-header__right {
+  flex-shrink: 0;
+}
+
+.ab-header__nav {
+  min-width: 0;
+}
+
+.ab-header__search {
+  min-width: 150px;
+}
+
+.ab-header__active-tool {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 14px;
+}
+
+@media (max-width: 1279px) {
+  .ab-header__tagline {
+    display: none !important;
+  }
+}
+
+@media (max-width: 1100px) {
+  .ab-header__inner {
+    gap: var(--space-4);
+  }
+
+  .ab-header__nav {
+    gap: var(--space-4);
+  }
+
+  .ab-header__active-tool {
+    display: none;
+  }
+}
+
+/* Homepage "Isometric game assets" (HomePage.js IsoAssetsBlock) */
+.home-iso {
+  margin-top: var(--space-6, 48px);
+}
+
+.home-iso__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.home-iso__eyebrow {
+  margin: 0 0 6px;
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.home-iso__title {
+  margin: 0;
+  font-size: clamp(24px, 3vw, 32px);
+  letter-spacing: -0.02em;
+}
+
+.home-iso__lede {
+  margin: 6px 0 0;
+  max-width: 60ch;
+  color: var(--text-secondary);
+}
+
+.home-iso__grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+@media (max-width: 900px) {
+  .home-iso__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  .home-iso__grid {
+    grid-template-columns: 1fr;
+  }
+}

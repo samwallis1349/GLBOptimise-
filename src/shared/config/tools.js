@@ -150,6 +150,28 @@ export const TOOLS = [
     category: 'build',
   },
   {
+    id: 'model-to-iso-sprites',
+    fbxInput: true,
+    name: 'Model to Iso Sprites',
+    route: '/model-to-iso-sprites',
+    description: 'Turn a 3D model into a finished isometric sprite set: fixed camera and scale, 8, 4 or 1 directions, animation frames, sheet + JSON.',
+    keywords: ['isometric', 'iso sprites', 'sprite sheet', '2:1', 'eight directions', 'animation frames', 'pixel art', 'base point', 'pivot', 'atlas json', 'glb to sprites', 'fbx to sprites'],
+    icon: 'grid',
+    thumbnail: '/thumbnails/model-to-iso-sprites.webp',
+    seo: {
+      title: 'Model to Iso Sprites — GLB/FBX to 2:1 Isometric Sprite Sheet + JSON | Asset Bench',
+      description:
+        'Render a GLB or FBX model as a finished 2:1 isometric sprite set: one camera and scale for every asset, a fixed base point, 8/4/1 directions, loop-safe animation frames, outline and pixel-art styles, and a sprite sheet with JSON. Runs in your browser.',
+    },
+    features: [
+      { icon: 'camera', label: '8 views' },
+      { icon: 'play-circle', label: 'Clips' },
+      { icon: 'grid', label: 'Sheet + JSON' },
+    ],
+    status: 'beta',
+    category: 'build',
+  },
+  {
     id: 'model-to-isometric',
     name: 'Model to Isometric',
     route: '/model-to-isometric',
@@ -170,19 +192,41 @@ export const TOOLS = [
     status: 'available',
     category: 'build',
   },
+  {
+    id: 'iso-scene-builder',
+    name: 'Iso Scene Builder',
+    route: '/iso-scene-builder',
+    description: 'Keep a bank of isometric PNG objects, drag them onto a 2:1 grid and export the scene.',
+    keywords: ['isometric', 'iso', 'scene', 'level', 'map', 'tiles', 'tilemap', 'drag and drop', 'layout', 'sprites', 'diorama', '2.5d'],
+    icon: 'layers',
+    seo: {
+      title: 'Isometric Scene Builder — Drag & Drop Iso Objects | Asset Bench',
+      description:
+        'Build isometric scenes from your own PNG objects: a saved object bank, a 2:1 snapping grid, depth sorting, flip, scale and layers. Export a PNG, layout JSON or scene ZIP. Nothing is uploaded.',
+    },
+    features: [
+      { icon: 'layers', label: 'Object bank' },
+      { icon: 'grid', label: 'Snap to grid' },
+      { icon: 'image-down', label: 'PNG + JSON' },
+    ],
+    status: 'beta',
+    category: 'build',
+  },
   // ---------- Optimise (geometry, textures, animation) ----------
   {
     id: 'optimise-glb',
+    fbxInput: true,
+    fbxOutput: true,
     name: 'Optimise GLB',
     route: '/optimise-glb',
     description: 'Reduce model size while preserving important content.',
-    keywords: ['compress', 'shrink', 'draco', 'meshopt', 'file size'],
+    keywords: ['compress', 'shrink', 'draco', 'meshopt', 'file size', 'fbx'],
     icon: 'package-open',
     thumbnail: '/thumbnails/optimise-glb.webp',
     seo: {
-      title: 'Compress GLB Online — Draco, Meshopt & Textures | Asset Bench',
+      title: 'Compress GLB & FBX Online — Draco, Meshopt, Textures | Asset Bench',
       description:
-        'Compress GLB and glTF files in your browser: Draco or Meshopt geometry compression, texture downscaling and cleanup in one pass, with a before-and-after preview. Nothing is uploaded.',
+        'Compress GLB and glTF files in your browser: Draco or Meshopt geometry compression, texture downscaling and cleanup in one pass, with a before-and-after preview. Nothing is uploaded. Takes FBX too, converted to GLB in your browser.',
     },
     features: [
       { icon: 'shrink', label: 'Smaller' },
@@ -194,18 +238,19 @@ export const TOOLS = [
   },
   {
     id: 'asset-pipeline',
+    fbxInput: true,
     name: 'Asset Pipeline',
     route: '/asset-pipeline',
     description: 'Batch-optimise a whole folder of GLB / glTF: geometry, textures, LODs, validation and one ZIP out.',
-    keywords: ['batch', 'pipeline', 'folder', 'bulk', 'automate', 'optimise', 'lod', 'ktx2', 'texture compression', 'polygon reduction', 'unity', 'unreal', 'godot', 'three.js', 'mobile', 'vr', 'zip', 'manifest', 'report'],
+    keywords: ['batch', 'pipeline', 'folder', 'bulk', 'automate', 'optimise', 'lod', 'ktx2', 'texture compression', 'polygon reduction', 'unity', 'unreal', 'godot', 'three.js', 'mobile', 'vr', 'zip', 'manifest', 'report', 'fbx'],
     icon: 'layers',
     thumbnail: '/thumbnails/asset-pipeline.webp',
     // Wide art for the full-width headline card (2.5:1).
     banner: '/thumbnails/asset-pipeline-wide.webp',
     seo: {
-      title: 'Batch GLB Optimiser — LODs, KTX2 & Validation | Asset Bench',
+      title: 'Batch GLB & FBX Optimiser — LODs, KTX2, Validation | Asset Bench',
       description:
-        'Optimise a whole folder of GLB and glTF models at once: polygon reduction, texture resizing, KTX2 or WebP compression, LOD chains, budgets and validation, with one ZIP out.',
+        'Optimise a whole folder of GLB and glTF models at once: polygon reduction, texture resizing, KTX2 or WebP compression, LOD chains, budgets and validation, with one ZIP out. Takes FBX too, converted to GLB in your browser.',
     },
     features: [
       { icon: 'layers', label: 'Whole folders' },
@@ -217,16 +262,18 @@ export const TOOLS = [
   },
   {
     id: 'reduce-polys',
+    fbxInput: true,
+    fbxOutput: true,
     name: 'Reduce Polys',
     route: '/reduce-polys',
     description: 'Reduce geometry for realtime use.',
-    keywords: ['decimate', 'simplify', 'triangles', 'polygons', 'lod', 'mesh'],
+    keywords: ['decimate', 'simplify', 'triangles', 'polygons', 'lod', 'mesh', 'fbx'],
     icon: 'shrink',
     thumbnail: '/thumbnails/reduce-polys.webp',
     seo: {
-      title: 'Reduce Polygon Count of GLB Models Online | Asset Bench',
+      title: 'Reduce Polygon Count of GLB & FBX Models Online | Asset Bench',
       description:
-        'Lower the triangle count of GLB and glTF models while keeping UVs, normals and material edges intact. Presets or a custom target, wireframe preview, and nothing is uploaded.',
+        'Lower the triangle count of GLB and glTF models while keeping UVs, normals and material edges intact. Presets or a custom target, wireframe preview, and nothing is uploaded. Takes FBX too, converted to GLB in your browser.',
     },
     features: [
       { icon: 'shrink', label: 'Low tris' },
@@ -238,16 +285,17 @@ export const TOOLS = [
   },
   {
     id: 'compress-textures',
+    fbxInput: true,
     name: 'Compress Textures',
     route: '/compress-textures',
     description: 'Resize and compress model textures.',
-    keywords: ['ktx2', 'basis', 'jpeg', 'png', 'webp', 'image', 'resolution'],
+    keywords: ['ktx2', 'basis', 'jpeg', 'png', 'webp', 'image', 'resolution', 'fbx'],
     icon: 'image-down',
     thumbnail: '/thumbnails/compress-textures.webp',
     seo: {
-      title: 'Compress GLB Textures — KTX2, WebP, AVIF & JPEG | Asset Bench',
+      title: 'Compress GLB & FBX Textures — KTX2, WebP, AVIF | Asset Bench',
       description:
-        'Resize and re-encode the textures inside GLB and glTF models: 4K to 256, as KTX2 (ETC1S/UASTC), WebP, AVIF, JPEG or PNG. The quickest way to shrink a model, all in your browser.',
+        'Resize and re-encode the textures inside GLB and glTF models: 4K to 256, as KTX2 (ETC1S/UASTC), WebP, AVIF, JPEG or PNG. The quickest way to shrink a model, all in your browser. Takes FBX too, converted to GLB in your browser.',
     },
     features: [
       { icon: 'image-down', label: 'Smaller' },
@@ -283,16 +331,18 @@ export const TOOLS = [
   },
   {
     id: 'generate-lods',
+    fbxInput: true,
+    fbxOutput: true,
     name: 'Generate LODs',
     route: '/generate-lods',
     description: 'Create multiple Levels of Detail.',
-    keywords: ['lod', 'detail', 'distance', 'performance', 'mesh'],
+    keywords: ['lod', 'detail', 'distance', 'performance', 'mesh', 'fbx'],
     icon: 'layers',
     thumbnail: '/thumbnails/generate-lods.webp',
     seo: {
-      title: 'Generate LODs for GLB Models Online | Asset Bench',
+      title: 'Generate LODs for GLB & FBX Models Online | Asset Bench',
       description:
-        'Create LOD0–LOD3 levels of detail from one GLB or glTF model for Unity, Unreal and Three.js. Preview each level, then download one or all as a ZIP. Runs in your browser.',
+        'Create LOD0–LOD3 levels of detail from one GLB or glTF model for Unity, Unreal and Three.js. Preview each level, then download one or all as a ZIP. Runs in your browser. Takes FBX too, converted to GLB in your browser.',
     },
     features: [
       { icon: 'layers', label: 'Multi-LOD' },
@@ -305,16 +355,18 @@ export const TOOLS = [
 
   {
     id: 'strip-animations',
+    fbxInput: true,
+    fbxOutput: true,
     name: 'Strip Animations',
     route: '/strip-animations',
     description: 'Inspect and remove unwanted animation clips.',
-    keywords: ['clips', 'clean up', 'delete animation', 'rig', 'keyframes'],
+    keywords: ['clips', 'clean up', 'delete animation', 'rig', 'keyframes', 'fbx'],
     icon: 'film-off',
     thumbnail: '/thumbnails/strip-animations.webp',
     seo: {
-      title: 'Remove Animations from GLB — Delete Unused Clips | Asset Bench',
+      title: 'Remove Animations from GLB & FBX — Delete Clips | Asset Bench',
       description:
-        'See every animation clip in a GLB or glTF, remove the ones you don’t need, and spot empty or duplicate clips. Download a smaller model with only the animations you keep.',
+        'See every animation clip in a GLB or glTF, remove the ones you don’t need, and spot empty or duplicate clips. Download a smaller model with only the animations you keep. Takes FBX too, converted to GLB in your browser.',
     },
     features: [
       { icon: 'film-off', label: 'Cut clips' },
@@ -326,16 +378,18 @@ export const TOOLS = [
   },
   {
     id: 'animation-optimiser',
+    fbxInput: true,
+    fbxOutput: true,
     name: 'Animation Optimiser',
     route: '/animation-optimiser',
     description: 'Reduce keyframes and optimise animation data.',
-    keywords: ['keyframes', 'curve', 'compress animation', 'clips'],
+    keywords: ['keyframes', 'curve', 'compress animation', 'clips', 'fbx'],
     icon: 'activity',
     thumbnail: '/thumbnails/animation-optimiser.webp',
     seo: {
-      title: 'GLB Animation Optimiser — Reduce Keyframes | Asset Bench',
+      title: 'GLB & FBX Animation Optimiser — Reduce Keyframes | Asset Bench',
       description:
-        'Shrink GLB and glTF animation data by removing redundant keyframes, with a lossless mode and stronger presets. Compare before and after, and see how much each clip saves.',
+        'Shrink GLB and glTF animation data by removing redundant keyframes, with a lossless mode and stronger presets. Compare before and after, and see how much each clip saves. Takes FBX too, converted to GLB in your browser.',
     },
     features: [
       { icon: 'shrink', label: 'Fewer keys' },
@@ -459,16 +513,17 @@ export const TOOLS = [
   // ---------- Inspect & Preview ----------
   {
     id: 'inspect-glb',
+    fbxInput: true,
     name: 'Inspect GLB',
     route: '/inspect-glb',
     description: 'Explore every mesh, material, texture and byte in a GLB.',
-    keywords: ['inspect', 'debug', 'structure', 'validate', 'json', 'scene graph', 'hierarchy', 'wireframe', 'uv', 'check'],
+    keywords: ['inspect', 'debug', 'structure', 'validate', 'json', 'scene graph', 'hierarchy', 'wireframe', 'uv', 'check', 'fbx'],
     icon: 'search',
     thumbnail: '/thumbnails/inspect-glb.webp',
     seo: {
-      title: 'GLB Viewer & Inspector — See What Makes a GLB Big | Asset Bench',
+      title: 'GLB & FBX Viewer & Inspector — What Makes It Big | Asset Bench',
       description:
-        'Open a GLB or glTF and explore its scene tree, meshes, materials, textures, animations and size breakdown. Check Draco, Meshopt and KTX2 extensions. In your browser, no upload.',
+        'Open a GLB or glTF and explore its scene tree, meshes, materials, textures, animations and size breakdown. Check Draco, Meshopt and KTX2 extensions. In your browser, no upload. Takes FBX too, converted to GLB in your browser.',
     },
     features: [
       { icon: 'search', label: 'Structure' },
@@ -480,17 +535,18 @@ export const TOOLS = [
   },
   {
     id: 'mobile-ready-checker',
+    fbxInput: true,
     name: 'Mobile Ready Checker',
     route: '/mobile-ready-checker',
     description: 'Check whether your GLB is phone-ready, and see which tool fixes each problem.',
-    keywords: ['mobile', 'phone', 'performance', 'budget', 'vr', 'quest', 'draw calls', 'triangles', 'texture memory', 'check', 'game ready'],
+    keywords: ['mobile', 'phone', 'performance', 'budget', 'vr', 'quest', 'draw calls', 'triangles', 'texture memory', 'check', 'game ready', 'fbx'],
     icon: 'smartphone',
     thumbnail: '/thumbnails/mobile-ready-checker.webp',
     banner: '/thumbnails/mobile-ready-checker-wide.webp',
     seo: {
-      title: 'Mobile Ready Checker — GLB Poly & Texture Budgets | Asset Bench',
+      title: 'Mobile Ready Checker — GLB & FBX Poly Budgets | Asset Bench',
       description:
-        'Check a GLB against budgets for mobile games, standalone VR and web 3D viewers: triangles, texture memory and draw calls, with a score and a link to the tool that fixes each problem.',
+        'Check a GLB against budgets for mobile games, standalone VR and web 3D viewers: triangles, texture memory and draw calls, with a score and a link to the tool that fixes each problem. Takes FBX too, converted to GLB in your browser.',
     },
     cardTheme: 'blue',
     features: [
@@ -503,16 +559,17 @@ export const TOOLS = [
   },
   {
     id: 'asset-compare',
+    fbxInput: true,
     name: 'Asset Compare',
     route: '/asset-compare',
     description: 'Compare two models side by side, stat by stat.',
-    keywords: ['diff', 'before after', 'side by side', 'versus', 'regression', 'slider'],
+    keywords: ['diff', 'before after', 'side by side', 'versus', 'regression', 'slider', 'fbx'],
     icon: 'columns-2',
     thumbnail: '/thumbnails/asset-compare.webp',
     seo: {
-      title: 'Compare Two GLB Models — Side by Side & Stats | Asset Bench',
+      title: 'Compare Two GLB or FBX Models — Side by Side | Asset Bench',
       description:
-        'Compare two 3D models side by side or with a slider, with a stat-by-stat diff of triangles, textures, materials and animations. Check an optimised model against the original.',
+        'Compare two 3D models side by side or with a slider, with a stat-by-stat diff of triangles, textures, materials and animations. Check an optimised model against the original. Takes FBX too, converted to GLB in your browser.',
     },
     features: [
       { icon: 'columns-2', label: 'Compare' },
@@ -524,16 +581,17 @@ export const TOOLS = [
   },
   {
     id: 'asset-report',
+    fbxInput: true,
     name: 'Asset Report',
     route: '/asset-report',
     description: 'Audit a whole asset library with scores, budgets and CSV export.',
-    keywords: ['audit', 'batch', 'summary', 'export csv', 'score', 'budget', 'library', 'pdf'],
+    keywords: ['audit', 'batch', 'summary', 'export csv', 'score', 'budget', 'library', 'pdf', 'fbx'],
     icon: 'file-text',
     thumbnail: '/thumbnails/asset-report.webp',
     seo: {
-      title: '3D Asset Library Audit — Batch GLB Report & CSV | Asset Bench',
+      title: '3D Asset Library Audit — Batch GLB & FBX Report | Asset Bench',
       description:
-        'Audit a whole folder of GLB and glTF models: scores, platform budgets, errors and thumbnails for every asset. Export the report as CSV or JSON, or print it as a PDF.',
+        'Audit a whole folder of GLB and glTF models: scores, platform budgets, errors and thumbnails for every asset. Export the report as CSV or JSON, or print it as a PDF. Takes FBX too, converted to GLB in your browser.',
     },
     features: [
       { icon: 'file-text', label: 'Audit' },
@@ -546,16 +604,17 @@ export const TOOLS = [
 
   {
     id: 'rig-inspector',
+    fbxInput: true,
     name: 'Rig Inspector',
     route: '/rig-inspector',
     description: 'Inspect bones, weights and skinning.',
-    keywords: ['skeleton', 'joints', 'weights', 'skin', 'rigging'],
+    keywords: ['skeleton', 'joints', 'weights', 'skin', 'rigging', 'fbx'],
     icon: 'bone',
     thumbnail: '/thumbnails/rig-inspector.webp',
     seo: {
-      title: 'Rig Inspector — Check GLB Bones & Skin Weights | Asset Bench',
+      title: 'Rig Inspector — Check GLB & FBX Bones, Skin Weights | Asset Bench',
       description:
-        'Inspect the skeleton of a GLB or glTF: bone hierarchy, joint weights and skinning. Finds unweighted and misnormalised vertices and duplicate joint names before you ship.',
+        'Inspect the skeleton of a GLB or glTF: bone hierarchy, joint weights and skinning. Finds unweighted and misnormalised vertices and duplicate joint names before you ship. Takes FBX too, converted to GLB in your browser.',
     },
     features: [
       { icon: 'bone', label: 'Joints' },
@@ -567,16 +626,17 @@ export const TOOLS = [
   },
   {
     id: 'animation-inspector',
+    fbxInput: true,
     name: 'Animation Inspector',
     route: '/animation-inspector',
     description: 'View and analyse animation clips.',
-    keywords: ['clips', 'preview', 'playback', 'timeline'],
+    keywords: ['clips', 'preview', 'playback', 'timeline', 'fbx'],
     icon: 'play-circle',
     thumbnail: '/thumbnails/animation-inspector.webp',
     seo: {
-      title: 'GLB Animation Viewer — Clips, Curves & Loops | Asset Bench',
+      title: 'GLB & FBX Animation Viewer — Clips, Curves & Loops | Asset Bench',
       description:
-        'Play and scrub the animation clips in a GLB or glTF, view each node’s curves, and check whether clips loop cleanly. Flags empty tracks and other common animation issues.',
+        'Play and scrub the animation clips in a GLB or glTF, view each node’s curves, and check whether clips loop cleanly. Flags empty tracks and other common animation issues. Takes FBX too, converted to GLB in your browser.',
     },
     features: [
       { icon: 'play-circle', label: 'Preview' },
@@ -588,15 +648,16 @@ export const TOOLS = [
   },
   {
     id: 'character-workshop',
+    fbxInput: true,
     name: 'Character Workshop',
     route: '/character-workshop',
     description: 'Import a GLB or FBX character, preview and check its animations and rig, then export a game-ready GLB.',
-    keywords: ['character', 'fbx to glb', 'mixamo', 'rig', 'skeleton', 'animation', 'idle', 'walk', 'run', 'three.js', 'isometric', 'npc', 'agent'],
+    keywords: ['character', 'fbx to glb', 'mixamo', 'rig', 'skeleton', 'animation', 'idle', 'walk', 'run', 'three.js', 'isometric', 'npc', 'agent', 'fbx'],
     icon: 'bone',
     thumbnail: '/thumbnails/character-workshop.webp',
     banner: '/thumbnails/character-workshop-wide.webp',
     seo: {
-      title: 'Character Workshop — Preview, Validate & Export GLB Characters | Asset Bench',
+      title: 'Character Workshop — Preview & Export GLB, FBX Characters | Asset Bench',
       description:
         'Import a GLB, glTF or FBX character, play and scrub its animation clips, check the rig, materials and scale, then export a GLB with the clips you choose. Runs in your browser.',
     },
@@ -627,6 +688,8 @@ export const TOOLS = [
       { icon: 'grid', label: 'Batch' },
     ],
     status: 'available',
+    // Free for everyone: no paywall or 99p offer, and a "Free tool" ribbon on its card.
+    free: true,
     category: 'inspect',
   },
 ];
@@ -662,6 +725,8 @@ export const POPULARITY_ORDER = [
   'thumbnail-maker',
   'asset-report',
   'model-to-isometric',
+  'model-to-iso-sprites',
+  'iso-scene-builder',
   'inspect-glb',
   'model-splitter',
   'optimise-glb',
@@ -689,3 +754,22 @@ export function getOrderedTools() {
   return [...TOOLS].sort((a, b) => rank(a) - rank(b));
 }
 
+
+/**
+ * Tool groups for the /2d-games page, in display order. A tool can sit in
+ * more than one group; ids missing from TOOLS are skipped.
+ */
+export const GAME_2D_GROUPS = [
+  {
+    id: 'isometric',
+    label: 'Isometric game assets',
+    description: 'Turn 3D models into matching 2:1 iso sprite sets, eight directions and animated, then lay them out on an isometric grid.',
+    tools: ['model-to-iso-sprites', 'model-to-isometric', 'iso-scene-builder'],
+  },
+  {
+    id: '2d',
+    label: '2D game tools',
+    description: 'Sprite sheets, transparent frames, clean line art, UI icons and textures.',
+    tools: ['alpha-cutout', 'thumbnail-maker', 'line-studio', 'app-icon-generator', 'texture-resizer'],
+  },
+];

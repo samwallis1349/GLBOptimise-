@@ -1,6 +1,7 @@
 import { getOrderedTools } from '../../shared/config/tools.js';
 import { ToolCard } from '../../shared/components/ToolCard.js';
-import { cachedUsageCounts, fetchUsageCounts, rankByUsage } from '../../services/UsageService.js';
+import { WinnerCard } from '../../shared/components/WinnerCard.js';
+import { cachedUsageCounts, fetchUsageCounts, nextRowTurn, rankByUsage, rotateRow } from '../../services/UsageService.js';
 
 export function render(container) {
   container.innerHTML = '';
@@ -19,11 +20,12 @@ export function render(container) {
 
   const grid = document.createElement('div');
   grid.className = 'tool-grid';
+  // As on the homepage: the most-used tool wins the full-width first card and
+  // the row under it takes turns among the next twelve.
+  const turn = nextRowTurn();
   const fill = (counts) => {
-    // Character Workshop takes the full-width card, as on the homepage;
-    // everything after it is ranked by site-wide usage.
-    const ranked = rankByUsage(getOrderedTools(), counts, ['character-workshop']);
-    grid.replaceChildren(...ranked.map((tool, i) => ToolCard(tool, { index: i + 1, headline: i === 0 })));
+    const ranked = rotateRow(rankByUsage(getOrderedTools(), counts), turn);
+    grid.replaceChildren(...ranked.map((tool, i) => (i === 0 ? WinnerCard(tool) : ToolCard(tool, { index: i + 1 }))));
   };
   fill(cachedUsageCounts());
   fetchUsageCounts().then((counts) => grid.isConnected && fill(counts));

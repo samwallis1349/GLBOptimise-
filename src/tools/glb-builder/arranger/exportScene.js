@@ -65,7 +65,7 @@ function safeBase(name) {
 
 /**
  * @param {object[]} instances scene instances ({ object, name, source })
- * @param {{ format: 'glb'|'gltf'|'obj', ground?: { size: number, material: THREE.Material }, name: string, prefixClips?: boolean }} options
+ * @param {{ format: 'glb'|'gltf'|'obj'|'fbx', ground?: { size: number, material: THREE.Material }, name: string, prefixClips?: boolean }} options
  * @returns {Promise<{ blob: Blob, filename: string, lost: string[] }>}
  */
 export async function exportInstances(instances, { format, ground, name, prefixClips = false }) {
@@ -81,6 +81,14 @@ export async function exportInstances(instances, { format, ground, name, prefixC
         maxTextureSize: ARRANGER_CONFIG.maxExportTextureSize,
       });
       return { blob: new Blob([buffer], { type: 'model/gltf-binary' }), filename: `${base}.glb`, lost: [] };
+    }
+    if (format === 'fbx') {
+      // FBX via the GLB the builder would export (shared/fbx): meshes, textures, rigs and clips.
+      const buffer = await new GLTFExporter().parseAsync(root, { binary: true, animations: clips, onlyVisible: true, embedImages: true, maxTextureSize: ARRANGER_CONFIG.maxExportTextureSize });
+      const { glbBytesToFbx } = await import('../../../shared/fbx/glbBytesToFbx.js');
+      const { bytes, notes } = await glbBytesToFbx(buffer);
+      const lost = notes.some((n) => /Morph/.test(n)) ? ['morph targets'] : [];
+      return { blob: new Blob([bytes], { type: 'application/octet-stream' }), filename: `${base}.fbx`, lost };
     }
     return await exportModel(root, { format, base, clips, textureCount });
   } finally {

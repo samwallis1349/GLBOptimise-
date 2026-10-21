@@ -33,7 +33,7 @@ Inspect GLB models in your browser: free health check, rig and animation checks,
 > Your models are checked on your own computer. Nothing is uploaded. It works offline once unlocked.
 >
 > PRICE
-> The health check is free. Rig, Anims and Compare give you 5 free runs every day between them. Unlimited is a 99p one-off unlock per tool, no subscription. Already have AssetBench All Access? Your key unlocks everything.
+> The health check is free. Rig, Anims and Compare give you 10 free runs between them. After that, one 99p payment unlocks all three for good, no subscription. Already have AssetBench All Access? Your key unlocks everything.
 >
 > GOOD FOR
 > Game developers, 3D artists and anyone checking models before they go into Unity, Unreal, Godot, Roblox or the web.
@@ -62,7 +62,7 @@ Inspect GLB 3D models: a health check of the model, its rig and its animations, 
 **Permission justifications**
 
 - `sidePanel`: the tool's interface is a side panel, so it stays open while the user picks a file.
-- `storage`: remembers the user's licence key, last settings and how many of today's free runs they've used, on their computer.
+- `storage`: remembers the user's licence key, last settings and how many free runs they've used, on their computer (the count also goes in the browser's own sync storage, so a reinstall doesn't reset it).
 - Host `api.lemonsqueezy.com`: checks the licence key the user enters with our payment provider.
 - Host `www.assetbench.co.uk`: links a 99p key to the tool it was bought for (same as our website).
 

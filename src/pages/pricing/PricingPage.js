@@ -18,6 +18,7 @@ import { TOOL_DEVICE_LIMIT, TOOL_PRICE_LABEL, toolProduct } from '../../shared/c
 import { LicenseActivationForm } from '../../shared/components/LicenseActivationForm.js';
 import { splashHero } from '../../shared/components/WelcomeOffer.js';
 import { refundNoticeHtml } from '../../shared/components/RefundNotice.js';
+import { PlanCard, monthlyPriceHtml } from '../../shared/components/PlanCard.js';
 
 function maskKey(key) {
   return key.length > 8 ? `${key.slice(0, 4)}…${key.slice(-4)}` : key;
@@ -97,49 +98,28 @@ function toolKeysPanel(licenses, onChange) {
   return panel;
 }
 
-/** One plan card (the plan-card style: title + badge, allowance box, price, CTA, checklist). */
-function planCard({ title, badge, lede, head, lines = [], price, cta, ctaHref, renews, features, featured = false }) {
-  const card = document.createElement('div');
-  card.className = `panel plan-card${featured ? ' plan-card--featured' : ''}`;
-  card.innerHTML = `
-    ${featured ? '<span class="plan-card__ribbon">Most popular</span>' : ''}
-    <h2 class="plan-card__title">${title}${badge ? ` <span class="plan-card__badge">${badge}</span>` : ''}</h2>
-    <p class="plan-card__lede">${lede}</p>
-    <div class="plan-card__credits">
-      <span class="plan-card__spark" aria-hidden="true">✦</span>
-      <div>
-        <strong>${head}</strong>
-        ${lines.map((l) => `<span>${l}</span>`).join('')}
-      </div>
-    </div>
-    <p class="plan-card__price">${price}</p>
-    <a class="plan-card__cta" href="${ctaHref}" target="_blank" rel="noopener">${cta}</a>
-    <p class="plan-card__renews">${renews}</p>
-    <ul class="plan-card__features">${features.map((f) => `<li>${f}</li>`).join('')}</ul>
-  `;
-  return card;
-}
-
-/** "£10/month" -> "<b>£10</b> per month" */
-function priceHtml(label) {
-  const [amount, per] = label.split('/');
-  return `<b>${amount}</b> per ${per}`;
-}
-
 /** Single tool: pick a tool, buy just that one. Hidden until a single-tool checkout is set up. */
 function singleToolCard() {
   const tools = TOOLS.filter((t) => t.status === 'available' || t.status === 'beta').filter((t) => toolProduct(t.id));
   if (!tools.length) return null;
-  const card = planCard({
+  const card = PlanCard({
     title: 'Single tool',
     lede: 'For when you only need one job done, again and again',
     head: 'One tool, unlocked for good',
-    lines: [`= pick any of ${tools.length} tools`, `~ on your phone and computer (${TOOL_DEVICE_LIMIT} devices)`],
-    price: `<b>${TOOL_PRICE_LABEL}</b> once`,
+    lines: [`= pick any of ${tools.length} tools`, `= on your phone and computer (${TOOL_DEVICE_LIMIT} devices)`],
+    price: `<b>${TOOL_PRICE_LABEL}</b> once, no subscription`,
     cta: 'Unlock this tool',
     ctaHref: toolProduct(tools[0].id).checkoutUrl,
-    renews: 'Pay once. No subscription.',
-    features: ['Unlimited use of that tool', 'Works in your browser, files stay on your device', 'Upgrade to All Access any time'],
+    renews: 'Pay once. Yours to keep.',
+    features: [
+      'Unlimited use of that tool',
+      'Runs in your browser, files stay on your device',
+      'Unlocks its browser extension too, if it has one',
+      'Upgrade to All Access any time',
+      { text: 'Every other tool', off: true },
+      { text: 'Cloud API operations', off: true },
+    ],
+    tone: 'plain',
   });
   const select = document.createElement('select');
   select.className = 'plan-card__select';
@@ -155,36 +135,44 @@ function singleToolCard() {
 function allAccessCard() {
   const free = isFreePeriodActive();
   const days = freeDaysRemaining();
-  const card = planCard({
+  const card = PlanCard({
     title: free ? `${TRIAL_DAYS}-day free All Access` : 'All Access',
     badge: 'API',
     lede: 'For anyone preparing 3D, image and app assets, in the browser or from code',
     head: 'Every tool + 1,000 API operations/month',
-    lines: [`= ${TOOLS.length} browser tools, unrestricted`, '~ one licence key for the tools and the API'],
-    price: free ? `<b>£0</b> for ${days} more day${days === 1 ? '' : 's'}, then ${PRICE_LABEL}` : priceHtml(PRICE_LABEL),
-    cta: free ? 'Get All Access' : 'Unlock every tool',
+    lines: [`= ${TOOLS.length} browser tools, unrestricted`, '= one licence key for the tools and the API'],
+    price: free ? `<b class="is-free">£0</b>for ${days} more day${days === 1 ? '' : 's'}, then ${PRICE_LABEL}` : monthlyPriceHtml(PRICE_LABEL),
+    cta: free ? 'Get All Access' : 'Get All Access',
     ctaHref: CHECKOUT_URL,
-    renews: free ? `Your trial needs no card. Subscribe any time for ${PRICE_LABEL}.` : `${PRICE_LABEL}, cancel any time`,
+    renews: free ? `No card needed for the trial. Subscribe any time for ${PRICE_LABEL}.` : `${PRICE_LABEL}, cancel any time`,
     features: [
       `Every current and future browser tool (${TOOLS.length} today)`,
-      '1,000 Cloud API operations/month, using the same key',
+      '1,000 Cloud API operations/month, same key',
+      'Every browser extension unlocked, same key (extensions do not use up a machine)',
       `One key on up to ${LICENSE_MACHINE_LIMIT} machines`,
-      'Cancel any time. If a payment fails, it cancels itself: never left owing',
+      'Cancel any time; a failed payment cancels it, never owing',
+      { text: `Team key for ${TEAM_MACHINES} machines`, off: true },
     ],
-    featured: true,
+    tone: 'amber',
   });
+  const title = card.querySelector('.plan-card__title');
+  title.insertAdjacentHTML('beforeend', '<span class="plan-card__badge plan-card__badge--star">★ Recommended</span>');
   return card;
 }
 
 /** Team: every tool + the API's Studio allowance on one key (billing.js TEAM_*). */
 function teamCard() {
-  return planCard({
+  // Per-machine cost vs All Access, worked out from the real prices.
+  const perAll = parseFloat(PRICE_LABEL.replace(/[^\d.]/g, '')) / LICENSE_MACHINE_LIMIT;
+  const perTeam = parseFloat(TEAM_PRICE_LABEL.replace(/[^\d.]/g, '')) / TEAM_MACHINES;
+  const saving = Math.floor((1 - perTeam / perAll) * 100);
+  return PlanCard({
     title: 'Team',
     badge: 'API',
     lede: 'For studios and pipelines: one key for the whole team',
     head: 'Every tool + 5,000 API operations/month',
-    lines: [`= one key on up to ${TEAM_MACHINES} machines`, '~ batch whole folders from your own code'],
-    price: priceHtml(TEAM_PRICE_LABEL),
+    lines: [`= one key on up to ${TEAM_MACHINES} machines`, '= batch whole folders from your own code'],
+    price: monthlyPriceHtml(TEAM_PRICE_LABEL),
     cta: 'Get Team',
     ctaHref: TEAM_CHECKOUT_URL,
     renews: `${TEAM_PRICE_LABEL}, cancel any time`,
@@ -193,15 +181,18 @@ function teamCard() {
       `${TEAM_MACHINES} machines on one key`,
       '5,000 Cloud API operations/month, bigger uploads',
       '<a href="/docs/">Read the API docs</a>',
+      saving > 0 ? { text: 'Lowest cost per machine', tag: `${saving}% less` } : 'Lowest cost per machine',
     ],
+    tone: 'copper',
   });
 }
 
 const FAQ = [
   ['Can I cancel?', `Yes, any time: <a href="${MY_ORDERS_URL}" target="_blank" rel="noopener">cancel from Lemon Squeezy My Orders</a> using the email you bought with. If a payment fails, the subscription cancels itself, so you are never left owing.`],
   ['What happens to my files?', 'The browser tools run on your own device: your models and images are never uploaded. Only the Cloud API receives files, and only the ones you send it.'],
-  ['What happens when the free trial ends?', `Every tool is free for ${TRIAL_DAYS} days with no card. After that the tools lock until you subscribe or unlock a single tool.`],
+  ['What happens when the free trial ends?', `Every tool is free for ${TRIAL_DAYS} days with no card. After that the tools lock until you subscribe or unlock a single tool. Thumbnail Maker stays free for everyone.`],
   ['Single tool or All Access?', `If you only ever need one tool, ${TOOL_PRICE_LABEL} once is cheapest. If you use two or more, or want the API, All Access is better value.`],
+  ['Do the browser extensions need a separate payment?', `No. All Access unlocks every Asset Bench extension with the same key, and extensions don't use up any of your key's devices. Without it, each extension gives 10 free uses, then ${TOOL_PRICE_LABEL} once unlocks everything in that extension.`],
   ['Can my team share a key?', `One All Access key works on ${LICENSE_MACHINE_LIMIT} machines. The Team plan covers up to ${TEAM_MACHINES} machines on one key.`],
   ['I lost my key.', `Find it any time at <a href="${MY_ORDERS_URL}" target="_blank" rel="noopener">Lemon Squeezy My Orders</a> using the email you bought with.`],
 ];
@@ -259,7 +250,11 @@ function buyPanel(onChange) {
   faq.className = 'pricing-faq';
   faq.innerHTML = `<h2>Questions</h2>${FAQ.map(([q, a]) => `<details><summary>${q}</summary><p>${a}</p></details>`).join('')}`;
 
-  wrap.append(grid, extra, faq);
+  const note = document.createElement('p');
+  note.className = 'plan-note';
+  note.innerHTML = `Note: every browser tool runs on your own device, so your files are never uploaded; only the Cloud API receives the files you send it. All Access and Team renew monthly until you cancel from <a href="${MY_ORDERS_URL}" target="_blank" rel="noopener">Lemon Squeezy My Orders</a>. Single-tool keys are a one-time payment. Checkout is handled by Lemon Squeezy.`;
+
+  wrap.append(grid, note, extra, faq);
   return wrap;
 }
 
@@ -277,9 +272,9 @@ export async function render(container) {
   section.classList.add('pricing-page');
   section.innerHTML = `
     <div class="pricing-page__header">
-      <h1 class="tool-page__title">Pricing</h1>
-      <p class="tool-page__description">
-        ${!license && free ? `Your free trial has ${days} day${days === 1 ? '' : 's'} left.` : !license ? `Your ${TRIAL_DAYS}-day free trial has ended. Subscribe to unlock all tools.` : 'One subscription. Every tool.'}
+      <h1 class="pricing-page__title">${license ? 'You have All Access' : free ? 'Start free, or unlock everything' : 'Pick a plan to keep going'}</h1>
+      <p class="pricing-page__sub">
+        ${!license && free ? `Your free trial has ${days} day${days === 1 ? '' : 's'} left. Keep one tool, or get every tool and the Cloud API.` : !license ? `Your ${TRIAL_DAYS}-day free trial has ended. Subscribe to unlock all tools.` : 'One subscription. Every tool.'}
       </p>
     </div>
   `;

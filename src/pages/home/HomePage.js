@@ -1,7 +1,8 @@
 import { APP_DESCRIPTION } from '../../shared/config/app.js';
-import { TOOLS, getOrderedTools } from '../../shared/config/tools.js';
+import { GAME_2D_GROUPS, TOOLS, getOrderedTools, getToolById } from '../../shared/config/tools.js';
 import { ToolCard } from '../../shared/components/ToolCard.js';
-import { cachedUsageCounts, fetchUsageCounts, rankByUsage } from '../../services/UsageService.js';
+import { WinnerCard } from '../../shared/components/WinnerCard.js';
+import { cachedUsageCounts, fetchUsageCounts, nextRowTurn, rankByUsage, rotateRow } from '../../services/UsageService.js';
 import { initCursorSpotlight } from '../../shared/effects/CursorSpotlight.js';
 import { iconSvg } from '../../shared/utils/icons.js';
 import { openCommandPalette } from '../../shared/effects/CommandPalette.js';
@@ -11,6 +12,7 @@ import { TOOL_PRICE_LABEL } from '../../shared/config/toolProducts.js';
 import { AdSenseAd } from '../../shared/components/AdSenseAd.js';
 import { HomeBannerPost } from '../../shared/components/HomeBannerPost.js';
 import { VsCodeApi } from './vscode-api/VsCodeApi.js';
+import { openExtensionsModal, EXTENSION_ICON } from '../../shared/components/ExtensionsModal.js';
 
 const BENEFITS = [
   { icon: 'zap', title: 'Works in browser', desc: 'Your files stay on your device' },
@@ -32,6 +34,7 @@ export function render(container) {
     HeroSection(heroVisual.element),
     WorkbenchIntro(),
     ToolsBlock(),
+    IsoAssetsBlock(),
     PricingStrip(),
     VsCodeApi(),
     HomeBannerPost(),
@@ -84,6 +87,7 @@ function HeroSection(wizardEl) {
     <div class="hero-split__actions">
       <a class="btn btn--primary" href="/tools">Explore Tools →</a>
       <a class="btn btn--secondary" href="/optimise-glb">${iconSvg('package-open')} Optimise a GLB</a>
+      <button type="button" class="btn hero-split__extensions">${EXTENSION_ICON} Web extensions <span class="hero-split__extensions-tag">New</span></button>
       <button type="button" class="hero-split__free">Free 3D model ↓</button>
     </div>
     <div class="hero-benefits">
@@ -100,6 +104,7 @@ function HeroSection(wizardEl) {
     </div>
   `;
   content.querySelector('.hero-finder__search').addEventListener('click', () => openCommandPalette());
+  content.querySelector('.hero-split__extensions').addEventListener('click', () => openExtensionsModal());
   content.querySelector('.hero-split__free').addEventListener('click', () => {
     const form = document.getElementById('free-model');
     form?.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -133,16 +138,44 @@ function ToolsBlock() {
 
   const grid = document.createElement('div');
   grid.className = 'tool-grid';
+  // The most-used tool wins the full-width first card; the row of four under
+  // it takes turns among the next twelve, a new set on each visit.
+  const turn = nextRowTurn();
   const fill = (counts) => {
-    // Character Workshop takes the full-width card and Line Studio leads the
-    // normal cards; everything after them is ranked by site-wide usage.
-    const tools = rankByUsage(getOrderedTools(), counts, ['character-workshop', 'line-studio']);
-    grid.replaceChildren(...tools.map((tool, index) => ToolCard(tool, { index: index + 1, headline: index === 0 })));
+    const tools = rotateRow(rankByUsage(getOrderedTools(), counts), turn);
+    grid.replaceChildren(...tools.map((tool, index) => (index === 0 ? WinnerCard(tool) : ToolCard(tool, { index: index + 1 }))));
   };
   fill(cachedUsageCounts());
   fetchUsageCounts().then((counts) => grid.isConnected && fill(counts));
   section.appendChild(grid);
 
+  return section;
+}
+
+/** "Isometric game assets": the iso tools together, under the main grid (GAME_2D_GROUPS isometric). */
+function IsoAssetsBlock() {
+  const group = GAME_2D_GROUPS.find((g) => g.id === 'isometric');
+  const tools = (group?.tools ?? []).map(getToolById).filter(Boolean);
+  const section = document.createElement('section');
+  section.className = 'home-iso container';
+  section.dataset.layoutEditable = '';
+  section.dataset.layoutId = 'home-iso';
+  section.dataset.layoutName = 'Isometric game assets';
+  if (!tools.length) return section;
+  section.innerHTML = `
+    <div class="home-iso__head">
+      <div>
+        <p class="home-iso__eyebrow">2:1 isometric · sprites · scenes</p>
+        <h2 class="home-iso__title">${group.label}</h2>
+        <p class="home-iso__lede">${group.description}</p>
+      </div>
+      <a class="btn btn--secondary home-iso__more" href="/2d-games#isometric">All 2D &amp; iso tools →</a>
+    </div>
+  `;
+  const grid = document.createElement('div');
+  grid.className = 'tool-grid home-iso__grid';
+  grid.replaceChildren(...tools.map((tool, i) => ToolCard(tool, { index: i + 1 })));
+  section.appendChild(grid);
   return section;
 }
 

@@ -8,7 +8,7 @@ Build the upload with `npm run zip:extension` (→ `extensions/assetbench-reduce
 Reduce Polys – GLB Polygon Reducer by AssetBench
 
 **Summary** (from the manifest, 128/132)
-Cut GLB triangle counts in your browser. Free model check, 5 free reduces a day, 99p for unlimited. Files stay on your computer.
+Cut GLB triangle counts in your browser. Free model check, 10 free reduces, then 99p once. Files stay on your computer.
 
 **Category:** Developer Tools  
 **Language:** English (United Kingdom)
@@ -33,7 +33,7 @@ Cut GLB triangle counts in your browser. Free model check, 5 free reduces a day,
 > Your models are processed on your own computer. Nothing is uploaded. It works offline once unlocked.
 >
 > PRICE
-> The model check is free, and you get 5 free reduces every day. Unlimited reducing is a 99p one-off unlock, no subscription. Already have AssetBench All Access? Your key unlocks it too.
+> The model check is free, and you get 10 free reduces. After that, unlimited reducing is a 99p one-off payment, no subscription. Already have AssetBench All Access? Your key unlocks it too.
 >
 > GOOD FOR
 > Making 3D models light enough for mobile games, websites and VR.
@@ -61,7 +61,7 @@ Reduce the polygon count of GLB 3D models, with a free check of how well a model
 **Permission justifications**
 
 - `sidePanel`: the tool's interface is a side panel, so it stays open while the user picks a file.
-- `storage`: remembers the user's licence key, last slider settings and how many of today's free reduces they've used, on their computer.
+- `storage`: remembers the user's licence key, last slider settings and how many free reduces they've used, on their computer (the count also goes in the browser's own sync storage, so a reinstall doesn't reset it).
 - `downloads`: saves the reduced .glb to the user's Downloads folder.
 - Host `api.lemonsqueezy.com`: checks the licence key the user enters with our payment provider.
 - Host `www.assetbench.co.uk`: links a 99p key to the tool it was bought for (same as our website).

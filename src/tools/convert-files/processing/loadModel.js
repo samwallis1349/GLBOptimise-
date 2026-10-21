@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { fbxMetresPerUnit } from '../../../shared/fbx/fbxUnits.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
@@ -106,6 +107,12 @@ export async function loadModelFiles(fileList) {
     } else if (kind === 'fbx') {
       model = await new FBXLoader(manager).loadAsync(mainUrl);
       clips = model.animations || [];
+      // FBXLoader ignores the file's unit scale; centimetre files would come in 100× too big.
+      const metres = fbxMetresPerUnit(await main.arrayBuffer());
+      if (Math.abs(metres - 1) > 1e-6) {
+        model.scale.multiplyScalar(metres);
+        notes.push({ text: `Scaled from the FBX's units to metres (×${+metres.toPrecision(4)}).` });
+      }
     } else if (kind === 'dae') {
       const collada = await new ColladaLoader(manager).loadAsync(mainUrl);
       model = collada.scene;

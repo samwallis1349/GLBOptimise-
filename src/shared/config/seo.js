@@ -30,9 +30,18 @@ export const STATIC_PAGES = [
     name: 'All Tools',
     title: `All Tools — Browser-based asset tools | ${SITE_NAME}`,
     description:
-      'Every Asset Bench tool in one place: optimise GLBs, reduce polys, compress textures, clean up line art, make sprites and thumbnails — free in your browser, nothing uploaded.',
+      'Every Asset Bench tool in one place: optimise GLBs, reduce polys, compress textures, clean up line art, make sprites and thumbnails — try them free in your browser, nothing uploaded.',
     changefreq: 'weekly',
     priority: '0.9',
+  },
+  {
+    path: '/2d-games',
+    name: '2D & Isometric Game Tools',
+    title: `2D & Isometric Game Tools — Sprites, iso scenes, sprite sheets | ${SITE_NAME}`,
+    description:
+      'Browser tools for 2D and isometric games: render 3D models as eight-direction iso sprites, build isometric scenes on a 2:1 grid, cut sprite sheets and clean up line art. Nothing is uploaded.',
+    changefreq: 'weekly',
+    priority: '0.8',
   },
   {
     path: '/about',
@@ -50,6 +59,14 @@ export const STATIC_PAGES = [
     description: 'All Access unlocks every current and future Asset Bench browser tool plus the Cloud API (1,000 operations/month) for £10 a month. Try free for 4 days first.',
     changefreq: 'monthly',
     priority: '0.6',
+  },
+  {
+    path: '/media',
+    name: 'Media',
+    title: `Media — Logos, images and press contact | ${SITE_NAME}`,
+    description: 'Asset Bench logos, promo images, tool artwork and browser extension links for press, reviewers and partners, plus a press contact.',
+    changefreq: 'monthly',
+    priority: '0.4',
   },
   {
     path: '/contact',

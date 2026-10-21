@@ -10,10 +10,32 @@
   flex-wrap: wrap;
   max-width: 1200px;
   margin: var(--space-4) auto 0;
-  padding: var(--space-3) var(--space-4);
-  border: 1px solid var(--border);
+  padding: 14px 18px;
+  border: 0;
+  border-radius: 16px;
+  /* Same look as the plan cards: dark card with an amber wash from the left. */
+  background: linear-gradient(90deg, rgba(255, 181, 71, 0.16) 0%, rgba(23, 24, 27, 0) 55%), #17181b;
+}
+
+.tool-offer__text strong {
+  color: #fff;
+  font-size: 15px;
+}
+
+.tool-offer .tool-offer__buy {
+  border: 0;
   border-radius: 10px;
-  background: var(--bg-secondary);
+  background: #ffb547;
+  box-shadow: 0 4px 0 #a8701c;
+  color: #1a1206;
+  font-weight: 650;
+  transition: transform .12s ease, box-shadow .12s ease;
+}
+
+.tool-offer .tool-offer__buy:hover,
+.tool-offer .tool-offer__buy:focus-visible {
+  transform: translateY(2px);
+  box-shadow: 0 2px 0 #a8701c;
 }
 
 .tool-offer__text {
@@ -225,4 +247,14 @@
   .tool-page__results {
     grid-template-columns: 1fr;
   }
+}
+
+/* 2D & Isometric page groups */
+.game-2d__group {
+  margin-top: var(--space-7);
+  scroll-margin-top: var(--space-8);
+}
+
+.game-2d__group .tool-page__description {
+  margin-bottom: var(--space-5);
 }

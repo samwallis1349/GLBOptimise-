@@ -31,3 +31,6 @@ extensions/model-optimiser/dist/
 
 # Colossus source models (one still has the badge); the site serves its own built copies in public/hero/
 scripts/hero/source/rusted-colossus-*.glb
+
+# Manual-install extension zips, rebuilt on every deploy (npm run build:extensions:site)
+/public/extensions/

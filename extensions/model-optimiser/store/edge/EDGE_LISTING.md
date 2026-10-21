@@ -1,4 +1,4 @@
-# Microsoft Edge Add-ons listing: Reduce Polys (£3 unlock)
+# Microsoft Edge Add-ons listing: Reduce Polys (99p unlock)
 
 Build the upload with `npm run upload:extension:edge`.
 Dashboard: Microsoft Partner Center → Edge → Extensions (https://partner.microsoft.com/dashboard/microsoftedge/overview).
@@ -27,14 +27,14 @@ Dashboard: Microsoft Partner Center → Edge → Extensions (https://partner.mic
 > Your models are processed on your own computer. Nothing is uploaded.
 >
 > PRICE
-> The model check is free, and you get 5 free reduces every day. Unlimited reducing is a £3 one-off unlock, no subscription. Already have AssetBench All Access or a Reduce Polys key from our website? It unlocks it too.
+> The model check is free, and you get 10 free reduces. After that, unlimited reducing is a 99p one-off payment, no subscription. Already have AssetBench All Access or a Reduce Polys key from our website? It unlocks it too.
 >
 > GOOD FOR
 > Making 3D models light enough for mobile games, websites and VR.
 >
 > More free 3D tools at https://www.assetbench.co.uk
 
-**Short description** comes from the package: Cut GLB triangle counts in your browser. Free model check, 5 free reduces a day, £3 for unlimited. Files never leave your computer.
+**Short description** comes from the package: Cut GLB triangle counts in your browser. Free model check, 10 free reduces, then 99p once. Files never leave your computer.
 
 **Search terms** (up to 7)
 
@@ -57,7 +57,7 @@ reduce polygons, GLB, glTF, decimate, low poly, 3D model optimizer, polycount
 
 **Privacy policy requirements:** "Does your extension access, collect or transmit personal information?" → **No**. Models stay on the device. The only thing sent anywhere is the licence key a buyer types, to our payment provider (Lemon Squeezy) and assetbench.co.uk to check it; it isn't personal information.
 
-**Pricing:** the listing is free to install; the £3 unlock is sold through Lemon Squeezy, not Microsoft.
+**Pricing:** the listing is free to install; the 99p unlock is sold through Lemon Squeezy, not Microsoft.
 
 **Privacy policy URL** (optional for this answer, but add it): https://www.assetbench.co.uk/privacy
 
@@ -69,4 +69,4 @@ Visibility: Public. Markets: all markets.
 
 ## Notes for certification
 
-No sign-in. To test: click the toolbar icon to open the sidebar panel and drop any .glb model (for example https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/DamagedHelmet/glTF-Binary/DamagedHelmet.glb). The Check tab is free and scores the model. Reduce runs free 5 times a day, then needs the £3 unlock: paste this test licence key into the Reduce tab and click Unlock: TEST-KEY-GOES-HERE. Then choose Keep triangles, click Reduce, and Download. Models are processed locally; the only network calls are the licence check to api.lemonsqueezy.com and www.assetbench.co.uk. Permissions: sidePanel (the UI), storage (licence key, last settings and the day's free-run count), downloads (saving the result). WebAssembly (meshoptimizer) is bundled, hence wasm-unsafe-eval in the CSP.
+No sign-in. To test: click the toolbar icon to open the sidebar panel and drop any .glb model (for example https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/DamagedHelmet/glTF-Binary/DamagedHelmet.glb). The Check tab is free and scores the model. Reduce runs free 10 times, then needs the 99p unlock: paste this test licence key into the Reduce tab and click Unlock: TEST-KEY-GOES-HERE. Then choose Keep triangles, click Reduce, and Download. Models are processed locally; the only network calls are the licence check to api.lemonsqueezy.com and www.assetbench.co.uk. Permissions: sidePanel (the UI), storage (licence key, last settings and the free-run count, which is also kept in the browser's sync storage), downloads (saving the result). WebAssembly (meshoptimizer) is bundled, hence wasm-unsafe-eval in the CSP.

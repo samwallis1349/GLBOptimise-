@@ -9,14 +9,16 @@
  * description, canonical and social tags, plus a plain-HTML summary inside
  * #app for crawlers and no-JS visitors — App.js clears #app on start, so real
  * visitors never see it. It also writes dist/sitemap.xml from the registry,
- * so new tools are listed automatically.
+ * so new tools are listed automatically, and dist/llms.txt + dist/llms-full.txt
+ * (plain-Markdown site guides for AI assistants and answer engines, see
+ * https://llmstxt.org) from the same registry and tool guides.
  */
 
 import { execFileSync } from 'node:child_process';
 import { readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { TOOLS } from '../src/shared/config/tools.js';
-import { SITE_URL, SITE_NAME, STATIC_PAGES, pageSeo } from '../src/shared/config/seo.js';
+import { TOOLS, CATEGORIES } from '../src/shared/config/tools.js';
+import { SITE_URL, SITE_NAME, STATIC_PAGES, HOME_SEO, pageSeo } from '../src/shared/config/seo.js';
 import { getToolGuide } from '../src/shared/config/toolGuides.js';
 import { toolGuideMarkup } from '../src/shared/components/ToolGuide.js';
 
@@ -169,6 +171,85 @@ export function renderSitemap({ lastmod = lastModified } = {}) {
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${entries.join('\n')}\n</urlset>\n`;
 }
 
+// ---------------------------------------------------------------- llms.txt
+/** Markdown-safe one-liner (no newlines; brackets can't break link syntax). */
+const md = (value) => String(value ?? '').replace(/\s+/g, ' ').replace(/[[\]]/g, '').trim();
+const liveTools = () => TOOLS.filter((t) => LIVE.has(t.status));
+const pagesFor = (paths) => paths.map((path) => STATIC_PAGES.find((p) => p.path === path)).filter(Boolean);
+
+/**
+ * /llms.txt: a short Markdown map of the site for AI assistants, grouped by
+ * category, every live tool with its link and one-line description.
+ */
+export function renderLlmsTxt() {
+  const out = [
+    `# ${SITE_NAME}`,
+    '',
+    `> ${md(HOME_SEO.description)}`,
+    '',
+    'Every tool runs in the browser: files are processed on the visitor\'s device and are not uploaded. Tools marked (beta) are new and still changing. Each tool page has a how-to guide and FAQs.',
+    '',
+  ];
+  for (const cat of CATEGORIES) {
+    const tools = liveTools().filter((t) => t.category === cat.id);
+    if (!tools.length) continue;
+    out.push(`## ${cat.label}`, '');
+    for (const t of tools) {
+      out.push(`- [${md(t.name)}](${SITE_URL}${t.route})${t.status === 'beta' ? ' (beta)' : ''}: ${md(t.description)}`);
+    }
+    out.push('');
+  }
+  out.push('## Pages', '');
+  for (const p of pagesFor(['/tools', '/2d-games', '/pricing', '/about', '/contact'])) {
+    out.push(`- [${md(p.name)}](${SITE_URL}${p.path}): ${md(p.description)}`);
+  }
+  out.push(
+    '',
+    '## Cloud API',
+    '',
+    `- [API docs](${SITE_URL}/docs/): HTTP API for optimising GLB models, encoding KTX2 textures and simplifying meshes on the server.`,
+    `- [OpenAPI spec](${SITE_URL}/api/v1/openapi.json): machine-readable description of every endpoint.`,
+    '',
+    '## Optional',
+    '',
+    `- [Full tool guide](${SITE_URL}/llms-full.txt): every tool with its features, steps and FAQs in one file.`,
+    `- [Sitemap](${SITE_URL}/sitemap.xml)`,
+    '',
+  );
+  return out.join('\n');
+}
+
+/** /llms-full.txt: every live tool with its features, keywords, how-to steps and FAQs. */
+export function renderLlmsFull() {
+  const out = [
+    `# ${SITE_NAME}: all tools in full`,
+    '',
+    `> ${md(HOME_SEO.description)}`,
+    '',
+    `Short index: ${SITE_URL}/llms.txt. Pricing: ${md(pageSeo('/pricing').description)}`,
+    '',
+  ];
+  for (const cat of CATEGORIES) {
+    const tools = liveTools().filter((t) => t.category === cat.id);
+    if (!tools.length) continue;
+    out.push(`## ${cat.label}`, '');
+    for (const t of tools) {
+      const seo = pageSeo(t.route);
+      const guide = getToolGuide(t.id);
+      out.push(`### ${md(t.name)}${t.status === 'beta' ? ' (beta)' : ''}`, '', `URL: ${SITE_URL}${t.route}`, '', md(seo.description || t.description), '');
+      if (t.features?.length) out.push(`Features: ${t.features.map((f) => md(f.label)).join(', ')}`, '');
+      if (t.keywords?.length) out.push(`Keywords: ${t.keywords.map(md).join(', ')}`, '');
+      if (guide) {
+        if (guide.heading) out.push(`#### ${md(guide.heading)}`, '');
+        for (const para of guide.intro ?? []) out.push(md(para), '');
+        if (guide.steps?.length) { guide.steps.forEach((step, i) => out.push(`${i + 1}. ${md(step)}`)); out.push(''); }
+        for (const f of guide.faqs ?? []) out.push(`**${md(f.q)}** ${md(f.a)}`, '');
+      }
+    }
+  }
+  return out.join('\n');
+}
+
 /** Vite plugin: runs once after the production bundle is written. */
 export function seoPages() {
   let outDir = 'dist';
@@ -189,6 +270,8 @@ export function seoPages() {
       }
       await writeFile(join(outDir, '404.html'), renderNoindexPage(indexHtml, `Page not found | ${SITE_NAME}`));
       await writeFile(join(outDir, 'sitemap.xml'), renderSitemap());
+      await writeFile(join(outDir, 'llms.txt'), renderLlmsTxt());
+      await writeFile(join(outDir, 'llms-full.txt'), renderLlmsFull());
     },
   };
 }

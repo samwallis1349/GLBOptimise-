@@ -64,9 +64,6 @@ if (allFree(EDITION)) delete manifest.host_permissions;
 // The store rejects permissions an extension never uses.
 if (!savesFiles(EDITION)) manifest.permissions = manifest.permissions.filter((p) => p !== 'downloads');
 if (manifest.description.length > 132) throw new Error('Store descriptions are limited to 132 characters.');
-if (EDITION.price && process.argv.includes('--zip') && (!EDITION.checkoutUrl || !Object.keys(EDITION.products || {}).length)) {
-  throw new Error(`${EDITION_ID} sells for ${EDITION.price}: set its products and checkoutUrl in editions.js (its Lemon Squeezy product) before zipping for the store.`);
-}
 await writeFile(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
 
 await build({

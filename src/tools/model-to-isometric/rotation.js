@@ -15,12 +15,12 @@ export function mountRotation(page,{enabled,changed}) {
     changed(Number(slider.value),value);
   }
   slider.addEventListener('input',()=>{if(enabled())setFront(Number(slider.value));});
-  number.addEventListener('input',()=>{if(enabled()&&number.value!=='')setFront(Number(number.value),{syncNumber:false});});
+  number.addEventListener('input',()=>{const v=Number(number.value);if(enabled()&&number.value!==''&&v>=0&&v<=360)setFront(v,{syncNumber:false});});
   number.addEventListener('change',()=>{if(enabled())setFront(number.value===''?Number(slider.value):Number(number.value));});
   snap.addEventListener('change',()=>{slider.step=snap.checked?'45':'0.1';if(enabled())setFront(Number(slider.value));});
   q('[data-front-reset]').addEventListener('click',()=>{if(enabled())setFront(0);});
   elevation.addEventListener('input',()=>{if(enabled())setElevation(Number(elevation.value));});
-  elevationNumber.addEventListener('input',()=>{if(enabled()&&elevationNumber.value!=='')setElevation(Number(elevationNumber.value),{syncNumber:false});});
+  elevationNumber.addEventListener('input',()=>{const v=Number(elevationNumber.value);if(enabled()&&elevationNumber.value!==''&&v>=10&&v<=80)setElevation(v,{syncNumber:false});});
   elevationNumber.addEventListener('change',()=>{if(enabled())setElevation(elevationNumber.value===''?Number(elevation.value):Number(elevationNumber.value));});
   q('[data-elevation-reset]').addEventListener('click',()=>{if(enabled())setElevation(35.26438968);});
   function end(event){if(!drag||event.pointerId!==drag.id)return;drag=null;surface.classList.remove('is-rotating');if(surface.hasPointerCapture(event.pointerId))surface.releasePointerCapture(event.pointerId);}

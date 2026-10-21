@@ -1,5 +1,6 @@
 import { hasStoredLicense, hasToolLicense } from '../../services/LicenseService.js';
 import { trialStartedAt } from '../../services/TrialService.js';
+import { getToolById } from './tools.js';
 
 /**
  * Every visitor gets TRIAL_DAYS of full access from their first visit without
@@ -80,5 +81,7 @@ export function freeDaysRemaining() {
  * count a single-tool key for that tool.
  */
 export function hasAccess(toolId) {
+  // Tools marked `free` in tools.js are never gated.
+  if (toolId != null && getToolById(toolId)?.free) return true;
   return ALL_TOOLS_FREE || isFreePeriodActive() || hasStoredLicense() || (toolId != null && hasToolLicense(toolId));
 }

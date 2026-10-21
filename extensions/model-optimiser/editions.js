@@ -3,10 +3,10 @@
  * listed: the Chrome Web Store (and Edge Add-ons) refuse several extensions
  * with duplicate functionality from the same developer.
  *
- *   reduce-polys       — Chrome Web Store: free Check + Reduce (5 free a day, 99p unlock).
- *   reduce-polys-edge  — Microsoft Edge Add-ons: free Check + Reduce (5 free a day, £3 unlock),
- *                        sold through its own £3 Lemon Squeezy product.
- *   model-optimiser    — all four tools (99p each), for later.
+ *   reduce-polys       — Chrome Web Store: free Check + Reduce (10 free uses, then 99p).
+ *   reduce-polys-edge  — Microsoft Edge Add-ons: the same, 99p through the shared
+ *                        product. Keys from its old £3 product still unlock it.
+ *   model-optimiser    — all four tools, for later.
  *
  * Separate Chrome listings are fine when each does a different job, so the
  * per-job editions below each own tools no other listing has:
@@ -14,39 +14,37 @@
  *   texture-compressor — free texture check, KTX2 compress and resize.
  *   inspector          — free health check, rig, animation and compare.
  *
- * `free` lists the tools that need no licence; `dailyFree` is how many runs
- * of the others a day anyone gets before the unlock card (src/quota.js).
- * An edition whose tools are all free ships without the licence-check host
- * permissions. `price` and `products` override the site's single-tool price and add Lemon Squeezy
- * products ({ productId: siteToolId }) whose keys unlock that tool here, with
- * `checkoutUrl` as the buy link. The shared site product still works too.
+ * `free` lists the tools that need no licence; `freeRuns` is how many runs
+ * of the others anyone gets, in all, before the unlock card (src/quota.js).
+ * After that one 99p payment (the shared single-tool product) unlocks every
+ * tool in the edition. An edition whose tools are all free ships without the
+ * licence-check host permissions. `products` adds Lemon Squeezy products
+ * ({ productId: siteToolId }) whose keys also unlock it here.
  */
 export const EDITIONS = {
   'reduce-polys': {
     store: 'Chrome Web Store',
     name: 'Reduce Polys – GLB Polygon Reducer by AssetBench',
     shortName: 'Reduce Polys',
-    description: 'Cut GLB triangle counts in your browser. Free model check, 5 free reduces a day, 99p for unlimited. Files stay on your computer.',
+    description: 'Cut GLB triangle counts in your browser. Free model check, 10 free reduces, then 99p once. Files stay on your computer.',
     heading: ['Reduce', 'Polys'],
     tools: ['check', 'reduce'],
     free: ['check'],
-    dailyFree: 5,
+    freeRuns: 10,
     firstTool: 'reduce',
   },
   'reduce-polys-edge': {
     store: 'Microsoft Edge Add-ons',
     name: 'Reduce Polys – GLB Polygon Reducer by AssetBench',
     shortName: 'Reduce Polys',
-    description: 'Cut GLB triangle counts in your browser. Free model check, 5 free reduces a day, £3 for unlimited. Files never leave your computer.',
+    description: 'Cut GLB triangle counts in your browser. Free model check, 10 free reduces, then 99p once. Files never leave your computer.',
     heading: ['Reduce', 'Polys'],
     tools: ['check', 'reduce'],
     free: ['check'],
-    dailyFree: 5,
+    freeRuns: 10,
     firstTool: 'reduce',
-    price: '£3',
-    // The £3 "Reduce Polys (Edge)" product in Lemon Squeezy.
+    // Keys from the old £3 "Reduce Polys (Edge)" product in Lemon Squeezy.
     products: { 1428470: 'reduce-polys' },
-    checkoutUrl: 'https://workbenchlabs.lemonsqueezy.com/checkout/buy/d0d42274-6f50-4c44-a4d6-26b2b2c0a4f2',
   },
   'model-optimiser': {
     store: 'Chrome Web Store',
@@ -56,18 +54,18 @@ export const EDITIONS = {
     heading: ['Model', 'Optimiser'],
     tools: ['check', 'reduce', 'optimise', 'compress'],
     free: ['check'],
-    dailyFree: 5,
+    freeRuns: 10,
     firstTool: 'check',
   },
   'texture-compressor': {
     store: 'Chrome Web Store',
     name: 'GLB Texture Compressor – KTX2 & Resize by AssetBench',
     shortName: 'Texture Compressor',
-    description: 'Shrink the textures in GLB models: free texture check, KTX2 compression and resizing. 5 free a day. Files stay on your PC.',
+    description: 'Shrink the textures in GLB models: free texture check, KTX2 compression and resizing. 10 free, then 99p. Files stay on your PC.',
     heading: ['Texture', 'Compressor'],
     tools: ['textures', 'compress', 'resize'],
     free: ['textures'],
-    dailyFree: 5,
+    freeRuns: 10,
     firstTool: 'textures',
     website: '/compress-textures',
   },
@@ -79,7 +77,7 @@ export const EDITIONS = {
     heading: ['GLB', 'Inspector'],
     tools: ['inspect', 'rig', 'animations', 'compare'],
     free: ['inspect'],
-    dailyFree: 5,
+    freeRuns: 10,
     firstTool: 'inspect',
     website: '/inspect-glb',
   },

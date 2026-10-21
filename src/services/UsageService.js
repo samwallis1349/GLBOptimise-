@@ -158,3 +158,35 @@ export function rankByUsage(tools, counts, pinned = []) {
     )
     .map(({ tool }) => tool);
 }
+
+/**
+ * Rotates the grid's second row. `ranked` is already ordered by usage: the
+ * first `lead` tools keep their places (the most-used tool owns the
+ * full-width headline card), then the next `pool` tools take turns filling
+ * the `size` slots after them, `size` at a time. `turn` picks the set; the
+ * pool tools not shown follow in rank order, then everything else.
+ */
+export function rotateRow(ranked, turn, { lead = 1, size = 4, pool = 12 } = {}) {
+  const head = ranked.slice(0, lead);
+  const candidates = ranked.slice(lead, lead + pool);
+  const tail = ranked.slice(lead + pool);
+  if (candidates.length <= size) return ranked;
+  const sets = Math.ceil(candidates.length / size);
+  const start = (((turn % sets) + sets) % sets) * size;
+  const shown = [];
+  for (let i = 0; i < size; i++) shown.push(candidates[(start + i) % candidates.length]);
+  return [...head, ...shown, ...candidates.filter((tool) => !shown.includes(tool)), ...tail];
+}
+
+const ROTATION_KEY = 'assetbench_row_turn_v1';
+
+/** This visit's turn for rotateRow: advances once per call (one per homepage view). */
+export function nextRowTurn() {
+  try {
+    const turn = (Number(localStorage.getItem(ROTATION_KEY)) || 0) + 1;
+    localStorage.setItem(ROTATION_KEY, String(turn));
+    return turn;
+  } catch {
+    return Math.floor(Math.random() * 1000);
+  }
+}

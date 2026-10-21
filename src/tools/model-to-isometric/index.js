@@ -106,10 +106,12 @@ export function mount(container) {
     changed:(front,elevation)=>{syncPreset(elevation);viewer?.setOrientation(front,elevation);if(results.length)q('[data-result-note]').textContent='View angle changed. Generate again to update these downloads.';},
   });
   q('[data-elevation]').onchange=()=>{const preset=q('[data-elevation]').value;if(preset!=='custom')q('[data-elevation-control]').value=preset;syncElevation();viewer?.setElevation(Number(q('[data-elevation-control]').value));};
-  function syncElevation(){const value=Number(q('[data-elevation-control]').value);q('[data-elevation-number]').value=String(Math.round(value*1000)/1000);q('[data-elevation-value]').textContent=value.toFixed(1)+'\u00b0';syncPreset(value);}
+  function syncElevation({syncNumber=true}={}){const value=Number(q('[data-elevation-control]').value);if(syncNumber)q('[data-elevation-number]').value=String(Math.round(value*1000)/1000);q('[data-elevation-value]').textContent=value.toFixed(1)+'\u00b0';syncPreset(value);}
   function syncPreset(value){const preset=matchElevationPreset(value);q('[data-elevation]').value=preset?String(preset.angle):'custom';q('[data-elevation-note]').textContent=preset?preset.note:'Custom angle. Drag up/down on the preview or type a value.';}
   q('[data-elevation-control]').addEventListener('input',()=>{if(!busy){syncElevation();viewer?.setElevation(Number(q('[data-elevation-control]').value));}});
-  q('[data-elevation-number]').addEventListener('input',()=>{if(!busy&&q('[data-elevation-number]').value!==''){q('[data-elevation-control]').value=q('[data-elevation-number]').value;syncElevation();viewer?.setElevation(Number(q('[data-elevation-control]').value));}});
+  // While typing, follow only in-range values and never rewrite the box (typing "4" on the way to 45 must not snap to 10); Enter or leaving the box clamps.
+  q('[data-elevation-number]').addEventListener('input',()=>{const box=q('[data-elevation-number]'),v=Number(box.value);if(!busy&&box.value!==''&&v>=10&&v<=80){q('[data-elevation-control]').value=String(v);syncElevation({syncNumber:false});viewer?.setElevation(v);}});
+  q('[data-elevation-number]').addEventListener('change',()=>{if(busy)return;const box=q('[data-elevation-number]'),v=box.value===''?Number(q('[data-elevation-control]').value):Math.max(10,Math.min(80,Number(box.value)));if(!Number.isFinite(v))return syncElevation();q('[data-elevation-control]').value=String(v);syncElevation();viewer?.setElevation(v);});
   q('[data-elevation-reset]').onclick=()=>{if(!busy){q('[data-elevation-control]').value='35.26438968';syncElevation();viewer?.setElevation(35.26438968);}};
   q('[data-settings]').oninput=event=>{if(!busy&&!event.target.closest('.iso-rotation')&&!event.target.closest('.iso-elevation')&&!event.target.closest('.iso-animation'))apply();};
   page.querySelectorAll('[data-animation],[data-frames],[data-in-place]').forEach(input=>input.addEventListener('change',()=>{if(!busy)applyAnimation();}));

@@ -8,7 +8,7 @@ Build the upload folder with `node extensions/model-optimiser/make-upload-folder
 GLB Texture Compressor – KTX2 & Resize by AssetBench
 
 **Summary** (from the manifest, 122/132)
-Shrink the textures in GLB models: free texture check, KTX2 compression and resizing. 5 free a day. Files stay on your PC.
+Shrink the textures in GLB models: free texture check, KTX2 compression and resizing. 10 free, then 99p. Files stay on your PC.
 
 **Category:** Developer Tools  
 **Language:** English (United Kingdom)
@@ -32,7 +32,7 @@ Shrink the textures in GLB models: free texture check, KTX2 compression and resi
 > Your models are processed on your own computer. Nothing is uploaded. It works offline once unlocked.
 >
 > PRICE
-> The texture check is free, and you get 5 free compress or resize runs every day. Unlimited is a 99p one-off unlock per tool, no subscription. Already have AssetBench All Access? Your key unlocks everything.
+> The texture check is free, and you get 10 free compress or resize runs. After that, one 99p payment unlocks both for good, no subscription. Already have AssetBench All Access? Your key unlocks everything.
 >
 > GOOD FOR
 > Getting 3D models under the memory limits of phones, VR headsets and the web.
@@ -61,7 +61,7 @@ Reduce the size and memory use of the textures inside GLB 3D models, with a free
 **Permission justifications**
 
 - `sidePanel`: the tool's interface is a side panel, so it stays open while the user picks a file.
-- `storage`: remembers the user's licence key, last settings and how many of today's free runs they've used, on their computer.
+- `storage`: remembers the user's licence key, last settings and how many free runs they've used, on their computer (the count also goes in the browser's own sync storage, so a reinstall doesn't reset it).
 - `downloads`: saves the processed .glb to the user's Downloads folder.
 - Host `api.lemonsqueezy.com`: checks the licence key the user enters with our payment provider.
 - Host `www.assetbench.co.uk`: links a 99p key to the tool it was bought for (same as our website).

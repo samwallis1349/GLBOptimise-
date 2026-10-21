@@ -1,3 +1,5 @@
+import { getToolById } from './tools.js';
+
 /**
  * Single tools sold on their own for 99p. A tool's key unlocks just that tool
  * in the browser, on up to TOOL_DEVICE_LIMIT devices (e.g. phone + computer),
@@ -22,6 +24,7 @@ export const TOOL_PRODUCTS = {
   'alpha-cutout': { productId: null, checkoutUrl: null },
   'line-studio': { productId: null, checkoutUrl: null },
   'model-to-isometric': { productId: null, checkoutUrl: null },
+  'iso-scene-builder': { productId: null, checkoutUrl: null },
   'optimise-glb': { productId: null, checkoutUrl: null },
   'asset-pipeline': { productId: null, checkoutUrl: null },
   'reduce-polys': { productId: null, checkoutUrl: null },
@@ -43,6 +46,7 @@ export const TOOL_PRODUCTS = {
   'animation-inspector': { productId: null, checkoutUrl: null },
   'thumbnail-maker': { productId: null, checkoutUrl: null },
   'character-workshop': { productId: null, checkoutUrl: null },
+  'model-to-iso-sprites': { productId: null, checkoutUrl: null },
 };
 
 export const SINGLE_TOOL_PRODUCT_ID = 1420925;
@@ -50,6 +54,7 @@ export const SINGLE_TOOL_CHECKOUT_URL = 'https://workbenchlabs.lemonsqueezy.com/
 
 /** The tool's single-tool product, or the universal single-tool listing. */
 export function toolProduct(toolId) {
+  if (getToolById(toolId)?.free) return null; // free tools have nothing to sell
   const specific = TOOL_PRODUCTS[toolId];
   if ((specific?.productId || specific?.variantId) && specific?.checkoutUrl) {
     return specific;

@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- Embedded at /model-to-iso-sprites: index its content as part of that page, not as a page of its own. -->
+<meta name="robots" content="noindex, indexifembedded">
+<title>Model to Iso Sprites</title>
+<script>
+  if (window.top === window.self && !window.location.search.includes('standalone=true')) {
+    const h = window.location.hostname;
+    if (h.includes('assetbench') || h.includes('workers.dev') || h === 'localhost' || h === '127.0.0.1') {
+      window.location.replace('/model-to-iso-sprites');
+    }
+  }
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap">
+<link rel="stylesheet" href="./model-to-iso-sprites.css">
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+} }
+</script>
+<script src="./vendor/jszip.min.js"></script>
+</head>
+<body>
+<div class="mis" id="app">
+  <header class="top">
+    <div class="brand">
+      <svg width="22" height="22" viewBox="0 0 32 32" aria-hidden="true"><path d="M16 4L27 10V22L16 28L5 22V10Z M16 16L27 10 M16 16L5 10 M16 16V28" fill="none" stroke="#ffb547" stroke-width="2" stroke-linejoin="round"/></svg>
+      <h1>Model to Iso Sprites</h1>
+      <span class="tag">BETA</span>
+    </div>
+    <nav class="steps" aria-label="Steps">
+      <span class="step" data-step="model">1 Model</span>
+      <span class="step" data-step="setup">2 Set up</span>
+      <span class="step" data-step="export">3 Export</span>
+    </nav>
+  </header>
+
+  <!-- ============ SET UP ============ -->
+  <div class="layout" id="setupView">
+    <aside class="col">
+      <section class="card">
+        <h2>Model</h2>
+        <div class="drop" id="drop" tabindex="0" role="button" aria-label="Choose a 3D model">
+          <div class="drop-empty" id="dropEmpty">
+            <strong>Drop a 3D model</strong>
+            <span>GLB, glTF, FBX, OBJ, DAE and more. Add texture or .bin files at the same time.</span>
+          </div>
+          <div class="model-row" id="modelRow" hidden>
+            <div class="model-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z M12 12l8-4.5 M12 12L4 7.5 M12 12v9"/></svg></div>
+            <div class="model-meta"><strong id="modelName">—</strong><span id="modelInfo"></span></div>
+          </div>
+        </div>
+        <div class="row">
+          <button class="btn" id="browseBtn" type="button">Choose file</button>
+          <button class="btn ghost" id="sampleBtn" type="button">Try the sample robot</button>
+        </div>
+        <input type="file" id="fileInput" multiple hidden>
+        <div class="field-grid">
+          <label>Units
+            <select id="units">
+              <option value="auto">Auto</option>
+              <option value="m">Metres</option>
+              <option value="cm">Centimetres</option>
+              <option value="height">Set height…</option>
+            </select>
+          </label>
+          <label id="heightWrap" hidden>Height (m)
+            <input id="heightM" type="number" min="0.05" max="50" step="0.05" value="1.75">
+          </label>
+          <label>Model faces
+            <select id="facing">
+              <option value="0">Forward (+Z)</option>
+              <option value="180">Backward (−Z)</option>
+              <option value="90">Right (+X)</option>
+              <option value="270">Left (−X)</option>
+            </select>
+          </label>
+        </div>
+        <p class="note" id="unitsNote"></p>
+      </section>
+
+      <section class="card">
+        <h2>Camera &amp; scale</h2>
+        <label>Project preset
+          <select id="tilePreset"></select>
+        </label>
+        <div class="stats">
+          <div><span>Angle</span><b>True 2:1</b></div>
+          <div><span>1 metre</span><b id="ppmOut">90 px</b></div>
+          <div><span>Cell</span><b id="cellOut">256 px</b></div>
+        </div>
+        <label>Cell size
+          <select id="cellMode">
+            <option value="auto">Auto fit</option>
+            <option value="64">64 px</option>
+            <option value="128">128 px</option>
+            <option value="256">256 px</option>
+            <option value="512">512 px</option>
+          </select>
+        </label>
+        <p class="note">Every model made with the same preset shares one camera and scale, so props and people always match.</p>
+      </section>
+
+      <section class="card">
+        <div class="head"><h2>Base point</h2><span class="pill" id="baseState">Auto</span></div>
+        <div class="base">
+          <label>X <input id="baseX" type="number" step="1"></label>
+          <label>Y <input id="baseY" type="number" step="1"></label>
+          <div class="nudge" aria-label="Nudge base point">
+            <span></span><button type="button" data-nudge="0,-1" aria-label="Nudge up">▲</button><span></span>
+            <button type="button" data-nudge="-1,0" aria-label="Nudge left">◀</button><button type="button" data-nudge="0,1" aria-label="Nudge down">▼</button><button type="button" data-nudge="1,0" aria-label="Nudge right">▶</button>
+          </div>
+        </div>
+        <div class="row"><button class="btn ghost small" id="baseAuto" type="button">Reset to feet</button></div>
+        <p class="note" id="baseNote">The pixel in each cell that lands on the tile centre.</p>
+      </section>
+
+      <section class="card">
+        <div class="head">
+          <h2>Directions</h2>
+          <div class="seg" role="group" aria-label="Direction count" id="dirCount">
+            <button type="button" data-v="8" aria-pressed="true">8</button>
+            <button type="button" data-v="4" aria-pressed="false">4</button>
+            <button type="button" data-v="1" aria-pressed="false">1</button>
+          </div>
+        </div>
+        <div class="compass" id="compass">
+          <button type="button" data-dir="nw">NW</button><button type="button" data-dir="n">N</button><button type="button" data-dir="ne">NE</button>
+          <button type="button" data-dir="w">W</button>
+          <div class="compass-mid" aria-hidden="true"><svg width="34" height="34" viewBox="0 0 34 34"><path d="M17 3L31 17L17 31L3 17Z" fill="none" stroke="#6f6c65" stroke-width="1.5"/><circle cx="17" cy="17" r="3" fill="#ffb547"/></svg></div>
+          <button type="button" data-dir="e">E</button>
+          <button type="button" data-dir="sw">SW</button><button type="button" data-dir="s">S</button><button type="button" data-dir="se">SE</button>
+        </div>
+        <p class="note" id="dirNote">All 8 render. Click one to preview it.</p>
+      </section>
+    </aside>
+
+    <main class="col mid">
+      <section class="card stagecard">
+        <div class="head">
+          <h2>Preview on the grid</h2>
+          <span class="mono dim" id="previewInfo">No model yet</span>
+          <div class="toggles">
+            <label class="chip"><input type="checkbox" id="showRefs" checked> Person + crate</label>
+            <label class="chip"><input type="checkbox" id="showCell" checked> Cell + base point</label>
+            <label class="chip"><input type="checkbox" id="showSprite"> Exact sprite</label>
+          </div>
+        </div>
+        <div class="viewport" id="viewport">
+          <canvas id="previewCanvas" aria-label="Iso preview"></canvas>
+          <div class="cellbox" id="cellBox" hidden><i class="basepoint"></i></div>
+          <img class="exact" id="exactImg" alt="Exact sprite as exported" hidden>
+          <div class="vp-tags"><span class="mono" id="tileTag">tile 128 × 64</span><span class="mono" id="baseTag">base —</span></div>
+          <div class="zoom">
+            <button type="button" id="zoomOut" aria-label="Zoom out">−</button>
+            <button type="button" id="zoomIn" aria-label="Zoom in">+</button>
+          </div>
+          <div class="empty-msg" id="emptyMsg">Drop a model, or try the sample robot.</div>
+        </div>
+        <div class="transport">
+          <button class="play" id="playBtn" type="button" aria-label="Play">
+            <svg class="i-play" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2l10 6-10 6z" fill="#1a1206"/></svg>
+            <svg class="i-pause" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="2" width="3.5" height="12" fill="#1a1206"/><rect x="9.5" y="2" width="3.5" height="12" fill="#1a1206"/></svg>
+          </button>
+          <select id="previewClip" aria-label="Clip to preview"></select>
+          <div class="frames" id="frameStrip" aria-label="Frames"></div>
+          <span class="mono dim" id="timeOut">0.00 s</span>
+        </div>
+      </section>
+      <section class="card dirstrip">
+        <span class="dim small-label">All directions</span>
+        <div class="thumbs" id="thumbs"></div>
+      </section>
+    </main>
+
+    <aside class="col">
+      <section class="card">
+        <div class="head">
+          <h2>Animations</h2>
+          <div class="seg" role="group" aria-label="Frames per second" id="fpsSeg">
+            <button type="button" data-v="8" aria-pressed="false">8</button>
+            <button type="button" data-v="12" aria-pressed="true">12 fps</button>
+            <button type="button" data-v="24" aria-pressed="false">24</button>
+          </div>
+        </div>
+        <div class="clips" id="clipList"><p class="note">No animations yet. A model without clips makes one still frame per direction.</p></div>
+        <div class="sub">
+          <label class="line">Loop-safe start and end <input type="checkbox" id="loopSafe" checked></label>
+          <label class="line">Play in place <input type="checkbox" id="inPlace" checked></label>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Style</h2>
+        <div class="seg wide" role="group" aria-label="Style preset" id="styleSeg">
+          <button type="button" data-v="clean" aria-pressed="true">Clean</button>
+          <button type="button" data-v="soft" aria-pressed="false">Soft</button>
+          <button type="button" data-v="pixel" aria-pressed="false">Pixel art</button>
+        </div>
+        <label class="range">
+          <span>Outline <b class="mono" id="outlineOut">2 px</b></span>
+          <input type="range" id="outline" min="0" max="6" step="1" value="2">
+        </label>
+        <label class="line">Soft shadow under sprite <input type="checkbox" id="shadow" checked></label>
+        <div class="line">Lighting
+          <div class="seg" role="group" aria-label="Lighting" id="lightSeg">
+            <button type="button" data-v="flat" aria-pressed="false">Flat</button>
+            <button type="button" data-v="soft" aria-pressed="true">Soft</button>
+          </div>
+        </div>
+        <div class="sub">
+          <label class="line">Pixel-art mode <input type="checkbox" id="pixel"></label>
+          <div class="field-grid" id="pixelOpts" hidden>
+            <label>Scale up
+              <select id="pixelScale"><option value="2">× 2</option><option value="4">× 4</option></select>
+            </label>
+            <label>Colour levels
+              <select id="levels"><option value="4">4</option><option value="6" selected>6</option><option value="8">8</option><option value="12">12</option></select>
+            </label>
+          </div>
+          <span class="note">Renders small, scales up with crisp pixels and limits colours.</span>
+        </div>
+      </section>
+
+      <section class="card export">
+        <h2>Export</h2>
+        <div class="summary">
+          <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 2l1.8 5.2L17 9l-5.2 1.8L10 16l-1.8-5.2L3 9l5.2-1.8zM18 13l.9 2.6 2.6.9-2.6.9L18 20l-.9-2.6-2.6-.9 2.6-.9z" fill="#1a1206"/></svg>
+          <div>
+            <strong id="sumFrames">—</strong>
+            <span id="sumParts"></span>
+            <span id="sumSheet"></span>
+          </div>
+        </div>
+        <label>Max sheet width
+          <select id="maxWidth"><option>2048</option><option selected>4096</option><option>8192</option></select>
+        </label>
+        <label class="line left"><input type="checkbox" id="wantSheet" checked disabled> Sprite sheet PNG + JSON</label>
+        <label class="line left"><input type="checkbox" id="wantZip" checked> Single PNGs in a ZIP</label>
+        <label>File names
+          <input type="text" id="pattern" value="{model}_{anim}_{dir}_{frame}" spellcheck="false">
+          <span class="note mono" id="patternEx"></span>
+        </label>
+        <button class="cta" id="makeBtn" type="button" disabled>Make iso sprites</button>
+        <div class="progress" id="progress" hidden><i id="progressBar"></i><span id="progressText"></span></div>
+        <span class="note center">Runs in your browser. Your model is never uploaded.</span>
+      </section>
+    </aside>
+  </div>
+
+  <!-- ============ RESULT ============ -->
+  <div class="layout result" id="resultView" hidden>
+    <div class="result-head">
+      <div>
+        <h2 class="big">Your sprites are ready</h2>
+        <p class="dim" id="resultLine"></p>
+      </div>
+      <button class="btn" id="backBtn" type="button">Back to set up</button>
+    </div>
+    <section class="card sheetcard">
+      <div class="head"><h3>Sprite sheet</h3><span class="mono dim" id="sheetDims"></span></div>
+      <div class="checker"><img id="sheetImg" alt="Sprite sheet"></div>
+    </section>
+    <aside class="col">
+      <section class="card download">
+        <h3 class="eyebrow amber">Download</h3>
+        <a class="dl primary" id="dlPng" download>sheet.png <span class="mono">sheet</span></a>
+        <a class="dl light" id="dlJson" download>sheet.json <span class="mono">frames</span></a>
+        <a class="dl" id="dlZip" download>frames.zip <span class="mono dim" id="zipCount"></span></a>
+      </section>
+      <section class="card">
+        <h3 class="eyebrow">Checks</h3>
+        <div id="checks" class="checks"></div>
+      </section>
+      <section class="card">
+        <h3 class="eyebrow">JSON, one frame</h3>
+        <pre id="jsonSample"></pre>
+      </section>
+    </aside>
+  </div>
+
+  <div class="toasts" id="toasts" aria-live="polite"></div>
+</div>
+<script type="module" src="./js/app.js"></script>
+</body>
+</html>

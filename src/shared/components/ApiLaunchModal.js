@@ -1,13 +1,26 @@
-const DISMISSED_KEY = 'assetbench_api_launch_v2';
+// v3: the three-product API with the poster; visitors who closed v2 see it once more.
+const DISMISSED_KEY = 'assetbench_api_launch_v3';
 
+/** The API's three products (worker/api/plans.js PRODUCTS). */
 const PRODUCTS = [
-  ['GLB optimisation', 'one call makes a model game-ready for a phone, Quest or the web'],
-  ['Batch', 'run any of it over a whole folder'],
-  ['KTX2', 'GPU-compressed textures'],
-  ['Audit', 'which devices can run this model?'],
-  ['Convert', 'FBX, OBJ, glTF to GLB'],
-  ['LODs', 'level-of-detail chains'],
-  ['iOS assets', 'icons, .xcassets, store screenshots'],
+  { name: 'Check a model', tag: 'Free', what: 'A score for every phone and headset class, and what to fix first.', endpoint: '/check' },
+  { name: 'Make it game-ready', what: 'Optimised GLB, LODs, collision and KTX2 in one ZIP for Unity, Unreal, Godot, Roblox or the web.', endpoint: '/game-ready' },
+  { name: 'App store assets', what: 'One square image becomes every app icon. Screenshots become every store size.', endpoint: '/app-assets' },
+];
+
+/** Every public endpoint (the /docs reference), by group; `*` marks a free one. */
+const COMMANDS = [
+  ['Main', ['/check*', '/game-ready', '/app-assets', '/app-assets/screenshots', '/batch']],
+  ['Single steps', ['/3d/optimize', '/3d/reduce*', '/3d/lods', '/3d/convert', '/textures/ktx2', '/textures/resize', '/ios/xcassets']],
+  ['Info', ['/auth/me', '/openapi.json', '/pricing', '/devices', '/formats', '/intent?target=…']],
+];
+const command = (c) => (c.endsWith('*') ? `<code>${c.slice(0, -1)}</code> (Free)` : `<code>${c}</code>`);
+
+/** worker/api/plans.js */
+const PLANS = [
+  { name: 'Free', price: '£0', ops: '100 operations/month', note: 'No card. Checks unlimited.' },
+  { name: 'All Access', price: '£10/mo', ops: '1,000 operations/month', note: 'Plus every site tool and extension.', featured: true },
+  { name: 'Studio', price: '£99/mo', ops: '5,000 operations/month', note: 'For whole asset libraries.' },
 ];
 
 function seen(key) {
@@ -51,14 +64,29 @@ export function openApiLaunchModal() {
     <div class="welcome-modal api-launch">
       <button class="welcome-modal__close" type="button" aria-label="Close">✕</button>
       <div class="api-launch__card">
-        <span class="api-launch__badge">New · Free to try · Included in All Access (£10/m)</span>
-        <h2 class="api-launch__title" id="api-launch-title">The AssetBench API</h2>
-        <p class="api-launch__lede">Everything AssetBench does, from your own code. 100 free operations/month, or 1,000/month included with the £10/m All Access subscription.</p>
-        <ul class="api-launch__list">
-          ${PRODUCTS.map(([name, what]) => `<li><b>${name}</b><span>${what}</span></li>`).join('')}
-        </ul>
-        <a class="api-launch__cta" href="/docs/">Try the API free →</a>
-        <button class="api-launch__later" type="button">Maybe later</button>
+        <figure class="api-launch__poster">
+          <img src="/images/api-poster.svg" width="1200" height="640" alt="One API request turns a heavy 3D model into a low-poly, game-ready version with LODs, for phones, Quest and the web, plus every app icon size">
+          <span class="api-launch__badge">New · Checks are free</span>
+        </figure>
+        <div class="api-launch__body">
+          <h2 class="api-launch__title" id="api-launch-title">Game-ready assets from <em>one API call</em></h2>
+          <p class="api-launch__lede">Send a 3D model or an app icon from your own code, a script or a terminal. Get back files ready for your engine or the app stores in seconds. Nothing to install, and your files are never stored.</p>
+          <ul class="api-launch__products">
+            ${PRODUCTS.map((p) => `<li><span class="api-launch__product-head"><b>${p.name}</b>${p.tag ? `<span class="api-launch__tag">${p.tag}</span>` : ''}</span><span>${p.what}</span><code>POST /api/v1${p.endpoint}</code></li>`).join('')}
+          </ul>
+          <table class="api-launch__commands">
+            <thead><tr><th scope="col">Group</th><th scope="col">Commands</th></tr></thead>
+            <tbody>${COMMANDS.map(([group, list]) => `<tr><th scope="row">${group}</th><td>${list.map(command).join(', ')}</td></tr>`).join('')}</tbody>
+          </table>
+          <ul class="api-launch__plans" aria-label="Plans">
+            ${PLANS.map((p) => `<li${p.featured ? ' class="is-featured"' : ''}><b>${p.name}</b><strong>${p.price}</strong><span>${p.ops}</span><small>${p.note}</small></li>`).join('')}
+          </ul>
+          <div class="api-launch__actions">
+            <a class="api-launch__cta" href="/docs/">Get a free key →</a>
+            <a class="api-launch__plans-link" href="/pricing">Compare plans</a>
+            <button class="api-launch__later" type="button">Maybe later</button>
+          </div>
+        </div>
       </div>
     </div>
   `;
@@ -79,6 +107,7 @@ export function openApiLaunchModal() {
 
   overlay.querySelector('.welcome-modal__close').addEventListener('click', dismiss);
   overlay.querySelector('.api-launch__later').addEventListener('click', dismiss);
+  overlay.querySelector('.api-launch__plans-link').addEventListener('click', close);
   overlay.addEventListener('click', (e) => { if (e.target === overlay) dismiss(); });
   overlay.querySelector('.api-launch__cta').addEventListener('click', (e) => {
     trackApiEvent('popup_click');

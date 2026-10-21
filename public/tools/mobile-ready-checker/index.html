@@ -177,10 +177,10 @@ td.nm{max-width:12em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   <div class="grid">
     <div class="col">
       <section class="card">
-        <div class="card-h"><span class="num">01</span><div><h2>Model</h2><p>GLB, or glTF with everything embedded</p></div><span class="sp"></span><button class="btn" id="sampleBtn">Sample</button></div>
+        <div class="card-h"><span class="num">01</span><div><h2>Model</h2><p>GLB, glTF with everything embedded, or FBX (converted to GLB first)</p></div><span class="sp"></span><button class="btn" id="sampleBtn">Sample</button></div>
         <div class="card-b">
-          <div class="drop" id="drop" tabindex="0" role="button" aria-label="Choose a model"><span class="plus" aria-hidden="true">+</span><div><strong>Add a model</strong><small>Drop a .glb or .gltf here, or click to browse</small></div></div>
-          <input type="file" id="file" accept=".glb,.gltf,model/gltf-binary,model/gltf+json" hidden>
+          <div class="drop" id="drop" tabindex="0" role="button" aria-label="Choose a model"><span class="plus" aria-hidden="true">+</span><div><strong>Add a model</strong><small>Drop a .glb, .gltf or .fbx here, or click to browse</small></div></div>
+          <input type="file" id="file" accept=".glb,.gltf,.fbx,model/gltf-binary,model/gltf+json" hidden>
           <dl class="facts">
             <div><dt>File</dt><dd id="fName">–</dd></div>
             <div><dt>Size</dt><dd id="fSize">–</dd></div>
@@ -482,8 +482,54 @@ async function loadBuffer(buf, name, size){
   } catch (e) { console.error(e); status('err', 'That file couldn’t be read as glTF. Export a .glb and try again.'); }
   finally { $('busy').hidden = true; }
 }
+// GlobalSettings › UnitScaleFactor as metres per file unit (same as src/shared/fbx/fbxUnits.js).
+function fbxMetresPerUnit(b){
+  let factor = NaN;
+  if (String.fromCharCode(...b.subarray(0, 18)) === 'Kaydara FBX Binary') {
+    const key = 'UnitScaleFactor', view = new DataView(b.buffer, b.byteOffset, b.byteLength);
+    outer: for (let i = 5; i < b.length - 60; i++) {
+      for (let k = 0; k < key.length; k++) if (b[i + k] !== key.charCodeAt(k)) continue outer;
+      if (b[i - 5] !== 0x53 || view.getUint32(i - 4, true) !== key.length) continue;
+      let p = i + key.length;
+      for (let s = 0; s < 3; s++) { if (b[p] !== 0x53) continue outer; p += 5 + view.getUint32(p + 1, true); }
+      if (b[p] === 0x44) { factor = view.getFloat64(p + 1, true); break; }
+    }
+  } else {
+    const m = new TextDecoder().decode(b.subarray(0, 200000)).match(/"UnitScaleFactor"\s*,\s*"double"\s*,\s*"Number"\s*,\s*"[^"]*"\s*,\s*([-\d.eE+]+)/);
+    if (m) factor = Number(m[1]);
+  }
+  return Number.isFinite(factor) && factor > 0 ? factor / 100 : 1;
+}
+// FBX in, GLB out: an FBX (textures embedded) is converted to GLB here first,
+// and the check runs on that GLB, the same file the site's other tools would use.
+async function fbxToGlb(f){
+  const { FBXLoader } = await import('three/addons/loaders/FBXLoader.js');
+  const bytes = await f.arrayBuffer();
+  const model = new FBXLoader().parse(bytes, '');
+  // FBXLoader ignores UnitScaleFactor (cm per unit); centimetre files would check as 100× too big.
+  const metres = fbxMetresPerUnit(new Uint8Array(bytes));
+  if (Math.abs(metres - 1) > 1e-6) { model.scale.multiplyScalar(metres); model.updateMatrixWorld(true); }
+  // Embedded textures decode after parse returns; the exporter needs their pixels.
+  const textures = [];
+  model.traverse(o => { if (o.isMesh) for (const m of [].concat(o.material)) for (const v of Object.values(m || {})) if (v && v.isTexture) textures.push(v); });
+  const ready = t => t.image && (t.image.complete !== false) && (t.image.width || t.image.videoWidth);
+  for (let waited = 0; !textures.every(ready) && waited < 10000; waited += 100) await new Promise(r => setTimeout(r, 100));
+  model.traverse(o => { if (o.isMesh) for (const m of [].concat(o.material)) for (const k of Object.keys(m || {})) if (m[k] && m[k].isTexture && !ready(m[k])) m[k] = null; });
+  const glb = await new GLTFExporter().parseAsync(model, { binary: true, animations: model.animations || [], embedImages: true });
+  return { buf: glb, name: f.name.replace(/\.fbx$/i, '.glb') };
+}
 async function loadFile(f){
-  if (!f) return; if (!/\.(glb|gltf)$/i.test(f.name)) { status('err', 'Use a .glb or .gltf file.'); return; }
+  if (!f) return;
+  if (/\.fbx$/i.test(f.name)) {
+    $('busy').hidden = false; status('', `Converting ${f.name} to GLB…`);
+    let converted;
+    try { converted = await fbxToGlb(f); }
+    catch (e) { console.error(e); $('busy').hidden = true; status('err', 'That FBX couldn’t be converted. FBX 2011 (7.0) or newer works, or export a .glb from your 3D app.'); return; }
+    await loadBuffer(converted.buf, converted.name, converted.buf.byteLength);
+    if ($('status').classList.contains('ok')) status('ok', `Converted ${f.name} to GLB, then checked it.`);
+    return;
+  }
+  if (!/\.(glb|gltf)$/i.test(f.name)) { status('err', 'Use a .glb, .gltf or .fbx file.'); return; }
   loadBuffer(await f.arrayBuffer(), f.name, f.size);
 }
 $('drop').addEventListener('click', () => $('file').click());

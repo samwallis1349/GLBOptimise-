@@ -1,6 +1,7 @@
 import { StatusBadge } from './StatusBadge.js';
 import { TOOLS, getCategoryById } from '../config/tools.js';
 import { iconSvg } from '../utils/icons.js';
+import { toolClip } from '../config/toolClips.js';
 
 /**
  * Renders a single tool card from a tool registry entry
@@ -70,6 +71,7 @@ export function ToolCard(tool, { index: displayIndex, featured = false, headline
           : iconSvg(tool.icon, { class: 'tool-card__visual-icon' })
       }
       <span class="tool-card__scan" aria-hidden="true"></span>
+      ${tool.free ? '<span class="tool-card__free">Free tool</span>' : ''}
     </div>
 
     <div class="tool-card__body">
@@ -91,7 +93,43 @@ export function ToolCard(tool, { index: displayIndex, featured = false, headline
     : '<span>Coming soon</span>';
   footer.appendChild(cta);
 
+  attachHoverClip(card, toolClip(tool.id));
+
   return card;
+}
+
+const canHover = typeof matchMedia === 'function' && matchMedia('(hover: hover) and (pointer: fine)').matches;
+
+/**
+ * Plays the tool's clip over the card artwork while the pointer is on the
+ * card. The video element is only made on the first hover, so a grid of 28
+ * cards downloads nothing extra until someone points at one. Touch screens
+ * keep the still artwork.
+ */
+function attachHoverClip(card, clip) {
+  if (!clip || !canHover) return;
+  const visual = card.querySelector('.tool-card__visual');
+  let video = null;
+  card.addEventListener('pointerenter', () => {
+    if (!video) {
+      video = document.createElement('video');
+      video.className = 'tool-card__clip';
+      video.src = clip.src;
+      video.muted = true;
+      video.loop = true;
+      video.playsInline = true;
+      video.setAttribute('aria-hidden', 'true');
+      video.addEventListener('playing', () => card.classList.add('is-playing'));
+      visual.appendChild(video);
+    }
+    video.currentTime = 0;
+    video.play().catch(() => {});
+  });
+  card.addEventListener('pointerleave', () => {
+    if (!video) return;
+    video.pause();
+    card.classList.remove('is-playing');
+  });
 }
 
 /**
@@ -100,7 +138,7 @@ export function ToolCard(tool, { index: displayIndex, featured = false, headline
  * Model *Splitter*). An ampersand is pulled across with the word that
  * follows it so "GLB Builder & Merger" doesn't break as "… &" / "Merger".
  */
-function accentTitle(name) {
+export function accentTitle(name) {
   const words = String(name).trim().split(/\s+/);
   if (words.length < 2) return `<span class="accent">${escapeHtml(name)}</span>`;
 
@@ -131,7 +169,7 @@ function specLine(tool) {
  * set (shared/utils/icons.js); a tool without `features` simply renders no
  * chip row rather than falling back to invented labels.
  */
-function featureChips(tool) {
+export function featureChips(tool) {
   const features = (tool.features ?? []).slice(0, 3);
   if (!features.length) return '';
 
@@ -150,7 +188,7 @@ function featureChips(tool) {
   `;
 }
 
-function escapeHtml(value) {
+export function escapeHtml(value) {
   return String(value ?? '')
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
