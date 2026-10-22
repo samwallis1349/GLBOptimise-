@@ -12,6 +12,7 @@ import { initLayoutEditor } from '../editor/LayoutEditor.js';
 import { initCommandPalette } from '../shared/effects/CommandPalette.js';
 import { initPromoBot } from '../shared/effects/PromoBot.js';
 import { initConsentBanner } from '../shared/components/ConsentBanner.js';
+import { initUpdateNotice } from '../shared/components/UpdateNotice.js';
 import { initApiLaunchModal } from '../shared/components/ApiLaunchModal.js';
 import { initAnalytics } from '../services/AnalyticsService.js';
 import { hasAccess, trialEndsAt } from '../shared/config/billing.js';
@@ -38,6 +39,9 @@ export function App(rootEl) {
   // opt-out; AnalyticsService respects any saved opt-out.
   initConsentBanner();
   initAnalytics();
+
+  // Tells open tabs when a newer build is live, without reloading them.
+  initUpdateNotice();
 
   cleanupStaleSessions().catch(() => {
     /* best-effort cleanup — never block app startup on it */

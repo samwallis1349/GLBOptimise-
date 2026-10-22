@@ -3978,3 +3978,60 @@ html.has-consent-notice .promo-bot {
   border-color: rgba(255, 107, 107, 0.6);
   color: #ffb0b0;
 }
+
+/* "New version is live" toast (UpdateNotice.js): top centre, clear of the consent toast. */
+.update-notice {
+  position: fixed;
+  top: var(--space-4);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10000;
+  width: min(520px, calc(100% - 2 * var(--space-4)));
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  background: var(--panel-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-4);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+.update-notice__text {
+  flex: 1;
+  margin: 0;
+}
+
+.update-notice__text strong {
+  color: var(--text-primary);
+}
+
+.update-notice__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.update-notice__btn {
+  min-height: 36px;
+  padding: 6px 14px;
+  font-size: 13px;
+}
+
+.update-notice__dismiss {
+  width: 28px;
+  height: 28px;
+  background: none;
+  border: 0;
+  border-radius: 999px;
+  font: inherit;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.update-notice__dismiss:hover {
+  background: var(--border);
+}
