@@ -1,0 +1,16 @@
+# Security headers for every static page and file (Cloudflare Workers static
+# assets read this file; it is copied to dist/ by Vite). /api/* responses come
+# from the Worker script instead and get the same headers in worker/index.js.
+#
+# X-Frame-Options is SAMEORIGIN, not DENY: the tool pages are shown inside the
+# site's own iframes (/tools/*, /docs/?embed=1).
+# The CSP is Report-Only for now: the tools load wasm, blobs, jsDelivr scripts,
+# AdSense and YouTube. Violations show in the browser console; enforce it once
+# nothing legitimate is being reported.
+/*
+  Strict-Transport-Security: max-age=31536000; includeSubDomains
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: SAMEORIGIN
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=()
+  Content-Security-Policy-Report-Only: default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' blob: https://cdn.jsdelivr.net https://static.cloudflareinsights.com https://pagead2.googlesyndication.com https://*.lemonsqueezy.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' data: blob:; connect-src 'self' data: blob: https:; worker-src 'self' blob:; frame-src 'self' https://www.youtube.com https://*.lemonsqueezy.com https://*.googlesyndication.com https://*.doubleclick.net https://*.google.com; frame-ancestors 'self'; object-src 'none'; base-uri 'self'; form-action 'self' https://*.lemonsqueezy.com https://www.paypal.com

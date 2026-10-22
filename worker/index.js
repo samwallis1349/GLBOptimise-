@@ -531,21 +531,36 @@ async function handleSubscribe(request, env) {
   return json({ ok: true });
 }
 
+// Static files get their security headers from public/_headers, which does not
+// cover responses made here, so the API sets the ones that apply to it.
+const SECURITY_HEADERS = {
+  'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
+  'X-Content-Type-Options': 'nosniff',
+  'Referrer-Policy': 'strict-origin-when-cross-origin',
+};
+
 export default {
   async fetch(request, env, ctx) {
-    const { pathname } = new URL(request.url);
-    if (pathname === '/api/trial') return handleTrial(request, env);
-    if (pathname === '/api/usage') return handleUsage(request, env, ctx);
-    if (pathname === '/api/tool-binding') return handleToolBinding(request, env);
-    if (pathname === '/api/stats') return handleStats(request, env);
-    if (pathname === '/api/sales-webhook') return handleSalesWebhook(request, env);
-    if (pathname === '/api/illustration-enquiry') return handleIllustrationEnquiry(request, env);
-    if (pathname === '/api/subscribe') return handleSubscribe(request, env);
-    if (pathname === '/api/banner' || pathname === '/api/banners' || pathname === '/api/banner/active') {
-      return handleBanner(request, env);
-    }
-    if (pathname === '/api/v1' || pathname.startsWith('/api/v1/')) return handleApiV1(request, env, ctx);
-    if (pathname.startsWith('/api/')) return json({ error: 'Not found' }, 404);
-    return env.ASSETS.fetch(request);
+    const res = await route(request, env, ctx);
+    const secured = new Response(res.body, res);
+    for (const [name, value] of Object.entries(SECURITY_HEADERS)) secured.headers.set(name, value);
+    return secured;
   },
 };
+
+async function route(request, env, ctx) {
+  const { pathname } = new URL(request.url);
+  if (pathname === '/api/trial') return handleTrial(request, env);
+  if (pathname === '/api/usage') return handleUsage(request, env, ctx);
+  if (pathname === '/api/tool-binding') return handleToolBinding(request, env);
+  if (pathname === '/api/stats') return handleStats(request, env);
+  if (pathname === '/api/sales-webhook') return handleSalesWebhook(request, env);
+  if (pathname === '/api/illustration-enquiry') return handleIllustrationEnquiry(request, env);
+  if (pathname === '/api/subscribe') return handleSubscribe(request, env);
+  if (pathname === '/api/banner' || pathname === '/api/banners' || pathname === '/api/banner/active') {
+    return handleBanner(request, env);
+  }
+  if (pathname === '/api/v1' || pathname.startsWith('/api/v1/')) return handleApiV1(request, env, ctx);
+  if (pathname.startsWith('/api/')) return json({ error: 'Not found' }, 404);
+  return env.ASSETS.fetch(request);
+}

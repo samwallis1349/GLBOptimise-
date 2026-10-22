@@ -41,7 +41,7 @@ export const DISCOUNT_CODE = 'G0MTE1NA';
  * its keys for the browser tools.
  */
 export const TEAM_PRODUCT_ID = 1430376;
-export const TEAM_PRICE_LABEL = '£99/month';
+export const TEAM_PRICE_LABEL = '£50/month';
 export const TEAM_MACHINES = 25;
 export const TEAM_CHECKOUT_URL = 'https://workbenchlabs.lemonsqueezy.com/checkout/buy/c65fbf3e-dc6d-43a6-9280-1013e0c36a31';
 

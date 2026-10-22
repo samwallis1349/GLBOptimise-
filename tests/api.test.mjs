@@ -42,7 +42,7 @@ const getSphere = async () => (sphere ??= await sphereGlb(120, { textureSize: [1
 test('pricing, targets and intent are public', async () => {
   const { call } = setup();
   const pricing = await (await call('/api/v1/pricing')).json();
-  assert.deepEqual(pricing.plans.map((p) => [p.id, p.price.amount, p.quota]), [['trial', 0, 100], ['allaccess', 10, 1000], ['all', 99, 5000]], 'retired plans are never listed');
+  assert.deepEqual(pricing.plans.map((p) => [p.id, p.price.amount, p.quota]), [['trial', 0, 100], ['allaccess', 10, 1000], ['all', 50, 5000]], 'retired plans are never listed');
   assert.deepEqual(pricing.products.map((p) => p.id), ['check', 'game-ready', 'app-assets']);
   assert.ok(pricing.advanced.includes('POST /api/v1/3d/reduce'));
   assert.ok((await (await call('/api/v1/targets')).json()).targets.prop);

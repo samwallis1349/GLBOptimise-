@@ -4,7 +4,7 @@
  *
  *   Free        100 operations a month, one key per network.
  *   All Access  the site's £10/month subscription; the API is included.
- *   Studio      £99/month for teams that need 5,000 operations.
+ *   Studio      £50/month for teams that need 5,000 operations.
  *
  * `engines` gates which endpoint families a key may call (texture
  * endpoints work with either); `quota` is operations per calendar month
@@ -42,7 +42,7 @@ export const PLANS = {
   all: {
     id: 'all',
     name: 'Studio',
-    price: { amount: 99, currency: 'GBP', interval: 'month' },
+    price: { amount: 50, currency: 'GBP', interval: 'month' },
     quota: 5000,
     period: 'month',
     engines: ['2d', '3d'],

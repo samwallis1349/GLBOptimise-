@@ -31,7 +31,7 @@
     "TRIAL_GENERATION": "2026-10-reset-1",
     // Cloud API billing. Lemon Squeezy product id -> plan, each product with licence keys on.
     // 1420844 is the site's All Access subscription: the API comes included.
-    // 1430376 is the £99/month Studio plan (5,000 operations).
+    // 1430376 is the £50/month Studio plan (5,000 operations).
     "API_LS_PRODUCTS": { "1420844": "allaccess", "1430376": "all" },
     // Plan -> Lemon Squeezy checkout link, shown as buttons on /docs.
     "API_LS_CHECKOUTS": {

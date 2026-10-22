@@ -20,7 +20,7 @@ const command = (c) => (c.endsWith('*') ? `<code>${c.slice(0, -1)}</code> (Free)
 const PLANS = [
   { name: 'Free', price: '£0', ops: '100 operations/month', note: 'No card. Checks unlimited.' },
   { name: 'All Access', price: '£10/mo', ops: '1,000 operations/month', note: 'Plus every site tool and extension.', featured: true },
-  { name: 'Studio', price: '£99/mo', ops: '5,000 operations/month', note: 'For whole asset libraries.' },
+  { name: 'Studio', price: '£50/mo', ops: '5,000 operations/month', note: 'For whole asset libraries.' },
 ];
 
 function seen(key) {
