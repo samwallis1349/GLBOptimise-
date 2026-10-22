@@ -34,3 +34,6 @@ scripts/hero/source/rusted-colossus-*.glb
 
 # Manual-install extension zips, rebuilt on every deploy (npm run build:extensions:site)
 /public/extensions/
+
+# Earlier builds' hashed assets, re-shipped for 7 days (scripts/keep-old-assets.mjs)
+/.asset-archive/
