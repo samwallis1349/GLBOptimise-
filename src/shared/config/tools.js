@@ -14,6 +14,14 @@
  * category: one of CATEGORIES[number].id below — groups tools on the
  * homepage into scannable families instead of one flat grid.
  *
+ * bento: the tool's place on the /tools bento grid (pages/tools/ToolsPage.js),
+ *   which has one section per category. `order` is its position within its
+ *   category: 1 takes the big featured panel, 2 and 3 sit beside it, and the
+ *   rest follow in even rows.
+ *
+ * mcp: the assetbench-mcp tools (mcp/index.js) that do this tool's job, if
+ *   any. Marks the card with an MCP badge and feeds the /tools MCP filter.
+ *
  * To add a new tool:
  *   1. Create src/tools/<id>/ with an index.js exporting a `mount(container)`
  *      function (see src/tools/optimise-glb/index.js for the pattern).
@@ -30,9 +38,9 @@
  */
 export const CATEGORIES = [
   // Build & Convert leads so the featured Asset Arranger is the homepage's first card.
-  { id: 'build', label: 'Build & Convert', icon: 'tools', accent: '--cat-blue' },
-  { id: 'optimise', label: 'Optimise', icon: 'gauge', accent: '--cat-amber' },
-  { id: 'inspect', label: 'Inspect & Preview', icon: 'search', accent: '--cat-pink' },
+  { id: 'build', label: 'Build & Convert', icon: 'tools', accent: '--cat-blue', blurb: 'Convert, split, merge and make sprites, icons and app assets.' },
+  { id: 'optimise', label: 'Optimise', icon: 'gauge', accent: '--cat-amber', blurb: 'Smaller, faster models and textures, ready for games and the web.' },
+  { id: 'inspect', label: 'Inspect & Preview', icon: 'search', accent: '--cat-pink', blurb: 'Check what is inside a model before you ship it.' },
 ];
 
 export function getCategoryById(id) {
@@ -61,6 +69,8 @@ export const TOOLS = [
     ],
     status: 'available',
     category: 'build',
+    bento: { order: 10 },
+    mcp: ['make_app_assets'],
   },
   {
     id: 'app-store-screenshot-generator',
@@ -83,6 +93,8 @@ export const TOOLS = [
     ],
     status: 'available',
     category: 'build',
+    bento: { order: 11 },
+    mcp: ['make_store_screenshots'],
   },
   {
     id: 'xcassets-generator',
@@ -105,6 +117,7 @@ export const TOOLS = [
     ],
     status: 'available',
     category: 'build',
+    bento: { order: 12 },
   },
   {
     id: 'alpha-cutout',
@@ -126,6 +139,7 @@ export const TOOLS = [
     ],
     status: 'available',
     category: 'build',
+    bento: { order: 5 },
   },
   {
     id: 'line-studio',
@@ -148,6 +162,7 @@ export const TOOLS = [
     ],
     status: 'available',
     category: 'build',
+    bento: { order: 1 },
   },
   {
     id: 'model-to-iso-sprites',
@@ -170,6 +185,7 @@ export const TOOLS = [
     ],
     status: 'beta',
     category: 'build',
+    bento: { order: 7 },
   },
   {
     id: 'model-to-isometric',
@@ -191,6 +207,7 @@ export const TOOLS = [
     ],
     status: 'available',
     category: 'build',
+    bento: { order: 6 },
   },
   {
     id: 'iso-scene-builder',
@@ -211,6 +228,7 @@ export const TOOLS = [
     ],
     status: 'beta',
     category: 'build',
+    bento: { order: 9 },
   },
   // ---------- Optimise (geometry, textures, animation) ----------
   {
@@ -235,6 +253,8 @@ export const TOOLS = [
     ],
     status: 'available',
     category: 'optimise',
+    bento: { order: 1 },
+    mcp: ['optimize_model'],
   },
   {
     id: 'asset-pipeline',
@@ -259,6 +279,8 @@ export const TOOLS = [
     ],
     status: 'available',
     category: 'optimise',
+    bento: { order: 2 },
+    mcp: ['make_game_ready'],
   },
   {
     id: 'reduce-polys',
@@ -282,6 +304,8 @@ export const TOOLS = [
     ],
     status: 'available',
     category: 'optimise',
+    bento: { order: 3 },
+    mcp: ['reduce_model'],
   },
   {
     id: 'compress-textures',
@@ -304,6 +328,8 @@ export const TOOLS = [
     ],
     status: 'available',
     category: 'optimise',
+    bento: { order: 4 },
+    mcp: ['compress_textures'],
   },
   {
     id: 'ktx2-texture-encoder',
@@ -328,6 +354,8 @@ export const TOOLS = [
     ],
     status: 'available',
     category: 'optimise',
+    bento: { order: 5 },
+    mcp: ['compress_textures'],
   },
   {
     id: 'generate-lods',
@@ -351,6 +379,8 @@ export const TOOLS = [
     ],
     status: 'available',
     category: 'optimise',
+    bento: { order: 6 },
+    mcp: ['generate_lods'],
   },
 
   {
@@ -375,6 +405,7 @@ export const TOOLS = [
     ],
     status: 'available',
     category: 'optimise',
+    bento: { order: 7 },
   },
   {
     id: 'animation-optimiser',
@@ -398,6 +429,7 @@ export const TOOLS = [
     ],
     status: 'available',
     category: 'optimise',
+    bento: { order: 8 },
   },
 
   {
@@ -420,6 +452,7 @@ export const TOOLS = [
     ],
     status: 'available',
     category: 'optimise',
+    bento: { order: 9 },
   },
   {
     id: 'texture-resizer',
@@ -441,6 +474,8 @@ export const TOOLS = [
     ],
     status: 'available',
     category: 'optimise',
+    bento: { order: 10 },
+    mcp: ['resize_texture'],
   },
 
   // ---------- Build & Convert ----------
@@ -464,6 +499,8 @@ export const TOOLS = [
     ],
     status: 'available',
     category: 'build',
+    bento: { order: 2 },
+    mcp: ['convert_model'],
   },
   {
     id: 'glb-builder',
@@ -487,6 +524,7 @@ export const TOOLS = [
     ],
     status: 'available',
     category: 'build',
+    bento: { order: 4 },
   },
   {
     id: 'model-splitter',
@@ -508,6 +546,7 @@ export const TOOLS = [
     ],
     status: 'available',
     category: 'build',
+    bento: { order: 3 },
   },
 
   // ---------- Inspect & Preview ----------
@@ -532,6 +571,7 @@ export const TOOLS = [
     ],
     status: 'available',
     category: 'inspect',
+    bento: { order: 2 },
   },
   {
     id: 'mobile-ready-checker',
@@ -556,6 +596,8 @@ export const TOOLS = [
     ],
     status: 'available',
     category: 'inspect',
+    bento: { order: 1 },
+    mcp: ['check_model'],
   },
   {
     id: 'asset-compare',
@@ -578,6 +620,7 @@ export const TOOLS = [
     ],
     status: 'available',
     category: 'inspect',
+    bento: { order: 5 },
   },
   {
     id: 'asset-report',
@@ -600,6 +643,7 @@ export const TOOLS = [
     ],
     status: 'available',
     category: 'inspect',
+    bento: { order: 3 },
   },
 
   {
@@ -623,6 +667,7 @@ export const TOOLS = [
     ],
     status: 'available',
     category: 'inspect',
+    bento: { order: 6 },
   },
   {
     id: 'animation-inspector',
@@ -645,6 +690,7 @@ export const TOOLS = [
     ],
     status: 'available',
     category: 'inspect',
+    bento: { order: 7 },
   },
   {
     id: 'character-workshop',
@@ -668,6 +714,7 @@ export const TOOLS = [
     ],
     status: 'beta',
     category: 'build',
+    bento: { order: 8 },
   },
   {
     id: 'thumbnail-maker',
@@ -691,6 +738,7 @@ export const TOOLS = [
     // Free for everyone: no paywall or 99p offer, and a "Free tool" ribbon on its card.
     free: true,
     category: 'inspect',
+    bento: { order: 4 },
   },
 ];
 
@@ -707,6 +755,26 @@ export function getToolsByCategory(categoryId) {
 }
 
 /**
+ * The order the homepage and /tools grids always show first (23 Oct 2026, the
+ * user's list): these keep their places whatever the usage counts say, and the
+ * first one gets the full-width headline card. Every other tool follows by usage.
+ */
+export const PINNED_ORDER = [
+  'mobile-ready-checker',
+  'line-studio',
+  'glb-builder',
+  'ktx2-texture-encoder',
+  'convert-files',
+  'thumbnail-maker',
+  'alpha-cutout',
+  'generate-lods',
+  'model-to-isometric',
+  'asset-report',
+  'model-splitter',
+  'inspect-glb',
+];
+
+/**
  * Starting order for tool grids, used before any usage counts arrive and to
  * break ties between tools with the same count. Grids are ranked purely by
  * site-wide usage (services/UsageService.js), and the most-used tool gets
@@ -714,21 +782,10 @@ export function getToolsByCategory(categoryId) {
  * visit and between equals.
  */
 export const POPULARITY_ORDER = [
-  // Site-wide open counts as of 2026-10-13, highest first.
-  'line-studio',
-  'mobile-ready-checker',
-  'glb-builder',
-  'ktx2-texture-encoder',
-  'convert-files',
-  'alpha-cutout',
-  'generate-lods',
-  'thumbnail-maker',
-  'asset-report',
-  'model-to-isometric',
+  // The pinned tools first, then site-wide open counts as of 2026-10-13.
+  ...PINNED_ORDER,
   'model-to-iso-sprites',
   'iso-scene-builder',
-  'inspect-glb',
-  'model-splitter',
   'optimise-glb',
   'reduce-polys',
   'strip-animations',
@@ -745,6 +802,15 @@ export const POPULARITY_ORDER = [
   'asset-pipeline',
   'character-workshop',
 ];
+
+/** The /tools bento grid's MCP banner sits after this category's section. */
+export const BENTO_BANNER_AFTER = 'build';
+
+/** A category's tools in their /tools bento order; a tool without `bento` goes last. */
+export function getBentoTools(categoryId) {
+  const order = (tool) => tool.bento?.order ?? Infinity;
+  return getToolsByCategory(categoryId).sort((a, b) => order(a) - order(b));
+}
 
 export function getOrderedTools() {
   const rank = (tool) => {
@@ -769,7 +835,7 @@ export const GAME_2D_GROUPS = [
   {
     id: '2d',
     label: '2D game tools',
-    description: 'Sprite sheets, transparent frames, clean line art, UI icons and textures.',
-    tools: ['alpha-cutout', 'thumbnail-maker', 'line-studio', 'app-icon-generator', 'texture-resizer'],
+    description: 'Sprite sheets, transparent frames, clean line art and UI icons.',
+    tools: ['alpha-cutout', 'line-studio', 'app-icon-generator'],
   },
 ];

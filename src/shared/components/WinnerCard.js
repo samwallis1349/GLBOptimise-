@@ -12,10 +12,13 @@ const reduceMotion = typeof matchMedia === 'function' && matchMedia('(prefers-re
  * clip) beside its title, description and an Open button. Everything comes
  * from the registry entry, so a new leader needs no new artwork.
  *
+ * `badge` replaces the "Most used tool" label (the /tools page leads each category with this card).
+ *
  * @param {import('../config/tools.js').TOOLS[number]} tool
+ * @param {{ badge?: string }} [options]
  * @returns {HTMLElement}
  */
-export function WinnerCard(tool) {
+export function WinnerCard(tool, { badge = 'Most used tool' } = {}) {
   const category = getCategoryById(tool.category);
   const clip = toolClip(tool.id);
   const still = clip?.poster ?? tool.banner ?? tool.thumbnail;
@@ -31,7 +34,7 @@ export function WinnerCard(tool) {
     </a>
     <div class="winner-card__body">
       <div class="winner-card__badges">
-        <span class="winner-card__badge">★ Most used tool</span>
+        <span class="winner-card__badge">★ ${escapeHtml(badge)}</span>
         ${tool.free ? '<span class="winner-card__free">Free tool</span>' : ''}
       </div>
       <p class="winner-card__category">${iconSvg(tool.icon, { class: 'winner-card__icon' })}${escapeHtml(category?.label ?? 'Tool')}</p>
