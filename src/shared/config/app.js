@@ -21,7 +21,7 @@ export const TOOL_STATUS_LABELS = {
  * and /privacy). Leave '' until a real inbox exists: the contact page then
  * says so plainly instead of showing an address nobody reads.
  */
-export const CONTACT_EMAIL = 'Workbench5@gmail.com';
+export const CONTACT_EMAIL = 'sam@assetbench.co.uk';
 
 /** Who runs Asset Bench — named in the footer, terms, privacy and refund pages. */
 export const OPERATOR_NAME = 'Workbench Labs';
