@@ -1,7 +1,8 @@
 import { StatusBadge } from './StatusBadge.js';
-import { TOOLS, getCategoryById } from '../config/tools.js';
+import { DIMENSIONS, TOOLS, getCategoryById, getToolDimension } from '../config/tools.js';
 import { iconSvg } from '../utils/icons.js';
 import { toolClip } from '../config/toolClips.js';
+import { TOOL_PRICE_LABEL, toolProduct } from '../config/toolProducts.js';
 
 /**
  * Renders a single tool card from a tool registry entry
@@ -36,12 +37,13 @@ import { toolClip } from '../config/toolClips.js';
  * using the tool's wide `banner` artwork. `headline` renders a full-row
  * card with the artwork (wide `banner` when the tool has one, else the
  * square thumbnail) beside the body, for the most-used tool at the top of a grid.
+ * `price` puts the tool's one-off price on the artwork (99p, or nothing for a free tool).
  *
  * @param {import('../config/tools.js').TOOLS[number]} tool
- * @param {{ index?: number, featured?: boolean, headline?: boolean }} [options]
+ * @param {{ index?: number, featured?: boolean, headline?: boolean, price?: boolean }} [options]
  * @returns {HTMLElement}
  */
-export function ToolCard(tool, { index: displayIndex, featured = false, headline = false } = {}) {
+export function ToolCard(tool, { index: displayIndex, featured = false, headline = false, price = false } = {}) {
   const category = getCategoryById(tool.category);
   const isAvailable = tool.status === 'available' || tool.status === 'beta';
 
@@ -50,6 +52,7 @@ export function ToolCard(tool, { index: displayIndex, featured = false, headline
   card.className = `tool-card${wide ? ' tool-card--featured' : ''}${headline ? ' tool-card--headline' : ''}${headline && tool.banner ? ' tool-card--headline-banner' : ''}${tool.cardTheme ? ` tool-card--${tool.cardTheme}` : ''}`;
   card.href = tool.route;
   card.dataset.status = tool.status;
+  card.dataset.dim = getToolDimension(tool).id;
   if (category) card.style.setProperty('--card-accent', `var(${category.accent})`);
 
   const position = displayIndex ?? TOOLS.indexOf(tool) + 1;
@@ -61,6 +64,7 @@ export function ToolCard(tool, { index: displayIndex, featured = false, headline
     <div class="tool-card__bar">
       ${iconSvg(tool.icon, { class: 'tool-card__bar-icon' })}
       <span class="tool-card__bar-label">${escapeHtml(category?.label ?? 'Tool')}</span>
+      ${dimensionTag(tool)}
       <span class="tool-card__index">${headline ? 'Most used · ' : wide ? 'New · ' : ''}#${index}</span>
     </div>
 
@@ -72,6 +76,7 @@ export function ToolCard(tool, { index: displayIndex, featured = false, headline
       }
       <span class="tool-card__scan" aria-hidden="true"></span>
       ${tool.free ? '<span class="tool-card__free">Free tool</span>' : ''}
+      ${price && !tool.free && toolProduct(tool.id) ? `<span class="tool-card__price"><b>${TOOL_PRICE_LABEL}</b> yours to keep</span>` : ''}
     </div>
 
     <div class="tool-card__body">
@@ -148,6 +153,20 @@ export function accentTitle(name) {
   const head = words.slice(0, words.length - tailCount).join(' ');
   const tail = words.slice(words.length - tailCount).join(' ');
   return `${escapeHtml(head)} <span class="accent">${escapeHtml(tail)}</span>`;
+}
+
+/**
+ * The 2D / 3D / 3D → 2D tag every tool card carries (DIMENSIONS in config/tools.js).
+ * Its colour, and the card border's, come from the card's `data-dim` (components.css).
+ */
+export function dimensionTag(tool) {
+  const dim = getToolDimension(tool);
+  return `<span class="dim-tag dim-tag--${dim.id}" title="${escapeHtml(dim.title)}">${escapeHtml(dim.label)}</span>`;
+}
+
+/** One line saying what the 2D / 3D / 3D → 2D tags and border colours mean. */
+export function dimensionLegend() {
+  return `<p class="dim-legend">${DIMENSIONS.map((d) => `<span class="dim-legend__item" data-dim="${d.id}"><span class="dim-tag dim-tag--${d.id}">${escapeHtml(d.label)}</span>${escapeHtml(d.title)}</span>`).join('')}</p>`;
 }
 
 /**

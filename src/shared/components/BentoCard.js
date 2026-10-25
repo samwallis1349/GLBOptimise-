@@ -1,7 +1,8 @@
 import { StatusBadge } from './StatusBadge.js';
 import { iconSvg } from '../utils/icons.js';
 import { toolClip } from '../config/toolClips.js';
-import { accentTitle, escapeHtml, featureChips } from './ToolCard.js';
+import { getToolDimension } from '../config/tools.js';
+import { accentTitle, dimensionTag, escapeHtml, featureChips } from './ToolCard.js';
 
 const canHover = typeof matchMedia === 'function' && matchMedia('(hover: hover) and (pointer: fine)').matches;
 const reduceMotion = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -17,7 +18,8 @@ const reduceMotion = typeof matchMedia === 'function' && matchMedia('(prefers-re
  * reduced-motion visitors keep the still.
  *
  * Cards sit under their category's heading, so they don't repeat the
- * category. The page sets each card's span (--span-c / --span-r) and adds
+ * category. The 2D / 3D tag sits on the poster and `data-dim` colours the
+ * border (bento.css). The page sets each card's span (--span-c / --span-r) and adds
  * `bento-card--wide` when a card fills a short last row.
  *
  * @param {import('../config/tools.js').TOOLS[number]} tool
@@ -32,6 +34,7 @@ export function BentoCard(tool) {
   card.className = 'bento-card';
   card.href = tool.route;
   card.dataset.status = tool.status;
+  card.dataset.dim = getToolDimension(tool).id;
 
   const mcp = tool.mcp?.length ? `<span class="bento-card__mcp" title="Also in the AssetBench MCP server: ${escapeHtml(tool.mcp.join(', '))}">MCP</span>` : '';
   const cta = isAvailable
@@ -45,6 +48,7 @@ export function BentoCard(tool) {
           ? `<img class="bento-card__still" src="${still}" alt="" width="640" height="360" loading="lazy" decoding="async" />`
           : iconSvg(tool.icon, { class: 'bento-card__art-icon' })
       }
+      ${dimensionTag(tool)}
       ${clip && canHover && !reduceMotion ? '<span class="bento-card__play" aria-hidden="true">▶ Preview</span>' : ''}
       ${tool.free ? '<span class="bento-card__free">Free tool</span>' : ''}
     </div>
@@ -63,6 +67,23 @@ export function BentoCard(tool) {
   card.querySelector('.bento-card__badges').appendChild(StatusBadge(tool.status));
   if (clip && canHover && !reduceMotion) playOnHover(card, clip.src);
   return card;
+}
+
+/**
+ * Spans for a bento grid on 12 columns: the first tool takes the big panel
+ * (8 × 2), the next two stack beside it, and the rest follow three to a row,
+ * so every card is the same size. A short last row widens to fill: one card
+ * spans all 12, two take 6 each (both drawn side by side, see bento.css).
+ */
+export function layoutSpans(count) {
+  const spans = [{ cols: 8, rows: 2 }, { cols: 4, rows: 1 }, { cols: 4, rows: 1 }].slice(0, count);
+  const rest = count - spans.length;
+  const lastRow = rest % 3;
+  for (let i = 0; i < rest; i += 1) {
+    const inLastRow = lastRow && i >= rest - lastRow;
+    spans.push({ cols: inLastRow ? 12 / lastRow : 4, rows: 1 });
+  }
+  return spans;
 }
 
 /** Plays the clip over the poster while the pointer is on the card, from the start each time. */

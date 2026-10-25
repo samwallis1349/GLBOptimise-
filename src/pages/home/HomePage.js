@@ -1,8 +1,9 @@
 import { APP_DESCRIPTION } from '../../shared/config/app.js';
-import { GAME_2D_GROUPS, TOOLS, getOrderedTools, getToolById } from '../../shared/config/tools.js';
-import { ToolCard } from '../../shared/components/ToolCard.js';
+import { GAME_2D_GROUPS, PINNED_ORDER, TOOLS, getOrderedTools, getToolById } from '../../shared/config/tools.js';
+import { dimensionLegend } from '../../shared/components/ToolCard.js';
+import { BentoCard, layoutSpans } from '../../shared/components/BentoCard.js';
 import { WinnerCard } from '../../shared/components/WinnerCard.js';
-import { cachedUsageCounts, fetchUsageCounts, nextRowTurn, rankByUsage, rotateRow } from '../../services/UsageService.js';
+import { cachedUsageCounts, fetchUsageCounts, rankByUsage } from '../../services/UsageService.js';
 import { initCursorSpotlight } from '../../shared/effects/CursorSpotlight.js';
 import { iconSvg } from '../../shared/utils/icons.js';
 import { openCommandPalette } from '../../shared/effects/CommandPalette.js';
@@ -121,29 +122,38 @@ function WorkbenchIntro() {
   section.innerHTML = `
     <div class="workbench-intro__heading">
       <div class="workbench-intro__eyebrow">The Workbench</div>
-      <h2 class="workbench-intro__title">${TOOLS.length} tools to prepare, optimise and inspect your 3D assets</h2>
+      <h2 class="workbench-intro__title">${TOOLS.length} tools to prepare, optimise and inspect your 2D and 3D assets</h2>
     </div>
     <p class="workbench-intro__desc">A complete suite of browser-based tools for game-ready assets. Click a tool to get started.</p>
+    ${dimensionLegend()}
   `;
   return section;
 }
 
 function ToolsBlock() {
   const section = document.createElement('section');
-  section.className = 'home-tools container';
+  section.className = 'home-tools home-bento container';
   section.dataset.layoutEditable = '';
   section.dataset.layoutId = 'home-tools';
   section.dataset.layoutName = 'Tools';
   section.setAttribute('data-layout-lock-children', '');
 
   const grid = document.createElement('div');
-  grid.className = 'tool-grid';
-  // The most-used tool wins the full-width first card; the row of four under
-  // it takes turns among the next twelve, a new set on each visit.
-  const turn = nextRowTurn();
+  grid.className = 'bento';
+  // The /tools bento pattern on one ranked list: PINNED_ORDER first, in that
+  // fixed order (the first takes the big live-preview panel), then every other
+  // tool by usage.
   const fill = (counts) => {
-    const tools = rotateRow(rankByUsage(getOrderedTools(), counts), turn);
-    grid.replaceChildren(...tools.map((tool, index) => (index === 0 ? WinnerCard(tool) : ToolCard(tool, { index: index + 1 }))));
+    const tools = rankByUsage(getOrderedTools(), counts, PINNED_ORDER);
+    const spans = layoutSpans(tools.length);
+    grid.replaceChildren(...tools.map((tool, index) => {
+      const card = index === 0 ? WinnerCard(tool) : BentoCard(tool);
+      if (index === 0) card.classList.add('bento-feature');
+      else if (spans[index].cols > 4) card.classList.add('bento-card--wide');
+      card.style.setProperty('--span-c', spans[index].cols);
+      card.style.setProperty('--span-r', spans[index].rows);
+      return card;
+    }));
   };
   fill(cachedUsageCounts());
   fetchUsageCounts().then((counts) => grid.isConnected && fill(counts));
@@ -157,7 +167,7 @@ function IsoAssetsBlock() {
   const group = GAME_2D_GROUPS.find((g) => g.id === 'isometric');
   const tools = (group?.tools ?? []).map(getToolById).filter(Boolean);
   const section = document.createElement('section');
-  section.className = 'home-iso container';
+  section.className = 'home-iso home-bento container';
   section.dataset.layoutEditable = '';
   section.dataset.layoutId = 'home-iso';
   section.dataset.layoutName = 'Isometric game assets';
@@ -173,8 +183,8 @@ function IsoAssetsBlock() {
     </div>
   `;
   const grid = document.createElement('div');
-  grid.className = 'tool-grid home-iso__grid';
-  grid.replaceChildren(...tools.map((tool, i) => ToolCard(tool, { index: i + 1 })));
+  grid.className = 'bento home-iso__grid';
+  grid.replaceChildren(...tools.map(BentoCard));
   section.appendChild(grid);
   return section;
 }

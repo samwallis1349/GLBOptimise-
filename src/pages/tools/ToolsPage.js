@@ -1,19 +1,19 @@
-import { BENTO_BANNER_AFTER, CATEGORIES, GAME_2D_GROUPS, PINNED_ORDER, getBentoTools, getOrderedTools } from '../../shared/config/tools.js';
-import { BentoCard } from '../../shared/components/BentoCard.js';
+import { BENTO_BANNER_AFTER, CATEGORIES, PINNED_ORDER, getBentoTools, getOrderedTools, getToolDimension } from '../../shared/config/tools.js';
+import { BentoCard, layoutSpans } from '../../shared/components/BentoCard.js';
 import { WinnerCard } from '../../shared/components/WinnerCard.js';
 import { INSTALL, bindMcpCopy } from '../../shared/components/McpLaunchModal.js';
 import { openApiPanel, trackApiEvent } from '../../shared/components/ApiLaunchModal.js';
-import { escapeHtml } from '../../shared/components/ToolCard.js';
+import { dimensionLegend, escapeHtml } from '../../shared/components/ToolCard.js';
 import { iconSvg } from '../../shared/utils/icons.js';
 import { cachedUsageCounts, fetchUsageCounts, rankByUsage } from '../../services/UsageService.js';
-
-const ISO_TOOLS = new Set(GAME_2D_GROUPS.flatMap((group) => group.tools));
 
 /** The filter pills, in order. `cat` is the ?cat= value; `match` decides which tools stay. */
 const FILTERS = [
   { cat: '', label: 'All', match: () => true },
   ...['inspect', 'build', 'optimise'].map((id) => ({ cat: id, label: CATEGORIES.find((c) => c.id === id).label, match: (tool) => tool.category === id })),
-  { cat: '2d', label: '2D & Iso', match: (tool) => ISO_TOOLS.has(tool.id) },
+  // A 3D → 2D tool (model in, sprites out) shows under both.
+  { cat: '3d', label: '3D', match: (tool) => getToolDimension(tool).id !== '2d' },
+  { cat: '2d', label: '2D', match: (tool) => getToolDimension(tool).id !== '3d' },
   { cat: 'mcp', label: 'MCP / Claude-ready', match: (tool) => Boolean(tool.mcp?.length), mcp: true },
 ];
 
@@ -69,6 +69,7 @@ export function render(container) {
         </label>
       </div>
       <p class="bento-filters__count" aria-live="polite"></p>
+      ${dimensionLegend()}
     </div>
   `;
 
@@ -178,23 +179,6 @@ export function render(container) {
   });
 
   apply();
-}
-
-/**
- * Every section's grid, on 12 columns: the first tool takes the big panel
- * (8 × 2), the next two stack beside it, and the rest follow three to a row,
- * so every card is the same size. A short last row widens to fill: one card
- * spans all 12, two take 6 each (both drawn side by side, see bento.css).
- */
-function layoutSpans(count) {
-  const spans = [{ cols: 8, rows: 2 }, { cols: 4, rows: 1 }, { cols: 4, rows: 1 }].slice(0, count);
-  const rest = count - spans.length;
-  const lastRow = rest % 3;
-  for (let i = 0; i < rest; i += 1) {
-    const inLastRow = lastRow && i >= rest - lastRow;
-    spans.push({ cols: inLastRow ? 12 / lastRow : 4, rows: 1 });
-  }
-  return spans;
 }
 
 /** Each section's lead tool gets the homepage's live-preview card; only the page's first one says "Most used". */

@@ -1,9 +1,10 @@
-/* The /tools bento dashboard (pages/tools/ToolsPage.js, shared/components/BentoCard.js).
-   Spans come from each tool's `bento` entry in shared/config/tools.js as
-   --span-c / --span-r; this file decides when to honour them. Everything is
-   scoped under .bento-page so no other page changes. */
+/* The /tools bento dashboard (pages/tools/ToolsPage.js, shared/components/BentoCard.js),
+   also used for the homepage tool grids (.home-bento). Spans come from each
+   tool's `bento` entry in shared/config/tools.js as --span-c / --span-r;
+   this file decides when to honour them. */
 
-.bento-page {
+.bento-page,
+.home-bento {
   --bento-bg: #10100e;
   --bento-panel: #1f1f1c;
   --bento-panel-2: #262622;
@@ -11,6 +12,9 @@
   --bento-line-strong: rgba(255, 240, 214, 0.18);
   --bento-gap: 14px;
   --bento-radius: 16px;
+}
+
+.bento-page {
   background: var(--bento-bg);
 }
 
@@ -924,4 +928,108 @@
   .bento-card::after {
     background: linear-gradient(135deg, #ffd58a, rgba(255, 181, 71, 0.35) 40%, rgba(255, 181, 71, 0.15) 60%, #ffb547);
   }
+}
+
+/* ---------- 2D / 3D ----------
+   Every tool card says whether it works on 3D models or 2D images
+   (DIMENSIONS in shared/config/tools.js): a tag, and the card's border in
+   that colour. A 3D → 2D tool (model in, sprites out) gets a two-tone edge,
+   3D on the top and left, 2D on the right and bottom. */
+
+:root {
+  --dim-3d: #4dd8e0;
+  --dim-2d: #c58bff;
+}
+
+[data-dim='3d'] { --dim-a: var(--dim-3d); --dim-b: var(--dim-3d); }
+[data-dim='2d'] { --dim-a: var(--dim-2d); --dim-b: var(--dim-2d); }
+[data-dim='3d-2d'] { --dim-a: var(--dim-3d); --dim-b: var(--dim-2d); }
+
+.bento-card[data-dim],
+.bento > .bento-feature[data-dim],
+.winner-card[data-dim],
+.tool-card[data-dim] {
+  border-color:
+    color-mix(in srgb, var(--dim-a) 85%, transparent)
+    color-mix(in srgb, var(--dim-b) 85%, transparent)
+    color-mix(in srgb, var(--dim-b) 85%, transparent)
+    color-mix(in srgb, var(--dim-a) 85%, transparent);
+}
+
+.bento-card[data-dim]:hover,
+.bento-card[data-dim]:focus-visible,
+.tool-card[data-dim]:hover {
+  border-color: var(--dim-a) var(--dim-b) var(--dim-b) var(--dim-a);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--dim-a) 30%, transparent),
+    0 0 24px color-mix(in srgb, var(--dim-b) 28%, transparent),
+    0 14px 34px rgba(0, 0, 0, 0.45);
+}
+
+.dim-tag {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  padding: 3px 9px;
+  border: 1px solid var(--dim-tag-a);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--dim-tag-a) 16%, rgba(10, 10, 9, 0.82));
+  color: var(--dim-tag-a);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  line-height: 1.3;
+  white-space: nowrap;
+}
+
+.dim-tag--3d { --dim-tag-a: var(--dim-3d); }
+.dim-tag--2d { --dim-tag-a: var(--dim-2d); }
+
+.dim-tag--3d-2d {
+  --dim-tag-a: var(--dim-3d);
+  border-color: var(--dim-3d) var(--dim-2d) var(--dim-2d) var(--dim-3d);
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--dim-3d) 18%, transparent), color-mix(in srgb, var(--dim-2d) 18%, transparent)),
+    rgba(10, 10, 9, 0.82);
+  color: #fff;
+}
+
+/* On a bento poster the tag sits top left, clear of the Preview and Free labels. */
+.bento-card__art .dim-tag {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 2;
+  padding: 4px 11px;
+  font-size: 11px;
+  backdrop-filter: blur(6px);
+}
+
+.winner-card__badges .dim-tag {
+  padding: 4px 11px;
+  font-size: 11px;
+}
+
+.tool-card__bar .dim-tag {
+  padding: 1px 7px;
+}
+
+.dim-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  margin: 12px 0 0;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.bento-filters .dim-legend {
+  flex-basis: 100%;
+  margin: 0;
+}
+
+.dim-legend__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }

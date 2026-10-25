@@ -803,6 +803,22 @@ export const POPULARITY_ORDER = [
   'character-workshop',
 ];
 
+/**
+ * Whether a tool works on 2D images or 3D models, shown as a tag and a
+ * border colour on every tool card. `3d-2d` is for tools that take a 3D
+ * model and give back 2D images (sprites, thumbnails). Any tool not listed
+ * in `tools` is 3D.
+ */
+export const DIMENSIONS = [
+  { id: '3d', label: '3D', title: 'Works on 3D models' },
+  { id: '2d', label: '2D', title: 'Works on 2D images', tools: ['alpha-cutout', 'line-studio', 'iso-scene-builder', 'texture-resizer', 'app-icon-generator', 'app-store-screenshot-generator', 'xcassets-generator'] },
+  { id: '3d-2d', label: '3D → 2D', title: 'Takes a 3D model, gives back 2D images', tools: ['model-to-iso-sprites', 'model-to-isometric', 'thumbnail-maker'] },
+];
+
+export function getToolDimension(tool) {
+  return DIMENSIONS.find((d) => d.tools?.includes(tool.id)) ?? DIMENSIONS[0];
+}
+
 /** The /tools bento grid's MCP banner sits after this category's section. */
 export const BENTO_BANNER_AFTER = 'build';
 

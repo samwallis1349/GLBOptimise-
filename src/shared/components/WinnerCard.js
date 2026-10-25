@@ -1,7 +1,7 @@
-import { getCategoryById } from '../config/tools.js';
+import { getCategoryById, getToolDimension } from '../config/tools.js';
 import { toolClip } from '../config/toolClips.js';
 import { iconSvg } from '../utils/icons.js';
-import { accentTitle, escapeHtml, featureChips } from './ToolCard.js';
+import { accentTitle, dimensionTag, escapeHtml, featureChips } from './ToolCard.js';
 
 const reduceMotion = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -25,6 +25,7 @@ export function WinnerCard(tool, { badge = 'Most used tool' } = {}) {
 
   const card = document.createElement('article');
   card.className = 'winner-card';
+  card.dataset.dim = getToolDimension(tool).id;
   if (category) card.style.setProperty('--card-accent', `var(${category.accent})`);
   card.innerHTML = `
     <a class="winner-card__media" href="${tool.route}" tabindex="-1" aria-hidden="true">
@@ -35,6 +36,7 @@ export function WinnerCard(tool, { badge = 'Most used tool' } = {}) {
     <div class="winner-card__body">
       <div class="winner-card__badges">
         <span class="winner-card__badge">★ ${escapeHtml(badge)}</span>
+        ${dimensionTag(tool)}
         ${tool.free ? '<span class="winner-card__free">Free tool</span>' : ''}
       </div>
       <p class="winner-card__category">${iconSvg(tool.icon, { class: 'winner-card__icon' })}${escapeHtml(category?.label ?? 'Tool')}</p>
