@@ -1,0 +1,315 @@
+/* Guide pages (pages/tripo/TripoPage.js) and the affiliate label used wherever a partner link appears. */
+
+.affiliate-note {
+  display: inline-block;
+  padding: 1px 7px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--text-muted);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  vertical-align: 1px;
+}
+
+.tripo-guide .tool-page__title .accent {
+  color: var(--accent);
+}
+
+.tripo-guide .tool-page__description {
+  max-width: 720px;
+}
+
+.tripo-guide__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+
+.tripo-guide__disclosure {
+  max-width: 720px;
+  margin: var(--space-3) 0 0;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.tripo-guide__steps {
+  display: grid;
+  gap: var(--space-3);
+  max-width: 820px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: step;
+}
+
+.tripo-guide__step {
+  position: relative;
+  padding: var(--space-4) var(--space-4) var(--space-4) 64px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--panel);
+  counter-increment: step;
+}
+
+.tripo-guide__step::before {
+  content: counter(step);
+  position: absolute;
+  left: var(--space-4);
+  top: var(--space-4);
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #1a1206;
+  font-weight: 800;
+  box-shadow: 0 0 14px rgba(255, 181, 71, 0.35);
+}
+
+.tripo-guide__step h2 {
+  margin: 4px 0 6px;
+  font-size: 18px;
+}
+
+.tripo-guide__step p {
+  margin: 0 0 var(--space-2);
+  color: var(--text-secondary);
+  font-size: 14.5px;
+  line-height: 1.55;
+}
+
+.tripo-guide__out {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.tripo-guide__tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: var(--space-2) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tripo-guide__tools a {
+  display: inline-block;
+  padding: 5px 12px;
+  border: 1px solid rgba(255, 181, 71, 0.35);
+  border-radius: 999px;
+  background: var(--accent-muted);
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.tripo-guide__tools a:hover {
+  border-color: var(--accent);
+}
+
+/* The small "Need a model?" card under 3D tools (components/TripoCard.js). */
+.tripo-card {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3) var(--space-4);
+  max-width: 1200px;
+  margin: var(--space-5) auto 0;
+  padding: 14px 18px;
+  border: 1px solid rgba(255, 181, 71, 0.22);
+  border-radius: var(--radius-lg);
+  background: linear-gradient(90deg, rgba(255, 181, 71, 0.1), transparent 60%), var(--panel);
+}
+
+/* Prompt → model: a prompt pill that types itself, then a wireframe cube. */
+.tripo-card__scene {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 10px;
+  height: 56px;
+  padding: 0 14px;
+  border: 1px solid rgba(255, 181, 71, 0.18);
+  border-radius: 12px;
+  background: radial-gradient(80% 120% at 85% 50%, rgba(255, 181, 71, 0.16), transparent 70%), #0b0b0a;
+}
+
+.tripo-card__prompt {
+  display: inline-flex;
+  width: calc(19ch + 18px);
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: #151513;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.tripo-card__prompt span {
+  overflow: hidden;
+  white-space: nowrap;
+  border-right: 1px solid var(--accent);
+}
+
+.tripo-card__arrow {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.tripo-card__cube {
+  position: relative;
+  width: 24px;
+  height: 24px;
+  margin: 0 6px;
+  transform: rotateX(-24deg) rotateY(38deg);
+  transform-style: preserve-3d;
+}
+
+.tripo-card__cube i {
+  position: absolute;
+  inset: 0;
+  border: 1.5px solid var(--accent);
+  background: rgba(255, 181, 71, 0.06);
+  box-shadow: 0 0 8px rgba(255, 181, 71, 0.45), inset 0 0 6px rgba(255, 181, 71, 0.25);
+}
+
+.tripo-card__cube i:nth-child(1) { transform: translateZ(12px); }
+.tripo-card__cube i:nth-child(2) { transform: rotateY(180deg) translateZ(12px); }
+.tripo-card__cube i:nth-child(3) { transform: rotateY(90deg) translateZ(12px); }
+.tripo-card__cube i:nth-child(4) { transform: rotateY(-90deg) translateZ(12px); }
+.tripo-card__cube i:nth-child(5) { transform: rotateX(90deg) translateZ(12px); }
+.tripo-card__cube i:nth-child(6) { transform: rotateX(-90deg) translateZ(12px); }
+
+/* The neon light running round the card, and the shine across its button. */
+.tripo-card {
+  position: relative;
+}
+
+.tripo-card::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  padding: 1px;
+  border-radius: inherit;
+  background: conic-gradient(from var(--neon-angle), transparent 0deg 260deg, rgba(255, 181, 71, 0.4) 300deg, #fff0cf 326deg, #ffb547 334deg, transparent 360deg);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+  pointer-events: none;
+}
+
+.tripo-card__button {
+  position: relative;
+  overflow: hidden;
+}
+
+.tripo-card__button::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 35%, rgba(255, 255, 255, 0.55) 50%, transparent 65%);
+  transform: translateX(-120%);
+  pointer-events: none;
+}
+
+@keyframes tripo-type {
+  0%, 8% { width: 0; }
+  45%, 92% { width: 19ch; }
+  100% { width: 0; }
+}
+
+@keyframes tripo-caret {
+  50% { border-color: transparent; }
+}
+
+/* Scale, not opacity: opacity below 1 flattens the 3D cube into one face. */
+@keyframes tripo-cube {
+  0%, 40% { transform: rotateX(-24deg) rotateY(38deg) scale3d(0, 0, 0); }
+  55% { transform: rotateX(-24deg) rotateY(160deg) scale3d(1, 1, 1); }
+  92% { transform: rotateX(-24deg) rotateY(398deg) scale3d(1, 1, 1); }
+  100% { transform: rotateX(-24deg) rotateY(420deg) scale3d(0, 0, 0); }
+}
+
+@keyframes tripo-arrow {
+  0%, 38%, 100% { opacity: 0.25; }
+  48%, 90% { opacity: 1; }
+}
+
+@keyframes tripo-shine {
+  0%, 70% { transform: translateX(-120%); }
+  100% { transform: translateX(120%); }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .tripo-card__prompt span {
+    width: 0;
+    animation: tripo-type 7s steps(19, end) infinite, tripo-caret 0.8s step-end infinite;
+  }
+
+  .tripo-card__cube {
+    animation: tripo-cube 7s ease-in-out infinite;
+  }
+
+  .tripo-card__arrow {
+    animation: tripo-arrow 7s ease-in-out infinite;
+  }
+
+  .tripo-card::after {
+    animation: neon-spin 9s linear infinite;
+  }
+
+  .tripo-card__button::after {
+    animation: tripo-shine 4.5s ease-in-out infinite;
+  }
+}
+
+@media (max-width: 600px) {
+  .tripo-card__scene {
+    display: none;
+  }
+}
+
+.tripo-card__text {
+  display: grid;
+  flex: 1 1 280px;
+  gap: 2px;
+  min-width: 0;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.tripo-card__text strong {
+  color: var(--text-primary);
+  font-size: 15px;
+}
+
+.tripo-card__guide {
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.tripo-card__action {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.tripo-card__button {
+  gap: 6px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+@media (max-width: 600px) {
+  .tripo-guide__step {
+    padding-left: var(--space-4);
+    padding-top: 60px;
+  }
+}

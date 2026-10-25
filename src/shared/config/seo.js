@@ -44,6 +44,15 @@ export const STATIC_PAGES = [
     priority: '0.8',
   },
   {
+    path: '/tripo-to-game-ready',
+    name: 'Make Tripo Models Game-Ready',
+    title: `Make Tripo AI Models Game-Ready — Reduce Polys & Textures | ${SITE_NAME}`,
+    description:
+      'Take a Tripo AI model from text or image prompt to game-ready: check it against phone, VR and web budgets, cut triangles, compress textures to KTX2 and add LODs, all in your browser.',
+    changefreq: 'monthly',
+    priority: '0.7',
+  },
+  {
     path: '/about',
     name: 'About Asset Bench',
     title: `About — Browser-based 3D and game asset tools | ${SITE_NAME}`,

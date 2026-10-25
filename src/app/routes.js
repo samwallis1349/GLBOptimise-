@@ -6,6 +6,7 @@ import { ExtensionBar } from '../shared/components/ExtensionBar.js';
 import { ToolNews } from '../shared/components/ToolNews.js';
 import { ToolGuide } from '../shared/components/ToolGuide.js';
 import { SampleModel } from '../shared/components/SampleModel.js';
+import { TripoCard } from '../shared/components/TripoCard.js';
 import { FbxBridge } from '../shared/fbx/FbxBridge.js';
 import { ToolNextSteps } from '../shared/components/ToolNextSteps.js';
 import { ToolClip } from '../shared/components/ToolClip.js';
@@ -35,7 +36,7 @@ const page = (path, load) => async (params, container) => {
 };
 
 async function mountTool(tool, container, params) {
-  if (GATED_STATUSES.has(tool.status)) recordToolOpen(tool.id);
+  if (GATED_STATUSES.has(tool.status)) recordToolOpen(tool.id, location.pathname);
   const mod = await import(`../tools/${tool.id}/index.js`);
   const result = await mod.mount(container, params);
   // FBX in, GLB out: FBX files are converted before the tool sees them.
@@ -48,6 +49,9 @@ async function mountTool(tool, container, params) {
   if (offer) container.prepend(offer);
   const extension = ExtensionBar(tool);
   if (extension) container.prepend(extension);
+  // Need a model? Tripo (affiliate) on the 3D tools, straight under the tool.
+  const tripo = TripoCard(tool);
+  if (tripo) container.append(tripo);
   // The tool's 5-second clip, straight under it.
   const clip = ToolClip(tool);
   if (clip) container.append(clip);
@@ -85,6 +89,10 @@ export const routes = [
   {
     path: '/2d-games',
     handler: page('/2d-games', () => import('../pages/game-2d/Game2DPage.js')),
+  },
+  {
+    path: '/tripo-to-game-ready',
+    handler: page('/tripo-to-game-ready', () => import('../pages/tripo/TripoPage.js')),
   },
   {
     path: '/about',

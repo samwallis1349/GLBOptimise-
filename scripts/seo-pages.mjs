@@ -21,6 +21,7 @@ import { TOOLS, CATEGORIES } from '../src/shared/config/tools.js';
 import { SITE_URL, SITE_NAME, STATIC_PAGES, HOME_SEO, pageSeo } from '../src/shared/config/seo.js';
 import { getToolGuide } from '../src/shared/config/toolGuides.js';
 import { toolGuideMarkup } from '../src/shared/components/ToolGuide.js';
+import { TRIPO_GUIDE_PATH, tripoStepsMarkup } from '../src/shared/config/tripo.js';
 
 const LIVE = new Set(['available', 'beta']);
 
@@ -106,6 +107,7 @@ export function renderPage(indexHtml, path) {
           <p>${esc(seo.description)}</p>
           ${tool?.features?.length ? `<ul>${tool.features.map((f) => `<li>${esc(f.label)}</li>`).join('')}</ul>` : ''}
           ${tool && getToolGuide(tool.id) ? toolGuideMarkup(getToolGuide(tool.id)) : ''}
+          ${path === TRIPO_GUIDE_PATH ? tripoStepsMarkup(esc) : ''}
           <p><a href="/tools">All ${SITE_NAME} tools</a></p>
           ${links ? `<ul>${links}</ul>` : ''}
         </main>
