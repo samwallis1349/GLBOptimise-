@@ -13,7 +13,14 @@
  *
  *   texture-compressor — free texture check, KTX2 compress and resize.
  *   inspector          — free health check, rig, animation and compare.
+ *   animation-tools    — free clip list, strip clips, cut keyframes.
+ *   converter          — free file info, convert GLB/glTF/OBJ/FBX, split, merge, LODs.
+ *   app-assets         — free icon check, app icon sets, Xcode image sets, store screenshots.
+ *   image-tools        — free sprite-sheet check, background cutout, line art, iso sprites.
  *
+ * `accepts`: 'glb' (the first listings: GLB only) or 'any' (GLB, glTF, FBX,
+ * OBJ or a ZIP of one, converted to GLB on the way in). Image tools always
+ * take PNG, JPEG or WebP (src/kinds.js).
  * `free` lists the tools that need no licence; `freeRuns` is how many runs
  * of the others anyone gets, in all, before the unlock card (src/quota.js).
  * After that one 99p payment (the shared single-tool product) unlocks every
@@ -81,6 +88,58 @@ export const EDITIONS = {
     firstTool: 'inspect',
     website: '/inspect-glb',
   },
+  'animation-tools': {
+    store: 'Chrome Web Store',
+    name: 'GLB & FBX Animation Tools – Strip & Optimise Clips by AssetBench',
+    shortName: 'Animation Tools',
+    description: 'List, strip and optimise animation clips in GLB, glTF and FBX models. Free clip list, 10 free runs, then 99p. Nothing uploaded.',
+    heading: ['Animation', 'Tools'],
+    tools: ['clips', 'strip', 'anim-optimise'],
+    free: ['clips'],
+    freeRuns: 10,
+    firstTool: 'clips',
+    accepts: 'any',
+    website: '/strip-animations',
+  },
+  converter: {
+    store: 'Chrome Web Store',
+    name: '3D Model Converter – FBX, GLB, OBJ & glTF by AssetBench',
+    shortName: '3D Converter',
+    description: 'Convert FBX, GLB, OBJ and glTF, split models into parts, merge them and make LODs. Free file info, 10 free runs, then 99p.',
+    heading: ['3D', 'Converter'],
+    tools: ['formats', 'convert', 'split', 'merge', 'lods'],
+    free: ['formats'],
+    freeRuns: 10,
+    firstTool: 'convert',
+    accepts: 'any',
+    website: '/convert-files',
+  },
+  'app-assets': {
+    store: 'Chrome Web Store',
+    name: 'App Icon & Store Asset Maker – iOS & Android by AssetBench',
+    shortName: 'App Assets',
+    description: 'Make iOS, Android and watchOS app icons, Xcode image sets and store screenshots from one image. 10 free runs, then 99p.',
+    heading: ['App', 'Assets'],
+    tools: ['icon-check', 'icons', 'xcassets', 'screenshots'],
+    free: ['icon-check'],
+    freeRuns: 10,
+    firstTool: 'icons',
+    accepts: 'any',
+    website: '/app-icon-generator',
+  },
+  'image-tools': {
+    store: 'Chrome Web Store',
+    name: 'Sprite Cutout, Line Art & Iso Sprites by AssetBench',
+    shortName: 'Sprite Studio',
+    description: 'Remove backgrounds and split sprite sheets, clean line art to PNG + SVG, and turn 3D models into iso sprites. 10 free, then 99p.',
+    heading: ['Sprite', 'Studio'],
+    tools: ['sheet-check', 'cutout', 'lines', 'iso'],
+    free: ['sheet-check'],
+    freeRuns: 10,
+    firstTool: 'cutout',
+    accepts: 'any',
+    website: '/alpha-cutout',
+  },
 };
 
 export const DEFAULT_EDITION = 'reduce-polys';
@@ -88,5 +147,5 @@ export const DEFAULT_EDITION = 'reduce-polys';
 export const allFree = (edition) => edition.tools.every((t) => edition.free.includes(t));
 
 /** Tools that hand back a file; an edition without any doesn't ask for the downloads permission. */
-const SAVING_TOOLS = ['reduce', 'optimise', 'compress', 'resize'];
+const SAVING_TOOLS = ['reduce', 'optimise', 'compress', 'resize', 'strip', 'anim-optimise', 'convert', 'split', 'merge', 'lods', 'icons', 'xcassets', 'screenshots', 'cutout', 'lines', 'iso'];
 export const savesFiles = (edition) => edition.tools.some((t) => SAVING_TOOLS.includes(t));

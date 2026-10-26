@@ -31,6 +31,22 @@ export const SITE_TOOL = {
   rig: 'rig-inspector',
   animations: 'animation-inspector',
   compare: 'asset-compare',
+  clips: 'strip-animations',
+  strip: 'strip-animations',
+  'anim-optimise': 'animation-optimiser',
+  formats: 'convert-files',
+  convert: 'convert-files',
+  split: 'model-splitter',
+  merge: 'glb-builder',
+  lods: 'generate-lods',
+  'icon-check': 'app-icon-generator',
+  icons: 'app-icon-generator',
+  xcassets: 'xcassets-generator',
+  screenshots: 'app-store-screenshot-generator',
+  'sheet-check': 'alpha-cutout',
+  cutout: 'alpha-cutout',
+  lines: 'line-studio',
+  iso: 'model-to-iso-sprites',
 };
 export const FREE_TOOLS = new Set(['check']);
 

@@ -1,0 +1,34 @@
+{
+  "name": "assetbench-mcp",
+  "version": "1.0.0",
+  "description": "AssetBench MCP server: lets Claude, Cursor and other AI agents check 3D models, make them game-ready and build app store assets through the AssetBench Cloud API.",
+  "type": "module",
+  "bin": {
+    "assetbench-mcp": "index.js"
+  },
+  "files": [
+    "index.js",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "glb",
+    "gltf",
+    "3d",
+    "game-ready",
+    "lod",
+    "ktx2",
+    "app-icons"
+  ],
+  "homepage": "https://www.assetbench.co.uk/docs/",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.32.1",
+    "jszip": "^3.10.1",
+    "zod": "^4.6.7"
+  }
+}

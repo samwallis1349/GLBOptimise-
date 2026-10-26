@@ -1,9 +1,11 @@
 /**
  * Tool usage counts, used to rank the tool grids by popularity.
  *
- * Every tool open is reported to the Worker (/api/usage), which keeps one
- * site-wide counter per tool in KV. To keep KV writes low, a browser reports
- * each tool at most once per day. Reads come back as { [toolId]: count }.
+ * Every tool open is reported to the Worker (/api/usage), which keeps a
+ * site-wide count per tool (worker/index.js UsageCounter): an open is a visit
+ * (a reload of the same tool within 30 minutes is the same visit), and a run is
+ * a file picked or dropped into the tool. Reads come back as { counts } (opens,
+ * which rank the grids) plus { opens, runs }.
  *
  * This browser also keeps its own counts. They stand in when the Worker
  * can't be reached (offline, or `vite dev`, which has no Worker), so the
@@ -17,7 +19,9 @@ import { hasConsent } from './ConsentService.js';
 
 const USAGE_API = '/api/usage';
 const LOCAL_KEY = 'assetbench_usage_v1';
-const SENT_KEY = 'assetbench_usage_sent_v1';
+const SENT_KEY = 'assetbench_usage_sent_v2'; // { toolId: last open reported, ms }
+const VISIT_MS = 30 * 60 * 1000;
+const RUN_GAP_MS = 3000; // one pick that fires both change and drop counts once
 const CACHE_KEY = 'assetbench_usage_cache_v1';
 
 function read(key) {
@@ -40,25 +44,54 @@ function today() {
   return new Date().toISOString().slice(0, 10);
 }
 
+const report = (tool, kind) => fetch(USAGE_API, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ tool, kind }),
+  keepalive: true,
+});
+
+let current = null; // { id, route } of the tool on screen, for counting its runs
+
 /** Records that a tool was opened. Fire-and-forget. */
-export function recordToolOpen(toolId) {
+export function recordToolOpen(toolId, route = location.pathname) {
+  current = { id: toolId, route };
+  installRunCounter();
   if (!hasConsent('analytics')) return;
   const local = read(LOCAL_KEY);
   local[toolId] = (local[toolId] ?? 0) + 1;
   write(LOCAL_KEY, local);
 
   const sent = read(SENT_KEY);
-  if (sent[toolId] === today()) return;
-  fetch(USAGE_API, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ tool: toolId }),
-    keepalive: true,
-  })
+  if (Date.now() - (Number(sent[toolId]) || 0) < VISIT_MS) return; // same visit
+  report(toolId, 'open')
     .then((response) => {
-      if (response.ok) write(SENT_KEY, { ...read(SENT_KEY), [toolId]: today() });
+      if (response.ok) write(SENT_KEY, { ...read(SENT_KEY), [toolId]: Date.now() });
     })
     .catch(() => {});
+}
+
+let lastRun = 0;
+/** Records one run of a tool: a file was given to it. Fire-and-forget. */
+export function recordToolRun(toolId) {
+  if (!hasConsent('analytics') || Date.now() - lastRun < RUN_GAP_MS) return;
+  lastRun = Date.now();
+  report(toolId, 'run').catch(() => {});
+}
+
+// One listener for every tool: a file picked (any <input type=file>) or dropped on the page while a tool
+// is on screen. Capture phase, so it still counts when a tool's drop zone stops the event.
+let installed = false;
+function installRunCounter() {
+  if (installed || typeof document === 'undefined') return;
+  installed = true;
+  const onTool = () => current && location.pathname === current.route;
+  document.addEventListener('change', (e) => {
+    if (onTool() && e.target?.type === 'file' && e.target.files?.length) recordToolRun(current.id);
+  }, true);
+  document.addEventListener('drop', (e) => {
+    if (onTool() && e.dataTransfer?.files?.length) recordToolRun(current.id);
+  }, true);
 }
 
 /** The last counts seen, available synchronously so grids render ranked at once. */

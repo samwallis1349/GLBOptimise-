@@ -588,6 +588,18 @@ const FIXED_METHODS = {
   '/api/v1/stats': 'GET',
 };
 
+/** The assetbench-mcp npm package (mcp/): lets AI agents call this API on local files. */
+const MCP_SERVER = {
+  name: 'assetbench-mcp',
+  description: 'MCP server that lets Claude, Cursor, VS Code and other MCP clients use this API on files on disk. Ask in plain English; results are saved next to your files. Uses your API key and quota.',
+  install: 'npx -y assetbench-mcp',
+  env: { ASSETBENCH_API_KEY: 'required', ASSETBENCH_API_URL: 'optional, default https://www.assetbench.co.uk' },
+  claudeCode: 'claude mcp add assetbench -e ASSETBENCH_API_KEY=your-key -- npx -y assetbench-mcp',
+  tools: ['check_model', 'make_game_ready', 'make_app_assets', 'make_store_screenshots', 'optimize_model', 'reduce_model', 'generate_lods', 'convert_model', 'compress_textures', 'resize_texture', 'explain_target', 'account_status'],
+  npm: 'https://www.npmjs.com/package/assetbench-mcp',
+  docs: 'https://www.assetbench.co.uk/docs/#mcp-h',
+};
+
 async function route(request, env, track) {
   const url = new URL(request.url);
   const path = url.pathname.replace(/\/+$/, '') || '/';
@@ -600,6 +612,7 @@ async function route(request, env, track) {
       docs: `${url.origin}/docs/`,
       openapi: `${url.origin}/api/v1/openapi.json`,
       auth: 'Authorization: Bearer abk_live_...',
+      mcp: MCP_SERVER,
       products: PRODUCTS,
       advanced: ADVANCED_ENDPOINTS,
     });
@@ -671,7 +684,12 @@ async function route(request, env, track) {
 export async function handleApiV1(request, env, ctx) {
   if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS_HEADERS });
   const pending = [];
-  const track = (metric, by) => { pending.push(bump(env, metric, by)); };
+  // Runs made through assetbench-mcp (its User-Agent) are also counted as mcp:<metric>, for the MCP agent.
+  const viaMcp = (request.headers.get('User-Agent') || '').startsWith('assetbench-mcp/');
+  const track = (metric, by) => {
+    pending.push(bump(env, metric, by));
+    if (viaMcp && /^(op:|error:|batch_files$)/.test(metric)) pending.push(bump(env, `mcp:${metric}`, by));
+  };
   try {
     return await route(request, env, track);
   } catch (err) {

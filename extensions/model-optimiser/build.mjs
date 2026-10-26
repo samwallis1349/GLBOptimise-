@@ -13,6 +13,7 @@ import { cp, mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { dirname, join, relative, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { allFree, DEFAULT_EDITION, EDITIONS, savesFiles } from './editions.js';
+import { IMAGE_TOOLS } from './src/kinds.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, '..', '..');
@@ -27,7 +28,7 @@ const DIST = join(HERE, 'dist', EDITION_ID);
 const stubBasisWasm = {
   name: 'stub-basis-wasm',
   setup(b) {
-    b.onResolve({ filter: /basisWasm\.js$/ }, () => ({ path: 'basis-wasm-stub', namespace: 'stub' }));
+    b.onResolve({ filter: /(basisWasm|dracoWasm)\.js$/ }, () => ({ path: 'wasm-stub', namespace: 'stub' }));
     b.onLoad({ filter: /.*/, namespace: 'stub' }, () => ({ contents: 'export default null;', loader: 'js' }));
   },
 };
@@ -46,9 +47,51 @@ const stubSiteReader = {
   },
 };
 
+// Each edition ships only its own tool groups (src/runners.js) and, for the
+// GLB-only listings, no format converter (src/convert-input.js).
+const GROUP_OF = {
+  clips: 'animation', strip: 'animation', 'anim-optimise': 'animation',
+  formats: 'converter', convert: 'converter', split: 'converter', merge: 'converter', lods: 'converter',
+  'icon-check': 'app', icons: 'app', xcassets: 'app', screenshots: 'app',
+  'sheet-check': 'image', cutout: 'image', lines: 'image', iso: 'image',
+};
+const groups = [...new Set(EDITION.tools.map((t) => GROUP_OF[t]).filter(Boolean))];
+// Only editions with model tools that take FBX/OBJ/glTF need the converter (and three.js's FBX loader).
+const convertsModels = EDITION.accepts === 'any' && EDITION.tools.some((t) => !IMAGE_TOOLS.has(t));
+const editionModules = {
+  name: 'edition-modules',
+  setup(b) {
+    b.onResolve({ filter: /^\.\/runners\.js$/ }, (args) => (args.importer.endsWith(join('src', 'engine.js')) ? { path: 'runners', namespace: 'edition' } : undefined));
+    b.onResolve({ filter: /^\.\/convert-input\.js$/ }, () => (convertsModels ? undefined : { path: 'no-convert', namespace: 'edition' }));
+    b.onLoad({ filter: /^runners$/, namespace: 'edition' }, () => ({
+      resolveDir: join(HERE, 'src'),
+      loader: 'js',
+      contents: `${groups.map((g) => `import ${g} from './groups/${g}.js';`).join('\n')}\nexport const EXTRA_RUNNERS = { ${groups.map((g) => `...${g}`).join(', ')} };`,
+    }));
+    b.onLoad({ filter: /^no-convert$/, namespace: 'edition' }, () => ({ contents: 'export const convertModel = null;', loader: 'js' }));
+  },
+};
+
+// ndarray-ops (pulled in by glTF-Transform's texture resizer, which the
+// extension never calls) compiles its functions with new Function() as soon
+// as it loads. Extension pages forbid eval, so that killed the engine worker
+// on start; this stands in for it and only throws if something calls it.
+const stubNdarrayOps = {
+  name: 'stub-ndarray-ops',
+  setup(b) {
+    b.onResolve({ filter: /^ndarray-ops$/ }, () => ({ path: 'ndarray-ops', namespace: 'ndarray-stub' }));
+    b.onLoad({ filter: /.*/, namespace: 'ndarray-stub' }, () => ({
+      contents: "module.exports = new Proxy({}, { get: (_, name) => () => { throw new Error(`ndarray-ops.${String(name)} is not available in the extension.`); } });",
+      loader: 'js',
+    }));
+  },
+};
+
 await rm(DIST, { recursive: true, force: true });
 await mkdir(DIST, { recursive: true });
 await cp(join(HERE, 'public'), DIST, { recursive: true });
+// Draco-compressed GLBs (worker/api/draco.js): its .wasm sits next to the worker.
+await cp(join(ROOT, 'node_modules/three/examples/jsm/libs/draco/gltf/draco_decoder.wasm'), join(DIST, 'draco_decoder.wasm'));
 if (EDITION.tools.includes('compress')) {
   await cp(join(ROOT, 'node_modules/ktx2-encoder/dist/basis/basis_encoder.wasm'), join(DIST, 'basis_encoder.wasm'));
 }
@@ -66,8 +109,11 @@ if (!savesFiles(EDITION)) manifest.permissions = manifest.permissions.filter((p)
 if (manifest.description.length > 132) throw new Error('Store descriptions are limited to 132 characters.');
 await writeFile(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
 
+const entryPoints = { 'engine-worker': join(HERE, 'src/engine-worker.js'), panel: join(HERE, 'src/panel.js') };
+// Iso sprites draw with three.js in the panel, loaded only when that tab runs.
+if (EDITION.tools.includes('iso')) entryPoints['iso-runner'] = join(HERE, 'src/iso-runner.js');
 await build({
-  entryPoints: { 'engine-worker': join(HERE, 'src/engine-worker.js'), panel: join(HERE, 'src/panel.js') },
+  entryPoints,
   outdir: DIST,
   bundle: true,
   format: 'esm',
@@ -75,10 +121,10 @@ await build({
   target: 'chrome116',
   minify: true,
   legalComments: 'none',
-  plugins: [stubBasisWasm, stubSiteReader],
+  plugins: [editionModules, stubBasisWasm, stubSiteReader, stubNdarrayOps],
   // Dynamic imports on Node-only code paths (glTF-Transform's file IO, the
   // Basis glue's Node loader); never reached in the browser.
-  external: ['module', 'node:fs', 'node:path'],
+  external: ['module', 'node:fs', 'node:path', 'fs', 'path'],
   define: { __EDITION__: JSON.stringify({ id: EDITION_ID, ...EDITION }) },
   logLevel: 'warning',
 });

@@ -2,6 +2,7 @@ import { CHECKOUT_URL, PRICE_LABEL } from '../../../src/shared/config/billing.js
 import { SINGLE_TOOL_CHECKOUT_URL, TOOL_PRICE_LABEL } from '../../../src/shared/config/toolProducts.js';
 import { activateKey, isUnlocked, revalidate } from './licensing.js';
 import { QUOTA_KEY, runsUsed, spendRun } from './quota.js';
+import { IMAGE_ACCEPT, IMAGE_TOOLS, MODEL_ACCEPT } from './kinds.js';
 
 // Set at build time from editions.js: which tools this store product has.
 const EDITION = __EDITION__;
@@ -15,16 +16,27 @@ const BIND_TOOL = EDITION.tools.find((t) => !FREE.has(t)) || EDITION.firstTool;
 const $ = (id) => document.getElementById(id);
 const LICENSES = 'licenses';
 const SETTINGS = 'settings';
-const TOOL_NAMES = { check: 'Mobile Ready Check', reduce: 'Reduce Polys', optimise: 'Optimise GLB', compress: 'Compress Textures', textures: 'Texture Check', resize: 'Texture Resizer',
-  inspect: 'Inspect GLB', rig: 'Rig Inspector', animations: 'Animation Inspector', compare: 'Asset Compare' };
 const RUN_LABELS = { check: 'Check model', reduce: 'Reduce', optimise: 'Optimise', compress: 'Compress textures', textures: 'List textures', resize: 'Resize textures',
-  inspect: 'Inspect model', rig: 'Inspect rig', animations: 'Inspect animations', compare: 'Compare A with B' };
-// Free read-only tools run as soon as a model is chosen.
-const INSTANT = new Set(['check', 'textures', 'inspect']);
+  inspect: 'Inspect model', rig: 'Inspect rig', animations: 'Inspect animations', compare: 'Compare A with B',
+  clips: 'List clips', strip: 'Keep ticked clips', 'anim-optimise': 'Optimise animation',
+  formats: 'Show file info', convert: 'Convert', split: 'Split into parts', merge: 'Merge models', lods: 'Make LODs',
+  'icon-check': 'Check icon', icons: 'Make icon sets', xcassets: 'Make image sets', screenshots: 'Make screenshots',
+  'sheet-check': 'Check image', cutout: 'Remove background', lines: 'Clean line art', iso: 'Make iso sprites' };
+// Free read-only tools run as soon as a file is chosen.
+const INSTANT = new Set(['check', 'textures', 'inspect', 'clips', 'formats', 'icon-check', 'sheet-check']);
+// Picker formats: the GLB-only listings keep .glb; the newer editions take FBX, OBJ, glTF and ZIPs too.
+const MODELS = MODEL_ACCEPT[EDITION.accepts || 'glb'];
+const kindOf = (toolId) => (IMAGE_TOOLS.has(toolId) ? 'image' : 'model');
+const EDITION_KINDS = new Set(EDITION.tools.map(kindOf));
+const MODEL_RE = EDITION.accepts === 'any' ? /\.(glb|gltf|fbx|obj|zip)$/i : /\.glb$/i;
+const IMAGE_RE = /\.(png|jpe?g|webp)$/i;
+// Tools that take more files than the one at the top: tool -> [{ name, bytes }].
+const extras = {};
 
 let licenses = [];
 let tool = EDITION.firstTool;
-let model = null; // { name, bytes, size }
+let model = null; // the chosen file: { name, bytes, size, kind: 'model' | 'image' }
+let clipNames = []; // the model's animation clips, for Strip and Iso
 let other = null; // Compare's model B, same shape
 let busy = false;
 let used = 0; // free runs used (src/quota.js)
@@ -48,13 +60,23 @@ worker.onmessage = ({ data }) => {
   if (data.ok) job.resolve(data.result);
   else job.reject(new Error(data.error));
 };
-function process(toolId, params) {
+function work(toolId, params, file = model) {
   return new Promise((resolve, reject) => {
     const id = ++nextId;
     pending.set(id, { resolve, reject });
-    const copy = model.bytes.slice().buffer; // the original stays usable for the next run
-    worker.postMessage({ id, tool: toolId, bytes: copy, params, name: model.name }, [copy]);
+    const copy = file.bytes.slice().buffer; // the original stays usable for the next run
+    worker.postMessage({ id, tool: toolId, bytes: copy, params, name: file.name }, [copy]);
   });
+}
+
+/** Iso sprites need WebGL, so they draw here; the worker first makes any model a plain GLB. */
+async function process(toolId, params) {
+  if (toolId !== 'iso') return work(toolId, params);
+  const prep = await work('iso-prep', {});
+  // A computed path, so esbuild leaves three.js out of panel.js; iso-runner.js is its own bundle (build.mjs).
+  const runner = './iso-runner.js';
+  const { runIso } = await import(runner);
+  return runIso(prep.output, params, model.name, (p, text) => status(`${text}…`));
 }
 
 // ---------------------------------------------------------------- quota
@@ -98,9 +120,12 @@ function render() {
 
   const run = $('run');
   run.hidden = !runnable;
-  const needsOther = tool === 'compare' && !other;
-  run.disabled = busy || !model || needsOther;
-  run.textContent = busy ? 'Working…' : !model ? 'Choose a model first' : needsOther ? 'Choose model B' : RUN_LABELS[tool];
+  const needsOther = (tool === 'compare' && !other) || (tool === 'merge' && !(extras.merge || []).length);
+  const wrongKind = model && model.kind !== kindOf(tool);
+  const noun = kindOf(tool) === 'image' ? 'an image' : 'a model';
+  run.disabled = busy || !model || needsOther || wrongKind;
+  run.textContent = busy ? 'Working…' : !model ? `Choose ${noun} first` : wrongKind ? `This tool needs ${noun}` : needsOther ? (tool === 'merge' ? 'Add models to merge' : 'Choose model B') : RUN_LABELS[tool];
+  $('file').accept = EDITION_KINDS.size > 1 ? `${MODELS},${IMAGE_ACCEPT}` : kindOf(tool) === 'image' ? IMAGE_ACCEPT : MODELS;
 
   const all = licenses.some((l) => l.scope === 'all');
   const paidTool = EDITION.tools.find((t) => !FREE.has(t));
@@ -141,6 +166,79 @@ function checks(items) {
   }
   return ul;
 }
+
+function table(rows) {
+  const t = document.createElement('table');
+  for (const cells of rows) {
+    const tr = t.insertRow();
+    for (const c of cells) tr.insertCell().textContent = c;
+  }
+  return t;
+}
+const sizes = (a, b) => `${fmtBytes(a)} → ${fmtBytes(b)}`;
+const plural = (n, word) => `${fmtInt(n)} ${word}${n === 1 ? '' : 's'}`;
+
+/** Result views for the Animation, Converter, App Assets and Image editions. */
+const RENDER = {
+  clips(r, box) {
+    box.append(list([['Clips', fmtInt(r.clips.length)], ['Keyframes', fmtInt(r.totalKeyframes)], ['Bones', fmtInt(r.bones)], ['File size', fmtBytes(r.fileBytes)]]));
+    if (r.clips.length) box.append(table(r.clips.map((c) => [c.name, `${c.duration.toFixed(2)} s`, `${fmtInt(c.keyframes)} keys`])));
+  },
+  strip(r, box) {
+    box.append(list([['Kept', r.kept.join(', ') || 'none'], ['Removed', r.removed.join(', ')], ['Keyframes', `${fmtInt(r.keyframesBefore)} → ${fmtInt(r.keyframesAfter)}`], ['File size', sizes(r.bytesBefore, r.bytesAfter)]]));
+  },
+  'anim-optimise'(r, box) {
+    const cut = r.keyframesBefore ? Math.round((1 - r.keyframesAfter / r.keyframesBefore) * 100) : 0;
+    box.append(list([['Keyframes', `${fmtInt(r.keyframesBefore)} → ${fmtInt(r.keyframesAfter)} (−${cut}%)`], ['File size', sizes(r.bytesBefore, r.bytesAfter)], ['Strength', `${r.preset}${r.fps ? ` · ${r.fps} fps` : ''}`]]));
+    if (r.clips.length > 1) box.append(table(r.clips.map((c) => [c.name, `${fmtInt(c.before)} → ${fmtInt(c.after)}`])));
+  },
+  formats(r, box) {
+    box.append(list([['Format', r.format], ['File size', fmtBytes(r.inputBytes)], ['Triangles', fmtInt(r.triangles)], ['Meshes · materials', `${fmtInt(r.meshes)} · ${fmtInt(r.materials)}`],
+      ['Textures', fmtInt(r.textures)], ['Animations · skins', `${fmtInt(r.animations)} · ${fmtInt(r.skins)}`], ['Can become', r.canBecome.join(', ')]]));
+  },
+  convert(r, box) {
+    box.append(list([['Converted', `${r.from.toUpperCase()} → ${r.to.toUpperCase()}`], ['Triangles', fmtInt(r.triangles)], ['Materials · textures', `${fmtInt(r.materials)} · ${fmtInt(r.textures)}`],
+      ['Animations', fmtInt(r.animations)], ['File size', fmtBytes(r.bytesOut)]]));
+  },
+  split(r, box) {
+    box.append(list([['Parts', fmtInt(r.parts.length)]]));
+    box.append(table(r.parts.map((p) => [p.name, plural(p.triangles, 'triangle'), fmtBytes(p.fileBytes)])));
+  },
+  merge(r, box) {
+    box.append(table(r.models.map((m) => [m.name, plural(m.triangles, 'triangle')])));
+    box.append(list([['Merged', `${plural(r.merged.triangles, 'triangle')} · ${plural(r.merged.meshes, 'mesh')}`], ['File size', fmtBytes(r.merged.fileBytes)]]));
+  },
+  lods(r, box) {
+    box.append(table(r.levels.map((l, i) => [`LOD${i}`, `${Math.round(l.keep * 100)}%`, plural(l.triangles, 'triangle'), fmtBytes(l.fileBytes)])));
+  },
+  'icon-check'(r, box) {
+    box.append(list([['Size', `${r.width}×${r.height} ${r.format}`], ['Transparent', r.transparent ? 'yes' : 'no']]));
+    box.append(checks(r.checks));
+  },
+  icons(r, box) {
+    box.append(list([['Platforms', r.platforms.join(', ')], ['Files', fmtInt(r.files)], ['iOS background', r.background]]));
+  },
+  xcassets(r, box) {
+    box.append(table(r.sets.map((x) => [`${x.name}.imageset`, `@3x ${x.size3x}`, `@1x ${x.size1x}`])));
+  },
+  screenshots(r, box) {
+    box.append(list([['Screenshots', fmtInt(r.files)], ['Fit', r.fit === 'cover' ? 'fill (cropped)' : 'fit (bars)']]));
+    box.append(table(r.devices.map((d) => [d])));
+  },
+  'sheet-check'(r, box) {
+    box.append(list([['Size', `${r.width}×${r.height} ${r.format}`], ['Background', r.background], ['Sprites found', fmtInt(r.sprites)], ['Artwork covers', `${r.coverage}%`]]));
+  },
+  cutout(r, box) {
+    box.append(list([['Background', r.background], ['Sprites', fmtInt(r.sprites.length)], ['Size', `${r.width}×${r.height}`]]));
+  },
+  lines(r, box) {
+    box.append(list([['Size', `${r.width}×${r.height}`], ['Lines', r.enhanced ? `redrawn at ${r.weight} px` : 'kept as drawn'], ...(r.breaksJoined ? [['Breaks joined', fmtInt(r.breaksJoined)]] : []), ...(r.paths != null ? [['SVG shapes', fmtInt(r.paths)]] : [])]));
+  },
+  iso(r, box) {
+    box.append(list([['Frames', `${fmtInt(r.frames)} · ${r.directions} direction${r.directions === 1 ? '' : 's'}`], ['Clips', r.clips.join(', ') || 'still pose'], ['Sheet', `${r.sheet} · ${r.cell} px cells`], ['Model height', `${r.heightM} m`]]));
+    box.append(checks(r.checks));
+  },
+};
 
 function showResult(toolId, result) {
   const box = $('result');
@@ -242,6 +340,8 @@ function showResult(toolId, result) {
       ['Textures converted', fmtInt(r.textures.length)],
       ['File size', `${fmtBytes(r.bytesBefore)} → ${fmtBytes(r.bytesAfter)}`],
     ]));
+  } else if (RENDER[toolId]) {
+    RENDER[toolId](r, box);
   } else {
     const before = r.before.stats ?? r.before;
     const after = r.after.stats ?? r.after;
@@ -263,8 +363,10 @@ function showResult(toolId, result) {
   box.hidden = false;
 }
 
+const MIME = { glb: 'model/gltf-binary', zip: 'application/zip', png: 'image/png', fbx: 'application/octet-stream', svg: 'image/svg+xml' };
+
 async function download(bytes, name) {
-  const url = URL.createObjectURL(new Blob([bytes], { type: 'model/gltf-binary' }));
+  const url = URL.createObjectURL(new Blob([bytes], { type: MIME[name.split('.').pop()] || 'application/octet-stream' }));
   await chrome.downloads.download({ url, filename: name, saveAs: false });
   setTimeout(() => URL.revokeObjectURL(url), 60_000);
   status(`Saved ${name} to your downloads.`, 'ok');
@@ -276,8 +378,22 @@ function paramsFor(toolId) {
   if (toolId === 'reduce') return { keep: Number($('keep').value) / 100, acrossSeams: $('acrossSeams').checked };
   if (toolId === 'optimise') return { target: $('target').value };
   if (toolId === 'resize') return { maxSize: Number($('resizeTo').value) };
-  if (['textures', 'inspect', 'rig', 'animations'].includes(toolId)) return {};
+  if (['textures', 'inspect', 'rig', 'animations', 'clips', 'formats', 'icon-check', 'sheet-check'].includes(toolId)) return {};
   if (toolId === 'compare') return { other: other.bytes.slice().buffer, otherName: other.name };
+  const files = (id) => (extras[id] || []).map((f) => ({ name: f.name, bytes: f.bytes.slice().buffer }));
+  const ticked = (cls) => [...document.querySelectorAll(`.${cls}:checked`)].map((el) => el.value).join(',');
+  if (toolId === 'strip') return { keep: [...document.querySelectorAll('#clipList input:checked')].map((el) => Number(el.value)) };
+  if (toolId === 'anim-optimise') return { preset: $('animPreset').value, fps: Number($('animFps').value) };
+  if (toolId === 'convert') return { to: $('convertTo').value, scale: Number($('convertScale').value) };
+  if (toolId === 'split') return { by: $('splitBy').value };
+  if (toolId === 'merge') return { others: files('merge'), layout: $('mergeLayout').value };
+  if (toolId === 'lods') return { levels: $('lodLevels').value };
+  if (toolId === 'icons') return { platforms: ticked('platform') || 'ios', background: $('iconBg').value };
+  if (toolId === 'xcassets') return { others: files('xcassets') };
+  if (toolId === 'screenshots') return { others: files('screenshots'), devices: ticked('device') || 'iphone-6.9', fit: $('shotFit').value };
+  if (toolId === 'cutout') return { tolerance: Number($('cutTol').value), split: $('cutSplit').checked };
+  if (toolId === 'lines') return { enhance: $('lineEnhance').checked, weight: Number($('lineWeight').value), svg: $('lineSvg').checked };
+  if (toolId === 'iso') return { tile: $('isoTile').value, dirs: Number($('isoDirs').value), clip: $('isoClip').value, fps: Number($('isoFps').value), style: $('isoStyle').value, height: Number($('isoHeight').value) || 0 };
   return { maxSize: Number($('maxSize').value) };
 }
 
@@ -287,7 +403,7 @@ async function run() {
   const metered = !owned(toolId);
   busy = true;
   $('result').hidden = true;
-  status(toolId === 'compress' ? 'Encoding textures… this can take a minute.' : 'Working…');
+  status(toolId === 'compress' ? 'Encoding textures… this can take a minute.' : toolId === 'iso' ? 'Drawing sprites…' : 'Working…');
   render();
   try {
     const result = await process(toolId, paramsFor(toolId));
@@ -302,26 +418,95 @@ async function run() {
   }
 }
 
+const wantedFiles = () => [EDITION_KINDS.has('model') && (EDITION.accepts === 'any' ? 'GLB, FBX, OBJ or glTF' : 'a .glb file (binary glTF)'), EDITION_KINDS.has('image') && 'a PNG, JPEG or WebP image'].filter(Boolean).join(' or ');
+
 async function choose(file) {
   if (!file) return;
-  if (!/\.glb$/i.test(file.name)) return status('Choose a .glb file (binary glTF).', 'bad');
-  model = { name: file.name, bytes: new Uint8Array(await file.arrayBuffer()), size: file.size };
+  const kind = EDITION_KINDS.has('model') && MODEL_RE.test(file.name) ? 'model' : EDITION_KINDS.has('image') && IMAGE_RE.test(file.name) ? 'image' : null;
+  if (!kind) return status(`Choose ${wantedFiles()}.`, 'bad');
+  model = { name: file.name, bytes: new Uint8Array(await file.arrayBuffer()), size: file.size, kind };
+  clipNames = [];
+  renderClips();
   $('fileName').textContent = file.name;
   $('fileHint').textContent = fmtBytes(file.size);
   $('result').hidden = true;
   status('');
+  // Mixed editions: jump to a tool that takes this kind of file.
+  if (kindOf(tool) !== kind) tool = EDITION.tools.find((t) => kindOf(t) === kind) || tool;
   render();
-  if (INSTANT.has(tool)) return run();
-  // Elsewhere, show the triangle count straight away (the free check, run quietly).
+  if (INSTANT.has(tool) && kindOf(tool) === kind) run();
   const current = model;
-  process('check', {}).then((r) => {
+  if (kind === 'image') {
+    createImageBitmap(file).then((bmp) => { if (model === current) $('fileHint').textContent = `${bmp.width}×${bmp.height} · ${fmtBytes(file.size)}`; bmp.close?.(); }).catch(() => {});
+    return;
+  }
+  // Show the triangle count straight away (the free check, run quietly), and the clips for Strip / Iso.
+  work('check', {}).then((r) => {
     if (model === current) $('fileHint').textContent = `${fmtInt(r.report.stats.triangles)} triangles · ${fmtBytes(file.size)}`;
   }).catch(() => {});
+  if (EDITION.tools.some((t) => t === 'strip' || t === 'iso')) {
+    work('clips', {}).then((r) => {
+      if (model !== current) return;
+      clipNames = r.report.clips.map((c) => ({ index: c.index, name: c.name, duration: c.duration }));
+      renderClips();
+    }).catch(() => {});
+  }
+}
+
+/** Strip's tick list and Iso's clip menu, from the model's clips. */
+function renderClips() {
+  const box = $('clipList');
+  if (box) {
+    box.replaceChildren();
+    if (!model) box.append(Object.assign(document.createElement('small'), { textContent: 'Choose a model to list its clips.' }));
+    else if (!clipNames.length) box.append(Object.assign(document.createElement('small'), { textContent: 'Reading clips…' }));
+    for (const c of clipNames) {
+      const label = document.createElement('label');
+      const cb = Object.assign(document.createElement('input'), { type: 'checkbox', value: String(c.index), checked: true });
+      label.append(cb, Object.assign(document.createElement('span'), { textContent: c.name, title: c.name }), Object.assign(document.createElement('small'), { textContent: `${c.duration.toFixed(2)} s` }));
+      box.append(label);
+    }
+    if (clipNames.length > 1) {
+      const tools = document.createElement('div');
+      tools.className = 'clip-tools';
+      for (const [text, on] of [['Tick all', true], ['Untick all', false]]) {
+        const b = Object.assign(document.createElement('button'), { type: 'button', textContent: text });
+        b.addEventListener('click', () => box.querySelectorAll('input').forEach((cb) => { cb.checked = on; }));
+        tools.append(b);
+      }
+      box.prepend(tools);
+    }
+  }
+  const menu = $('isoClip');
+  if (menu) {
+    // The first clip by default: every clip in 8 directions can outgrow what a browser can draw.
+    menu.replaceChildren(...clipNames.map((c) => new Option(c.name, String(c.index))), new Option('All clips (up to 6)', 'all'), new Option('Still pose', 'none'));
+  }
+}
+
+/** Extra files for Merge, Xcode image sets and Screenshots. */
+function wireExtras(el) {
+  const id = el.dataset.extras;
+  const input = el.querySelector('input');
+  const kind = el.dataset.kind || 'model';
+  if (kind === 'model') input.accept = MODELS;
+  const add = async (files) => {
+    const ok = [...files].filter((f) => (kind === 'image' ? IMAGE_RE : MODEL_RE).test(f.name));
+    if (ok.length < files.length) status(`Only ${kind === 'image' ? 'PNG, JPEG and WebP images' : 'GLB, FBX, OBJ and glTF models'} can be added here.`, 'bad');
+    extras[id] = [...(extras[id] || []), ...(await Promise.all(ok.map(async (f) => ({ name: f.name, bytes: new Uint8Array(await f.arrayBuffer()) }))))];
+    el.querySelector('.extras-list').textContent = extras[id].map((f) => f.name).join(', ') || 'None yet';
+    render();
+  };
+  el.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); input.click(); } });
+  input.addEventListener('change', (e) => { add(e.target.files); e.target.value = ''; });
+  el.addEventListener('dragover', (e) => { e.preventDefault(); el.classList.add('is-over'); });
+  el.addEventListener('dragleave', () => el.classList.remove('is-over'));
+  el.addEventListener('drop', (e) => { e.preventDefault(); el.classList.remove('is-over'); add(e.dataTransfer.files); });
 }
 
 async function chooseOther(file) {
   if (!file) return;
-  if (!/\.glb$/i.test(file.name)) return status('Choose a .glb file (binary glTF).', 'bad');
+  if (!MODEL_RE.test(file.name)) return status(`Choose ${wantedFiles()}.`, 'bad');
   other = { name: file.name, bytes: new Uint8Array(await file.arrayBuffer()), size: file.size };
   $('otherName').textContent = `B: ${file.name}`;
   $('result').hidden = true;
@@ -377,16 +562,16 @@ drop.addEventListener('drop', (e) => {
 
 // Compare's second model (B), picked or dropped the same way.
 const otherDrop = $('otherDrop');
-otherDrop.addEventListener('keydown', (e) => {
+if (otherDrop) otherDrop.addEventListener('keydown', (e) => {
   if (e.key === 'Enter' || e.key === ' ') {
     e.preventDefault();
     $('otherFile').click();
   }
 });
-$('otherFile').addEventListener('change', (e) => chooseOther(e.target.files[0]));
-otherDrop.addEventListener('dragover', (e) => { e.preventDefault(); otherDrop.classList.add('is-over'); });
-otherDrop.addEventListener('dragleave', () => otherDrop.classList.remove('is-over'));
-otherDrop.addEventListener('drop', (e) => {
+$('otherFile')?.addEventListener('change', (e) => chooseOther(e.target.files[0]));
+otherDrop?.addEventListener('dragover', (e) => { e.preventDefault(); otherDrop.classList.add('is-over'); });
+otherDrop?.addEventListener('dragleave', () => otherDrop.classList.remove('is-over'));
+otherDrop?.addEventListener('drop', (e) => {
   e.preventDefault();
   otherDrop.classList.remove('is-over');
   chooseOther(e.dataTransfer.files[0]);
@@ -394,18 +579,28 @@ otherDrop.addEventListener('drop', (e) => {
 
 // Only controls in this edition's tabs exist, so save whichever are present.
 const remember = () => chrome.storage.local.set({
-  [SETTINGS]: Object.fromEntries(['keep', 'acrossSeams', 'target', 'maxSize', 'resizeTo', 'role', 'engine']
+  [SETTINGS]: Object.fromEntries(['keep', 'acrossSeams', 'target', 'maxSize', 'resizeTo', 'role', 'engine', 'animPreset', 'animFps', 'convertTo', 'convertScale', 'splitBy', 'mergeLayout', 'lodLevels',
+    'iconBg', 'shotFit', 'cutTol', 'cutSplit', 'lineEnhance', 'lineWeight', 'lineSvg', 'isoTile', 'isoDirs', 'isoFps', 'isoStyle']
     .map((id) => $(id))
     .filter(Boolean)
     .map((el) => [el.id, el.type === 'checkbox' ? el.checked : el.value])),
 });
 document.querySelectorAll('select, input[type=range], input[type=checkbox]').forEach((el) => el.addEventListener('change', remember));
-const showKeep = () => { if ($('keep')) $('keepLabel').textContent = `${$('keep').value}%`; };
-$('keep').addEventListener('input', showKeep);
+const showKeep = () => {
+  if ($('keep')) $('keepLabel').textContent = `${$('keep').value}%`;
+  if ($('cutTol')) $('cutTolLabel').textContent = $('cutTol').value;
+  if ($('lineWeight')) $('lineWeightLabel').textContent = `${$('lineWeight').value} px`;
+};
+document.querySelectorAll('input[type=range]').forEach((el) => el.addEventListener('input', showKeep));
 
 // Edition: only its tabs, its name.
 document.querySelectorAll('[role=tab]').forEach((tab) => { tab.hidden = !EDITION.tools.includes(tab.dataset.tool); });
 document.querySelectorAll('.tool').forEach((section) => { if (!EDITION.tools.includes(section.dataset.panel)) section.remove(); });
+document.querySelectorAll('[data-extras]').forEach(wireExtras);
+renderClips();
+$('fileName').textContent = `Drop ${EDITION_KINDS.size > 1 ? 'a model or an image' : EDITION_KINDS.has('image') ? 'an image' : EDITION.accepts === 'any' ? 'a 3D model' : 'a .glb'} here`;
+if (EDITION.accepts === 'any' && EDITION_KINDS.has('model')) $('fileHint').textContent = `${EDITION_KINDS.has('image') ? 'GLB, FBX, OBJ, glTF, PNG, JPEG or WebP' : 'GLB, FBX, OBJ or glTF'} · runs on your computer, nothing is uploaded`;
+else if (EDITION_KINDS.has('image')) $('fileHint').textContent = 'PNG, JPEG or WebP · runs on your computer, nothing is uploaded';
 // Tabs in the edition's own order, so its free check can come first.
 for (const id of EDITION.tools) document.querySelector('.tabs').append(document.querySelector(`[role=tab][data-tool="${id}"]`));
 document.querySelector('.tabs').style.setProperty('--tabs', String(EDITION.tools.length));

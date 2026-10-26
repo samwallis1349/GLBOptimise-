@@ -3417,11 +3417,12 @@ html.has-consent-notice .promo-bot {
   color: var(--text-primary);
   font-weight: 700;
   animation: ext-button-pulse 2.6s ease-out infinite;
+  transition: transform 0.2s ease, background 0.2s ease;
 }
-
 .hero-split__extensions:hover,
 .hero-split__extensions:focus-visible {
   background: linear-gradient(135deg, rgba(255, 181, 71, 0.34), rgba(255, 120, 40, 0.2));
+  transform: scale(1.05);
 }
 
 .hero-split__extensions svg {
@@ -3489,6 +3490,53 @@ html.has-consent-notice .promo-bot {
 .ext-modal__text {
   flex: 1;
   min-width: 0;
+}
+
+/* Clip poster; pointing at the row plays its tools' clips over it. */
+.ext-modal__art {
+  position: relative;
+  flex-shrink: 0;
+  width: 128px;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: #000;
+}
+
+.ext-modal__art img,
+.ext-modal__clip {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.ext-modal__clip {
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.ext-modal__item.is-playing .ext-modal__clip {
+  opacity: 1;
+}
+
+.ext-modal__play {
+  position: absolute;
+  right: 4px;
+  bottom: 4px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.6);
+  color: var(--accent);
+  font-size: 10px;
+  line-height: 16px;
+  transition: opacity 0.2s ease;
+}
+
+.ext-modal__item.is-playing .ext-modal__play {
+  opacity: 0;
 }
 
 .ext-modal__name {
@@ -3614,6 +3662,10 @@ html.has-consent-notice .promo-bot {
   .ext-modal__text {
     flex-basis: calc(100% - 18px - var(--space-2));
   }
+
+  .ext-modal__art {
+    display: none;
+  }
 }
 
 .ext-modal__modes {
@@ -3666,6 +3718,32 @@ html.has-consent-notice .promo-bot {
   pointer-events: none;
 }
 
+/* One-off price on the artwork (ToolCard price option, the 2D & Iso page). */
+.tool-card__price {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #1a1204;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+  pointer-events: none;
+}
+
+.tool-card__price b {
+  font-size: 15px;
+  font-weight: 900;
+  letter-spacing: 0;
+}
+
 /* API launch popup: the full command list */
 .api-launch__commands {
   width: 100%;
@@ -3715,6 +3793,93 @@ html.has-consent-notice .promo-bot {
   color: #c49bff;
   font-size: 12px;
   white-space: nowrap;
+}
+
+/* MCP launch popup (McpLaunchModal.js): the install snippet */
+.mcp-launch__install {
+  min-width: 0;
+  max-width: 100%;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: #0b0f19;
+}
+
+.mcp-launch__tabs {
+  display: flex;
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--border);
+}
+
+.mcp-launch__tab {
+  padding: 9px 14px;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--text-muted);
+  background: none;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+}
+
+.mcp-launch__tab:hover {
+  color: var(--text-secondary);
+}
+
+.mcp-launch__tab[aria-selected='true'] {
+  color: var(--text-primary);
+  border-bottom-color: #7ee0c3;
+}
+
+.mcp-launch__code {
+  position: relative;
+  min-width: 0;
+}
+
+.mcp-launch__code pre {
+  margin: 0;
+  padding: 14px 84px 14px 16px;
+  overflow-x: auto;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: #7ee0c3;
+}
+
+.mcp-launch__copy {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  padding: 5px 12px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  color: #06210f;
+  background: #7ee0c3;
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.mcp-launch__copy:hover,
+.mcp-launch__copy:focus-visible {
+  background: #a6f0da;
+}
+
+/* Shown instead of the install snippet while COMING_SOON is on */
+.mcp-launch__soon {
+  margin: 0;
+  padding: 12px 16px;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--text-secondary);
+  border: 1px dashed #7ee0c3;
+  border-radius: var(--radius-md);
+  background: rgba(126, 224, 195, 0.06);
+}
+
+.mcp-launch__soon b {
+  color: #7ee0c3;
 }
 
 /* ==========================================================================

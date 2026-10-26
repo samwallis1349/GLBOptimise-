@@ -21,7 +21,9 @@ import { TOOLS, CATEGORIES } from '../src/shared/config/tools.js';
 import { SITE_URL, SITE_NAME, STATIC_PAGES, HOME_SEO, pageSeo } from '../src/shared/config/seo.js';
 import { getToolGuide } from '../src/shared/config/toolGuides.js';
 import { toolGuideMarkup } from '../src/shared/components/ToolGuide.js';
+import { engineNotesMarkup } from '../src/shared/config/game2d.js';
 import { TRIPO_GUIDE_PATH, tripoStepsMarkup } from '../src/shared/config/tripo.js';
+import { TOOL_PRICE_LABEL } from '../src/shared/config/toolProducts.js';
 
 const LIVE = new Set(['available', 'beta']);
 
@@ -107,6 +109,8 @@ export function renderPage(indexHtml, path) {
           <p>${esc(seo.description)}</p>
           ${tool?.features?.length ? `<ul>${tool.features.map((f) => `<li>${esc(f.label)}</li>`).join('')}</ul>` : ''}
           ${tool && getToolGuide(tool.id) ? toolGuideMarkup(getToolGuide(tool.id)) : ''}
+          ${path === '/2d-games' ? `<p>${esc(TOOL_PRICE_LABEL)} per tool, paid once, or every tool in All Access.</p>
+          <h2>Ready for your engine</h2>${engineNotesMarkup(esc)}` : ''}
           ${path === TRIPO_GUIDE_PATH ? tripoStepsMarkup(esc) : ''}
           <p><a href="/tools">All ${SITE_NAME} tools</a></p>
           ${links ? `<ul>${links}</ul>` : ''}

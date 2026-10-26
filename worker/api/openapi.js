@@ -103,12 +103,16 @@ export function buildOpenApiSpec(origin = 'https://www.assetbench.co.uk', env = 
       summary: 'Edge 3D & 2D game/app asset optimisation, polygon reduction, KTX2 compression, LOD chains, and store asset generation.',
       description:
         'Process 3D models (GLB, glTF, OBJ, FBX, including Draco- and Meshopt-compressed GLBs) and 2D textures/icons on the edge. ' +
-        'Every processing endpoint accepts raw binary uploads, `multipart/form-data` (`file`), or a public asset URL (`?url=https://...` or JSON `{"url": "..."}`).',
+        'Every processing endpoint accepts raw binary uploads, `multipart/form-data` (`file`), or a public asset URL (`?url=https://...` or JSON `{"url": "..."}`).\n\n' +
+        'AI agents: the `assetbench-mcp` MCP server (`npx -y assetbench-mcp`, env `ASSETBENCH_API_KEY`) exposes this API as 12 tools for Claude, Cursor, VS Code and other MCP clients, working on local files. ' +
+        `Setup: ${origin}/docs/#mcp-h`,
       contact: {
         name: 'AssetBench',
         url: `${origin}/docs/`,
       },
     },
+    externalDocs: { description: 'Docs, playground and MCP server setup', url: `${origin}/docs/` },
+    'x-mcp-server': { package: 'assetbench-mcp', command: 'npx', args: ['-y', 'assetbench-mcp'], env: ['ASSETBENCH_API_KEY'], docs: `${origin}/docs/#mcp-h` },
     servers: [{ url: origin, description: 'AssetBench Cloud Edge API' }],
     paths: {
       '/api/v1': {

@@ -38,8 +38,8 @@ function pageHtml(tool) {
   return `<!doctype html>
 <html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${title}</title><meta name="description" content="${tool.description}">
-<link rel="icon" href="./branding/favicon.svg" type="image/svg+xml">
-</head><body><div id="app"><header class="ab-header package-header"><img src="./branding/asset-bench-logo.svg" alt=""/><span>Asset Bench</span><strong>${tool.name}</strong></header><main id="page-root"></main></div>
+<link rel="icon" href="./branding/favicon.png" type="image/png">
+</head><body><div id="app"><header class="ab-header package-header"><img src="./branding/asset-bench-logo.png" alt=""/><span>Asset Bench</span><strong>${tool.name}</strong></header><main id="page-root"></main></div>
 <script type="module" src="./src/main.js"></script></body></html>`;
 }
 

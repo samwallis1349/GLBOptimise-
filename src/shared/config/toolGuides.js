@@ -295,6 +295,137 @@ export const TOOL_GUIDES = {
       },
     ],
   },
+  'model-to-isometric': {
+    heading: 'How to render a 3D model as eight isometric sprites',
+    intro: [
+      'Model to Isometric renders a GLB or self-contained FBX with a fixed orthographic camera from eight directions, 45° apart, so every view of the model is framed the same way. It suits buildings, props and characters for isometric and top-down 2D games.',
+      'Animated models render 4 to 16 frames per direction, one sheet row per direction. Everything runs in your browser and your model never leaves your device.',
+    ],
+    steps: [
+      'Drop a GLB or FBX (up to 200 MB), or try the sample building.',
+      'Drag the preview left or right to set the starting rotation, and up or down to set the camera elevation. 35.3° is true isometric.',
+      'Pick a resolution from 256 to 2048 px and a background. For an animated model, pick the clip and the frames per direction.',
+      'Lock the scale if you are rendering a set of models that must stay in proportion, then press Generate 8 Views.',
+      'Download the eight PNGs, the sprite sheet and the JSON together in one ZIP.',
+    ],
+    faqs: [
+      {
+        q: 'How is this different from Model to Iso Sprites?',
+        a: 'Model to Isometric gives you eight views at the camera angle you choose, which suits props, buildings and concept work. Model to Iso Sprites locks the camera to true 2:1 isometric and the scale to a tile preset, and builds a full sprite sheet and atlas for a game engine.',
+      },
+      {
+        q: 'Why are sprites from different models different sizes?',
+        a: 'By default each model fills its frame. Lock the scale and set the pixels per metre, and every model you render keeps the same size and stands on the same ground point.',
+      },
+      {
+        q: 'Does it work with FBX files?',
+        a: 'Yes, when the textures are embedded in the FBX. Textures kept as separate files are not loaded, so convert the model to GLB first if they come out missing.',
+      },
+    ],
+  },
+  'iso-scene-builder': {
+    heading: 'How to build an isometric scene from PNG sprites',
+    intro: [
+      'Iso Scene Builder keeps a bank of your isometric PNG and WebP objects and lets you drag them onto a 2:1 grid to lay out a level, a room or a promo shot. Objects snap to the tiles and sort their depth automatically, so whatever is lower on screen draws in front.',
+      'Your bank and the current scene are saved in this browser, and nothing is uploaded. Export the scene as a PNG, as a layout.json for your game, or as a ZIP with both and every object image.',
+    ],
+    steps: [
+      'Add transparent PNG or WebP objects to your bank. Sprites from Model to Iso Sprites or Alpha Cutout work well.',
+      'Pick a tile width and a snap mode: tile centres, tile corners, half tiles or off.',
+      'Drag objects onto the grid, or click one to drop it in the middle. Arrow keys nudge, F flips, and [ and ] change the layer.',
+      'Check each object\'s ground point, the gold dot that sits on the tile. Detect from pixels finds it for you, or set it by hand.',
+      'Export a PNG at 0.5× to 2×, the layout JSON, or the scene ZIP.',
+    ],
+    faqs: [
+      {
+        q: 'How does it decide what is in front?',
+        a: 'With auto depth on, the object whose ground point is lower on screen draws in front. Layers override that: an object on a higher layer always draws on top.',
+      },
+      {
+        q: 'What is in layout.json?',
+        a: 'Every placed object with its draw order, world and grid position, scale, flip and layer, so you can rebuild the scene in your engine.',
+      },
+      {
+        q: 'Where are my objects kept?',
+        a: 'In this browser on this device. They are not uploaded. In a private window the bank is not kept after you leave.',
+      },
+    ],
+  },
+  'alpha-cutout': {
+    heading: 'How to remove a background and split a sprite sheet',
+    intro: [
+      'Alpha Cutout lifts sprites, icons and effects off their background and splits a sprite sheet into separate transparent PNGs. It is built for art on white or flat backgrounds, and also handles gradients, noise and soft effects like smoke and splatter.',
+      'Fix any edge by hand with the wand, box, lasso, erase and restore tools, then download every sprite in one ZIP. Processing stays in your browser.',
+    ],
+    steps: [
+      'Drop a PNG, JPG or WebP, or paste one with Ctrl+V.',
+      'Choose how the background is removed: Smart flood for busy backgrounds, Colour to alpha for soft effects, Colour key for hard-edged sprites, or Existing alpha to clean up a PNG.',
+      'Tidy the edges with alpha cut-off, speck removal and shrink or grow edge. Add edge padding so mipmaps don\'t show dark outlines.',
+      'Split the sheet with Auto-detect or a grid of rows and columns, and click the thumbnails to include or skip each sprite.',
+      'Touch up any pixels on the preview, then download the sprites as a ZIP.',
+    ],
+    faqs: [
+      {
+        q: 'Why is a gap inside my sprite still filled?',
+        a: 'Smart flood clears the background from the image border inwards, so an enclosed gap, like the space between an arm and a body, needs a seed. Choose Pick in the touch-up tools and click the gap.',
+      },
+      {
+        q: 'Auto-detect missed or merged a sprite. What now?',
+        a: 'Use the Sprite box tool (B) and drag around the piece. Lower Merge gap to separate pieces that were joined, or raise it to join pieces that belong together.',
+      },
+      {
+        q: 'Why do my sprites get dark outlines in the engine?',
+        a: 'Fully clear pixels still carry a colour, and mipmapping blends it into the edge. Turn on edge padding on export so the clear pixels take the sprite\'s edge colour.',
+      },
+    ],
+  },
+  'line-studio': {
+    heading: 'How to clean up line art and colouring pages',
+    intro: [
+      'Line Studio takes a scan or drawing, removes the white background and redraws rough, broken lines smooth at the weight you choose. It is made for colouring book pages and fine line art.',
+      'Export a transparent PNG, a traced SVG that scales to any size, or both in a ZIP. Processing stays in your browser.',
+    ],
+    steps: [
+      'Drop a PNG, WebP or JPG, or paste one with Ctrl+V.',
+      'Set the white tolerance and edge softness so the paper disappears and the lines stay.',
+      'Turn on line enhancement and choose 3 weights (fine, medium and bold) or 1 weight for every line. Keep solid black areas and join small breaks if you need them.',
+      'Drag a box over any lettering so it keeps its original lines.',
+      'Check the result on light and dark backgrounds, then download the PNG, the SVG, or both as a ZIP.',
+    ],
+    faqs: [
+      {
+        q: 'Why did some letters change shape?',
+        a: 'Redrawn lines can close small gaps, so an "a" may turn into an "o". Drag a box over the text to mark it as lettering, and it stays as drawn.',
+      },
+      {
+        q: 'Should I use traced vectors or image in SVG?',
+        a: 'Traced vectors scale sharply to any size and suit logos, icons and flat game art. Image in SVG wraps a pixel-perfect copy, which is better for painterly sprites and photos.',
+      },
+    ],
+  },
+  'app-icon-generator': {
+    heading: 'How to make app icons for iOS, Android and game UI',
+    intro: [
+      'iOS App Icon Generator turns one 1024 × 1024 artwork into a full icon set. Frame it in a squircle, rounded, circle or shield mask, add a background, a border, a badge or a gloss, and preview it on a home screen, a store page, a game inventory and a watch face.',
+      'If you have no artwork yet, it can write a prompt for Midjourney, DALL·E or Flux. Everything exports as one ZIP.',
+    ],
+    steps: [
+      'Upload your icon (PNG, JPG, SVG or WebP), paste it, or pick a sample. No artwork yet? Describe your app in the AI Prompt Crafter and copy the prompt.',
+      'Choose the mask shape, then set the padding, subject scale and position.',
+      'Set the background style, border, badge and gloss.',
+      'Check the live previews, then export the complete package as a ZIP.',
+    ],
+    faqs: [
+      {
+        q: 'What is in the ZIP?',
+        a: 'An Xcode AppIcon.appiconset, Android mipmaps and store icons, a game UI sprite sheet and the master 1024 × 1024 PNG.',
+      },
+      {
+        q: 'Does the prompt crafter make the image?',
+        a: 'No. It writes a prompt for you to paste into your image generator. Upload the result here to frame and export it.',
+      },
+    ],
+  },
 };
 
 /** @param {string} toolId */

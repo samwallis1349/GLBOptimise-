@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import worker from '../worker/index.js';
+import worker, { UsageCounter } from '../worker/index.js';
 import { TOOLS, POPULARITY_ORDER, getOrderedTools } from '../src/shared/config/tools.js';
 import { placeAtRowStart, placePairTogether, rankByUsage, rotateRow } from '../src/services/UsageService.js';
 
@@ -99,4 +99,30 @@ test('rotateRow: the leader stays first, the next row takes turns among the next
   assert.deepEqual(ids(2).slice(1, 5), ['t9', 't10', 't11', 't12']);
   assert.deepEqual(ids(3).slice(1, 5), ids(0).slice(1, 5), 'and round again');
   assert.deepEqual(ids(1).slice(5, 9), ['t1', 't2', 't3', 't4'], 'the rest of the pool follows in rank order');
+});
+
+// A stand-in for the USAGE Durable Object binding: one UsageCounter with in-memory storage.
+function memoryUsage(env) {
+  const store = new Map();
+  const storage = {
+    async get(key) { return store.get(key); },
+    async put(key, value) { if (typeof key === 'object') for (const [k, v] of Object.entries(key)) store.set(k, v); else store.set(key, value); },
+    async list() { return new Map([...store].sort()); },
+  };
+  const counter = new UsageCounter({ storage }, env);
+  return { idFromName: (name) => name, get: () => ({ fetch: (url, init) => counter.fetch(new Request(url, init)) }) };
+}
+const hit = (tool, kind) => new Request('https://x.test/api/usage', { method: 'POST', body: JSON.stringify({ tool, kind }) });
+
+test('the Durable Object counter keeps opens and runs, starting from the old KV opens', async () => {
+  const env = { TRIALS: memoryKv() };
+  await worker.fetch(post('line-studio'), env); // an old KV count from before the counter
+  env.USAGE = memoryUsage(env);
+  await Promise.all([hit('line-studio', 'open'), hit('line-studio', 'open'), hit('line-studio', 'run'), hit('pack-pbr', 'run')].map((r) => worker.fetch(r, env)));
+  assert.equal((await worker.fetch(hit('line-studio', 'sneeze'), env)).status, 400);
+  const body = await (await worker.fetch(new Request('https://x.test/api/usage'), env)).json();
+  assert.deepEqual(body.opens, { 'line-studio': 3 }, 'the old KV count plus two new opens - none lost');
+  assert.deepEqual(body.runs, { 'line-studio': 1, 'pack-pbr': 1 });
+  assert.deepEqual(body.counts, body.opens, 'the grids still rank by opens');
+  assert.ok(body.since);
 });

@@ -56,7 +56,7 @@ const icon = path.join(staging, 'icon.png');
 await fs.mkdir(staging, { recursive: true });
 // electron-builder looks upward for a package.json; a stray one in %TEMP% breaks it.
 await fs.writeFile(path.join(staging, 'package.json'), '{ "private": true }\n');
-await sharp(path.join(root, 'public', 'branding', 'favicon.svg'), { density: 1200 }).resize(512, 512).png().toFile(icon);
+await sharp(path.join(root, 'public', 'branding', 'asset-bench-logo-1024.png')).resize(512, 512).png().toFile(icon);
 
 try {
   for (const [i, { tool, product }] of tools.entries()) {

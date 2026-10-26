@@ -29,6 +29,22 @@
     <button type="button" role="tab" data-tool="rig" aria-selected="false">Rig</button>
     <button type="button" role="tab" data-tool="animations" aria-selected="false">Anims</button>
     <button type="button" role="tab" data-tool="compare" aria-selected="false">Compare</button>
+    <button type="button" role="tab" data-tool="clips" aria-selected="false">Clips <em>Free</em></button>
+    <button type="button" role="tab" data-tool="strip" aria-selected="false">Strip</button>
+    <button type="button" role="tab" data-tool="anim-optimise" aria-selected="false">Optimise</button>
+    <button type="button" role="tab" data-tool="formats" aria-selected="false">Info <em>Free</em></button>
+    <button type="button" role="tab" data-tool="convert" aria-selected="false">Convert</button>
+    <button type="button" role="tab" data-tool="split" aria-selected="false">Split</button>
+    <button type="button" role="tab" data-tool="merge" aria-selected="false">Merge</button>
+    <button type="button" role="tab" data-tool="lods" aria-selected="false">LODs</button>
+    <button type="button" role="tab" data-tool="icon-check" aria-selected="false">Check <em>Free</em></button>
+    <button type="button" role="tab" data-tool="icons" aria-selected="false">Icons</button>
+    <button type="button" role="tab" data-tool="xcassets" aria-selected="false">Xcode</button>
+    <button type="button" role="tab" data-tool="screenshots" aria-selected="false">Shots</button>
+    <button type="button" role="tab" data-tool="sheet-check" aria-selected="false">Check <em>Free</em></button>
+    <button type="button" role="tab" data-tool="cutout" aria-selected="false">Cutout</button>
+    <button type="button" role="tab" data-tool="lines" aria-selected="false">Line art</button>
+    <button type="button" role="tab" data-tool="iso" aria-selected="false">Iso</button>
   </nav>
 
   <section class="tool" data-panel="check">
@@ -118,6 +134,176 @@
       <strong id="otherName">Choose model B</strong>
       <small>e.g. the optimised copy of the same model</small>
     </label>
+  </section>
+
+
+  <!-- Animation Tools -->
+  <section class="tool" data-panel="clips" hidden>
+    <p class="lede">Every animation clip with its length, tracks and keyframes. Works on FBX too.</p>
+  </section>
+
+  <section class="tool" data-panel="strip" hidden>
+    <p class="lede">Keep only the clips you need. The rig stays; data only the removed clips used goes too.</p>
+    <div class="clip-list" id="clipList"><small>Choose a model to list its clips.</small></div>
+  </section>
+
+  <section class="tool" data-panel="anim-optimise" hidden>
+    <p class="lede">Removes keyframes the motion doesn't need, checked against the curve it replaces.</p>
+    <div class="grid2">
+      <label class="field">Strength
+        <select id="animPreset">
+          <option value="lossless">Lossless</option><option value="balanced" selected>Balanced</option><option value="aggressive">Aggressive</option>
+        </select>
+      </label>
+      <label class="field">Frame rate
+        <select id="animFps">
+          <option value="0" selected>Keep</option><option value="60">60 fps</option><option value="30">30 fps</option><option value="24">24 fps</option>
+        </select>
+      </label>
+    </div>
+  </section>
+
+  <!-- 3D Converter & Splitter -->
+  <section class="tool" data-panel="formats" hidden>
+    <p class="lede">What the file is, what's inside it and what it can be converted to.</p>
+  </section>
+
+  <section class="tool" data-panel="convert" hidden>
+    <p class="lede">Convert between GLB, glTF, OBJ and FBX. Textures and animation come along where the format allows.</p>
+    <div class="grid2">
+      <label class="field">Save as
+        <select id="convertTo">
+          <option value="glb" selected>GLB</option><option value="gltf">glTF (ZIP)</option><option value="obj">OBJ (ZIP)</option><option value="fbx">FBX</option>
+        </select>
+      </label>
+      <label class="field">Scale
+        <select id="convertScale">
+          <option value="1" selected>Keep</option><option value="0.01">× 0.01 (cm → m)</option><option value="100">× 100 (m → cm)</option>
+        </select>
+      </label>
+    </div>
+  </section>
+
+  <section class="tool" data-panel="split" hidden>
+    <p class="lede">Save each part of the model as its own GLB, in one ZIP.</p>
+    <label class="field">Split into
+      <select id="splitBy">
+        <option value="objects" selected>Top-level objects</option><option value="meshes">Every mesh</option><option value="materials">One file per material</option>
+      </select>
+    </label>
+  </section>
+
+  <section class="tool" data-panel="merge" hidden>
+    <p class="lede">Combine the model above with more models into one GLB. Mix GLB, FBX, OBJ and glTF.</p>
+    <label class="drop drop--small extras" data-extras="merge" tabindex="0">
+      <input type="file" multiple hidden>
+      <strong>Add models to merge</strong>
+      <small class="extras-list">None yet</small>
+    </label>
+    <label class="field">Place them
+      <select id="mergeLayout"><option value="row" selected>Side by side</option><option value="stack">Where they are</option></select>
+    </label>
+  </section>
+
+  <section class="tool" data-panel="lods" hidden>
+    <p class="lede">A level-of-detail chain from one model: LOD0 plus lighter copies, in one ZIP.</p>
+    <label class="field">Levels
+      <select id="lodLevels">
+        <option value="1,0.5,0.25,0.1" selected>100 · 50 · 25 · 10%</option>
+        <option value="1,0.5,0.25">100 · 50 · 25%</option>
+        <option value="1,0.6,0.3,0.15,0.05">100 · 60 · 30 · 15 · 5%</option>
+      </select>
+    </label>
+  </section>
+
+  <!-- App Icon & Store Assets -->
+  <section class="tool" data-panel="icon-check" hidden>
+    <p class="lede">Is this image ready to be an app icon? Size, shape, transparency and padding.</p>
+  </section>
+
+  <section class="tool" data-panel="icons" hidden>
+    <p class="lede">Every icon size for iOS, Android and Apple Watch from one 1024×1024 image.</p>
+    <div class="checks-row">
+      <label><input type="checkbox" class="platform" value="ios" checked> iOS</label>
+      <label><input type="checkbox" class="platform" value="android" checked> Android</label>
+      <label><input type="checkbox" class="platform" value="watchos"> watchOS</label>
+    </div>
+    <label class="field">Background for iOS (no transparency allowed)
+      <input type="color" id="iconBg" value="#ffffff">
+    </label>
+  </section>
+
+  <section class="tool" data-panel="xcassets" hidden>
+    <p class="lede">Xcode image sets: each image (treated as @3x) becomes @1x, @2x and @3x with a Contents.json.</p>
+    <label class="drop drop--small extras" data-extras="xcassets" data-kind="image" tabindex="0">
+      <input type="file" multiple hidden accept=".png,.jpg,.jpeg,.webp">
+      <strong>Add more images</strong>
+      <small class="extras-list">Optional</small>
+    </label>
+  </section>
+
+  <section class="tool" data-panel="screenshots" hidden>
+    <p class="lede">Store screenshots at the exact sizes App Store Connect and Google Play ask for.</p>
+    <label class="drop drop--small extras" data-extras="screenshots" data-kind="image" tabindex="0">
+      <input type="file" multiple hidden accept=".png,.jpg,.jpeg,.webp">
+      <strong>Add more screenshots</strong>
+      <small class="extras-list">Optional, up to 9 more</small>
+    </label>
+    <div class="checks-row">
+      <label><input type="checkbox" class="device" value="iphone-6.9" checked> iPhone 6.9"</label>
+      <label><input type="checkbox" class="device" value="iphone-6.5" checked> iPhone 6.5"</label>
+      <label><input type="checkbox" class="device" value="ipad-13"> iPad 13"</label>
+      <label><input type="checkbox" class="device" value="android-phone" checked> Android</label>
+    </div>
+    <label class="field">Fit
+      <select id="shotFit"><option value="cover" selected>Fill (crop edges)</option><option value="contain">Fit (add bars)</option></select>
+    </label>
+  </section>
+
+  <!-- Image Cutout & Sprites -->
+  <section class="tool" data-panel="sheet-check" hidden>
+    <p class="lede">Size, background colour and how many separate sprites the image holds.</p>
+  </section>
+
+  <section class="tool" data-panel="cutout" hidden>
+    <p class="lede">Removes the background and saves each sprite as its own PNG, plus a JSON map.</p>
+    <label class="field">Background tolerance <b id="cutTolLabel">12</b>
+      <input type="range" id="cutTol" min="2" max="40" step="1" value="12">
+    </label>
+    <label class="check"><input type="checkbox" id="cutSplit" checked><span>Split into separate sprites</span></label>
+  </section>
+
+  <section class="tool" data-panel="lines" hidden>
+    <p class="lede">Clean scanned or AI line art: white removed, lines redrawn at one weight, PNG + SVG.</p>
+    <label class="check"><input type="checkbox" id="lineEnhance" checked><span>Redraw lines at an even weight</span></label>
+    <label class="field">Line weight <b id="lineWeightLabel">4 px</b>
+      <input type="range" id="lineWeight" min="1" max="12" step="1" value="4">
+    </label>
+    <label class="check"><input type="checkbox" id="lineSvg" checked><span>Also trace an SVG</span></label>
+  </section>
+
+  <section class="tool" data-panel="iso" hidden>
+    <p class="lede">A 3D model (GLB, FBX, OBJ, glTF) as a 2:1 isometric sprite sheet + JSON, every direction on one base point.</p>
+    <div class="grid2">
+      <label class="field">Tile
+        <select id="isoTile"><option value="pixel">64 × 32</option><option value="standard" selected>128 × 64</option><option value="hd">256 × 128</option></select>
+      </label>
+      <label class="field">Directions
+        <select id="isoDirs"><option value="8" selected>8</option><option value="4">4</option><option value="1">1</option></select>
+      </label>
+      <label class="field">Animation
+        <select id="isoClip"><option value="none" selected>Still pose</option></select>
+      </label>
+      <label class="field">Frames per second
+        <select id="isoFps"><option value="8">8</option><option value="12" selected>12</option><option value="24">24</option></select>
+      </label>
+      <label class="field">Style
+        <select id="isoStyle"><option value="clean" selected>Clean outline</option><option value="soft">Soft</option><option value="pixel">Pixel art</option></select>
+      </label>
+      <label class="field">Height (m)
+        <input type="number" id="isoHeight" min="0" step="0.1" placeholder="Auto">
+      </label>
+    </div>
   </section>
 
   <button type="button" id="run" class="btn primary run" disabled>Choose a model first</button>

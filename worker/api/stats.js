@@ -3,14 +3,14 @@
  *
  *   apistat:<YYYY-MM-DD>:<metric>  -> '' with metadata { count }
  *
- * Metrics: key_issued, op:<operation> (a successful run = a delivered
+ * Metrics: key_issued, mcp:<metric> (an op/error that came through assetbench-mcp), op:<operation> (a successful run = a delivered
  * download or report), batch_files, error:<code>, plus page events sent by
- * the site (popup_shown, popup_click, popup_dismiss, docs_view, panel_open, vscode_copy). The
+ * the site (popup_shown, popup_click, popup_dismiss, docs_view, panel_open, vscode_copy, mcp_shown, mcp_click, mcp_dismiss, mcp_copy, tripo_tool_click, tripo_guide_click). The
  * read-modify-write can drop a count under a race; fine for trends.
  */
 
 const PREFIX = 'apistat:';
-export const PAGE_EVENTS = new Set(['popup_shown', 'popup_click', 'popup_dismiss', 'docs_view', 'panel_open', 'vscode_copy']);
+export const PAGE_EVENTS = new Set(['popup_shown', 'popup_click', 'popup_dismiss', 'docs_view', 'panel_open', 'vscode_copy', 'mcp_shown', 'mcp_click', 'mcp_dismiss', 'mcp_copy', 'tripo_tool_click', 'tripo_guide_click']);
 
 const today = () => new Date().toISOString().slice(0, 10);
 

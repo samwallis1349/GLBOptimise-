@@ -24,7 +24,7 @@ export function Header() {
   const brand = document.createElement('a');
   brand.className = 'ab-header__brand';
   brand.href = '/';
-  brand.innerHTML = `<img src="/branding/asset-bench-logo.svg" alt="" /><span>${APP_NAME}</span>`;
+  brand.innerHTML = `<img src="/branding/asset-bench-logo.png" alt="" /><span>${APP_NAME}</span>`;
 
   const nav = document.createElement('nav');
   nav.className = 'ab-header__nav';

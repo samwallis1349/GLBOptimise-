@@ -3,7 +3,8 @@
  * API (worker/api), so results match /api/v1 exactly. DOM-free: bundled into
  * the panel's Web Worker by build.mjs and imported directly by the tests.
  */
-import { analyseGlb, evaluate, readDocument, writeDocument } from '../../../worker/api/glb.js';
+import { analyseGlb, evaluate, readDocument, registerDracoDecoder, splitGlb, writeDocument } from '../../../worker/api/glb.js';
+import { getDracoDecoder } from '../../../worker/api/draco.js';
 import { deviceMatrix } from '../../../worker/api/gameReady.js';
 import { downscaleTextures, optimizeGlb, reduceGlb } from '../../../worker/api/mesh.js';
 import { texturesToKtx2 } from '../../../worker/api/ktx2.js';
@@ -12,16 +13,14 @@ import { analyseRig, buildRigChecks } from '../../../src/tools/rig-inspector/Rig
 import { analyseAnimations, buildAnimationChecks } from '../../../src/tools/animation-inspector/AnimationAnalysis.js';
 import { compareAnalyses } from '../../../src/tools/asset-compare/compare/diff.js';
 import { fmtValue } from '../../../src/tools/asset-compare/compare/format.js';
+import { MAX_INPUT_BYTES, modelToGlb, stem } from './inputs.js';
+import { IMAGE_TOOLS, PANEL_TOOLS } from './kinds.js';
+import { EXTRA_RUNNERS } from './runners.js';
 
-export const MAX_INPUT_BYTES = 200 * 1048576;
+export { MAX_INPUT_BYTES };
 
-const stem = (name) => String(name || 'model').replace(/\.[^.]+$/, '').replace(/[^\w.-]+/g, '_').slice(0, 80) || 'model';
-
-function assertGlb(bytes) {
-  const glb = bytes.length >= 4 && bytes[0] === 0x67 && bytes[1] === 0x6c && bytes[2] === 0x54 && bytes[3] === 0x46;
-  if (!glb) throw new Error('That is not a binary glTF (.glb) file.');
-  if (bytes.length > MAX_INPUT_BYTES) throw new Error('Models up to 200 MB only.');
-}
+// Draco-compressed GLBs: the API's decoder, its .wasm supplied by the worker (or the tests).
+registerDracoDecoder(getDracoDecoder);
 
 /** The site's Inspect GLB analysis, read with the API's reader (the site's needs eval, which extensions forbid). */
 const analyse = (bytes, name) => analyseAsset(
@@ -123,8 +122,7 @@ const RUNNERS = {
   /** `params.other` is the second model (B); the dropped model is A. */
   async compare(bytes, { other, otherName = 'model-b.glb' }, name) {
     if (!other) throw new Error('Choose a second model to compare against.');
-    const b = new Uint8Array(other);
-    assertGlb(b);
+    const b = (await modelToGlb(new Uint8Array(other), otherName)).bytes;
     const result = compareAnalyses(await analyse(bytes, name), await analyse(b, otherName));
     return {
       report: {
@@ -136,13 +134,44 @@ const RUNNERS = {
       },
     };
   },
+
+
+  /** Iso sprites run in the panel (WebGL); this hands it a plain GLB three.js can read without Draco. */
+  async 'iso-prep'(bytes) {
+    const document = await readDocument(bytes);
+    for (const ext of document.getRoot().listExtensionsUsed()) if (ext.extensionName === 'KHR_draco_mesh_compression') ext.dispose();
+    const output = await writeDocument(document);
+    return { output, name: 'model.glb', report: { clips: document.getRoot().listAnimations().map((a, i) => a.getName() || `Clip ${i + 1}`), warnings: [] } };
+  },
+
 };
 
-export const TOOL_IDS = Object.keys(RUNNERS);
+export { IMAGE_TOOLS };
 
+const usesDraco = (glb) => {
+  try { return (splitGlb(glb).json.extensionsUsed || []).includes('KHR_draco_mesh_compression'); } catch { return false; }
+};
+
+/** Every tool an edition can list: the engine's, plus those that run in the panel (PANEL_TOOLS). */
+export const TOOL_IDS = [...new Set([...Object.keys(RUNNERS), ...Object.keys(EXTRA_RUNNERS), ...PANEL_TOOLS])];
+
+/**
+ * Runs a tool. Model tools accept GLB, glTF, FBX or OBJ (or a ZIP of one):
+ * anything but GLB is converted to GLB first and the converter's notes are
+ * added to the report's warnings.
+ */
 export async function runTool(tool, bytes, params = {}, name = 'model.glb') {
-  const run = RUNNERS[tool];
+  const run = RUNNERS[tool] || EXTRA_RUNNERS[tool];
   if (!run) throw new Error(`Unknown tool '${tool}'.`);
-  assertGlb(bytes);
-  return run(bytes, params, name);
+  if (bytes.length > MAX_INPUT_BYTES) throw new Error('Files up to 200 MB only.');
+  if (IMAGE_TOOLS.has(tool)) return run(bytes, params, name);
+  const model = await modelToGlb(bytes, name);
+  const result = await run(model.bytes, { ...params, inputBytes: bytes.byteLength }, name, model.from);
+  const notes = [...model.notes];
+  // There's no Draco encoder here: a Draco GLB comes back uncompressed (and bigger).
+  if (result.output && tool !== 'iso-prep' && /\.glb$/i.test(result.name || '') && usesDraco(model.bytes)) {
+    notes.push('The input was Draco-compressed; this copy is not (no Draco encoder runs here), so it may be bigger. Compress it again in your pipeline if you need to.');
+  }
+  if (notes.length && result.report) result.report.warnings = [...notes, ...(result.report.warnings || [])];
+  return result;
 }

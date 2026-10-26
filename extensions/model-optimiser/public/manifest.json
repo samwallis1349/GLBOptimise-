@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "AssetBench Model Optimiser",
   "short_name": "Model Optimiser",
-  "version": "1.0.3",
+  "version": "1.0.8",
   "minimum_chrome_version": "116",
   "description": "Check, reduce, optimise and compress GLB models for games and the web, right in your browser. Files never leave your computer.",
   "homepage_url": "https://www.assetbench.co.uk/",

@@ -88,7 +88,7 @@ function HeroSection(wizardEl) {
     <div class="hero-split__actions">
       <a class="btn btn--primary" href="/tools">Explore Tools →</a>
       <a class="btn btn--secondary" href="/optimise-glb">${iconSvg('package-open')} Optimise a GLB</a>
-      <button type="button" class="btn hero-split__extensions">${EXTENSION_ICON} Web extensions <span class="hero-split__extensions-tag">New</span></button>
+            <button type="button" class="btn hero-split__extensions">${EXTENSION_ICON} Web extensions/Browser plugins <span class="hero-split__extensions-tag">New</span></button>
       <button type="button" class="hero-split__free">Free 3D model ↓</button>
     </div>
     <div class="hero-benefits">

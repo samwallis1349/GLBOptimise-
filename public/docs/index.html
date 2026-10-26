@@ -24,7 +24,7 @@ body{margin:0;background:var(--bg);color:var(--text);font:14px/1.55 var(--body);
 .wrap{max-width:1080px;margin:0 auto}
 a{color:var(--accent-hi)}
 .top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:28px;flex-wrap:wrap}
-.brand{font:800 18px var(--display);color:var(--ink);text-decoration:none;letter-spacing:-.01em}
+.brand{display:inline-flex;align-items:center;gap:8px;font:800 18px var(--display);color:var(--ink);text-decoration:none;letter-spacing:-.01em}
 .eyebrow{font:700 10.5px var(--body);letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin:0 0 10px}
 h1{font:800 clamp(34px,6vw,56px)/.98 var(--display);letter-spacing:-.03em;margin:0;color:var(--ink);text-wrap:balance}
 h1 em{font-style:normal;background:var(--silver);-webkit-background-clip:text;background-clip:text;color:transparent}
@@ -108,6 +108,12 @@ td code,p code{font:12px var(--mono);color:var(--accent-hi)}
 .way .who{font:600 11px var(--body);color:var(--accent-hi);letter-spacing:.04em}
 .way pre{font-size:11px;padding:10px;white-space:pre-wrap;word-break:break-all}
 .way a.go{margin-top:auto;font:600 13px var(--body);color:var(--ink)}
+.mcp-tools{display:grid;gap:8px;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));margin-top:6px}
+.mcp-tool{background:var(--tile);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.mcp-tool code{font:600 12px var(--mono);color:var(--accent-hi)}
+.mcp-tool .cost{float:right;font:600 10.5px var(--body);color:var(--dim)}
+.mcp-tool .cost.free{color:var(--ok)}
+.mcp-tool span:last-child{display:block;font-size:12px;color:var(--muted);margin-top:3px}
 .faq details{border-bottom:1px solid var(--line);padding:12px 0}
 .faq summary{cursor:pointer;color:var(--ink);font-weight:600;list-style:none}
 .faq summary::before{content:"+ ";color:var(--muted)}
@@ -145,7 +151,7 @@ td code,p code{font:12px var(--mono);color:var(--accent-hi)}
 <body>
 <div class="wrap">
   <div class="top">
-    <a class="brand" href="/">Asset Bench</a>
+    <a class="brand" href="/"><img src="/branding/asset-bench-logo.png" width="26" height="26" alt="">Asset Bench</a>
     <div class="row" style="gap:14px"><a href="/api/v1/openapi.json">OpenAPI 3.1</a><a href="/api/v1">GET /api/v1 →</a></div>
   </div>
 
@@ -158,7 +164,7 @@ td code,p code{font:12px var(--mono);color:var(--accent-hi)}
         <a class="btn primary" href="#key-h">Try it free →</a>
         <a class="btn" href="https://workbenchlabs.lemonsqueezy.com/checkout/buy/3d09253a-bc8b-44a4-853f-5882dc964807" target="_blank" rel="noopener">Get All Access <small>£10/month</small></a>
       </div>
-      <div class="trust"><span>Free key in one click</span><span>No card needed</span><span>Files never stored</span></div>
+      <div class="trust"><span>Free key in one click</span><span>No card needed</span><span>Files never stored</span><span>Works in Claude, Cursor &amp; VS Code (<a href="#mcp-h">MCP</a>)</span></div>
     </div>
     <figure class="hero-art">
       <img src="/images/api-poster.svg" width="1200" height="640" alt="One API request turns a heavy 3D model into a low-poly, game-ready version with LODs, for phones, Quest and the web, plus every app icon size" fetchpriority="high">
@@ -220,7 +226,7 @@ td code,p code{font:12px var(--mono);color:var(--accent-hi)}
 
   <section class="card" aria-labelledby="ways-h">
     <h2 id="ways-h">Do I need to install anything?</h2>
-    <p class="sub">No. The API runs on our servers. Pick whichever way suits you; all three use the same free key.</p>
+    <p class="sub">No. The API runs on our servers. Pick whichever way suits you; all four use the same free key.</p>
     <div class="ways">
       <div class="way"><span class="who">NO CODE</span><h3>Use this page</h3>
         <p>Get a free key below, drop your file into the playground, press Run and download the result. Good for trying it out.</p>
@@ -231,8 +237,48 @@ td code,p code{font:12px var(--mono);color:var(--accent-hi)}
       <div class="way"><span class="who">AUTOMATE</span><h3>From your code or build</h3>
         <p>Call it from a Unity editor script (C#), Python, Node.js or your CI, so every model is checked and optimised automatically. Copy-paste samples are below.</p>
         <a class="go" href="#code-h">See the code ↓</a></div>
+      <div class="way"><span class="who">AI AGENT</span><h3>From Claude, Cursor or VS Code</h3>
+        <p>Add the AssetBench MCP server and just ask: <i>"make robot.glb ready for Unity on mid-range phones"</i>. Results are saved next to your files.</p>
+        <a class="go" href="#mcp-h">Set up the MCP server ↓</a></div>
     </div>
     <p class="sub" style="margin:14px 0 0">Prefer clicking to coding? The same tools are on <a href="/">assetbench.co.uk</a> as normal web pages, included with All Access.</p>
+  </section>
+
+  <section class="card" aria-labelledby="mcp-h">
+    <h2 id="mcp-h">Use it from your AI agent (MCP)</h2>
+    <p class="sub"><a href="https://www.npmjs.com/package/assetbench-mcp" target="_blank" rel="noopener"><code>assetbench-mcp</code></a> is a free MCP server that lets Claude, Cursor, VS Code and any other MCP client use this API on the files on your computer. Ask in plain English, for example <i>"make robot.glb ready for Unity on mid-range phones"</i> or <i>"under 5k tris, 512px textures"</i>; the agent picks the tool and the settings, and the results are saved next to your files (ZIPs unzipped, nothing overwritten). It uses your API key and your plan's operations, so checks stay free.</p>
+    <div class="tabs" role="tablist" id="mcpTabs">
+      <button role="tab" aria-selected="true" data-mcp="cli" type="button">Claude Code</button>
+      <button role="tab" aria-selected="false" data-mcp="json" type="button">Claude Desktop · Cursor · VS Code</button>
+    </div>
+    <pre id="mcpCode" data-mcp="cli">claude mcp add assetbench -e ASSETBENCH_API_KEY=YOUR_KEY -- npx -y assetbench-mcp</pre>
+    <pre id="mcpJson" data-mcp="json" hidden>{
+  "mcpServers": {
+    "assetbench": {
+      "command": "npx",
+      "args": ["-y", "assetbench-mcp"],
+      "env": { "ASSETBENCH_API_KEY": "YOUR_KEY" }
+    }
+  }
+}</pre>
+    <div class="row" style="margin-top:10px"><button id="copyMcp" type="button">Copy</button><a class="go" href="#key-h" style="margin-left:auto;font:600 13px var(--body);color:var(--ink)">Need a key? Get one free ↓</a></div>
+    <p class="sub" style="margin:10px 0 0">The JSON goes in the app's MCP settings file. Needs Node.js 18 or newer. Your key from step 1 below is filled in for you once you have one.</p>
+    <p class="group-label">12 tools your agent can call</p>
+    <div class="mcp-tools">
+      <div class="mcp-tool"><code>check_model</code><span class="cost free">Free</span><span>Score a GLB for every device class and list what to fix first</span></div>
+      <div class="mcp-tool"><code>make_game_ready</code><span class="cost">1 op</span><span>Merge, reduce, fit textures, fix the pivot, plus LODs, collision and KTX2, with import notes for Unity, Unreal, Godot, Roblox or the web</span></div>
+      <div class="mcp-tool"><code>make_app_assets</code><span class="cost">1 op</span><span>One image becomes every iOS, Android and watchOS app icon</span></div>
+      <div class="mcp-tool"><code>make_store_screenshots</code><span class="cost">1 op</span><span>Screenshots resized for every App Store and Google Play size</span></div>
+      <div class="mcp-tool"><code>optimize_model</code><span class="cost">1 op</span><span>Reduce, downscale textures and compress towards a target</span></div>
+      <div class="mcp-tool"><code>reduce_model</code><span class="cost free">Free</span><span>Polygon reduction only</span></div>
+      <div class="mcp-tool"><code>generate_lods</code><span class="cost">1 op</span><span>A chain of lower-detail GLBs</span></div>
+      <div class="mcp-tool"><code>convert_model</code><span class="cost">1 op</span><span>FBX, OBJ or glTF to GLB; GLB to glTF or OBJ</span></div>
+      <div class="mcp-tool"><code>compress_textures</code><span class="cost">1 op</span><span>KTX2 for an image or every texture in a GLB</span></div>
+      <div class="mcp-tool"><code>resize_texture</code><span class="cost">1 op</span><span>Resize to a power of two as PNG, JPEG or WebP</span></div>
+      <div class="mcp-tool"><code>explain_target</code><span class="cost free">Free</span><span>What "Roblox on a low-end phone" means in triangles and texture sizes</span></div>
+      <div class="mcp-tool"><code>account_status</code><span class="cost free">Free</span><span>Your plan and operations left this month</span></div>
+    </div>
+    <p class="sub" style="margin:12px 0 0">Files go to the AssetBench API to be processed and are never stored. Set <code>ASSETBENCH_API_URL</code> to point it at another host. Source and full instructions: <a href="https://www.npmjs.com/package/assetbench-mcp" target="_blank" rel="noopener">npm</a>.</p>
   </section>
 
   <section class="card" aria-labelledby="plans-h">
@@ -240,7 +286,7 @@ td code,p code{font:12px var(--mono);color:var(--accent-hi)}
     <p class="sub">Start free. The API comes included with the £10/month All Access subscription (every website tool + 1,000 API operations/month), and studios that need 5,000 operations a month move to Studio. One operation = one processed file (a game-ready pack, icon pack or screenshot set counts once; a batch counts each file). Checks are always free.</p>
     <div class="grid" id="plans"><p class="sub">Loading…</p></div>
     <p class="sub" id="paidNote" style="margin-top:14px" hidden>After subscribing, Lemon Squeezy emails you a licence key: use it as your API key. All Access subscribers use the same key for the website tools and the API. Manage or cancel any time from your Lemon Squeezy receipt.</p>
-    <p class="sub" id="manualNote" style="margin-top:14px">Need more than 5,000 operations a month? Email <a href="mailto:Workbench5@gmail.com">Workbench5@gmail.com</a>, and tell us what you're building.</p>
+    <p class="sub" id="manualNote" style="margin-top:14px">Need more than 5,000 operations a month? Email <a href="mailto:sam@assetbench.co.uk">sam@assetbench.co.uk</a>, and tell us what you're building.</p>
   </section>
 
   <section class="card" aria-labelledby="key-h">
@@ -428,6 +474,7 @@ td code,p code{font:12px var(--mono);color:var(--accent-hi)}
     <details><summary>Which files can I send?</summary><p>3D: GLB, glTF, OBJ and FBX (FBX and OBJ are converted to GLB first), including Draco- and Meshopt-compressed GLBs and models with WebP textures. Images: PNG, JPEG and WebP. Up to 25 MB per file on Free, 50 MB on All Access and 100 MB on Studio. You can upload files directly or pass a public <code>url</code>.</p></details>
     <details><summary>What counts as an operation?</summary><p>One processed file. A game-ready pack, an icon set or a set of screenshots each count once, however many files come back. Checks are free and never count.</p></details>
     <details><summary>I already pay for All Access. Do I need anything else?</summary><p>No. Your All Access licence key is also your API key, with 1,000 operations a month. Paste it into the key box below.</p></details>
+    <details><summary>Can Claude or another AI agent use it?</summary><p>Yes. Add the free <code>assetbench-mcp</code> server (<a href="#mcp-h">one line to set up</a>) and Claude, Cursor, VS Code or any MCP client can check models, make them game-ready and build app icons and screenshots from your files. It uses the same key and operations as the API. AI tools can also read the <a href="/api/v1/openapi.json">OpenAPI spec</a> directly.</p></details>
     <details><summary>What happens if I run out?</summary><p>Requests return a clear "quota used up" message until the month resets. Nothing is charged automatically; you can move to Studio for 5,000 a month.</p></details>
   </section>
 
@@ -834,12 +881,21 @@ with open(${JSON.stringify(outName)}, "wb") as out:
     out.write(res.content)` : `print(res.json())`}`;
   }
   $('code').textContent = code;
+  renderMcp();
 }
 document.querySelectorAll('#codeTabs button').forEach((b) => b.addEventListener('click', () => {
   lang = b.dataset.lang;
   document.querySelectorAll('#codeTabs button').forEach((x) => x.setAttribute('aria-selected', String(x === b)));
   renderCode();
 }));
+// MCP install snippets, with the visitor's key filled in (renderCode calls this on every key change).
+function mcpPres() { return [$('mcpCode'), $('mcpJson')]; }
+function renderMcp() { for (const pre of mcpPres()) { pre.dataset.tpl ??= pre.textContent; pre.textContent = pre.dataset.tpl.replace('YOUR_KEY', key() || 'YOUR_KEY'); } }
+document.querySelectorAll('#mcpTabs button').forEach((b) => b.addEventListener('click', () => {
+  document.querySelectorAll('#mcpTabs button').forEach((x) => x.setAttribute('aria-selected', String(x === b)));
+  for (const pre of mcpPres()) pre.hidden = pre.dataset.mcp !== b.dataset.mcp;
+}));
+$('copyMcp').addEventListener('click', async () => { renderMcp(); const pre = mcpPres().find((p) => !p.hidden); try { await navigator.clipboard.writeText(pre.textContent); $('copyMcp').textContent = 'Copied'; setTimeout(() => { $('copyMcp').textContent = 'Copy'; }, 1500); } catch {} });
 $('copyCode').addEventListener('click', async () => { try { await navigator.clipboard.writeText($('code').textContent); $('copyCode').textContent = 'Copied'; setTimeout(() => { $('copyCode').textContent = 'Copy'; }, 1500); } catch {} });
 syncAll();
 previewIntent();

@@ -1,0 +1,84 @@
+<!doctype html>
+<!--
+  Chrome Web Store art for the Animation Tools, 3D Converter, App Assets and
+  Sprite Studio editions, captured by store/render-editions.mjs:
+  ?edition=<id>&shot=s1|s2|s3 (1280x800), tile (440x280) or marquee (1400x560).
+  Expects, next to it, icon-128.png and the panel screenshots
+  <edition>-1.png, -2.png and -3.png.
+-->
+<html><head><meta charset="utf-8">
+<style>
+  :root { --bg: #0b0b0a; --text: #f4f1ea; --muted: #a8a49b; --accent: #ffb547; --border: rgba(255,255,255,.1); }
+  * { box-sizing: border-box; margin: 0; }
+  body { overflow: hidden; background: radial-gradient(120% 90% at 70% 40%, #1d1710 0%, var(--bg) 60%); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; }
+  .shot { width: 100vw; height: 100vh; padding: 64px 72px; display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 56px; }
+  .logo { display: flex; align-items: center; gap: 12px; font-weight: 700; font-size: 22px; color: var(--muted); }
+  .logo img { width: 36px; height: 36px; }
+  h1 { font-size: 62px; line-height: 1.03; letter-spacing: -0.03em; margin: 26px 0 18px; }
+  h1 span { color: var(--accent); }
+  p.sub { font-size: 24px; line-height: 1.35; color: var(--muted); max-width: 30ch; }
+  ul.ticks { list-style: none; padding: 0; margin-top: 28px; display: grid; gap: 12px; font-size: 21px; }
+  ul.ticks li::before { content: '✓'; color: var(--accent); font-weight: 700; margin-right: 12px; }
+  .deal { display: inline-block; margin-top: 30px; padding: 12px 20px; border-radius: 14px; border: 1px solid rgba(255,181,71,.4); font-size: 20px; color: var(--muted); }
+  .deal b { color: var(--accent); }
+  .panelshot { height: 672px; border-radius: 16px; border: 1px solid var(--border); box-shadow: 0 30px 80px rgba(0,0,0,.6), 0 0 60px rgba(255,181,71,.12); }
+  body.tile .shot { padding: 34px 36px; grid-template-columns: 1fr; align-content: center; }
+  body.tile .logo img { width: 54px; height: 54px; }
+  body.tile h1 { font-size: 44px; margin: 14px 0 8px; }
+  body.tile p.sub { font-size: 19px; }
+  body.marquee .shot { gap: 44px; padding: 56px 72px; }
+  body.marquee h1 { font-size: 68px; margin: 22px 0 14px; }
+  body.marquee .panelshot { height: 448px; }
+</style></head>
+<body>
+<div class="shot">
+  <div>
+    <div class="logo"><img src="icon-128.png" alt=""> AssetBench</div>
+    <h1 id="h1"></h1>
+    <p class="sub" id="sub"></p>
+    <ul class="ticks" id="ticks"></ul>
+    <p class="deal" id="deal"></p>
+  </div>
+  <img class="panelshot" id="panel" alt="">
+</div>
+<script>
+const COPY = {
+  'animation-tools': {
+    name: ['Animation', 'Tools'],
+    s1: ['Every clip,', 'at a glance', 'Drop a GLB or FBX: see each clip, its length and keyframes. Free.', ['GLB, glTF and FBX', 'Clip length and keyframes', 'Bones and skins']],
+    s2: ['Keep the clips', 'you ship', 'Untick the clips you don’t need. The rig stays put.', ['Strip unused clips', 'Data only they used goes too', 'Download a clean GLB']],
+    s3: ['Fewer keyframes,', 'same motion', 'Cuts keyframes the motion doesn’t need, checked against the curve.', ['Lossless, Balanced or Aggressive', 'Resample to 60, 30 or 24 fps', 'Smaller files for web and mobile']],
+  },
+  converter: {
+    name: ['3D', 'Converter'],
+    s1: ['FBX, GLB, OBJ,', 'glTF. Sorted.', 'Convert between the formats game engines and the web use.', ['FBX → GLB and back', 'glTF and OBJ with their textures', 'Rescale centimetres to metres']],
+    s2: ['Split a model', 'into parts', 'One GLB per object, mesh or material, in one ZIP.', ['By object, mesh or material', 'Parts keep their place', 'Rigs stay with skinned meshes']],
+    s3: ['Merge, and', 'make LODs', 'Combine models into one GLB, or build a level-of-detail chain.', ['Mix FBX, OBJ and GLB', 'Side by side or in place', 'LOD0 to LOD3 in one ZIP']],
+  },
+  'app-assets': {
+    name: ['App', 'Assets'],
+    s1: ['Is your icon', 'store-ready?', 'A free check of size, shape, transparency and padding.', ['1024 × 1024 check', 'Transparency warnings', 'PNG, JPEG or WebP']],
+    s2: ['Every icon size', 'in one ZIP', 'iOS, Android and watchOS app icons from one image.', ['AppIcon.appiconset + Contents.json', 'Android mipmaps and adaptive icon', 'Flattened for Apple’s rules']],
+    s3: ['Store screenshots,', 'exact sizes', 'Resize screenshots for App Store Connect and Google Play.', ['iPhone 6.9" and 6.5", iPad, Android', 'Fill or fit with bars', 'Xcode image sets too']],
+  },
+  'image-tools': {
+    name: ['Sprite', 'Studio'],
+    s1: ['Background gone,', 'sprites split', 'Removes the background and saves each sprite as its own PNG.', ['Finds the background colour', 'Sprites + JSON map', 'PNG, JPEG or WebP sheets']],
+    s2: ['Clean line art', 'in one click', 'White removed, lines redrawn at one weight, PNG + SVG.', ['Transparent PNG', 'Traced SVG', 'Joins small breaks']],
+    s3: ['3D model to', 'iso sprites', 'GLB, FBX or OBJ to a 2:1 isometric sprite sheet + JSON.', ['8, 4 or 1 directions', 'Animation frames', 'Pixel-art style']],
+  },
+};
+const q = new URLSearchParams(location.search);
+const ed = COPY[q.get('edition')], shot = q.get('shot') || 's1';
+const [a, b, sub, ticks] = ed[shot === 'tile' || shot === 'marquee' ? 's1' : shot];
+const [n1, n2] = ed.name;
+document.body.classList.add(shot);
+document.getElementById('h1').innerHTML = shot === 'tile' || shot === 'marquee' ? `${n1} <span>${n2}</span>` : `${a}<br><span>${b}</span>`;
+document.getElementById('sub').textContent = shot === 'tile' ? 'by AssetBench · runs in your browser' : sub;
+document.getElementById('ticks').innerHTML = shot === 'tile' ? '' : ticks.map((t) => `<li>${t}</li>`).join('');
+document.getElementById('deal').innerHTML = shot === 'tile' ? '' : '<b>Free check</b> · 10 free runs, then 99p once';
+document.getElementById('deal').hidden = shot === 'tile';
+const panel = document.getElementById('panel');
+if (shot === 'tile') panel.remove(); else panel.src = `${q.get('edition')}-${shot === 'marquee' ? 1 : shot.slice(1)}.png`;
+</script>
+</body></html>

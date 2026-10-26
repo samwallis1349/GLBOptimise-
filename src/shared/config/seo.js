@@ -12,7 +12,7 @@ import { TOOLS } from './tools.js';
 
 export const SITE_URL = 'https://www.assetbench.co.uk';
 export const SITE_NAME = 'Asset Bench';
-const DEFAULT_IMAGE = `${SITE_URL}/branding/asset-bench-logo.svg`;
+const DEFAULT_IMAGE = `${SITE_URL}/branding/asset-bench-logo-1024.png`;
 
 /** Must match the homepage tags in index.html. */
 export const HOME_SEO = {
@@ -37,9 +37,9 @@ export const STATIC_PAGES = [
   {
     path: '/2d-games',
     name: '2D & Isometric Game Tools',
-    title: `2D & Isometric Game Tools — Sprites, iso scenes, sprite sheets | ${SITE_NAME}`,
+    title: `Isometric Sprite Sheets from 3D Models — 2D & Iso Game Tools | ${SITE_NAME}`,
     description:
-      'Browser tools for 2D and isometric games: render 3D models as eight-direction iso sprites, build isometric scenes on a 2:1 grid, cut sprite sheets and clean up line art. Nothing is uploaded.',
+      'Turn 3D models into 2:1 isometric sprite sheets (8 directions, animated, sheet + JSON) for Godot, Unity and Phaser, build iso scenes and cut sprite sheets in your browser. 99p per tool, nothing uploaded.',
     changefreq: 'weekly',
     priority: '0.8',
   },

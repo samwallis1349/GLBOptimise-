@@ -2,6 +2,10 @@ import { openModal } from './Modal.js';
 import { EXTENSIONS } from '../config/extensions.js';
 import { getToolById } from '../config/tools.js';
 import { downloadBlob } from '../utils/download.js';
+import { toolClip } from '../config/toolClips.js';
+
+const canHover = typeof matchMedia === 'function' && matchMedia('(hover: hover) and (pointer: fine)').matches;
+const reduceMotion = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 const STATUS_LABEL = { live: 'Available', review: 'In review', planned: 'Coming soon' };
 const STATUS_ORDER = { live: 0, review: 1, planned: 2 };
@@ -25,6 +29,9 @@ function detectBrowser() {
 /** Puzzle-piece mark used on the homepage button. */
 export const EXTENSION_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19.4 11H18V7a1 1 0 0 0-1-1h-4V4.6a2.1 2.1 0 1 0-4 0V6H5a1 1 0 0 0-1 1v3.5h1.4a2.1 2.1 0 1 1 0 4.2H4V19a1 1 0 0 0 1 1h4.3v-1.4a2.1 2.1 0 1 1 4.2 0V20H17a1 1 0 0 0 1-1v-4h1.4a2 2 0 1 0 0-4Z"/></svg>`;
 
+/** The extension's tool clips, in listing order (tools without one are skipped). */
+const clipsFor = (ext) => ext.tools.map(toolClip).filter(Boolean);
+
 const statusPill = (status) => `<span class="ext-modal__status ext-modal__status--${status}">${STATUS_LABEL[status]}</span>`;
 
 /** `mode`: 'store' (Add to Chrome where listed) or 'manual' (tick to download the zip). */
@@ -42,9 +49,14 @@ function row(ext, mode, picked) {
       : '<span class="ext-modal__pick-gap"></span>';
   }
   const highlight = manual ? ext.download : ext.url;
+  const [first] = clipsFor(ext);
+  const art = first
+    ? `<div class="ext-modal__art"><img src="${first.poster}" alt="" loading="lazy" decoding="async" width="128" height="72">${canHover && !reduceMotion ? '<span class="ext-modal__play" aria-hidden="true">▶</span>' : ''}</div>`
+    : '';
   return `
-    <li class="ext-modal__item${highlight ? ' is-live' : ''}">
+    <li class="ext-modal__item${highlight ? ' is-live' : ''}" data-ext="${ext.id}">
       ${pick}
+      ${art}
       <div class="ext-modal__text">
         <div class="ext-modal__name">${ext.name}</div>
         <p class="ext-modal__blurb">${ext.blurb}</p>
@@ -75,6 +87,45 @@ async function downloadZip(ids) {
   }
   const name = ids.length === 1 ? `assetbench-${ids[0]}.zip` : 'assetbench-extensions.zip';
   downloadBlob(await bundle.generateAsync({ type: 'blob' }), name);
+}
+
+/**
+ * Pointing at a row plays its tools' clips over the poster, one after another
+ * and round again. Like the /tools cards, the video is only made on the first
+ * hover, and touch screens and reduced-motion visitors keep the still.
+ */
+function playOnHover(item, clips) {
+  const art = item.querySelector('.ext-modal__art');
+  let video = null;
+  let index = 0;
+  const load = () => {
+    video.src = clips[index].src;
+    video.play().catch(() => {});
+  };
+  item.addEventListener('pointerenter', () => {
+    if (!video) {
+      video = document.createElement('video');
+      video.className = 'ext-modal__clip';
+      video.muted = true;
+      video.loop = clips.length === 1;
+      video.playsInline = true;
+      video.preload = 'auto';
+      video.setAttribute('aria-hidden', 'true');
+      video.addEventListener('playing', () => item.classList.add('is-playing'));
+      video.addEventListener('ended', () => {
+        index = (index + 1) % clips.length;
+        load();
+      });
+      art.appendChild(video);
+    }
+    index = 0;
+    load();
+  });
+  item.addEventListener('pointerleave', () => {
+    if (!video) return;
+    video.pause();
+    item.classList.remove('is-playing');
+  });
 }
 
 /**
@@ -118,7 +169,7 @@ export function openExtensionsModal() {
   closeButton.className = 'btn btn--secondary';
   closeButton.textContent = 'Close';
 
-  const close = openModal({ title: 'Web extensions', content, actions: [downloadButton, closeButton], className: 'ext-modal' });
+  const close = openModal({ title: 'Web extensions/Browser plugins', content, actions: [downloadButton, closeButton], className: 'ext-modal' });
   closeButton.addEventListener('click', close);
 
   const label = () => {
@@ -131,6 +182,12 @@ export function openExtensionsModal() {
     listEl.innerHTML = list.map((ext) => row(ext, mode, picked)).join('');
     // Following a tool link inside the popup navigates in-app, so close it too.
     listEl.querySelectorAll('.ext-modal__tools a').forEach((a) => a.addEventListener('click', close));
+    if (canHover && !reduceMotion) {
+      listEl.querySelectorAll('.ext-modal__item').forEach((item) => {
+        const clips = clipsFor(EXTENSIONS.find((e) => e.id === item.dataset.ext));
+        if (clips.length) playOnHover(item, clips);
+      });
+    }
     listEl.querySelectorAll('.ext-modal__pick').forEach((p) => p.addEventListener('change', () => {
       if (p.checked) picked.add(p.value);
       else picked.delete(p.value);

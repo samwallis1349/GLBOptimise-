@@ -258,3 +258,309 @@
 .game-2d__group .tool-page__description {
   margin-bottom: var(--space-5);
 }
+
+/* The 2D page's price line and "Ready for your engine" section (Game2DPage.js, shared/config/game2d.js). */
+.game-2d__price {
+  margin-top: var(--space-3);
+  color: var(--text-primary);
+  font-size: 15px;
+}
+
+.game-2d__price b {
+  color: var(--accent);
+  font-size: 20px;
+  font-weight: 900;
+}
+
+.game-2d__price a {
+  color: var(--accent);
+}
+
+.game-2d__exports {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-5);
+  padding: 0;
+  list-style: none;
+}
+
+.game-2d__exports li {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg-secondary);
+}
+
+.game-2d__exports a {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.game-2d__exports span {
+  color: var(--text-secondary);
+}
+
+.game-2d__engines {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.game-2d__engine {
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-top: 2px solid var(--accent);
+  border-radius: var(--radius-md);
+  background: var(--bg-secondary);
+}
+
+.game-2d__engine b {
+  display: block;
+  margin-bottom: var(--space-2);
+  font-size: 16px;
+}
+
+.game-2d__engine p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+@media (max-width: 600px) {
+  .game-2d__exports li {
+    grid-template-columns: 1fr;
+    gap: var(--space-1);
+  }
+}
+
+/* /2d-games: tool index and one how-to block per tool (pages/game-2d/Game2DPage.js). */
+.game-2d__index {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4) var(--space-6);
+  margin-top: var(--space-5);
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg-secondary);
+}
+
+.game-2d__index-group {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.game-2d__index-label {
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.game-2d__index ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.game-2d__index a {
+  display: inline-block;
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--panel);
+  color: var(--text-primary);
+  font-size: 13px;
+  text-decoration: none;
+}
+
+.game-2d__index a:hover,
+.game-2d__index a:focus-visible {
+  border-color: var(--border-hover);
+  color: var(--accent);
+}
+
+.game-2d__tool {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+  gap: var(--space-6);
+  align-items: start;
+  padding: var(--space-6) 0;
+  border-top: 1px solid var(--border);
+  scroll-margin-top: var(--space-8);
+}
+
+.game-2d__media {
+  position: sticky;
+  top: var(--space-8);
+}
+
+.game-2d__clip {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--panel);
+}
+
+.game-2d__body {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.game-2d__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.game-2d__name {
+  margin: 0;
+  font-size: 24px;
+  line-height: 1.2;
+  text-wrap: balance;
+}
+
+.game-2d__lede {
+  margin: 0;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  max-width: 62ch;
+}
+
+.game-2d__sub {
+  margin: var(--space-2) 0 0;
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.game-2d__steps {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: step;
+}
+
+.game-2d__steps li {
+  display: grid;
+  grid-template-columns: 28px 1fr;
+  gap: var(--space-3);
+  align-items: baseline;
+  color: var(--text-primary);
+  line-height: 1.55;
+  counter-increment: step;
+}
+
+.game-2d__steps li::before {
+  content: counter(step);
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border: 1px solid var(--border-hover);
+  border-radius: 50%;
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.game-2d__gives {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--space-3);
+  margin: var(--space-2) 0 0;
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
+  background: var(--accent-muted);
+  color: var(--text-primary);
+  font-size: 14px;
+}
+
+.game-2d__gives span {
+  color: var(--accent);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.game-2d__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+}
+
+.game-2d__cost {
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.game-2d__faqs {
+  border-top: 1px solid var(--border);
+  padding-top: var(--space-3);
+}
+
+.game-2d__faqs summary {
+  cursor: pointer;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.game-2d__faqs summary:hover {
+  color: var(--text-primary);
+}
+
+.game-2d__faq {
+  margin-top: var(--space-3);
+}
+
+.game-2d__faq b {
+  display: block;
+  font-size: 14px;
+}
+
+.game-2d__faq p {
+  margin: var(--space-1) 0 0;
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+@media (max-width: 767px) {
+  .game-2d__tool {
+    grid-template-columns: 1fr;
+    gap: var(--space-4);
+    padding: var(--space-5) 0;
+  }
+
+  .game-2d__media {
+    position: static;
+  }
+
+  .game-2d__gives {
+    grid-template-columns: 1fr;
+    gap: var(--space-1);
+  }
+}

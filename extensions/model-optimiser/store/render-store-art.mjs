@@ -164,14 +164,9 @@ try {
     await sharp(await page.shot()).flatten({ background: '#0b0b0a' }).removeAlpha().png().toFile(join(OUT, file));
     console.log(`saved ${join(OUT, file)}`);
   }
-  // Edge's store logo: the icon redrawn at 300x300.
+  // Edge's store logo: the site logo at 300x300.
   if (OUT !== HERE) {
-    const logo = `<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 32 32">
-      <rect width="32" height="32" rx="7" fill="#10100E"/>
-      <g fill="none" stroke="#FFB547" stroke-width="1.6" stroke-linejoin="round">
-        <path d="M16 7L24 11.5V20.5L16 25L8 20.5V11.5L16 7Z"/><path d="M16 16L24 11.5M16 16L8 11.5M16 16V25"/>
-      </g></svg>`;
-    await sharp(Buffer.from(logo)).png().toFile(join(OUT, 'store-logo-300x300.png'));
+    await sharp(join(HERE, '..', '..', '..', 'public', 'branding', 'asset-bench-logo-1024.png')).resize(300, 300).png().toFile(join(OUT, 'store-logo-300x300.png'));
     console.log(`saved ${join(OUT, 'store-logo-300x300.png')}`);
   }
 } finally {

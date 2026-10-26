@@ -13,7 +13,7 @@ import { initCommandPalette } from '../shared/effects/CommandPalette.js';
 import { initPromoBot } from '../shared/effects/PromoBot.js';
 import { initConsentBanner } from '../shared/components/ConsentBanner.js';
 import { initUpdateNotice } from '../shared/components/UpdateNotice.js';
-import { initApiLaunchModal } from '../shared/components/ApiLaunchModal.js';
+import { initMcpLaunchModal } from '../shared/components/McpLaunchModal.js';
 import { initAnalytics } from '../services/AnalyticsService.js';
 import { hasAccess, trialEndsAt } from '../shared/config/billing.js';
 import { TOOLS } from '../shared/config/tools.js';
@@ -59,8 +59,8 @@ export function App(rootEl) {
   // router's DOM, reachable from any page.
   initCommandPalette();
 
-  // Free API announcement, once per visitor.
-  initApiLaunchModal();
+  // MCP server announcement (takes over from the API one), once per visitor.
+  initMcpLaunchModal();
 
   // The banner and Bench Bot both quote days left, so they wait for the
   // trial clock. initTrial() never rejects — it falls back to local time.

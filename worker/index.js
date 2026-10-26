@@ -17,10 +17,13 @@
  * so GET /api/stats (owner only: "Authorization: Bearer <STATS_KEY>" secret)
  * can count trials per day from one list() - no IPs or hashes are returned.
  *
- * Usage counter: one KV key per tool (usage:<id>), with the count held in
- * the key's metadata so a single list() call reads every tool at once. The
- * read-modify-write can drop a count under a race, which is fine for a
- * popularity ranking. Reads are edge-cached for a few minutes.
+ * Usage counter (23 Oct 2026): opens (a visit to a tool's page) and runs (a
+ * file picked or dropped into a tool) per tool, kept by one Durable Object
+ * (UsageCounter below, binding USAGE) so every hit is added one at a time and
+ * none is lost. On its first use it takes the old KV counts (usage:<id>, which
+ * were opens once per browser per day and could drop hits under a race) as its
+ * starting opens. Without the USAGE binding it falls back to those KV keys.
+ * Reads are edge-cached for a minute.
  */
 
 import { TOOLS } from '../src/shared/config/tools.js';
@@ -29,7 +32,8 @@ import { handleApiBillingEvent, isApiProduct } from './api/billing.js';
 
 const TOOL_IDS = new Set(TOOLS.map((tool) => tool.id));
 const USAGE_PREFIX = 'usage:';
-const USAGE_CACHE_SECONDS = 300;
+const USAGE_CACHE_SECONDS = 60;
+const USAGE_KINDS = new Set(['open', 'run']);
 const TRIAL_PREFIX = 'trial:';
 const SITE_SALE_PREFIX = 'site-sale:';
 const LICENSE_PRODUCT_ID = 1420844;
@@ -139,8 +143,13 @@ async function handleUsage(request, env, ctx) {
   if (request.method === 'POST') {
     const body = await request.json().catch(() => ({}));
     const tool = body?.tool;
-    if (!TOOL_IDS.has(tool)) return json({ error: 'Unknown tool' }, 400);
-    if (!env.TRIALS) return json({ ok: true });
+    const kind = body?.kind ?? 'open';
+    if (!TOOL_IDS.has(tool) || !USAGE_KINDS.has(kind)) return json({ error: 'Unknown tool' }, 400);
+    if (env.USAGE) {
+      await usageStub(env).fetch('https://usage/hit', { method: 'POST', body: JSON.stringify({ tool, kind }) });
+      return json({ ok: true });
+    }
+    if (!env.TRIALS || kind !== 'open') return json({ ok: true });
     const key = USAGE_PREFIX + tool;
     const { metadata } = await env.TRIALS.getWithMetadata(key);
     const count = (Number(metadata?.count) || 0) + 1;
@@ -154,23 +163,86 @@ async function handleUsage(request, env, ctx) {
   const hit = await cache?.match(cacheKey);
   if (hit) return hit;
 
-  const counts = {};
-  if (env.TRIALS) {
-    let cursor;
-    do {
-      const page = await env.TRIALS.list({ prefix: USAGE_PREFIX, cursor });
-      for (const { name, metadata } of page.keys) {
-        const id = name.slice(USAGE_PREFIX.length);
-        if (TOOL_IDS.has(id)) counts[id] = Number(metadata?.count) || 0;
-      }
-      cursor = page.list_complete ? null : page.cursor;
-    } while (cursor);
+  // `counts` (= opens) is what the tool grids rank by; `opens` and `runs` are the full picture.
+  let data;
+  if (env.USAGE) data = await (await usageStub(env).fetch('https://usage/counts')).json();
+  else {
+    const opens = await kvUsageCounts(env);
+    data = { opens, runs: {}, since: null };
   }
-  const response = new Response(JSON.stringify({ counts }), {
+  const response = new Response(JSON.stringify({ counts: data.opens, opens: data.opens, runs: data.runs, since: data.since }), {
     headers: { 'Content-Type': 'application/json', 'Cache-Control': `public, max-age=${USAGE_CACHE_SECONDS}` },
   });
   if (cache) ctx?.waitUntil?.(cache.put(cacheKey, response.clone()));
   return response;
+}
+
+const usageStub = (env) => env.USAGE.get(env.USAGE.idFromName('site'));
+
+/** The old KV counters: { toolId: count }. */
+async function kvUsageCounts(env) {
+  const counts = {};
+  if (!env.TRIALS) return counts;
+  let cursor;
+  do {
+    const page = await env.TRIALS.list({ prefix: USAGE_PREFIX, cursor });
+    for (const { name, metadata } of page.keys) {
+      const id = name.slice(USAGE_PREFIX.length);
+      if (TOOL_IDS.has(id)) counts[id] = Number(metadata?.count) || 0;
+    }
+    cursor = page.list_complete ? null : page.cursor;
+  } while (cursor);
+  return counts;
+}
+
+/**
+ * The site's one usage counter (Durable Object). Requests reach it one at a time,
+ * so read + add + write can't lose a hit. Keys: "open:<tool>", "run:<tool>", "since".
+ */
+export class UsageCounter {
+  constructor(state, env) {
+    this.storage = state.storage;
+    this.env = env;
+  }
+
+  async seed() {
+    if (await this.storage.get('since')) return;
+    const old = await kvUsageCounts(this.env);
+    const entries = Object.fromEntries(Object.entries(old).map(([id, n]) => [`open:${id}`, n]));
+    await this.storage.put({ ...entries, since: new Date().toISOString() });
+  }
+
+  // Strictly one request after another (a Durable Object already holds other requests while it waits on its
+  // storage; the queue makes the read + add + write safe without relying on that).
+  fetch(request) {
+    const run = (this.queue ?? Promise.resolve()).then(() => this.handle(request));
+    this.queue = run.catch(() => {});
+    return run;
+  }
+
+  async handle(request) {
+    await this.seed();
+    const { pathname } = new URL(request.url);
+    if (pathname === '/hit' && request.method === 'POST') {
+      const { tool, kind } = await request.json();
+      if (!TOOL_IDS.has(tool) || !USAGE_KINDS.has(kind)) return json({ error: 'Unknown tool' }, 400);
+      const key = `${kind}:${tool}`;
+      await this.storage.put(key, ((await this.storage.get(key)) ?? 0) + 1);
+      return json({ ok: true });
+    }
+    if (pathname === '/counts') {
+      const all = await this.storage.list();
+      const opens = {};
+      const runs = {};
+      for (const [key, n] of all) {
+        const [kind, id] = key.split(/:(.+)/);
+        if (kind === 'open' && TOOL_IDS.has(id)) opens[id] = n;
+        if (kind === 'run' && TOOL_IDS.has(id)) runs[id] = n;
+      }
+      return json({ opens, runs, since: all.get('since') ?? null });
+    }
+    return json({ error: 'Not found' }, 404);
+  }
 }
 
 async function validWebhookSignature(rawBody, signature, secret) {

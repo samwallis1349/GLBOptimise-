@@ -56,8 +56,8 @@ export function render(container) {
 
       <h2>Logo</h2>
       <div class="media-page__grid">
-        ${tile({ src: '/branding/asset-bench-logo.svg', label: `${APP_NAME} logo (SVG)` })}
-        ${tile({ src: '/branding/favicon.svg', label: 'Icon (SVG)' })}
+        ${tile({ src: '/branding/asset-bench-logo-1024.png', label: `${APP_NAME} logo (PNG)` })}
+        ${tile({ src: '/branding/favicon.png', label: 'Icon (PNG)' })}
       </div>
 
       <h2>Images</h2>

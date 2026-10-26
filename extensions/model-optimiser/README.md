@@ -67,10 +67,48 @@ Click the cube icon; the panel opens on the right.
 
 `wasm-unsafe-eval` in the manifest's CSP is required for the meshoptimizer and Basis KTX2 WebAssembly.
 
+## The newer editions (4–7)
+
+| Edition | Free tool | Paid tools | Takes |
+|---|---|---|---|
+| `animation-tools` (Animation Tools) | Clips | Strip, Optimise | GLB, glTF, FBX, OBJ, ZIP |
+| `converter` (3D Converter) | Info | Convert (GLB/glTF/OBJ/FBX), Split, Merge, LODs | GLB, glTF, FBX, OBJ, ZIP |
+| `app-assets` (App Assets) | Check | Icons, Xcode image sets, Screenshots | PNG, JPEG, WebP |
+| `image-tools` (Sprite Studio) | Check | Cutout, Line art, Iso | PNG, JPEG, WebP + GLB, FBX, OBJ, glTF |
+
+`accepts: 'any'` editions convert glTF / FBX / OBJ / ZIP to GLB on the way in
+(`src/inputs.js`, the Cloud API's converter); the first three listings stay
+GLB-only. Each edition bundles only its own tool group (`src/groups/`, swapped
+in by `build.mjs`), so the GLB-only ones don't carry three.js's FBX loader.
+Iso draws with WebGL, so it runs in the panel (`src/iso-runner.js`, its own
+bundle, loaded when that tab runs) on the site tool's stage
+(`public/tools/model-to-iso-sprites/js`).
+
+Two build fixes apply to every edition:
+
+- **ndarray-ops is stubbed.** glTF-Transform's texture resizer pulls it in, and it
+  calls `new Function()` the moment it loads. Extension pages forbid eval, so
+  the engine worker died on start and every tool hung on "Working…". Nothing in
+  the extension uses it.
+- **Draco GLBs work.** The worker loads `draco_decoder.wasm` (copied next to it)
+  and registers the API's decoder, so Draco-compressed models open. Output is
+  uncompressed (there's no Draco encoder), and the report says so.
+
+Build and test:
+
+```
+node extensions/model-optimiser/build.mjs --edition converter          # or animation-tools, app-assets, image-tools
+node extensions/model-optimiser/make-upload-folder.mjs --edition converter
+node --test tests/extension-editions.test.mjs
+```
+
+Listings and art: `store/<edition>/STORE_LISTING.md` and its PNGs.
+
 ## Layout
 
-- `src/engine.js` — the four tools (imports `worker/api`); tested in `tests/model-optimiser.test.mjs`.
-- `src/engine-worker.js` — runs them off the UI thread; loads `basis_encoder.wasm` for Compress.
+- `src/engine.js` — the tools (imports `worker/api`); tested in `tests/model-optimiser.test.mjs` and `tests/extension-editions.test.mjs`.
+- `src/groups/`, `src/tools/` — the newer editions' tools; `src/inputs.js` reads models and images; `src/kinds.js` says which tools take images.
+- `src/engine-worker.js` — runs them off the UI thread; loads `draco_decoder.wasm`, and `basis_encoder.wasm` for Compress; decodes WebP with the browser.
 - `src/licensing.js` — Lemon Squeezy activation, validation and per-tool scope.
 - `src/panel.js` + `public/` — the side panel, manifest, icons and service worker.
 - `build.mjs` — esbuild bundle into `dist/`, `--zip` for the store.

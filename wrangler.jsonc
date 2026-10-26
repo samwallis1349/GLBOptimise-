@@ -42,6 +42,9 @@
   // Trial start times keyed by a salted hash of the visitor's IP.
   // Create once with: npx wrangler kv namespace create TRIALS
   // then paste the printed id below.
-  "kv_namespaces": [{ "binding": "TRIALS", "id": "1bbbbc6dc36f40268430887895a49835" }]
+  "kv_namespaces": [{ "binding": "TRIALS", "id": "1bbbbc6dc36f40268430887895a49835" }],
+  // Tool usage (opens + runs per tool): one Durable Object, so no count is lost (worker/index.js UsageCounter).
+  "durable_objects": { "bindings": [{ "name": "USAGE", "class_name": "UsageCounter" }] },
+  "migrations": [{ "tag": "v1-usage-counter", "new_sqlite_classes": ["UsageCounter"] }]
   // Optional secret salt for the IP hash: npx wrangler secret put TRIAL_SALT
 }
