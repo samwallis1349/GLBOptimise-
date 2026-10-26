@@ -144,10 +144,16 @@ export const routes = [
       if (GATED_STATUSES.has(tool.status)) await initTrial();
       if (GATED_STATUSES.has(tool.status) && !hasAccess(tool.id)) {
         container.innerHTML = '';
+        // The Tripo advert shows above the paywall too, not only on unlocked tools.
+        const tripoBanner = TripoBanner(tool);
+        if (tripoBanner) container.appendChild(tripoBanner);
         container.appendChild(
           Paywall({
             tool,
-            onUnlock: () => mountTool(tool, container, params),
+            onUnlock: () => {
+              container.innerHTML = '';
+              return mountTool(tool, container, params);
+            },
           }),
         );
         return;
