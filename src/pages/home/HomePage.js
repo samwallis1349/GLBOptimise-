@@ -8,6 +8,7 @@ import { initCursorSpotlight } from '../../shared/effects/CursorSpotlight.js';
 import { iconSvg } from '../../shared/utils/icons.js';
 import { openCommandPalette } from '../../shared/effects/CommandPalette.js';
 import { ColossusHero } from './wizard-hero/ColossusHero.js';
+import { TripoBanner } from '../../shared/components/TripoBanner.js';
 import { DONATE_URL, PRICE_LABEL, TEAM_PRICE_LABEL } from '../../shared/config/billing.js';
 import { TOOL_PRICE_LABEL } from '../../shared/config/toolProducts.js';
 import { AdSenseAd } from '../../shared/components/AdSenseAd.js';
@@ -32,6 +33,7 @@ export function render(container) {
   // pricing strip. AdSenseAd() returns null when ads are off, so nothing renders.
   const ad = AdSenseAd({ placement: 'homepage' });
   container.append(
+    TripoBanner(),
     HeroSection(heroVisual.element),
     WorkbenchIntro(),
     ToolsBlock(),

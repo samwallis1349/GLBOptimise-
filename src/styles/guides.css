@@ -112,6 +112,102 @@
   border-color: var(--accent);
 }
 
+/* Slim Tripo advert at the top of the homepage and a few tools (components/TripoBanner.js). */
+.tripo-banner {
+  position: relative;
+  max-width: 1200px;
+  margin: 0 auto var(--space-4);
+}
+
+.tripo-banner--home {
+  margin: var(--space-4) auto 0;
+  padding: 0 var(--space-4);
+}
+
+.tripo-banner__link {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: 8px 14px 8px 8px;
+  border: 1px solid rgba(255, 181, 71, 0.3);
+  border-radius: var(--radius-lg);
+  background: linear-gradient(90deg, rgba(255, 181, 71, 0.12), transparent 70%), var(--panel);
+  color: inherit;
+  text-decoration: none;
+  transition: border-color 0.15s ease;
+}
+
+.tripo-banner__link:hover {
+  border-color: var(--accent);
+}
+
+.tripo-banner__art {
+  flex-shrink: 0;
+  width: 120px;
+  height: 60px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.tripo-banner__offer {
+  flex: 1;
+  font-size: 18px;
+  letter-spacing: -0.01em;
+}
+
+.tripo-banner__button {
+  flex-shrink: 0;
+}
+
+.tripo-banner__note {
+  position: absolute;
+  top: -9px;
+  right: 14px;
+  background: var(--bg);
+  font-size: 10px;
+}
+
+/* Impact's 250 × 250 ad: centred, in a frame like the slim advert's. */
+.tripo-banner--impact {
+  display: flex;
+  justify-content: center;
+}
+
+.tripo-banner__frame {
+  display: block;
+  width: 250px;
+  height: 250px;
+  border: 1px solid rgba(255, 181, 71, 0.3);
+  border-radius: var(--radius-lg);
+  background: var(--panel);
+}
+
+.tripo-banner--impact .tripo-banner__note {
+  position: static;
+  align-self: flex-start;
+  margin-left: var(--space-2);
+}
+
+.tripo-banner--home .tripo-banner__note {
+  right: calc(var(--space-4) + 14px);
+}
+
+@media (max-width: 520px) {
+  .tripo-banner__art {
+    width: 80px;
+    height: 40px;
+  }
+
+  .tripo-banner__offer {
+    font-size: 15px;
+  }
+
+  .tripo-banner__button {
+    padding-inline: 10px;
+    font-size: 13px;
+  }
+}
+
 /* The small "Need a model?" card under 3D tools (components/TripoCard.js). */
 .tripo-card {
   display: flex;

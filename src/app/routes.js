@@ -7,6 +7,7 @@ import { ToolNews } from '../shared/components/ToolNews.js';
 import { ToolGuide } from '../shared/components/ToolGuide.js';
 import { SampleModel } from '../shared/components/SampleModel.js';
 import { TripoCard } from '../shared/components/TripoCard.js';
+import { TripoBanner } from '../shared/components/TripoBanner.js';
 import { FbxBridge } from '../shared/fbx/FbxBridge.js';
 import { ToolNextSteps } from '../shared/components/ToolNextSteps.js';
 import { ToolClip } from '../shared/components/ToolClip.js';
@@ -49,6 +50,9 @@ async function mountTool(tool, container, params) {
   if (offer) container.prepend(offer);
   const extension = ExtensionBar(tool);
   if (extension) container.prepend(extension);
+  // Slim Tripo advert (affiliate) at the very top of a few 3D tools.
+  const tripoBanner = TripoBanner(tool);
+  if (tripoBanner) container.prepend(tripoBanner);
   // Need a model? Tripo (affiliate) on the 3D tools, straight under the tool.
   const tripo = TripoCard(tool);
   if (tripo) container.append(tripo);

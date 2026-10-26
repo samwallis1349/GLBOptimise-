@@ -11,7 +11,7 @@
 
 import { getToolById } from './tools.js';
 
-export const TRIPO_URL = 'https://tripo.pxf.io/Pz9Xgq';
+export const TRIPO_URL = 'https://tripo.pxf.io/c/7253936/4027202/55781';
 export const TRIPO_GUIDE_PATH = '/tripo-to-game-ready';
 
 /**
@@ -23,6 +23,21 @@ export const TRIPO_TOOLS = new Set([
   'optimise-glb', 'reduce-polys', 'generate-lods', 'compress-textures', 'asset-pipeline',
   'convert-files', 'glb-builder', 'model-splitter', 'model-to-isometric', 'model-to-iso-sprites',
   'character-workshop', 'rig-inspector', 'animation-inspector', 'animation-optimiser', 'ktx2-texture-encoder',
+]);
+
+/** Impact's own 250 × 250 Tripo ad, shown in turn with the slim advert (components/TripoBanner.js). */
+export const TRIPO_IMPACT_AD = 'https://a.impactradius-go.com/gen-ad-code/7253936/4027565/55781/';
+
+/** The one line on the slim Tripo advert (components/TripoBanner.js). */
+export const TRIPO_OFFER = 'Save 60% on Tripo';
+
+/**
+ * Tool pages that show the slim Tripo advert at the top (10). They show it
+ * instead of the Tripo card, so a page has one Tripo ad, not two.
+ */
+export const TRIPO_BANNER_TOOLS = new Set([
+  'reduce-polys', 'optimise-glb', 'inspect-glb', 'convert-files', 'compress-textures',
+  'generate-lods', 'mobile-ready-checker', 'model-to-iso-sprites', 'glb-builder', 'thumbnail-maker',
 ]);
 
 /** Attributes for every link out to Tripo. */

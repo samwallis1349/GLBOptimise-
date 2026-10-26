@@ -1,4 +1,4 @@
-import { TRIPO_GUIDE_PATH, TRIPO_LINK_ATTRS, TRIPO_TOOLS } from '../config/tripo.js';
+import { TRIPO_BANNER_TOOLS, TRIPO_GUIDE_PATH, TRIPO_LINK_ATTRS, TRIPO_TOOLS } from '../config/tripo.js';
 import { trackApiEvent } from './ApiLaunchModal.js';
 
 /**
@@ -12,7 +12,7 @@ import { trackApiEvent } from './ApiLaunchModal.js';
  * @returns {HTMLElement | null}
  */
 export function TripoCard(tool) {
-  if (!TRIPO_TOOLS.has(tool.id)) return null;
+  if (!TRIPO_TOOLS.has(tool.id) || TRIPO_BANNER_TOOLS.has(tool.id)) return null;
 
   const card = document.createElement('aside');
   card.className = 'tripo-card';
