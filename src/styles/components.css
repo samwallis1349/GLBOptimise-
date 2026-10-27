@@ -4291,3 +4291,94 @@ html.has-consent-notice .promo-bot {
 .update-notice__dismiss:hover {
   background: var(--border);
 }
+
+/* ✨ Your fix plan (components/FixPlan.js): after a check in Inspect GLB and the Mobile Ready Checker */
+.fix-plan {
+  max-width: 1200px;
+  margin: var(--space-4) auto;
+  padding: var(--space-4);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-lg);
+  background: radial-gradient(120% 90% at 0% 0%, rgba(255, 181, 71, 0.12), transparent 60%), var(--panel);
+}
+
+.fix-plan header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-2) var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.fix-plan__badge {
+  font-family: var(--font-heading);
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.fix-plan header small {
+  color: var(--text-secondary);
+}
+
+.fix-plan__steps {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: fix;
+  display: grid;
+  gap: var(--space-2);
+}
+
+.fix-plan__steps li {
+  counter-increment: fix;
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.fix-plan__steps li::before {
+  content: counter(fix);
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  color: #0b0b0a;
+  background: var(--accent);
+}
+
+.fix-plan__steps p {
+  margin: 0;
+}
+
+.fix-plan__steps.is-loading li {
+  height: 44px;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03)) 0 0 / 200% 100%;
+  animation: fix-plan-shimmer 1.4s linear infinite;
+}
+
+.fix-plan__steps.is-loading li::before {
+  content: none;
+}
+
+@keyframes fix-plan-shimmer {
+  to { background-position: -200% 0; }
+}
+
+@media (max-width: 640px) {
+  .fix-plan__steps li {
+    grid-template-columns: 28px minmax(0, 1fr);
+  }
+
+  .fix-plan__go {
+    grid-column: 2;
+    justify-self: start;
+  }
+}

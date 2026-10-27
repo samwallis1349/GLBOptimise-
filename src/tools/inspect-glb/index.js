@@ -9,6 +9,14 @@ import { analyseAsset, collectAssets } from '../../shared/glb/analyseGLB.js';
 import { Viewer } from '../../shared/viewer/Viewer.js';
 import { loadModel } from '../../shared/viewer/loadModel.js';
 import { navigate } from '../../app/router.js';
+import { FixPlan } from '../../shared/components/FixPlan.js';
+
+// The thresholds behind the health checks (shared/glb/checks.js), sent as each problem's budget so the fix plan only
+// quotes real numbers
+const ISSUE_BUDGETS = {
+  'file-huge': '50 MB', 'file-large': '15 MB', 'tris-extreme': '100,000', 'tris-high': '100,000', 'drawcalls-high': '100',
+  'tex-8k': '4K per texture', 'tex-4k': '2K per texture', 'tex-bytes': '20 MB', 'anim-bytes': '5 MB', 'rig-joints': '255 joints',
+};
 import { downloadBlob } from '../../shared/utils/download.js';
 
 /**
@@ -106,6 +114,14 @@ async function openFiles(fileList) {
     el.fileName.textContent = asset.name;
     el.fileMeta.textContent = `${fmtBytes(analysis.file.bytes)} · ${analysis.file.kind.toUpperCase()}${analysis.file.generator ? ` · ${analysis.file.generator}` : ''}`;
     el.strip.innerHTML = renderStrip(analysis);
+    // ✨ the fix plan (shared/components/FixPlan.js): the errors and warnings that name a tool, worst first
+    el.strip.parentElement.querySelector('.fix-plan')?.remove();
+    el.strip.after(FixPlan({
+      tool: 'inspect-glb',
+      target: 'realtime game or app',
+      score: analysis.health.score,
+      problems: analysis.issues.filter((i) => i.fix?.tool && i.severity !== 'info').map((i) => ({ name: i.title, value: String(i.detail ?? '').slice(0, 40), budget: ISSUE_BUDGETS[i.code] ?? '', state: i.severity === 'error' ? 'bad' : 'warn', tools: [i.fix.tool] })),
+    }));
     updateTabCounts();
     renderTab();
     await loadPreview(asset, token);

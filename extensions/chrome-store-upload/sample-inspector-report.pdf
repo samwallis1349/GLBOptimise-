@@ -1,0 +1,82 @@
+%PDF-1.4
+%ту╧╙
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [6 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>
+endobj
+4 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>
+endobj
+5 0 obj
+<< /Length 4087 >>
+stream
+BT /F2 18 Tf 0.1 0.1 0.1 rg 48.00 770.13 Td (GLB Inspector report) Tj ET
+BT /F1 10 Tf 0.4 0.4 0.4 rg 48.00 754.93 Td (unreal_a.fbx Х 171 KB Х 10/26/2026, 1:22:03 PM) Tj ET
+BT /F2 12.5 Tf 0.1 0.1 0.1 rg 48.00 725.43 Td (Dimensions & scale) Tj ET
+0.85 0.85 0.85 RG 0.6 w 48 721.43 m 547.28 721.43 l S
+BT /F1 10 Tf 0.1 0.1 0.1 rg 48.00 705.23 Td (Width ╫ height ╫ depth: 128.63 m ╫ 181.50 m ╫ 23.50 m) Tj ET
+BT /F1 9.5 Tf 0.55 0.38 0 rg 56.00 691.19 Td (Х CHECK 181.50 m across is large for a single asset. If it was modelled in centimetres, scale by 0.01 to get) Tj ET
+BT /F1 9.5 Tf 0.55 0.38 0 rg 56.00 678.65 Td (1.29 m ╫ 1.81 m ╫ 23.5 cm.) Tj ET
+BT /F2 12.5 Tf 0.1 0.1 0.1 rg 48.00 650.65 Td (Model health) Tj ET
+0.85 0.85 0.85 RG 0.6 w 48 646.65 m 547.28 646.65 l S
+BT /F1 10 Tf 0.1 0.1 0.1 rg 48.00 630.45 Td (Score: 92/100 \(A, Game-ready\)) Tj ET
+BT /F1 10 Tf 0.1 0.1 0.1 rg 48.00 615.75 Td (Contents: 264 triangles, 1 draw calls, 1 materials, 0 textures, 1 animations, 22 joints) Tj ET
+BT /F1 10 Tf 0.1 0.1 0.1 rg 48.00 601.05 Td (GPU memory \(est.\): 37 KB) Tj ET
+BT /F1 9.5 Tf 0.55 0.38 0 rg 56.00 587.01 Td (Х CHECK 68 static animation channels Ч Channels whose value never changes still cost memory and CPU) Tj ET
+BT /F1 9.5 Tf 0.55 0.38 0 rg 56.00 574.47 Td (every frame.) Tj ET
+BT /F1 9.5 Tf 0.15 0.15 0.15 rg 56.00 560.43 Td (Х 1 primitive without an index buffer Ч Unindexed triangles duplicate shared vertices; welding and indexing) Tj ET
+BT /F1 9.5 Tf 0.15 0.15 0.15 rg 56.00 547.89 Td (reduces memory.) Tj ET
+BT /F2 12.5 Tf 0.1 0.1 0.1 rg 48.00 519.89 Td (Rig) Tj ET
+0.85 0.85 0.85 RG 0.6 w 48 515.89 m 547.28 515.89 l S
+BT /F1 10 Tf 0.1 0.1 0.1 rg 48.00 499.69 Td (Joints / skins: 22 / 1, root pelvis) Tj ET
+BT /F1 9.5 Tf 0.15 0.15 0.15 rg 56.00 485.65 Td (Х OK 1 skin found, 22 joints total) Tj ET
+BT /F1 9.5 Tf 0.15 0.15 0.15 rg 56.00 471.61 Td (Х OK 1 skinned primitive, 792 skinned vertices) Tj ET
+BT /F1 9.5 Tf 0.15 0.15 0.15 rg 56.00 457.57 Td (Х OK Every skinned vertex has at least one non-zero joint weight) Tj ET
+BT /F1 9.5 Tf 0.15 0.15 0.15 rg 56.00 443.53 Td (Х OK Joint weights sum to 1.0 on every vertex) Tj ET
+BT /F1 9.5 Tf 0.15 0.15 0.15 rg 56.00 429.49 Td (Х OK No duplicate joint names within any skin) Tj ET
+BT /F1 9.5 Tf 0.15 0.15 0.15 rg 56.00 415.45 Td (Х OK Every skin's joints form a single connected hierarchy) Tj ET
+BT /F1 9.5 Tf 0.15 0.15 0.15 rg 56.00 401.41 Td (Х OK 1 animation clip reference this rig \(not played back here Ч see Animation Inspector\)) Tj ET
+BT /F2 12.5 Tf 0.1 0.1 0.1 rg 48.00 373.41 Td (Humanoid & retargeting) Tj ET
+0.85 0.85 0.85 RG 0.6 w 48 369.41 m 547.28 369.41 l S
+BT /F1 10 Tf 0.1 0.1 0.1 rg 48.00 353.21 Td (Humanoid bones: 15 / 15 required) Tj ET
+BT /F1 10 Tf 0.1 0.1 0.1 rg 48.00 338.51 Td (Naming: Unreal Mannequin) Tj ET
+BT /F1 10 Tf 0.1 0.1 0.1 rg 48.00 323.81 Td (Bind pose: A-pose \(arms 45░ from horizontal\)) Tj ET
+BT /F1 9.5 Tf 0.15 0.15 0.15 rg 56.00 309.77 Td (Х OK Unity \(Humanoid avatar\): All 15 required bones found, so it should map automatically.) Tj ET
+BT /F1 9.5 Tf 0.15 0.15 0.15 rg 56.00 295.73 Td (Х OK Unreal \(IK Retargeter\): Uses UE Mannequin bone names, so it lines up with the stock Mannequin IK Rig.) Tj ET
+BT /F1 9.5 Tf 0.15 0.15 0.15 rg 56.00 281.69 Td (Х Mixamo animations: Not Mixamo bone names; Mixamo animations need retargeting \(Unity Humanoid or an) Tj ET
+BT /F1 9.5 Tf 0.15 0.15 0.15 rg 56.00 269.15 Td (Unreal IK Retargeter can do this\).) Tj ET
+BT /F2 12.5 Tf 0.1 0.1 0.1 rg 48.00 241.15 Td (Notes) Tj ET
+0.85 0.85 0.85 RG 0.6 w 48 237.15 m 547.28 237.15 l S
+BT /F1 9.5 Tf 0.15 0.15 0.15 rg 56.00 221.61 Td (Х Converted from FBX to GLB first.) Tj ET
+BT /F1 9.5 Tf 0.15 0.15 0.15 rg 56.00 207.57 Td (Х The model is 181 units across; FBX files are often in centimetres. If it comes out 100 times too big, rescale) Tj ET
+BT /F1 9.5 Tf 0.15 0.15 0.15 rg 56.00 195.03 Td (it by 0.01.) Tj ET
+BT /F1 9 Tf 0.45 0.45 0.45 rg 48.00 171.65 Td (Not run: Anims, Compare.) Tj ET
+BT /F1 8 Tf 0.5 0.5 0.5 rg 48 28 Td (AssetBench GLB Inspector Х assetbench.co.uk  Х  Page 1 of 1) Tj ET
+endstream
+endobj
+6 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595.28 841.89] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents 5 0 R >>
+endobj
+7 0 obj
+<< /Title (GLB Inspector report Ч unreal_a.fbx) /Producer (AssetBench) >>
+endobj
+xref
+0 8
+0000000000 65535 f 
+0000000015 00000 n 
+0000000064 00000 n 
+0000000121 00000 n 
+0000000218 00000 n 
+0000000320 00000 n 
+0000004459 00000 n 
+0000004601 00000 n 
+trailer
+<< /Size 8 /Root 1 0 R /Info 7 0 R >>
+startxref
+4690
+%%EOF

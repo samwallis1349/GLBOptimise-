@@ -1,4 +1,5 @@
 import './mobile-ready-checker.css';
+import { FixPlan } from '../../shared/components/FixPlan.js';
 
 /**
  * Mobile Ready Checker is a self-contained page (public/tools/mobile-ready-checker/),
@@ -12,7 +13,15 @@ export function mount(container) {
   const frame = page.querySelector('iframe');
 
   const onMessage = (event) => {
-    if (event.source !== frame.contentWindow || event.data?.type !== 'assetbench:height') return;
+    if (event.source !== frame.contentWindow) return;
+    // ✨ a check finished (or the target changed): its fix plan under the frame
+    if (event.data?.type === 'assetbench:check') {
+      page.querySelector('.fix-plan')?.remove();
+      const { target, score, problems } = event.data;
+      page.append(FixPlan({ tool: 'mobile-ready-checker', target: String(target ?? ''), score, problems: Array.isArray(problems) ? problems : [] }));
+      return;
+    }
+    if (event.data?.type !== 'assetbench:height') return;
     const height = Number(event.data.height);
     if (height > 0) frame.style.height = `${Math.ceil(height)}px`;
   };

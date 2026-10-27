@@ -388,6 +388,8 @@ function evaluate(){
 // ---------- render ----------
 function render(){
   const { rows, score, fails, warns, T, severe } = results, S = stats;
+  // ✨ on assetbench.co.uk: what's over or near budget goes to the page for its fix plan (numbers only, never the file)
+  if (window.parent !== window) window.parent.postMessage({ type: 'assetbench:check', target: T.name, score, problems: rows.filter(r => r.s !== 'ok').map(r => ({ name: r.name, value: String(r.show(r.value)), budget: r.budgetText ?? String(r.show(r.budget)), state: r.s === 'bad' ? 'bad' : 'warn', tools: (r.fix || []).map(f => f[1]) })) }, '*');
   // Embedded on assetbench.co.uk: fix links open the tool in the same tab. Standalone: the live site.
   const embedded = window.top !== window, toolHref = slug => embedded ? '/' + slug : SITE + slug, linkTarget = embedded ? '_top' : '_blank';
   $('vFor').textContent = `${S.name} · checked as a ${T.name.toLowerCase()}`;

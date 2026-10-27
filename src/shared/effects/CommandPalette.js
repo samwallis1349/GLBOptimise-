@@ -1,6 +1,7 @@
 import { TOOLS, getCategoryById } from '../config/tools.js';
 import { navigate } from '../../app/router.js';
 import { iconSvg } from '../utils/icons.js';
+import { trackApiEvent } from '../components/ApiLaunchModal.js';
 
 /**
  * The Ctrl/Cmd+K tool finder — a centred modal palette, built on the
@@ -25,6 +26,29 @@ let matches = [];
 let activeIndex = -1;
 let lastFocused = null;
 let initialized = false;
+// ✨ Plain-English search (27 Oct, user: AI ideas #2): for a phrase, the tools closest in meaning (worker/api/ai.js
+// /api/ai/route) join the top of the list, marked ✨. Short searches stay plain word matching; no Worker = no ✨.
+let aiIds = [];
+let aiTimer = null;
+const isPhrase = (q) => q.trim().split(/\s+/).length >= 3 || q.trim().length >= 14;
+const merge = (keyword) => [...aiIds.map((id) => TOOLS.find((t) => t.id === id)).filter(Boolean), ...keyword.filter((t) => !aiIds.includes(t.id))].slice(0, MAX_RESULTS);
+
+function askAi(query) {
+  clearTimeout(aiTimer);
+  if (!isPhrase(query)) { aiIds = []; return; }
+  aiTimer = setTimeout(() => {
+    fetch('/api/ai/route', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ q: query }) })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => {
+        if (!input || input.value !== query || !j?.tools?.length) return; // you kept typing, or nothing close
+        aiIds = j.tools.map((t) => t.id);
+        matches = merge(search(query));
+        activeIndex = matches.length ? 0 : -1;
+        render();
+      })
+      .catch(() => {});
+  }, 450);
+}
 
 function readRecents() {
   try {
@@ -106,7 +130,9 @@ function build() {
     if (e.target === overlay) close();
   });
   input.addEventListener('input', () => {
+    aiIds = [];
     matches = search(input.value);
+    askAi(input.value);
     activeIndex = matches.length ? 0 : -1;
     render();
   });
@@ -129,10 +155,10 @@ function build() {
 }
 
 function render() {
-  hint.textContent = input.value.trim() ? 'RESULTS' : readRecents().length ? 'RECENT' : 'SUGGESTED';
+  hint.textContent = input.value.trim() ? (aiIds.length ? 'RESULTS · ✨ = closest in meaning' : 'RESULTS') : readRecents().length ? 'RECENT' : 'SUGGESTED';
 
   if (!matches.length) {
-    list.innerHTML = `<div class="cmdk-empty">No tools match "${escapeHtml(input.value)}".</div>`;
+    list.innerHTML = `<div class="cmdk-empty">${isPhrase(input.value) ? 'Looking for the right tool…' : `No tools match "${escapeHtml(input.value)}". Try describing what you want to do.`}</div>`;
     return;
   }
 
@@ -143,7 +169,7 @@ function render() {
         <div class="cmdk-item${i === activeIndex ? ' is-active' : ''}" role="option" aria-selected="${i === activeIndex}" data-index="${i}">
           ${iconSvg(tool.icon, { class: 'cmdk-item-icon' })}
           <div class="cmdk-item-text">
-            <span class="cmdk-item-name">${escapeHtml(tool.name)}</span>
+            <span class="cmdk-item-name">${aiIds.includes(tool.id) ? '<span class="cmdk-ai" title="Closest in meaning to what you typed">✨</span> ' : ''}${escapeHtml(tool.name)}</span>
             <span class="cmdk-item-desc">${escapeHtml(tool.description)}</span>
           </div>
           <span class="cmdk-item-category">${escapeHtml(category?.label || '')}</span>
@@ -184,6 +210,7 @@ function onKeydown(e) {
 
 function openTool(tool) {
   if (!tool) return;
+  if (aiIds.includes(tool.id)) trackApiEvent('aisearch_click');
   pushRecent(tool.id);
   navigate(tool.route);
   close();

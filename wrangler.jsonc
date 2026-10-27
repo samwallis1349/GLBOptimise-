@@ -42,6 +42,8 @@
   // Trial start times keyed by a salted hash of the visitor's IP.
   // Create once with: npx wrangler kv namespace create TRIALS
   // then paste the printed id below.
+  // Workers AI (worker/api/ai.js): the fix plan and plain-English search, on the free daily allowance
+  "ai": { "binding": "AI" },
   "kv_namespaces": [{ "binding": "TRIALS", "id": "1bbbbc6dc36f40268430887895a49835" }],
   // Tool usage (opens + runs per tool): one Durable Object, so no count is lost (worker/index.js UsageCounter).
   "durable_objects": { "bindings": [{ "name": "USAGE", "class_name": "UsageCounter" }] },

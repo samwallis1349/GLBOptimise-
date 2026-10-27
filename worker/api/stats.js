@@ -10,7 +10,7 @@
  */
 
 const PREFIX = 'apistat:';
-export const PAGE_EVENTS = new Set(['popup_shown', 'popup_click', 'popup_dismiss', 'docs_view', 'panel_open', 'vscode_copy', 'mcp_shown', 'mcp_click', 'mcp_dismiss', 'mcp_copy', 'tripo_tool_click', 'tripo_guide_click', 'tripo_banner_click', 'ext_spot_shown', 'ext_spot_click', 'tripo_blocked', 'partner_join_click']);
+export const PAGE_EVENTS = new Set(['popup_shown', 'popup_click', 'popup_dismiss', 'docs_view', 'panel_open', 'vscode_copy', 'mcp_shown', 'mcp_click', 'mcp_dismiss', 'mcp_copy', 'tripo_tool_click', 'tripo_guide_click', 'tripo_banner_click', 'ext_spot_shown', 'ext_spot_click', 'tripo_blocked', 'partner_join_click', 'fixplan_shown', 'fixplan_click', 'aisearch_click']);
 
 const today = () => new Date().toISOString().slice(0, 10);
 

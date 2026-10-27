@@ -321,3 +321,8 @@ body.cmdk-lock-scroll {
   }
 }
 
+
+/* ✨ a tool suggested by meaning (CommandPalette.js plain-English search) */
+.cmdk-ai {
+  font-size: 0.85em;
+}

@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>GLB Inspector</title>
+  <link rel="stylesheet" href="panel.css">
+</head>
+<body>
+  <header class="top">
+    <img src="icons/icon-32.png" alt="" width="20" height="20">
+    <h1 id="heading">GLB <span>Inspector</span></h1>
+    <span class="credits" id="credits" hidden></span>
+  </header>
+
+  <label class="drop" id="drop" tabindex="0">
+    <input type="file" id="file" accept=".glb,.gltf,.fbx,.obj,.zip" hidden>
+    <strong id="fileName">Drop a .glb here</strong>
+    <small id="fileHint">or click to choose · runs on your computer, nothing is uploaded</small>
+  </label>
+
+  <nav class="tabs" role="tablist" aria-label="Tools">
+    <button type="button" role="tab" data-tool="inspect" aria-selected="true">Inspect <em>Free</em></button>
+    <button type="button" role="tab" data-tool="rig" aria-selected="false">Rig</button>
+    <button type="button" role="tab" data-tool="animations" aria-selected="false">Anims</button>
+    <button type="button" role="tab" data-tool="compare" aria-selected="false">Compare</button>
+  </nav>
+
+  <section class="tool" data-panel="inspect">
+    <p class="lede">A health score out of 100, what's inside the model, and anything that needs fixing.</p>
+  </section>
+
+  <section class="tool" data-panel="rig" hidden>
+    <p class="lede">Checks the skeleton: joint count, hierarchy, and that every vertex is properly weighted.</p>
+  </section>
+
+  <section class="tool" data-panel="animations" hidden>
+    <p class="lede">Every clip with its length and frame rate, plus loops that pop and keyframes you can cut.</p>
+  </section>
+
+  <section class="tool" data-panel="compare" hidden>
+    <p class="lede">Compare the model above (A) with another version (B). See what changed and what broke.</p>
+    <label class="drop drop--small" id="otherDrop" tabindex="0">
+      <input type="file" id="otherFile" accept=".glb,.gltf,.fbx,.obj,.zip" hidden>
+      <strong id="otherName">Choose model B</strong>
+      <small>e.g. the optimised copy of the same model</small>
+    </label>
+  </section>
+
+  <button type="button" id="run" class="btn primary run" disabled>Choose a model first</button>
+
+  <p id="status" role="status" aria-live="polite"></p>
+  <div id="result" hidden></div>
+
+  <section class="lock" id="lock" hidden>
+    <p><strong id="lockTitle">Unlock this tool</strong></p>
+    <a class="btn primary" id="buyTool" target="_blank" rel="noopener">Unlock for 99p</a>
+    <a class="btn" id="buyAll" target="_blank" rel="noopener">Every tool with All Access</a>
+    <p class="small">Already paid? Paste the licence key from your receipt email.</p>
+    <div class="row">
+      <input type="text" id="keyInput" placeholder="Licence key" autocomplete="off" spellcheck="false" aria-label="Licence key">
+      <button type="button" id="activate">Unlock</button>
+    </div>
+  </section>
+
+  <footer>
+    <span id="keysInfo"></span>
+    <a href="https://www.assetbench.co.uk/" target="_blank" rel="noopener">assetbench.co.uk</a>
+  </footer>
+
+  <script type="module" src="extras.js"></script>
+  <script type="module" src="panel.js"></script>
+</body>
+</html>

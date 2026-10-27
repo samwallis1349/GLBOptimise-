@@ -29,6 +29,7 @@
 import { TOOLS, getOrderedTools } from '../src/shared/config/tools.js';
 import { TRIPO_URL } from '../src/shared/config/tripo.js';
 import { bump } from './api/stats.js';
+import { fixPlan, routeQuery } from './api/ai.js';
 import { handleApiV1 } from './api/index.js';
 import { handleApiBillingEvent, isApiProduct } from './api/billing.js';
 
@@ -704,6 +705,9 @@ async function route(request, env, ctx) {
     ctx.waitUntil(bump(env, 'tripo_go'));
     return new Response(null, { status: 302, headers: { Location: TRIPO_URL, 'Cache-Control': 'no-store', 'X-Robots-Tag': 'noindex' } });
   }
+  // Cheap AI (worker/api/ai.js): a fix plan after a check, plain-English tool search
+  if (pathname === '/api/ai/fixplan' && request.method === 'POST') return fixPlan(request, env);
+  if (pathname === '/api/ai/route' && request.method === 'POST') return routeQuery(request, env);
   if (pathname === '/api/trial') return handleTrial(request, env);
   if (pathname === '/api/usage') return handleUsage(request, env, ctx);
   if (pathname === '/api/tool-binding') return handleToolBinding(request, env);
