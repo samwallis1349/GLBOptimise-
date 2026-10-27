@@ -603,7 +603,7 @@
   min-width: 0;
   margin: 0;
   color: #f4f1ea;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-family: var(--font-mono);
   font-size: 13px;
   line-height: 1.55;
   white-space: pre-wrap;
@@ -1032,4 +1032,79 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
+}
+
+/* ---------- Advert pushed by API, full width (components/AdvertCard.js) ---------- */
+
+.bento > .bento-post {
+  grid-column: 1 / -1;
+  grid-row: auto;
+}
+
+.bento-post {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  align-items: center;
+  gap: 20px 28px;
+  padding: 16px;
+  border: 1px solid rgba(255, 181, 71, 0.18);
+  border-radius: var(--bento-radius);
+  background:
+    radial-gradient(80% 140% at 100% 0%, rgba(255, 181, 71, 0.1), transparent 60%),
+    var(--bento-panel-2);
+}
+
+.bento-post--text {
+  grid-template-columns: minmax(0, 1fr);
+  padding: 22px 24px;
+}
+
+.bento-post__media {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  max-height: 360px;
+  object-fit: cover;
+  border-radius: calc(var(--bento-radius) - 6px);
+  background: #000;
+}
+
+.bento-post__body {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  padding-right: 8px;
+}
+
+.bento-post__badge {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.bento-post__title {
+  font-size: clamp(1.25rem, 2.2vw, 1.6rem);
+  line-height: 1.2;
+}
+
+.bento-post__text {
+  color: var(--text-secondary);
+  white-space: pre-line;
+}
+
+.bento-post__link {
+  margin-top: 4px;
+}
+
+@media (max-width: 767px) {
+  .bento-post {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .bento-post__body {
+    padding: 0 4px 4px;
+  }
 }

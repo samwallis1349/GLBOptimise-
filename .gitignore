@@ -37,3 +37,6 @@ scripts/hero/source/rusted-colossus-*.glb
 
 # Earlier builds' hashed assets, re-shipped for 7 days (scripts/keep-old-assets.mjs)
 /.asset-archive/
+
+# Local-only secrets for `wrangler dev` (never committed)
+.dev.vars

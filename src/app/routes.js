@@ -7,11 +7,12 @@ import { ToolNews } from '../shared/components/ToolNews.js';
 import { ToolGuide } from '../shared/components/ToolGuide.js';
 import { SampleModel } from '../shared/components/SampleModel.js';
 import { TripoCard } from '../shared/components/TripoCard.js';
-import { TripoBanner } from '../shared/components/TripoBanner.js';
+import { PartnerCard } from '../shared/components/PartnerCard.js';
 import { FbxBridge } from '../shared/fbx/FbxBridge.js';
 import { ToolNextSteps } from '../shared/components/ToolNextSteps.js';
 import { ToolClip } from '../shared/components/ToolClip.js';
 import { AdSenseAd } from '../shared/components/AdSenseAd.js';
+import { AdvertCard, toolAdvertName } from '../shared/components/AdvertCard.js';
 import { initTrial } from '../services/TrialService.js';
 import { recordToolOpen } from '../services/UsageService.js';
 import { pageSeo } from '../shared/config/seo.js';
@@ -50,12 +51,12 @@ async function mountTool(tool, container, params) {
   if (offer) container.prepend(offer);
   const extension = ExtensionBar(tool);
   if (extension) container.prepend(extension);
-  // Slim Tripo advert (affiliate) at the very top of a few 3D tools.
-  const tripoBanner = TripoBanner(tool);
-  if (tripoBanner) container.prepend(tripoBanner);
   // Need a model? Tripo (affiliate) on the 3D tools, straight under the tool.
   const tripo = TripoCard(tool);
   if (tripo) container.append(tripo);
+  // ...or, on the other 3D tools, our own affiliate programme in the same place (config/partners.js).
+  const partner = PartnerCard(tool);
+  if (partner) container.append(partner);
   // The tool's 5-second clip, straight under it.
   const clip = ToolClip(tool);
   if (clip) container.append(clip);
@@ -71,6 +72,12 @@ async function mountTool(tool, container, params) {
   // One ad, below the whole tool — never between its controls, preview or downloads.
   const ad = AdSenseAd({ placement: 'tool', toolId: tool.id });
   if (ad) container.append(ad);
+  // Its own advert card, pushed by API like the homepage's (AdvertCard.js), at the very bottom: as wide as the
+  // next-steps cards (27 Oct, user: "append one at the bottom of every tool, the width of the cards on a row").
+  const advert = document.createElement('section');
+  advert.className = 'tool-advert';
+  advert.append(AdvertCard(toolAdvertName(tool.id)));
+  container.append(advert);
   return result;
 }
 
@@ -144,9 +151,6 @@ export const routes = [
       if (GATED_STATUSES.has(tool.status)) await initTrial();
       if (GATED_STATUSES.has(tool.status) && !hasAccess(tool.id)) {
         container.innerHTML = '';
-        // The Tripo advert shows above the paywall too, not only on unlocked tools.
-        const tripoBanner = TripoBanner(tool);
-        if (tripoBanner) container.appendChild(tripoBanner);
         container.appendChild(
           Paywall({
             tool,

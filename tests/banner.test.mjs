@@ -162,3 +162,47 @@ test('banner authorization rejects unauthorized modification when secret is set'
   );
   assert.equal(authQuery.status, 200);
 });
+
+test('banner media: upload a file, serve it whole and by byte range, advert stays inactive', async () => {
+  const store = new Map();
+  const TRIALS = {
+    ...memoryKv(),
+    async put(key, value, { metadata } = {}) { store.set(key, { value, metadata }); },
+    async get(key, type) {
+      const val = store.get(key)?.value ?? null;
+      return val && type === 'json' ? JSON.parse(val) : val;
+    },
+    async getWithMetadata(key) { return { value: store.get(key)?.value ?? null, metadata: store.get(key)?.metadata ?? null }; },
+  };
+  const env = { TRIALS, API_ADMIN_KEY: 'k' };
+  const bytes = new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+
+  const unauth = await worker.fetch(new Request('https://assetbench.co.uk/api/banner/media?name=advert', { method: 'POST', headers: { 'Content-Type': 'video/mp4' }, body: bytes }), env);
+  assert.equal(unauth.status, 401);
+
+  const badType = await worker.fetch(new Request('https://assetbench.co.uk/api/banner/media?name=advert', { method: 'POST', headers: { 'Content-Type': 'text/html', Authorization: 'Bearer k' }, body: bytes }), env);
+  assert.equal(badType.status, 415);
+
+  const up = await worker.fetch(new Request('https://assetbench.co.uk/api/banner/media?name=advert', { method: 'POST', headers: { 'Content-Type': 'video/mp4', Authorization: 'Bearer k' }, body: bytes }), env);
+  assert.equal(up.status, 200);
+  const { mediaUrl, mediaType } = await up.json();
+  assert.equal(mediaType, 'video');
+  assert.match(mediaUrl, /^\/api\/banner\/media\?name=advert&v=\d+$/);
+
+  const whole = await worker.fetch(new Request(`https://assetbench.co.uk${mediaUrl}`), env);
+  assert.equal(whole.headers.get('Content-Type'), 'video/mp4');
+  assert.deepEqual(new Uint8Array(await whole.arrayBuffer()), bytes);
+
+  const part = await worker.fetch(new Request(`https://assetbench.co.uk${mediaUrl}`, { headers: { Range: 'bytes=2-4' } }), env);
+  assert.equal(part.status, 206);
+  assert.equal(part.headers.get('Content-Range'), 'bytes 2-4/10');
+  assert.deepEqual([...new Uint8Array(await part.arrayBuffer())], [3, 4, 5]);
+
+  // Save the advert without making it the bottom banner; an empty title stays empty.
+  const save = await worker.fetch(req('/api/banner', { method: 'POST', headers: { Authorization: 'Bearer k' }, body: JSON.stringify({ name: 'advert', active: false, title: '', badge: '', text: 'Hello', mediaUrl, mediaType }) }), env);
+  const saved = (await save.json()).banner;
+  assert.equal(saved.title, '');
+  assert.equal(saved.mediaUrl, mediaUrl);
+  const read = await (await worker.fetch(req('/api/banner?name=advert'), env)).json();
+  assert.equal(read.banner.text, 'Hello');
+});

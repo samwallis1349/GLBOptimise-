@@ -12,36 +12,24 @@
 import { getToolById } from './tools.js';
 
 export const TRIPO_URL = 'https://tripo.pxf.io/c/7253936/4027202/55781';
+// Our own short link: counts the click and forwards to TRIPO_URL (worker/index.js). Every button points here.
+export const TRIPO_GO_PATH = '/go/tripo';
+// Where a visitor whose ad blocker stops TRIPO_URL is sent instead (services/TripoLinks.js): no credit, but no dead page.
+export const TRIPO_DIRECT_URL = 'https://www.tripo3d.ai/';
 export const TRIPO_GUIDE_PATH = '/tripo-to-game-ready';
 
 /**
- * Tool pages that show the Tripo card (20): the ones that take a 3D model, where
- * "need a model?" makes sense. The image, app-icon and 2D tools are left out.
+ * Tool pages that show the Tripo card (10): the ones where making a new model fits best. Since 27 Oct the other 10
+ * 3D tools show our affiliate programme's card instead (config/partners.js PARTNER_TOOLS). The image, app-icon and
+ * 2D tools have neither.
  */
 export const TRIPO_TOOLS = new Set([
-  'mobile-ready-checker', 'inspect-glb', 'asset-report', 'asset-compare', 'thumbnail-maker',
-  'optimise-glb', 'reduce-polys', 'generate-lods', 'compress-textures', 'asset-pipeline',
-  'convert-files', 'glb-builder', 'model-splitter', 'model-to-isometric', 'model-to-iso-sprites',
-  'character-workshop', 'rig-inspector', 'animation-inspector', 'animation-optimiser', 'ktx2-texture-encoder',
+  'mobile-ready-checker', 'thumbnail-maker', 'optimise-glb', 'reduce-polys', 'generate-lods',
+  'compress-textures', 'asset-pipeline', 'model-to-isometric', 'model-to-iso-sprites', 'character-workshop',
 ]);
 
-/** Impact's own 250 × 250 Tripo ad, shown in turn with the slim advert (components/TripoBanner.js). */
-export const TRIPO_IMPACT_AD = 'https://a.impactradius-go.com/gen-ad-code/7253936/4027565/55781/';
-
-/** The one line on the slim Tripo advert (components/TripoBanner.js). */
-export const TRIPO_OFFER = 'Save 60% on Tripo';
-
-/**
- * Tool pages that show the slim Tripo advert at the top (10). They show it
- * instead of the Tripo card, so a page has one Tripo ad, not two.
- */
-export const TRIPO_BANNER_TOOLS = new Set([
-  'reduce-polys', 'optimise-glb', 'inspect-glb', 'convert-files', 'compress-textures',
-  'generate-lods', 'mobile-ready-checker', 'model-to-iso-sprites', 'glb-builder', 'thumbnail-maker',
-]);
-
-/** Attributes for every link out to Tripo. */
-export const TRIPO_LINK_ATTRS = `href="${TRIPO_URL}" target="_blank" rel="sponsored noopener"`;
+/** Attributes for every link out to Tripo: our /go/tripo, checked for a blocker on click (services/TripoLinks.js). */
+export const TRIPO_LINK_ATTRS = `href="${TRIPO_GO_PATH}" data-tripo-link target="_blank" rel="sponsored noopener"`;
 
 /** The guide, in order. `tools` are registry ids; missing ones are skipped. */
 export const TRIPO_STEPS = [

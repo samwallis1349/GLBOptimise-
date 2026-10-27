@@ -26,7 +26,9 @@
  * Reads are edge-cached for a minute.
  */
 
-import { TOOLS } from '../src/shared/config/tools.js';
+import { TOOLS, getOrderedTools } from '../src/shared/config/tools.js';
+import { TRIPO_URL } from '../src/shared/config/tripo.js';
+import { bump } from './api/stats.js';
 import { handleApiV1 } from './api/index.js';
 import { handleApiBillingEvent, isApiProduct } from './api/billing.js';
 
@@ -408,9 +410,83 @@ function detectMediaType(url) {
   return 'image';
 }
 
+// Banner pictures and videos sent as files (the Game's social agent posts local files), kept in KV beside
+// the banner: POST /api/banner/media?name=<banner> with the raw bytes and their Content-Type, then use the
+// returned mediaUrl in POST /api/banner. GET serves it, with byte ranges so Safari plays videos.
+const BANNER_MEDIA_PREFIX = 'banner_media:';
+const BANNER_MEDIA_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'video/mp4', 'video/webm']);
+const BANNER_MEDIA_MAX = 24 * 1024 * 1024; // KV values top out at 25 MiB
+
+async function handleBannerMedia(request, env, url) {
+  const name = String(url.searchParams.get('name') || '').trim().toLowerCase().replace(/[^a-z0-9_-]/g, '-').slice(0, 80);
+  if (!name) return json({ error: 'Missing banner name' }, 400);
+  if (!env.TRIALS) return json({ error: 'KV unavailable' }, 503);
+
+  if (request.method === 'POST') {
+    if (!(await isBannerAuthorized(request, env))) return json({ error: 'Unauthorized' }, 401);
+    const type = String(request.headers.get('Content-Type') || '').split(';')[0].trim().toLowerCase();
+    if (!BANNER_MEDIA_TYPES.has(type)) return json({ error: `Unsupported type '${type}' (JPEG, PNG, WebP, GIF, MP4 or WebM)` }, 415);
+    const bytes = await request.arrayBuffer();
+    if (!bytes.byteLength) return json({ error: 'Empty file' }, 400);
+    if (bytes.byteLength > BANNER_MEDIA_MAX) return json({ error: 'File over 24 MB' }, 413);
+    const version = Date.now();
+    await env.TRIALS.put(`${BANNER_MEDIA_PREFIX}${name}`, bytes, { metadata: { type, version } });
+    return json({
+      ok: true,
+      mediaUrl: `/api/banner/media?name=${encodeURIComponent(name)}&v=${version}`,
+      mediaType: type.startsWith('video/') ? 'video' : 'image',
+    });
+  }
+
+  if (request.method !== 'GET' && request.method !== 'HEAD') return json({ error: 'Method not allowed' }, 405);
+  const { value, metadata } = await env.TRIALS.getWithMetadata(`${BANNER_MEDIA_PREFIX}${name}`, 'arrayBuffer');
+  if (!value) return json({ error: 'Not found' }, 404);
+  const size = value.byteLength;
+  const headers = {
+    'Content-Type': metadata?.type || 'application/octet-stream',
+    'Accept-Ranges': 'bytes',
+    // Each upload gets a new ?v=, so a given address never changes.
+    'Cache-Control': url.searchParams.has('v') ? 'public, max-age=31536000, immutable' : 'public, max-age=60',
+  };
+  const range = /^bytes=(\d*)-(\d*)$/.exec(request.headers.get('Range') || '');
+  if (range && (range[1] || range[2])) {
+    let start = range[1] ? Number(range[1]) : size - Number(range[2]);
+    let end = range[1] && range[2] ? Number(range[2]) : size - 1;
+    start = Math.max(0, start);
+    end = Math.min(end, size - 1);
+    if (start > end) return new Response(null, { status: 416, headers: { 'Content-Range': `bytes */${size}` } });
+    return new Response(request.method === 'HEAD' ? null : value.slice(start, end + 1), {
+      status: 206,
+      headers: { ...headers, 'Content-Range': `bytes ${start}-${end}/${size}`, 'Content-Length': String(end - start + 1) },
+    });
+  }
+  return new Response(request.method === 'HEAD' ? null : value, { headers: { ...headers, 'Content-Length': String(size) } });
+}
+
+/**
+ * GET /api/banner/slots - every advert card's reference name, as a shortlist for other programs: the homepage's
+ * (advert, advert-2... one every 3 rows of tools, pages/home/HomePage.js) and one per tool page (ad-<tool id>,
+ * app/routes.js), each with what's in it now. Public, like GET /api/banner.
+ */
+async function bannerSlots(env) {
+  const home = [];
+  for (let k = 0, at = 2; at < getOrderedTools().length - 1; k += 1, at += 9) home.push({ name: k ? `advert-${k + 1}` : 'advert', page: '/', where: k ? `homepage, after ${3 * k + 2} rows of tools` : 'homepage, under the first block of tools' });
+  const tools = TOOLS.filter((t) => t.route).map((t) => ({ name: `ad-${t.id}`, page: t.route, where: `bottom of ${t.name}` }));
+  const filled = async (slot) => ({ ...slot, filled: !!(env.TRIALS && (await env.TRIALS.get(`${BANNER_PREFIX}${slot.name}`))) });
+  return {
+    ok: true,
+    update: `POST /api/banner (Authorization: Bearer <API_ADMIN_KEY>) { name, active: false, text, title?, badge?, mediaUrl?, mediaType?, linkUrl?, linkText? }`,
+    home: await Promise.all(home.map(filled)),
+    tools: await Promise.all(tools.map(filled)),
+  };
+}
+
 async function handleBanner(request, env) {
   const url = new URL(request.url);
   const { pathname } = url;
+  if (pathname === '/api/banner/slots' && request.method === 'GET') return json(await bannerSlots(env));
+
+  if (pathname === '/api/banner/media' && request.method !== 'OPTIONS') return handleBannerMedia(request, env, url);
 
   if (request.method === 'OPTIONS') {
     return new Response(null, {
@@ -495,9 +571,9 @@ async function handleBanner(request, env) {
 
     const record = {
       name: cleanName,
-      title: String(body?.title || 'Featured Announcement').trim().slice(0, 200),
+      title: String(body?.title ?? 'Featured Announcement').trim().slice(0, 200),
       text: String(body?.text || body?.description || '').trim().slice(0, 1000),
-      badge: String(body?.badge || 'UPDATE').trim().slice(0, 40),
+      badge: String(body?.badge ?? 'UPDATE').trim().slice(0, 40),
       mediaUrl,
       mediaType,
       linkUrl: sanitizeBannerUrl(body?.linkUrl || body?.url || ''),
@@ -622,6 +698,12 @@ export default {
 
 async function route(request, env, ctx) {
   const { pathname } = new URL(request.url);
+  // /go/tripo: our own short link to the Tripo affiliate link, counted here (tripo_go) whatever the visitor's blocker
+  // does next. Compare it with Impact's click count to see how many are lost (services/TripoLinks.js).
+  if (pathname === '/go/tripo') {
+    ctx.waitUntil(bump(env, 'tripo_go'));
+    return new Response(null, { status: 302, headers: { Location: TRIPO_URL, 'Cache-Control': 'no-store', 'X-Robots-Tag': 'noindex' } });
+  }
   if (pathname === '/api/trial') return handleTrial(request, env);
   if (pathname === '/api/usage') return handleUsage(request, env, ctx);
   if (pathname === '/api/tool-binding') return handleToolBinding(request, env);
@@ -629,7 +711,7 @@ async function route(request, env, ctx) {
   if (pathname === '/api/sales-webhook') return handleSalesWebhook(request, env);
   if (pathname === '/api/illustration-enquiry') return handleIllustrationEnquiry(request, env);
   if (pathname === '/api/subscribe') return handleSubscribe(request, env);
-  if (pathname === '/api/banner' || pathname === '/api/banners' || pathname === '/api/banner/active') {
+  if (pathname === '/api/banner' || pathname === '/api/banners' || pathname === '/api/banner/active' || pathname === '/api/banner/media' || pathname === '/api/banner/slots') {
     return handleBanner(request, env);
   }
   if (pathname === '/api/v1' || pathname.startsWith('/api/v1/')) return handleApiV1(request, env, ctx);

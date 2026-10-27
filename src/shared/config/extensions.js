@@ -14,6 +14,25 @@ export function chromeExtensionFor(toolId) {
 }
 
 /**
+ * The extension featured at the top of the "Web extensions" popup, big, with
+ * its tools' clips playing (shared/components/ExtensionsModal.js). Point `id`
+ * at another EXTENSIONS entry to feature that one instead, or set it to null
+ * for no spotlight. Its button is "Add to Chrome" once the listing is live,
+ * otherwise a free download of the zip.
+ */
+export const EXTENSION_SPOTLIGHT = {
+  id: 'inspector',
+  eyebrow: 'New · Browser extension',
+  headline: 'Inspect any GLB in one click',
+  subhead: 'Meshes, materials, textures, rigs and animations, checked right in your browser. No uploads, no desktop software.',
+  features: [
+    ['⚡', 'Instant', 'open a file and see its health score straight away'],
+    ['🔒', 'Private', 'your files never leave your computer'],
+    ['📊', 'Detailed', 'triangles, draw calls, GPU memory, rig and animation checks'],
+  ],
+};
+
+/**
  * Every browser extension, for the homepage "Web extensions" popup. `url` is
  * the store listing once it's approved; until then the extension shows as
  * "In review" (built and submitted) or "Coming soon" (planned).

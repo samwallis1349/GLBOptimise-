@@ -12,6 +12,7 @@ import { initLayoutEditor } from '../editor/LayoutEditor.js';
 import { initCommandPalette } from '../shared/effects/CommandPalette.js';
 import { initPromoBot } from '../shared/effects/PromoBot.js';
 import { initConsentBanner } from '../shared/components/ConsentBanner.js';
+import { initTripoLinks } from '../services/TripoLinks.js';
 import { initUpdateNotice } from '../shared/components/UpdateNotice.js';
 import { initMcpLaunchModal } from '../shared/components/McpLaunchModal.js';
 import { initAnalytics } from '../services/AnalyticsService.js';
@@ -58,6 +59,9 @@ export function App(rootEl) {
   // Ctrl/Cmd+K tool finder — same pattern: mounted once, outside the
   // router's DOM, reachable from any page.
   initCommandPalette();
+
+  // Tripo buttons: still reach Tripo when an ad blocker stops the affiliate link (services/TripoLinks.js).
+  initTripoLinks();
 
   // MCP server announcement (takes over from the API one), once per visitor.
   initMcpLaunchModal();

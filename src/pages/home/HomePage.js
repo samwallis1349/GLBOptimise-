@@ -8,8 +8,8 @@ import { initCursorSpotlight } from '../../shared/effects/CursorSpotlight.js';
 import { iconSvg } from '../../shared/utils/icons.js';
 import { openCommandPalette } from '../../shared/effects/CommandPalette.js';
 import { ColossusHero } from './wizard-hero/ColossusHero.js';
-import { TripoBanner } from '../../shared/components/TripoBanner.js';
 import { DONATE_URL, PRICE_LABEL, TEAM_PRICE_LABEL } from '../../shared/config/billing.js';
+import { AdvertCard } from '../../shared/components/AdvertCard.js';
 import { TOOL_PRICE_LABEL } from '../../shared/config/toolProducts.js';
 import { AdSenseAd } from '../../shared/components/AdSenseAd.js';
 import { HomeBannerPost } from '../../shared/components/HomeBannerPost.js';
@@ -33,7 +33,6 @@ export function render(container) {
   // pricing strip. AdSenseAd() returns null when ads are off, so nothing renders.
   const ad = AdSenseAd({ placement: 'homepage' });
   container.append(
-    TripoBanner(),
     HeroSection(heroVisual.element),
     WorkbenchIntro(),
     ToolsBlock(),
@@ -142,6 +141,11 @@ function ToolsBlock() {
 
   const grid = document.createElement('div');
   grid.className = 'bento';
+  // The adverts pushed by API (AdvertCard.js): full width, one every 3 rows of tools (27 Oct, user: 'make me one of
+  // those every 3 rows'). The first sits under the feature block and is 'advert'; then 'advert-2', 'advert-3'... An
+  // empty one stays hidden. Made once and moved back into place when the grid re-ranks.
+  const posts = [];
+  const postAt = (k) => (posts[k] ??= AdvertCard(k ? `advert-${k + 1}` : 'advert'));
   // The /tools bento pattern on one ranked list: PINNED_ORDER first, in that
   // fixed order (the first takes the big live-preview panel), then every other
   // tool by usage.
@@ -156,6 +160,9 @@ function ToolsBlock() {
       card.style.setProperty('--span-r', spans[index].rows);
       return card;
     }));
+    // the feature block fills rows 1-2 (cards 0-2), then 3 cards a row: after card 2, 11, 20...
+    const cards = [...grid.children];
+    for (let k = 0, at = 2; at < cards.length - 1; k += 1, at += 9) cards[at].after(postAt(k));
   };
   fill(cachedUsageCounts());
   fetchUsageCounts().then((counts) => grid.isConnected && fill(counts));

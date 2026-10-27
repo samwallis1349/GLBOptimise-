@@ -112,102 +112,6 @@
   border-color: var(--accent);
 }
 
-/* Slim Tripo advert at the top of the homepage and a few tools (components/TripoBanner.js). */
-.tripo-banner {
-  position: relative;
-  max-width: 1200px;
-  margin: 0 auto var(--space-4);
-}
-
-.tripo-banner--home {
-  margin: var(--space-4) auto 0;
-  padding: 0 var(--space-4);
-}
-
-.tripo-banner__link {
-  display: flex;
-  align-items: center;
-  gap: var(--space-4);
-  padding: 8px 14px 8px 8px;
-  border: 1px solid rgba(255, 181, 71, 0.3);
-  border-radius: var(--radius-lg);
-  background: linear-gradient(90deg, rgba(255, 181, 71, 0.12), transparent 70%), var(--panel);
-  color: inherit;
-  text-decoration: none;
-  transition: border-color 0.15s ease;
-}
-
-.tripo-banner__link:hover {
-  border-color: var(--accent);
-}
-
-.tripo-banner__art {
-  flex-shrink: 0;
-  width: 120px;
-  height: 60px;
-  border-radius: 8px;
-  object-fit: cover;
-}
-
-.tripo-banner__offer {
-  flex: 1;
-  font-size: 18px;
-  letter-spacing: -0.01em;
-}
-
-.tripo-banner__button {
-  flex-shrink: 0;
-}
-
-.tripo-banner__note {
-  position: absolute;
-  top: -9px;
-  right: 14px;
-  background: var(--bg);
-  font-size: 10px;
-}
-
-/* Impact's 250 × 250 ad: centred, in a frame like the slim advert's. */
-.tripo-banner--impact {
-  display: flex;
-  justify-content: center;
-}
-
-.tripo-banner__frame {
-  display: block;
-  width: 250px;
-  height: 250px;
-  border: 1px solid rgba(255, 181, 71, 0.3);
-  border-radius: var(--radius-lg);
-  background: var(--panel);
-}
-
-.tripo-banner--impact .tripo-banner__note {
-  position: static;
-  align-self: flex-start;
-  margin-left: var(--space-2);
-}
-
-.tripo-banner--home .tripo-banner__note {
-  right: calc(var(--space-4) + 14px);
-}
-
-@media (max-width: 520px) {
-  .tripo-banner__art {
-    width: 80px;
-    height: 40px;
-  }
-
-  .tripo-banner__offer {
-    font-size: 15px;
-  }
-
-  .tripo-banner__button {
-    padding-inline: 10px;
-    font-size: 13px;
-  }
-}
-
 /* The small "Need a model?" card under 3D tools (components/TripoCard.js). */
 .tripo-card {
   display: flex;
@@ -242,7 +146,7 @@
   border: 1px solid var(--border);
   border-radius: 6px;
   background: #151513;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-family: var(--font-mono);
   font-size: 11px;
   color: var(--text-secondary);
 }
@@ -408,4 +312,49 @@
     padding-left: var(--space-4);
     padding-top: 60px;
   }
+}
+
+/* Our affiliate programme's card (components/PartnerCard.js): the Tripo card's layout, a commission badge for its scene. */
+.partner-card {
+  border-color: rgba(110, 231, 183, 0.25);
+  background: linear-gradient(90deg, rgba(110, 231, 183, 0.09), transparent 60%), var(--panel);
+}
+
+.partner-card__scene {
+  border-color: rgba(110, 231, 183, 0.2);
+  background: radial-gradient(80% 120% at 85% 50%, rgba(110, 231, 183, 0.16), transparent 70%), #0b0b0a;
+}
+
+.partner-card__link {
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: #151513;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.partner-card__coin {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  color: #0b0b0a;
+  background: radial-gradient(circle at 35% 30%, #d1fae5, #6ee7b7 60%, #34d399);
+  box-shadow: 0 0 14px rgba(110, 231, 183, 0.45);
+  animation: partner-coin 3.2s ease-in-out infinite;
+}
+
+@keyframes partner-coin {
+  0%, 100% { transform: translateY(0) rotate(0); }
+  50% { transform: translateY(-3px) rotate(-6deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .partner-card__coin { animation: none; }
 }

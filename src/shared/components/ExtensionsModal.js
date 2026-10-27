@@ -1,5 +1,6 @@
 import { openModal } from './Modal.js';
-import { EXTENSIONS } from '../config/extensions.js';
+import { EXTENSIONS, EXTENSION_SPOTLIGHT } from '../config/extensions.js';
+import { trackApiEvent } from './ApiLaunchModal.js';
 import { getToolById } from '../config/tools.js';
 import { downloadBlob } from '../utils/download.js';
 import { toolClip } from '../config/toolClips.js';
@@ -64,6 +65,47 @@ function row(ext, mode, picked) {
       </div>
       ${action}
     </li>`;
+}
+
+/**
+ * The spotlight: one extension featured above the list (config EXTENSION_SPOTLIGHT), with its tools' clips playing
+ * on a loop (the still for reduced-motion visitors). Its button adds it from the store when it's listed, otherwise
+ * downloads its zip straight away and opens the install steps.
+ */
+function spotlight() {
+  const s = EXTENSION_SPOTLIGHT;
+  const ext = s && EXTENSIONS.find((e) => e.id === s.id);
+  if (!ext) return null;
+  const clips = clipsFor(ext);
+  const el = document.createElement('section');
+  el.className = 'ext-spot';
+  el.innerHTML = `
+    <div class="ext-spot__media">${clips[0] ? `<img src="${clips[0].poster}" alt="" decoding="async" width="320" height="180">` : ''}</div>
+    <div class="ext-spot__body">
+      <p class="ext-spot__eyebrow">${s.eyebrow}</p>
+      <h3 class="ext-spot__title">${s.headline}</h3>
+      <p class="ext-spot__sub">${s.subhead}</p>
+      <ul class="ext-spot__features">${s.features.map(([icon, name, text]) => `<li><span aria-hidden="true">${icon}</span><span><strong>${name}:</strong> ${text}</span></li>`).join('')}</ul>
+      <div class="ext-spot__actions">
+        ${ext.url
+          ? `<a class="btn btn--primary" href="${ext.url}" target="_blank" rel="noopener" data-spot="store">Add to Chrome, it's free</a>`
+          : ext.download ? '<button type="button" class="btn btn--primary" data-spot="download">Download free</button>' : ''}
+        <small>${ext.url ? '10 free uses, then 99p once' : ext.status === 'review' ? 'In Chrome Web Store review · works in Chrome, Edge and Brave now' : '10 free uses, then 99p once'}</small>
+      </div>
+    </div>`;
+  if (clips.length && !reduceMotion) {
+    const video = document.createElement('video');
+    Object.assign(video, { muted: true, playsInline: true, autoplay: true, preload: 'auto', loop: clips.length === 1 });
+    video.setAttribute('aria-hidden', 'true');
+    let i = 0;
+    video.src = clips[0].src;
+    video.addEventListener('ended', () => { i = (i + 1) % clips.length; video.src = clips[i].src; video.play().catch(() => {}); });
+    video.addEventListener('playing', () => el.classList.add('is-playing'));
+    video.setAttribute('muted', ''); // autoplay set from script isn't always honoured: muted + play() once it's in the page
+    el.querySelector('.ext-spot__media').appendChild(video);
+    requestAnimationFrame(() => video.play().catch(() => {}));
+  }
+  return el;
 }
 
 function steps(browser) {
@@ -136,14 +178,14 @@ function playOnHover(item, clips) {
 export function openExtensionsModal() {
   const list = [...EXTENSIONS].sort((a, b) => STATUS_ORDER[a.status] - STATUS_ORDER[b.status]);
   let browser = BROWSERS.find((b) => b.id === detectBrowser());
-  let mode = 'store';
+  let mode = 'manual'; // opens on Manual download (27 Oct, user: 'manual toggle first')
   const picked = new Set(EXTENSIONS.filter((e) => e.download).map((e) => e.id));
 
   const content = document.createElement('div');
   content.innerHTML = `
     <div class="ext-modal__modes" role="tablist" aria-label="How to install">
-      <button type="button" role="tab" class="ext-modal__mode" data-mode="store">Chrome Web Store</button>
       <button type="button" role="tab" class="ext-modal__mode" data-mode="manual">Manual download</button>
+      <button type="button" role="tab" class="ext-modal__mode" data-mode="store">Chrome Web Store</button>
     </div>
     <p class="ext-modal__intro">Asset Bench tools in your browser toolbar. Free to install, 10 free uses, then 99p once per extension. Your files never leave your computer, and an All Access key unlocks them all.</p>
     <ul class="ext-modal__list"></ul>
@@ -178,6 +220,29 @@ export function openExtensionsModal() {
   };
 
   const listEl = content.querySelector('.ext-modal__list');
+  // ✦ the featured extension, first thing in the popup
+  const spot = spotlight();
+  if (spot) {
+    content.prepend(spot);
+    trackApiEvent('ext_spot_shown');
+    spot.querySelector('[data-spot="store"]')?.addEventListener('click', () => trackApiEvent('ext_spot_click'));
+    spot.querySelector('[data-spot="download"]')?.addEventListener('click', async (e) => {
+      trackApiEvent('ext_spot_click');
+      const btn = e.currentTarget;
+      btn.disabled = true;
+      btn.textContent = 'Preparing…';
+      try {
+        await downloadZip([EXTENSION_SPOTLIGHT.id]);
+        btn.textContent = 'Downloaded · install steps below';
+        mode = 'manual'; // the Load unpacked steps for their browser
+        show();
+        content.querySelector('.ext-modal__manual').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      } catch {
+        btn.textContent = 'Download failed. Try again';
+        btn.disabled = false;
+      }
+    });
+  }
   const show = () => {
     listEl.innerHTML = list.map((ext) => row(ext, mode, picked)).join('');
     // Following a tool link inside the popup navigates in-app, so close it too.
@@ -223,5 +288,5 @@ export function openExtensionsModal() {
     }
   });
 
-  closeButton.focus();
+  closeButton.focus({ preventScroll: true }); // focus for the keyboard, but the popup stays at the top, on the spotlight
 }
