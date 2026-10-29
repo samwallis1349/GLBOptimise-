@@ -14,7 +14,7 @@ import { initPromoBot } from '../shared/effects/PromoBot.js';
 import { initConsentBanner } from '../shared/components/ConsentBanner.js';
 import { initTripoLinks } from '../services/TripoLinks.js';
 import { initUpdateNotice } from '../shared/components/UpdateNotice.js';
-import { initMcpLaunchModal } from '../shared/components/McpLaunchModal.js';
+import { initExtensionLaunchModal } from '../shared/components/ExtensionLaunchModal.js';
 import { initAnalytics } from '../services/AnalyticsService.js';
 import { hasAccess, trialEndsAt } from '../shared/config/billing.js';
 import { TOOLS } from '../shared/config/tools.js';
@@ -63,8 +63,8 @@ export function App(rootEl) {
   // Tripo buttons: still reach Tripo when an ad blocker stops the affiliate link (services/TripoLinks.js).
   initTripoLinks();
 
-  // MCP server announcement (takes over from the API one), once per visitor.
-  initMcpLaunchModal();
+  // GLB Inspector extension popup (takes over from the MCP one): once per visitor, 14-day cooldown.
+  initExtensionLaunchModal();
 
   // The banner and Bench Bot both quote days left, so they wait for the
   // trial clock. initTrial() never rejects — it falls back to local time.

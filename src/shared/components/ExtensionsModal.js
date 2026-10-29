@@ -15,13 +15,13 @@ const STATUS_ORDER = { live: 0, review: 1, planned: 2 };
  * Browsers the manual-download zips load in (all Chromium, so one build).
  * `page` can't be a link: web pages aren't allowed to open browser pages.
  */
-const BROWSERS = [
+export const BROWSERS = [
   { id: 'chrome', name: 'Chrome', page: 'chrome://extensions', toggle: 'top right' },
   { id: 'edge', name: 'Edge', page: 'edge://extensions', toggle: 'left-hand menu' },
   { id: 'brave', name: 'Brave', page: 'brave://extensions', toggle: 'top right' },
 ];
 
-function detectBrowser() {
+export function detectBrowser() {
   if (navigator.brave) return 'brave';
   if (/\bEdg\//.test(navigator.userAgent)) return 'edge';
   return 'chrome';
@@ -108,7 +108,7 @@ function spotlight() {
   return el;
 }
 
-function steps(browser) {
+export function steps(browser) {
   return `
     <li>Unzip the download. Each extension is its own folder.</li>
     <li>Open <code>${browser.page}</code> in ${browser.name} (paste it into the address bar).</li>
@@ -117,7 +117,7 @@ function steps(browser) {
 }
 
 /** One zip with a folder per extension, ready for Load unpacked. */
-async function downloadZip(ids) {
+export async function downloadZip(ids) {
   const { default: JSZip } = await import('jszip');
   const bundle = new JSZip();
   for (const id of ids) {

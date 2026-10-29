@@ -4382,3 +4382,255 @@ html.has-consent-notice .promo-bot {
     justify-self: start;
   }
 }
+
+/* ── GLB Inspector extension popup (shared/components/ExtensionLaunchModal.js) ── */
+.ext-launch {
+  position: relative;
+  width: 100%;
+  max-width: 480px;
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+  border: 1px solid rgba(255, 181, 71, 0.35);
+  border-radius: var(--radius-lg);
+  background:
+    radial-gradient(120% 70% at 0% 0%, rgba(255, 181, 71, 0.12), transparent 60%),
+    var(--panel);
+  color: var(--text-primary);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.04);
+  transform: scale(0.95) translateY(10px);
+  transition: transform 240ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.welcome-modal-overlay--open .ext-launch {
+  transform: none;
+}
+
+.ext-launch__close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 2;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 181, 71, 0.4);
+  background: rgba(18, 18, 22, 0.8);
+  color: #fff;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.ext-launch__close:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.ext-launch__preview {
+  position: relative;
+  margin: 0;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  background: #000;
+}
+
+.ext-launch__preview img,
+.ext-launch__preview video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.ext-launch__preview video {
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.ext-launch__preview.is-playing video {
+  opacity: 1;
+}
+
+.ext-launch__body {
+  padding: 20px 24px 18px;
+}
+
+.ext-launch__eyebrow {
+  margin: 0 0 6px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.ext-launch__title {
+  margin: 0 0 8px;
+  font-size: 1.6rem;
+  line-height: 1.15;
+}
+
+.ext-launch__sub {
+  margin: 0 0 16px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.ext-launch__features {
+  list-style: none;
+  margin: 0 0 18px;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+  font-size: 0.92rem;
+  line-height: 1.4;
+}
+
+.ext-launch__features li {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.ext-launch__icon {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  background: rgba(255, 181, 71, 0.14);
+  color: var(--accent);
+}
+
+.ext-launch__icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+.ext-launch__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 16px;
+}
+
+.ext-launch__cta {
+  flex: 1 1 100%;
+  padding: 14px 18px;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: linear-gradient(90deg, #ffb547, #ff9a52);
+  color: #1a1305;
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 800;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  box-shadow: 0 8px 28px rgba(255, 181, 71, 0.35);
+  transition: transform 160ms ease, box-shadow 160ms ease;
+}
+
+.ext-launch__cta:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 36px rgba(255, 181, 71, 0.5);
+}
+
+.ext-launch__cta:disabled {
+  cursor: progress;
+  opacity: 0.8;
+  transform: none;
+}
+
+.ext-launch__alt,
+.ext-launch__all,
+.ext-launch__later {
+  padding: 4px 2px;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.ext-launch__alt,
+.ext-launch__all {
+  color: var(--text-primary);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.ext-launch__alt-note {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.ext-launch__steps {
+  margin-top: 14px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  font-size: 0.88rem;
+}
+
+.ext-launch__steps p {
+  margin: 0 0 6px;
+}
+
+.ext-launch__steps ol {
+  margin: 0;
+  padding-left: 1.2em;
+  display: grid;
+  gap: 4px;
+  color: var(--text-secondary);
+}
+
+.ext-launch__price {
+  margin: 14px 0 0;
+  font-size: 12.5px;
+  color: var(--text-secondary);
+}
+
+.ext-launch__foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.ext-launch__later {
+  color: var(--text-secondary);
+}
+
+.ext-launch__later:hover,
+.ext-launch__all:hover,
+.ext-launch__alt:hover {
+  color: var(--accent);
+}
+
+.ext-launch :is(a, button):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.ext-launch .ext-launch__cta:focus-visible {
+  outline-color: #fff;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ext-launch-overlay,
+  .ext-launch,
+  .ext-launch__cta {
+    transition: none;
+  }
+  .ext-launch {
+    transform: none;
+  }
+}
