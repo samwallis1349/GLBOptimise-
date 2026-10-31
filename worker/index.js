@@ -27,6 +27,7 @@
  */
 
 import { TOOLS, getOrderedTools } from '../src/shared/config/tools.js';
+import { groupByCategory, advertPlaces, advertName } from '../src/shared/config/homeLayout.js';
 import { TRIPO_URL } from '../src/shared/config/tripo.js';
 import { bump } from './api/stats.js';
 import { fixPlan, routeQuery } from './api/ai.js';
@@ -471,7 +472,9 @@ async function handleBannerMedia(request, env, url) {
  */
 async function bannerSlots(env) {
   const home = [];
-  for (let k = 0, at = 5; at < getOrderedTools().length - 1; k += 1, at += 6) home.push({ name: k ? `advert-${k + 1}` : 'advert', page: '/', where: `homepage, after ${at + 1} tools` }); // one every 6 tools (pages/home/HomePage.js)
+  // The same banners the homepage draws (shared/config/homeLayout.js): one every 6 tools, at a row end, sections by category.
+  const groups = groupByCategory(getOrderedTools());
+  for (const [k, p] of advertPlaces(groups.map((g) => g.tools.length)).entries()) home.push({ name: advertName(k), page: '/', where: `homepage, after ${p.afterTools} tools (${groups[p.group].category.label})` });
   const tools = TOOLS.filter((t) => t.route).map((t) => ({ name: `ad-${t.id}`, page: t.route, where: `bottom of ${t.name}` }));
   const filled = async (slot) => ({ ...slot, filled: !!(env.TRIALS && (await env.TRIALS.get(`${BANNER_PREFIX}${slot.name}`))) });
   return {

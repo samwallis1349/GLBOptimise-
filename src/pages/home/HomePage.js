@@ -1,7 +1,8 @@
 import { APP_DESCRIPTION } from '../../shared/config/app.js';
 import { GAME_2D_GROUPS, PINNED_ORDER, TOOLS, getOrderedTools, getToolById } from '../../shared/config/tools.js';
 import { dimensionLegend } from '../../shared/components/ToolCard.js';
-import { BentoCard, layoutSpans } from '../../shared/components/BentoCard.js';
+import { BentoCard } from '../../shared/components/BentoCard.js';
+import { groupByCategory, advertPlaces, sectionSpans } from '../../shared/config/homeLayout.js';
 import { WinnerCard } from '../../shared/components/WinnerCard.js';
 import { cachedUsageCounts, fetchUsageCounts, rankByUsage } from '../../services/UsageService.js';
 import { initCursorSpotlight } from '../../shared/effects/CursorSpotlight.js';
@@ -149,20 +150,28 @@ function ToolsBlock() {
   // The /tools bento pattern on one ranked list: PINNED_ORDER first, in that
   // fixed order (the first takes the big live-preview panel), then every other
   // tool by usage.
+  // Grouped by category with a title over each (31 Oct, shared/config/homeLayout.js): ranked by usage inside each
+  // section, the first section opening with the big feature card, a banner after every 6 tools at a row end.
   const fill = (counts) => {
-    const tools = rankByUsage(getOrderedTools(), counts, PINNED_ORDER);
-    const spans = layoutSpans(tools.length);
-    grid.replaceChildren(...tools.map((tool, index) => {
-      const card = index === 0 ? WinnerCard(tool) : BentoCard(tool);
-      if (index === 0) card.classList.add('bento-feature');
-      else if (spans[index].cols > 4) card.classList.add('bento-card--wide');
-      card.style.setProperty('--span-c', spans[index].cols);
-      card.style.setProperty('--span-r', spans[index].rows);
-      return card;
-    }));
-    // the feature block fills rows 1-2 (cards 0-2), then 3 cards a row: after every 6th tool (cards 5, 11, 17...), each a row end
-    const cards = [...grid.children];
-    for (let k = 0, at = 5; at < cards.length - 1; k += 1, at += 6) cards[at].after(postAt(k));
+    const groups = groupByCategory(rankByUsage(getOrderedTools(), counts, PINNED_ORDER));
+    const places = advertPlaces(groups.map((g) => g.tools.length));
+    const children = [];
+    groups.forEach(({ category, tools }, gi) => {
+      children.push(categoryTitle(category, tools.length));
+      const spans = sectionSpans(tools.length, { feature: gi === 0 });
+      tools.forEach((tool, i) => {
+        const feature = gi === 0 && i === 0;
+        const card = feature ? WinnerCard(tool) : BentoCard(tool);
+        if (feature) card.classList.add('bento-feature');
+        else if (spans[i].cols > 4) card.classList.add('bento-card--wide');
+        card.style.setProperty('--span-c', spans[i].cols);
+        card.style.setProperty('--span-r', spans[i].rows);
+        children.push(card);
+        const k = places.findIndex((p) => p.group === gi && p.index === i);
+        if (k >= 0) children.push(postAt(k));
+      });
+    });
+    grid.replaceChildren(...children);
   };
   fill(cachedUsageCounts());
   fetchUsageCounts().then((counts) => grid.isConnected && fill(counts));
@@ -271,4 +280,17 @@ function CTAPanel() {
   }));
 
   return panel;
+}
+
+/** A category's title across the full grid width (the /tools page's group header): icon, name, tool count, blurb. */
+function categoryTitle(category, count) {
+  const head = document.createElement('header');
+  head.className = 'bento-group__head bento-cat-title';
+  head.innerHTML = `
+    <span class="bento-group__icon" aria-hidden="true">${iconSvg(category.icon, { class: 'bento-group__icon-svg' })}</span>
+    <h2 class="bento-group__title">${category.label}</h2>
+    <span class="bento-group__count">${count} tool${count === 1 ? '' : 's'}</span>
+    <a class="bento-cat-title__all" href="/tools#bento-group-${category.id}">See all →</a>
+    ${category.blurb ? `<p class="bento-group__blurb">${category.blurb}</p>` : ''}`;
+  return head;
 }

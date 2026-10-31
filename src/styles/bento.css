@@ -1128,3 +1128,26 @@
     font-size: 0.9rem;
   }
 }
+
+/* Homepage: a category title across the grid above each section of tools (pages/home/HomePage.js categoryTitle) */
+.bento > .bento-cat-title {
+  grid-column: 1 / -1;
+  grid-row: auto;
+  margin: 18px 0 0;
+}
+
+.bento > .bento-cat-title:first-child {
+  margin-top: 0;
+}
+
+.bento-cat-title__all {
+  margin-left: auto;
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.bento-cat-title__all:hover {
+  text-decoration: underline;
+}
