@@ -567,10 +567,23 @@
 
 /* Each tool page's advert card (app/routes.js, AdvertCard.js ad-<tool id>): at the very bottom, the same width as
    the next-steps cards (.tool-next: 1200px with the same side padding). Hidden while it has nothing in it. */
+/* The tool page's advert banner: as wide as the cards row above it, half their height (~252px tall). */
 .tool-advert {
-  max-width: 1200px;
+  max-width: var(--content-width); /* the same box as the .container rows above it */
   margin: var(--space-6) auto 0;
-  padding: 0 var(--space-4);
+  padding: 0 var(--space-5);
+}
+
+.tool-advert .bento-post {
+  --post-h: 126px;
+}
+
+.tool-advert .bento-post__title {
+  font-size: 1.05rem;
+}
+
+.tool-advert .bento-post__text {
+  -webkit-line-clamp: 2;
 }
 
 .tool-advert:has(> .bento-post[hidden]) {

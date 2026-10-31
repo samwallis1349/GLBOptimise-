@@ -1034,7 +1034,9 @@
   gap: 8px;
 }
 
-/* ---------- Advert pushed by API, full width (components/AdvertCard.js) ---------- */
+/* ---------- Advert pushed by API (components/AdvertCard.js) ----------
+   A banner strip half the height of a tool card (30 Oct, user: "half size normal tool cards"): picture on the left,
+   text and button on the right. Homepage: full grid width, one every 6 tools. Tool pages: --post-h set in tools.css. */
 
 .bento > .bento-post {
   grid-column: 1 / -1;
@@ -1042,11 +1044,15 @@
 }
 
 .bento-post {
+  --post-h: 200px; /* homepage tool cards are ~400px tall */
   display: grid;
-  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
-  gap: 20px 28px;
-  padding: 16px;
+  gap: 18px;
+  height: var(--post-h);
+  padding: 10px;
+  overflow: hidden;
+  box-sizing: border-box;
   border: 1px solid rgba(255, 181, 71, 0.18);
   border-radius: var(--bento-radius);
   background:
@@ -1056,14 +1062,15 @@
 
 .bento-post--text {
   grid-template-columns: minmax(0, 1fr);
-  padding: 22px 24px;
+  padding: 14px 22px;
 }
 
 .bento-post__media {
   display: block;
-  width: 100%;
+  height: calc(var(--post-h) - 20px);
+  width: auto;
   aspect-ratio: 16 / 9;
-  max-height: 360px;
+  max-width: 45vw;
   object-fit: cover;
   border-radius: calc(var(--bento-radius) - 6px);
   background: #000;
@@ -1073,7 +1080,10 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 10px;
+  justify-content: center;
+  gap: 6px;
+  min-width: 0;
+  max-height: 100%;
   padding-right: 8px;
 }
 
@@ -1086,25 +1096,35 @@
 }
 
 .bento-post__title {
-  font-size: clamp(1.25rem, 2.2vw, 1.6rem);
+  font-size: clamp(1.05rem, 1.8vw, 1.35rem);
   line-height: 1.2;
 }
 
 .bento-post__text {
   color: var(--text-secondary);
   white-space: pre-line;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .bento-post__link {
-  margin-top: 4px;
+  margin-top: 2px;
 }
 
 @media (max-width: 767px) {
   .bento-post {
-    grid-template-columns: minmax(0, 1fr);
+    --post-h: 140px;
+    gap: 12px;
   }
 
-  .bento-post__body {
-    padding: 0 4px 4px;
+  .bento-post__media {
+    max-width: 40vw;
+  }
+
+  .bento-post__text {
+    -webkit-line-clamp: 2;
+    font-size: 0.9rem;
   }
 }

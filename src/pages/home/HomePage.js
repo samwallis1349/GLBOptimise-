@@ -141,9 +141,9 @@ function ToolsBlock() {
 
   const grid = document.createElement('div');
   grid.className = 'bento';
-  // The adverts pushed by API (AdvertCard.js): full width, one every 3 rows of tools (27 Oct, user: 'make me one of
-  // those every 3 rows'). The first sits under the feature block and is 'advert'; then 'advert-2', 'advert-3'... An
-  // empty one stays hidden. Made once and moved back into place when the grid re-ranks.
+  // The adverts pushed by API (AdvertCard.js): full-width banners half a tool card tall, one every 6 tools (30 Oct, user:
+  // 'an advert banner ... every 6 tools'; was every 3 rows). 'advert' first, then 'advert-2', 'advert-3'... An
+  // empty one stays hidden. The worker's /api/banner/slots lists the same places (worker/index.js bannerSlots). Made once and moved back into place when the grid re-ranks.
   const posts = [];
   const postAt = (k) => (posts[k] ??= AdvertCard(k ? `advert-${k + 1}` : 'advert'));
   // The /tools bento pattern on one ranked list: PINNED_ORDER first, in that
@@ -160,9 +160,9 @@ function ToolsBlock() {
       card.style.setProperty('--span-r', spans[index].rows);
       return card;
     }));
-    // the feature block fills rows 1-2 (cards 0-2), then 3 cards a row: after card 2, 11, 20...
+    // the feature block fills rows 1-2 (cards 0-2), then 3 cards a row: after every 6th tool (cards 5, 11, 17...), each a row end
     const cards = [...grid.children];
-    for (let k = 0, at = 2; at < cards.length - 1; k += 1, at += 9) cards[at].after(postAt(k));
+    for (let k = 0, at = 5; at < cards.length - 1; k += 1, at += 6) cards[at].after(postAt(k));
   };
   fill(cachedUsageCounts());
   fetchUsageCounts().then((counts) => grid.isConnected && fill(counts));

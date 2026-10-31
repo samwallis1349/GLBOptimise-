@@ -471,7 +471,7 @@ async function handleBannerMedia(request, env, url) {
  */
 async function bannerSlots(env) {
   const home = [];
-  for (let k = 0, at = 2; at < getOrderedTools().length - 1; k += 1, at += 9) home.push({ name: k ? `advert-${k + 1}` : 'advert', page: '/', where: k ? `homepage, after ${3 * k + 2} rows of tools` : 'homepage, under the first block of tools' });
+  for (let k = 0, at = 5; at < getOrderedTools().length - 1; k += 1, at += 6) home.push({ name: k ? `advert-${k + 1}` : 'advert', page: '/', where: `homepage, after ${at + 1} tools` }); // one every 6 tools (pages/home/HomePage.js)
   const tools = TOOLS.filter((t) => t.route).map((t) => ({ name: `ad-${t.id}`, page: t.route, where: `bottom of ${t.name}` }));
   const filled = async (slot) => ({ ...slot, filled: !!(env.TRIALS && (await env.TRIALS.get(`${BANNER_PREFIX}${slot.name}`))) });
   return {
