@@ -43,18 +43,44 @@ function media(post) {
     : `<img class="bento-post__media" src="${esc(src)}" alt="${alt}" loading="lazy" decoding="async">`;
 }
 
+const VALID_STYLES = new Set([
+  'classic',
+  'full-card',
+  'full-card-plus',
+  'neon-cyber',
+  'cinema-backdrop',
+  'spotlight-right',
+  'terminal-dev',
+  'royal-gold',
+  'versus-split',
+  'glass-pill',
+  'jumbo-left',
+  'jumbo-right',
+  'panoramic-bleed',
+  'center-stage',
+  'center-cinema',
+  'center-neon',
+]);
+
 function render(card, post) {
   const link = safeUrl(post.linkUrl);
   const external = /^https?:/.test(link);
-  card.classList.toggle('bento-post--text', !safeUrl(post.mediaUrl));
+  const style = VALID_STYLES.has(post.style) ? post.style : 'classic';
+  const hasCopy = Boolean(post.badge || post.title || post.text || link);
+  card.className = `bento-post bento-post--${style}${!safeUrl(post.mediaUrl) ? ' bento-post--text' : ''}${!hasCopy ? ' bento-post--media-only' : ''}`;
+  card.dataset.style = style;
+  const bgMedia = (style === 'cinema-backdrop' || style === 'center-cinema') && safeUrl(post.mediaUrl) && post.mediaType !== 'video'
+    ? `<img class="bento-post__backdrop" src="${esc(safeUrl(post.mediaUrl))}" alt="" aria-hidden="true" loading="lazy" decoding="async">`
+    : '';
   card.innerHTML = `
+    ${bgMedia}
     ${media(post)}
-    <div class="bento-post__body">
+    ${hasCopy ? `<div class="bento-post__body">
       ${post.badge ? `<span class="bento-post__badge">${esc(post.badge)}</span>` : ''}
       ${post.title ? `<h3 class="bento-post__title">${esc(post.title)}</h3>` : ''}
-      <p class="bento-post__text">${esc(post.text)}</p>
+      ${post.text ? `<p class="bento-post__text">${esc(post.text)}</p>` : ''}
       ${link ? `<a class="btn btn--primary bento-post__link" href="${esc(link)}"${external ? ' target="_blank" rel="noopener"' : ''}>${esc(post.linkText || 'Find out more →')}</a>` : ''}
-    </div>
+    </div>` : ''}
   `;
 }
 

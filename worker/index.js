@@ -573,11 +573,31 @@ async function handleBanner(request, env) {
       ? body.mediaType
       : detectMediaType(mediaUrl);
 
+    const VALID_STYLES = new Set([
+      'classic',
+      'full-card',
+      'full-card-plus',
+      'neon-cyber',
+      'cinema-backdrop',
+      'spotlight-right',
+      'terminal-dev',
+      'royal-gold',
+      'versus-split',
+      'glass-pill',
+      'jumbo-left',
+      'jumbo-right',
+      'panoramic-bleed',
+      'center-stage',
+      'center-cinema',
+      'center-neon',
+    ]);
+    const rawStyle = String(body?.style || body?.template || 'classic').trim().toLowerCase();
     const record = {
       name: cleanName,
       title: String(body?.title ?? 'Featured Announcement').trim().slice(0, 200),
       text: String(body?.text || body?.description || '').trim().slice(0, 1000),
       badge: String(body?.badge ?? 'UPDATE').trim().slice(0, 40),
+      style: VALID_STYLES.has(rawStyle) ? rawStyle : 'classic',
       mediaUrl,
       mediaType,
       linkUrl: sanitizeBannerUrl(body?.linkUrl || body?.url || ''),
