@@ -3,6 +3,7 @@ import { DIMENSIONS, TOOLS, getCategoryById, getToolDimension } from '../config/
 import { iconSvg } from '../utils/icons.js';
 import { toolClip } from '../config/toolClips.js';
 import { TOOL_PRICE_LABEL, toolProduct } from '../config/toolProducts.js';
+import { isToolWidgetOpen, onToolWidgetChange, openToolWidget } from './ToolWidget.js';
 
 /**
  * Renders a single tool card from a tool registry entry
@@ -97,6 +98,28 @@ export function ToolCard(tool, { index: displayIndex, featured = false, headline
     ? `<span>Open Tool</span><svg class="tool-card__arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13"/><path d="m12 5 7 7-7 7"/></svg>`
     : '<span>Coming soon</span>';
   footer.appendChild(cta);
+
+  if (isAvailable) {
+    const popBtn = document.createElement('button');
+    popBtn.type = 'button';
+    popBtn.className = 'bento-card__popout tool-card__popout';
+    popBtn.title = `Pop out ${tool.name} as a resizable external desktop widget (closes when webpage is left)`;
+    popBtn.setAttribute('aria-pressed', String(isToolWidgetOpen(tool.id)));
+    popBtn.innerHTML = `${iconSvg('popout', { class: 'bento-card__popout-icon' })}<span>${isToolWidgetOpen(tool.id) ? 'Active' : 'Pop out'}</span>`;
+    popBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      openToolWidget(tool, { detach: true });
+    });
+    onToolWidgetChange(({ open, tool: active }) => {
+      if (!card.isConnected) return;
+      const isThisOpen = open && active?.id === tool.id;
+      popBtn.setAttribute('aria-pressed', String(isThisOpen));
+      const span = popBtn.querySelector('span');
+      if (span) span.textContent = isThisOpen ? 'Active' : 'Pop out';
+    });
+    footer.appendChild(popBtn);
+  }
 
   attachHoverClip(card, toolClip(tool.id));
 

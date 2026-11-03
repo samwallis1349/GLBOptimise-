@@ -13,9 +13,9 @@ import { DONATE_URL, PRICE_LABEL, TEAM_PRICE_LABEL } from '../../shared/config/b
 import { AdvertCard } from '../../shared/components/AdvertCard.js';
 import { TOOL_PRICE_LABEL } from '../../shared/config/toolProducts.js';
 import { AdSenseAd } from '../../shared/components/AdSenseAd.js';
-import { HomeBannerPost } from '../../shared/components/HomeBannerPost.js';
 import { VsCodeApi } from './vscode-api/VsCodeApi.js';
 import { openExtensionsModal, EXTENSION_ICON } from '../../shared/components/ExtensionsModal.js';
+import { openPopoutPreviewModal } from '../../shared/components/ToolWidget.js';
 
 const BENEFITS = [
   { icon: 'zap', title: 'Works in browser', desc: 'Your files stay on your device' },
@@ -40,7 +40,6 @@ export function render(container) {
     IsoAssetsBlock(),
     PricingStrip(),
     VsCodeApi(),
-    HomeBannerPost(),
     ...(ad ? [ad] : []),
     SupportPanel(),
     CTAPanel()
@@ -89,8 +88,8 @@ function HeroSection(wizardEl) {
     </div>
     <div class="hero-split__actions">
       <a class="btn btn--primary" href="/tools">Explore Tools →</a>
-      <a class="btn btn--secondary" href="/optimise-glb">${iconSvg('package-open')} Optimise a GLB</a>
-            <button type="button" class="btn hero-split__extensions">${EXTENSION_ICON} Web extensions/Browser plugins <span class="hero-split__extensions-tag">New</span></button>
+      <button type="button" class="btn btn--secondary hero-split__popout-preview">${iconSvg('popout')} Popout Widget Preview <span class="hero-split__extensions-tag">New</span></button>
+      <button type="button" class="btn hero-split__extensions">${EXTENSION_ICON} Web extensions/Browser plugins</button>
       <button type="button" class="hero-split__free">Free 3D model ↓</button>
     </div>
     <div class="hero-benefits">
@@ -107,6 +106,7 @@ function HeroSection(wizardEl) {
     </div>
   `;
   content.querySelector('.hero-finder__search').addEventListener('click', () => openCommandPalette());
+  content.querySelector('.hero-split__popout-preview').addEventListener('click', () => openPopoutPreviewModal());
   content.querySelector('.hero-split__extensions').addEventListener('click', () => openExtensionsModal());
   content.querySelector('.hero-split__free').addEventListener('click', () => {
     const form = document.getElementById('free-model');

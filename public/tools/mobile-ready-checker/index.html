@@ -7,7 +7,7 @@
 <meta name="robots" content="noindex, indexifembedded">
 <title>Mobile Ready Checker</title>
 <script>
-  if (window.top === window.self && !window.location.search.includes('standalone=true')) {
+  if (window.top === window.self && !window.location.search.includes('standalone=true') && !window.location.search.includes('widget=1')) {
     const h = window.location.hostname;
     if (h.includes('assetbench') || h.includes('workers.dev') || h === 'localhost' || h === '127.0.0.1') {
       window.location.replace('/mobile-ready-checker');
@@ -155,6 +155,16 @@ td.nm{max-width:12em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ck .st{display:flex;flex-direction:column;align-items:center}
 .ck .ico{width:26px;height:26px;font-size:13px}
 .ck.bad .go{background:var(--silver);color:var(--accent-ink);border-color:transparent;font-weight:700}
+.hero-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.popout-btn{display:inline-flex;align-items:center;gap:7px;font:700 11.5px var(--body);color:var(--warn);background:linear-gradient(180deg,rgba(255,200,97,.16),rgba(255,200,97,.05));border:1px solid rgba(255,200,97,.5);border-radius:999px;padding:8px 14px;cursor:pointer;white-space:nowrap}
+.popout-btn:hover{border-color:var(--warn);background:rgba(255,200,97,.22);color:#fff}
+.popout-btn svg{width:14px;height:14px;flex:none}
+body.is-widget{padding:10px}
+body.is-widget .hero,body.is-widget .howto{display:none}
+body.is-widget .grid{grid-template-columns:1fr;gap:10px}
+body.is-widget .ring{width:92px;height:92px}
+body.is-widget .ring .v b{font-size:28px}
+body.is-widget .vtitle{font-size:20px}
 
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
@@ -166,7 +176,13 @@ td.nm{max-width:12em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
       <h1>Mobile <em>Ready</em> Checker</h1>
       <p class="lede">Drop a GLB and pick where it will run. You get a pass or fail on every budget that matters on phones and headsets, and the AssetBench tool that fixes each problem.</p>
     </div>
-    <span class="pill">Private · your model never leaves this page</span>
+    <div class="hero-actions">
+      <button type="button" class="popout-btn" id="popoutBtn" title="Turn Mobile Ready Checker into a compact desktop widget attached to your browser (closes when homepage closes)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="20" height="15" rx="2"/><rect x="11" y="9" width="9" height="7" rx="1"/><path d="M5 7h4v4"/><path d="m4 12 5-5"/></svg>
+        <span>Pop out widget</span>
+      </button>
+      <span class="pill">Private · your model never leaves this page</span>
+    </div>
   </header>
   <ol class="howto" aria-label="How it works">
     <li><b>1</b><span><strong>Drop your model</strong>GLB or glTF</span></li>
@@ -562,7 +578,25 @@ async function sample(){
 }
 $('sampleBtn').addEventListener('click', sample);
 // Tell the Asset Bench page how tall this tool is (content + body margin), so its frame never scrolls on its own.
-if (window.parent !== window) new ResizeObserver(() => window.parent.postMessage({ type: 'assetbench:height', height: Math.ceil(document.body.getBoundingClientRect().height) + 16 }, '*')).observe(document.body);
+const wParams = new URLSearchParams(window.location.search);
+if (wParams.get('widget') === '1') document.body.classList.add('is-widget');
+else if (window.parent !== window) new ResizeObserver(() => window.parent.postMessage({ type: 'assetbench:height', height: Math.ceil(document.body.getBoundingClientRect().height) + 16 }, '*')).observe(document.body);
+$('popoutBtn')?.addEventListener('click', () => {
+  if (window.parent && window.parent !== window) window.parent.postMessage({ type: 'assetbench:widget-toggle', toolId: 'mobile-ready-checker' }, '*');
+  else document.body.classList.toggle('is-widget');
+});
+if (wParams.get('widget') === '1' || wParams.get('popout') === '1') {
+  let lastPing = Date.now(), hadPing = false;
+  const closeNow = () => { try { window.close(); } catch {} };
+  if (typeof BroadcastChannel === 'function') {
+    const bc = new BroadcastChannel('assetbench:widget');
+    bc.addEventListener('message', ev => {
+      if (ev.data?.type === 'assetbench:homepage-closed') closeNow();
+      else if (ev.data?.type === 'assetbench:homepage-ping') { lastPing = Date.now(); hadPing = true; }
+    });
+  }
+  if (wParams.get('popout') === '1') setInterval(() => { if ((window.opener && window.opener.closed) || (hadPing && Date.now() - lastPing > 3500)) closeNow(); }, 600);
+}
 sample();
 </script>
 

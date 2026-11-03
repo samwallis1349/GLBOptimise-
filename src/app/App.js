@@ -15,6 +15,7 @@ import { initConsentBanner } from '../shared/components/ConsentBanner.js';
 import { initTripoLinks } from '../services/TripoLinks.js';
 import { initUpdateNotice } from '../shared/components/UpdateNotice.js';
 import { initExtensionLaunchModal } from '../shared/components/ExtensionLaunchModal.js';
+import { initToolWidgetListener, isWidgetWindowMode } from '../shared/components/ToolWidget.js';
 import { initAnalytics } from '../services/AnalyticsService.js';
 import { hasAccess, trialEndsAt } from '../shared/config/billing.js';
 import { TOOLS } from '../shared/config/tools.js';
@@ -23,18 +24,28 @@ import { navigate } from './router.js';
 /** Mounts the whole Asset Bench app (header, routed page content, footer) into rootEl. */
 export function App(rootEl) {
   rootEl.innerHTML = '';
-  rootEl.appendChild(Header());
-  rootEl.appendChild(ShareBanner());
+  const widgetWindow = isWidgetWindowMode();
+  if (!widgetWindow) {
+    rootEl.appendChild(Header());
+    rootEl.appendChild(ShareBanner());
+  }
 
   const main = document.createElement('main');
   main.id = 'page-root';
   rootEl.appendChild(main);
 
-  rootEl.appendChild(Footer());
+  if (!widgetWindow) {
+    rootEl.appendChild(Footer());
+  }
 
   setRouteContainer(main);
   registerRoutes(routes, { notFound });
   startRouter();
+
+  if (widgetWindow) {
+    initTripoLinks();
+    return;
+  }
 
   // Privacy choices: the notice explains default-on analytics and the simple
   // opt-out; AnalyticsService respects any saved opt-out.
@@ -65,6 +76,9 @@ export function App(rootEl) {
 
   // GLB Inspector extension popup (takes over from the MCP one): once per visitor, 14-day cooldown.
   initExtensionLaunchModal();
+
+  // Desktop widget popout controller — attaches compact tool widget to browser and closes popup when homepage closes.
+  initToolWidgetListener();
 
   // The banner and Bench Bot both quote days left, so they wait for the
   // trial clock. initTrial() never rejects — it falls back to local time.

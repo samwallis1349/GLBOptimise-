@@ -3,6 +3,7 @@ import { iconSvg } from '../utils/icons.js';
 import { toolClip } from '../config/toolClips.js';
 import { getToolDimension } from '../config/tools.js';
 import { accentTitle, dimensionTag, escapeHtml, featureChips } from './ToolCard.js';
+import { isToolWidgetOpen, onToolWidgetChange, openToolWidget } from './ToolWidget.js';
 
 const canHover = typeof matchMedia === 'function' && matchMedia('(hover: hover) and (pointer: fine)').matches;
 const reduceMotion = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -60,9 +61,32 @@ export function BentoCard(tool) {
       </div>
       ${featureChips(tool)}
       <p class="bento-card__description" title="${escapeHtml(tool.description).replace(/"/g, '&quot;')}">${escapeHtml(tool.description)}</p>
-      <div class="bento-card__footer">${cta}</div>
+      <div class="bento-card__footer">
+        ${cta}
+        ${
+          isAvailable
+            ? `<button type="button" class="bento-card__popout" title="Pop out ${escapeHtml(tool.name)} as a resizable external desktop widget (closes when webpage is left)" aria-pressed="${isToolWidgetOpen(tool.id)}">${iconSvg('popout', { class: 'bento-card__popout-icon' })}<span>${isToolWidgetOpen(tool.id) ? 'Active' : 'Pop out'}</span></button>`
+            : ''
+        }
+      </div>
     </div>
   `;
+
+  const popoutBtn = card.querySelector('.bento-card__popout');
+  if (popoutBtn) {
+    popoutBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      openToolWidget(tool, { detach: true });
+    });
+    onToolWidgetChange(({ open, tool: active }) => {
+      if (!card.isConnected) return;
+      const isThisOpen = open && active?.id === tool.id;
+      popoutBtn.setAttribute('aria-pressed', String(isThisOpen));
+      const span = popoutBtn.querySelector('span');
+      if (span) span.textContent = isThisOpen ? 'Active' : 'Pop out';
+    });
+  }
 
   card.querySelector('.bento-card__badges').appendChild(StatusBadge(tool.status));
   if (clip && canHover && !reduceMotion) playOnHover(card, clip.src);

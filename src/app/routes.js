@@ -13,6 +13,7 @@ import { ToolNextSteps } from '../shared/components/ToolNextSteps.js';
 import { ToolClip } from '../shared/components/ToolClip.js';
 import { AdSenseAd } from '../shared/components/AdSenseAd.js';
 import { AdvertCard, toolAdvertName } from '../shared/components/AdvertCard.js';
+import { isWidgetWindowMode, ToolWidgetBar, WidgetWindowChrome } from '../shared/components/ToolWidget.js';
 import { initTrial } from '../services/TrialService.js';
 import { recordToolOpen } from '../services/UsageService.js';
 import { pageSeo } from '../shared/config/seo.js';
@@ -47,10 +48,21 @@ async function mountTool(tool, container, params) {
   // No model to hand? Load the free Colossus into the tool (3D tools only).
   const sample = SampleModel(tool, container);
   if (sample) container.prepend(sample);
+  if (isWidgetWindowMode()) {
+    const isEmbeddedFrame = new URLSearchParams(location.search).get('embedded') === '1';
+    if (!isEmbeddedFrame) container.prepend(WidgetWindowChrome(tool));
+    else {
+      document.body.classList.add('is-tool-widget', 'is-embedded-tool-widget');
+      document.body.dataset.wsize = new URLSearchParams(location.search).get('wsize') || 'm';
+    }
+    return result;
+  }
   const offer = ToolOffer(tool);
   if (offer) container.prepend(offer);
   const extension = ExtensionBar(tool);
   if (extension) container.prepend(extension);
+  const widgetBar = ToolWidgetBar(tool);
+  if (widgetBar) container.prepend(widgetBar);
   // Need a model? Tripo (affiliate) on the 3D tools, straight under the tool.
   const tripo = TripoCard(tool);
   if (tripo) container.append(tripo);

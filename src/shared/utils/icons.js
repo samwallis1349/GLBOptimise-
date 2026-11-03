@@ -39,6 +39,7 @@ const ICONS = {
   shield: '<path d="M12 2 4 5v6c0 5 3.5 8.7 8 11 4.5-2.3 8-6 8-11V5l-8-3Z"/>',
   gamepad: '<rect x="2" y="7" width="20" height="10" rx="3"/><path d="M7 12h.01M17 12h.01M10 10v4M14 10v4"/>',
   grid: '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>',
+  popout: '<rect x="2" y="3" width="20" height="15" rx="2"/><rect x="11" y="9" width="9" height="7" rx="1"/><path d="M5 7h4v4"/><path d="m4 12 5-5"/>',
 };
 
 const DEFAULT_ICON = ICONS.grid;

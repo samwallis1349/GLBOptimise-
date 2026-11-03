@@ -6,7 +6,7 @@
 <!-- Embedded at /line-studio: index its content as part of that page, not as a page of its own. -->
 <meta name="robots" content="noindex, indexifembedded">
 <script>
-  if (window.top === window.self && !window.location.search.includes('standalone=true')) {
+  if (window.top === window.self && !window.location.search.includes('standalone=true') && !window.location.search.includes('widget=1')) {
     const h = window.location.hostname;
     if (h.includes('assetbench') || h.includes('workers.dev') || h === 'localhost' || h === '127.0.0.1') {
       window.location.replace('/line-studio');
@@ -134,17 +134,107 @@ input[type=text]{font:500 12px var(--body);color:var(--text);background:var(--fi
 .status{font-size:11.5px;color:var(--muted);background:var(--field);border:1px solid var(--line);border-radius:7px;padding:10px 12px;min-height:38px}
 .status.ok{color:var(--ok)}.status.err{color:var(--err)}
 button:focus-visible,input:focus-visible,.drop:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+/* Popout button & Compact Desktop Widget mode */
+.hero-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.popout-btn{display:inline-flex;align-items:center;gap:7px;font:700 11.5px var(--body);color:var(--gold);background:linear-gradient(180deg,rgba(255,200,97,.16),rgba(255,200,97,.05));border:1px solid var(--gold-line);border-radius:999px;padding:8px 14px;cursor:pointer;white-space:nowrap;box-shadow:0 0 18px rgba(255,179,64,.14)}
+.popout-btn:hover{border-color:var(--gold);background:rgba(255,200,97,.22);color:#fff}
+.popout-btn svg{width:14px;height:14px;flex:none}
+.widget-chrome{display:none;flex-wrap:nowrap;align-items:center;justify-content:space-between;gap:6px;padding:4px 8px;min-height:30px;background:linear-gradient(180deg,#181b22,#101217);border:1px solid rgba(255,200,97,.35);border-radius:8px}
+.widget-chrome__id{display:flex;align-items:center;gap:6px;min-width:0;flex:1 1 auto}
+.widget-chrome__logo{width:17px;height:17px;border-radius:4px;flex:none;display:block}
+.widget-chrome__brand{font:800 10.5px var(--display);color:var(--gold);letter-spacing:.03em;white-space:nowrap}
+.widget-chrome__sep{color:var(--dim);font-size:11px}
+.widget-chrome__title{font:700 11.5px var(--display);color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.widget-chrome__dims{font:600 9px var(--mono);color:var(--accent);background:rgba(74,148,255,.14);border:1px solid rgba(74,148,255,.35);border-radius:999px;padding:1px 5px;flex:none}
+.widget-chrome__actions{display:flex;align-items:center;gap:4px;flex:none}
+.widget-sizes{display:inline-flex;align-items:center;gap:1px;padding:2px;background:var(--field);border:1px solid var(--line);border-radius:6px}
+.widget-sizes button{font:800 9.5px var(--body);color:var(--muted);background:transparent;border:0;border-radius:4px;padding:2px 5px;cursor:pointer;min-width:19px}
+.widget-sizes button:hover{color:#fff}
+.widget-sizes button[aria-pressed="true"]{background:var(--gold);color:#1a1206}
+.widget-chrome__btn{font:700 10px var(--body);color:var(--text);background:var(--field);border:1px solid var(--line);border-radius:6px;padding:3px 6px;cursor:pointer}
+.widget-chrome__btn:hover{border-color:var(--accent);color:#fff}
+.widget-resize-grip{display:none;position:fixed;right:3px;bottom:3px;width:18px;height:18px;cursor:nwse-resize;z-index:50;background:linear-gradient(135deg,transparent 45%,rgba(255,200,97,.65) 45%,rgba(255,200,97,.65) 55%,transparent 55%,transparent 70%,rgba(255,200,97,.95) 70%)}
+body.is-widget:not(.is-embedded-widget) .widget-resize-grip{display:block}
+body.is-widget[data-wsize="s"] .wrap{max-width:340px}
+body.is-widget[data-wsize="s"] .stage{max-height:112px}
+body.is-widget[data-wsize="m"] .wrap{max-width:440px}
+body.is-widget[data-wsize="l"] .wrap{max-width:600px}
+body.is-widget[data-wsize="l"] .stage{max-height:220px}
+body.is-widget[data-wsize="xl"] .wrap{max-width:860px}
+body.is-widget[data-wsize="xl"] .grid{display:grid;grid-template-columns:minmax(0,.95fr) minmax(0,1.15fr);gap:12px;align-items:start}
+body.is-widget[data-wsize="xl"] .col.out{order:1;position:sticky;top:10px}
+body.is-widget[data-wsize="xl"] .stage{max-height:280px}
+.widget-tabs{display:none;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;background:var(--panel);border:1px solid var(--line-cool);border-radius:10px;padding:5px}
+.widget-tabs button{font:700 11px var(--body);color:var(--muted);background:transparent;border:1px solid transparent;border-radius:7px;padding:7px 4px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.widget-tabs button[aria-selected="true"]{background:linear-gradient(180deg,#122A4A,#0D1A2D);color:var(--accent);border-color:var(--accent)}
+body.is-widget{padding:10px 10px 14px;background:#08090c}
+body.is-widget:not(.is-embedded-widget) .widget-chrome{display:flex}
+body.is-widget .wrap{max-width:440px;gap:10px}
+body.is-widget .hero{display:none}
+body.is-widget .grid{display:flex;flex-direction:column;gap:10px}
+body.is-widget .col.out{order:-1;position:static}
+body.is-widget .col{gap:10px}
+body.is-widget .widget-tabs{display:grid}
+body.is-widget .card-h{padding:10px 12px}
+body.is-widget .card-h p{display:none}
+body.is-widget .card-b{padding:11px 12px;gap:10px}
+body.is-widget .drop{padding:10px 12px;gap:10px}
+body.is-widget .plus{width:32px;height:32px;font-size:18px}
+body.is-widget .stage{aspect-ratio:16/10;max-height:200px}
+body.is-widget .stats{grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}
+body.is-widget .stats div{padding:6px 7px}
+body.is-widget .stats dd{font-size:11px}
+body.is-widget .btns{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+body.is-widget .btn{padding:9px 6px;font-size:11.5px}
+body.is-widget .status{padding:7px 10px;min-height:0;font-size:10.5px}
+body.is-widget [data-wcard]{display:none}
+body.is-widget [data-wcard].is-wtab-active{display:block}
+body.is-widget .out .field{display:none}
+body.is-widget[data-wtab="bg"] .out .field{display:flex}
+body.is-widget .out .card-h,body.is-widget .srcinfo,body.is-widget .hint,body.is-widget .tip{display:none}
+body.is-widget .stage{aspect-ratio:16/9;max-height:142px}
+body.is-widget .drop{padding:6px 10px;gap:8px}
+body.is-widget .plus{width:24px;height:24px;font-size:15px}
+body.is-widget .card-h{padding:6px 10px}
+body.is-widget .card-b{padding:8px 10px;gap:7px}
+body.is-widget .btn{padding:7px 5px;font-size:11px}
+body.is-widget .status{padding:5px 8px;font-size:10px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 
 <div class="wrap">
+  <div class="widget-chrome" id="widgetChrome">
+    <div class="widget-chrome__id">
+      <img class="widget-chrome__logo" src="/branding/asset-bench-logo.png" width="17" height="17" alt="Asset Bench">
+      <span class="widget-chrome__brand">Asset Bench</span>
+      <span class="widget-chrome__sep" aria-hidden="true">·</span>
+      <span class="widget-chrome__title">Line Studio</span>
+      <span class="widget-chrome__dims" id="widgetDims">430×650</span>
+    </div>
+    <div class="widget-chrome__actions">
+      <div class="widget-sizes" id="widgetSizes" role="group" aria-label="Resize widget window">
+        <button type="button" data-wsize="s" title="Compact (360×520)" aria-pressed="false">S</button>
+        <button type="button" data-wsize="m" title="Standard (430×650)" aria-pressed="true">M</button>
+        <button type="button" data-wsize="l" title="Wide (620×760)" aria-pressed="false">L</button>
+        <button type="button" data-wsize="xl" title="Split 2-Column (880×780)" aria-pressed="false">XL</button>
+      </div>
+      <button type="button" class="widget-chrome__btn" id="widgetExpandBtn" title="Return to full tool view">⤢</button>
+    </div>
+  </div>
+  <div class="widget-resize-grip" id="widgetResizeGrip" title="Drag to resize window"></div>
   <header class="hero">
     <div>
       <p class="eyebrow">Line art cleanup</p>
       <h1>Line <em>Studio</em></h1>
       <p class="lede">Cleans up fine line art, like colouring book pages. Drop in a scan or drawing and rough, broken lines are redrawn smooth, at the weight you choose. You can join small gaps, keep solid black areas and lettering as drawn, remove the white background, and export a transparent PNG or a scalable SVG.</p>
     </div>
-    <span class="pill">Private · browser-only processing</span>
+    <div class="hero-actions">
+      <button type="button" class="popout-btn" id="popoutBtn" title="Turn Line Studio into a compact desktop widget attached to your browser (closes when homepage closes)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="20" height="15" rx="2"/><rect x="11" y="9" width="9" height="7" rx="1"/><path d="M5 7h4v4"/><path d="m4 12 5-5"/></svg>
+        <span>Pop out widget</span>
+      </button>
+      <span class="pill">Private · browser-only processing</span>
+    </div>
   </header>
 
   <div class="grid">
@@ -158,7 +248,14 @@ button:focus-visible,input:focus-visible,.drop:focus-visible{outline:2px solid v
         </div>
       </section>
 
-      <section class="card">
+      <div class="widget-tabs" id="widgetTabs" role="tablist" aria-label="Widget controls">
+        <button type="button" role="tab" data-wtab="clean" aria-selected="true">Clean lines</button>
+        <button type="button" role="tab" data-wtab="white" aria-selected="false">Remove white</button>
+        <button type="button" role="tab" data-wtab="svg" aria-selected="false">SVG trace</button>
+        <button type="button" role="tab" data-wtab="bg" aria-selected="false">Bg &amp; file</button>
+      </div>
+
+      <section class="card" data-wcard="white">
         <div class="card-h"><span class="num">02</span><div><h2>Remove white</h2><p>How close to white a pixel must be to disappear</p></div></div>
         <div class="card-b">
           <div class="sliders">
@@ -170,7 +267,7 @@ button:focus-visible,input:focus-visible,.drop:focus-visible{outline:2px solid v
         </div>
       </section>
 
-      <section class="card">
+      <section class="card is-wtab-active" data-wcard="clean">
         <div class="card-h"><span class="num">03</span><div><p class="eyebrow" style="margin:0 0 3px;font-size:9px">Line enhancement</p><h2>Colouring Page – Image Cleaner</h2><p>Every line redrawn clean, at a thickness you choose</p></div><span class="sp"></span><span class="tag" id="inkTag">Off</span></div>
         <div class="card-b">
           <div class="seg seg3" id="inkMode">
@@ -196,7 +293,7 @@ button:focus-visible,input:focus-visible,.drop:focus-visible{outline:2px solid v
         </div>
       </section>
 
-      <section class="card">
+      <section class="card" data-wcard="svg">
         <div class="card-h"><span class="num">04</span><div><h2>SVG</h2><p>Traced shapes, or the cut-out image wrapped in an SVG</p></div></div>
         <div class="card-b">
           <div class="seg" id="svgMode">
@@ -629,6 +726,204 @@ function sample2(){
 }
 $('sample2Btn').addEventListener('click', sample2);
 sample2();
+
+// ---------- Compact Desktop Widget, Window Resizing & Leave-Page Close Binding ----------
+const params = new URLSearchParams(window.location.search);
+const isWidgetParam = params.get('widget') === '1';
+const isEmbeddedWidget = params.get('embedded') === '1';
+const isPopoutWin = params.get('popout') === '1';
+const initialWSize = params.get('wsize') || 'm';
+
+const SIZE_PRESETS = {
+  s: { w: 360, h: 520 },
+  m: { w: 430, h: 650 },
+  l: { w: 620, h: 760 },
+  xl: { w: 880, h: 780 },
+};
+
+function updateDimsReadout(w, h) {
+  const el = $('widgetDims');
+  if (el) el.textContent = `${Math.round(w)}×${Math.round(h)}`;
+}
+
+function applyWidgetSize(sizeKey, resizeOSWindow = true) {
+  const preset = SIZE_PRESETS[sizeKey] || SIZE_PRESETS.m;
+  document.body.dataset.wsize = sizeKey;
+  $('widgetSizes')?.querySelectorAll('button[data-wsize]').forEach(b => {
+    b.setAttribute('aria-pressed', String(b.dataset.wsize === sizeKey));
+  });
+  updateDimsReadout(preset.w, preset.h);
+  if (resizeOSWindow) {
+    try { window.resizeTo(preset.w, preset.h); } catch {}
+    if (window.parent && window.parent !== window) {
+      window.parent.postMessage({ type: 'assetbench:widget-resize', size: sizeKey, width: preset.w, height: preset.h }, '*');
+    }
+    if (typeof BroadcastChannel === 'function') {
+      try { new BroadcastChannel('assetbench:widget').postMessage({ type: 'assetbench:widget-resize-preset', size: sizeKey }); } catch {}
+    }
+  }
+  setTimeout(renderMarks, 50);
+}
+
+$('widgetSizes')?.addEventListener('click', e => {
+  const b = e.target.closest('button[data-wsize]');
+  if (b) applyWidgetSize(b.dataset.wsize, true);
+});
+
+window.addEventListener('resize', () => {
+  if (!document.body.classList.contains('is-widget')) return;
+  const w = window.outerWidth || window.innerWidth;
+  const h = window.outerHeight || window.innerHeight;
+  updateDimsReadout(w, h);
+  if (window.innerWidth >= 740 && document.body.dataset.wsize !== 'xl') {
+    document.body.dataset.wsize = 'xl';
+  }
+});
+
+window.addEventListener('message', e => {
+  if (e.data?.type === 'assetbench:widget-set-size') {
+    if (e.data.size) applyWidgetSize(e.data.size, false);
+    else if (e.data.width && e.data.height) updateDimsReadout(e.data.width, e.data.height);
+  }
+});
+
+// Corner drag-to-resize inside standalone widget
+let wGripDrag = null;
+$('widgetResizeGrip')?.addEventListener('pointerdown', e => {
+  e.preventDefault();
+  $('widgetResizeGrip').setPointerCapture(e.pointerId);
+  wGripDrag = {
+    sx: e.screenX,
+    sy: e.screenY,
+    sw: window.outerWidth || window.innerWidth,
+    sh: window.outerHeight || window.innerHeight,
+  };
+});
+$('widgetResizeGrip')?.addEventListener('pointermove', e => {
+  if (!wGripDrag) return;
+  const nw = Math.max(330, Math.min(1200, wGripDrag.sw + (e.screenX - wGripDrag.sx)));
+  const nh = Math.max(440, Math.min(1000, wGripDrag.sh + (e.screenY - wGripDrag.sy)));
+  updateDimsReadout(nw, nh);
+  try { window.resizeTo(nw, nh); } catch {}
+  if (window.parent && window.parent !== window) {
+    window.parent.postMessage({ type: 'assetbench:widget-resize', width: nw, height: nh }, '*');
+  }
+});
+$('widgetResizeGrip')?.addEventListener('pointerup', () => { wGripDrag = null; });
+$('widgetResizeGrip')?.addEventListener('pointercancel', () => { wGripDrag = null; });
+
+function setWidgetTab(tab) {
+  document.body.dataset.wtab = tab;
+  $('widgetTabs').querySelectorAll('button').forEach(b => {
+    b.setAttribute('aria-selected', String(b.dataset.wtab === tab));
+  });
+  document.querySelectorAll('[data-wcard]').forEach(sec => {
+    sec.classList.toggle('is-wtab-active', sec.dataset.wcard === tab);
+  });
+}
+
+$('widgetTabs').addEventListener('click', e => {
+  const b = e.target.closest('button[data-wtab]');
+  if (b) setWidgetTab(b.dataset.wtab);
+});
+
+function enableWidgetMode(on) {
+  document.body.classList.toggle('is-widget', on);
+  if (isEmbeddedWidget) document.body.classList.add('is-embedded-widget');
+  if (on) {
+    if (!document.body.dataset.wtab) setWidgetTab('clean');
+    applyWidgetSize(initialWSize, false);
+  }
+  setTimeout(renderMarks, 40);
+}
+
+if (isWidgetParam) enableWidgetMode(true);
+
+$('popoutBtn')?.addEventListener('click', () => {
+  if (window.parent && window.parent !== window) {
+    window.parent.postMessage({ type: 'assetbench:widget-toggle', toolId: 'line-studio', detach: true }, '*');
+  } else {
+    const preset = SIZE_PRESETS.m;
+    const left = Math.max(20, (window.screen?.availWidth || 1280) - preset.w - 36);
+    const top = Math.max(40, ((window.screen?.availHeight || 800) - preset.h) / 2);
+    const win = window.open(
+      '/tools/line-studio/index.html?standalone=true&widget=1&popout=1&wsize=m',
+      'assetbench_widget_line-studio',
+      `popup=yes,width=${preset.w},height=${preset.h},left=${Math.round(left)},top=${Math.round(top)},menubar=no,toolbar=no,location=no,status=no,resizable=yes,scrollbars=yes`
+    );
+    if (!win) enableWidgetMode(true);
+  }
+});
+
+$('widgetExpandBtn')?.addEventListener('click', () => {
+  if (isPopoutWin && typeof BroadcastChannel === 'function') {
+    const bc = new BroadcastChannel('assetbench:widget');
+    bc.postMessage({ type: 'assetbench:widget-dock-back', route: '/line-studio' });
+    window.close();
+    return;
+  }
+  if (window.parent && window.parent !== window) {
+    window.parent.postMessage({ type: 'assetbench:widget-expand', toolId: 'line-studio' }, '*');
+  } else {
+    enableWidgetMode(false);
+  }
+});
+
+// Close widget automatically when the webpage is left or closed
+if (isWidgetParam || isPopoutWin) {
+  let lastPing = Date.now();
+  let hadPing = false;
+  let openerStartPath = null;
+  try {
+    if (window.opener && !window.opener.closed) {
+      openerStartPath = window.opener.location.pathname;
+    }
+  } catch {}
+  const closeWidgetNow = () => {
+    try { window.close(); } catch {}
+    if (!window.closed && isPopoutWin) {
+      document.body.innerHTML = '<div style="display:grid;place-items:center;height:100vh;text-align:center;padding:24px;color:#8c8a86;font:600 13px Inter,sans-serif"><div><strong style="color:#f3efe6;display:block;font-size:15px;margin-bottom:6px">Webpage left — Widget closed</strong>This external desktop widget automatically closes when the Asset Bench webpage is left.</div></div>';
+    }
+  };
+  if (typeof BroadcastChannel === 'function') {
+    const bc = new BroadcastChannel('assetbench:widget');
+    bc.addEventListener('message', ev => {
+      if (ev.data?.type === 'assetbench:homepage-closed') closeWidgetNow();
+      else if (ev.data?.type === 'assetbench:homepage-ping') {
+        lastPing = Date.now();
+        hadPing = true;
+      } else if (ev.data?.type === 'assetbench:widget-set-size' && ev.data.size) {
+        applyWidgetSize(ev.data.size, false);
+      }
+    });
+    window.addEventListener('pagehide', () => {
+      try { bc.postMessage({ type: 'assetbench:widget-closed', toolId: 'line-studio' }); } catch {}
+    });
+  }
+  if (isPopoutWin) {
+    const inPiPFrame = window.parent && window.parent !== window;
+    setInterval(() => {
+      if (window.opener && window.opener.closed) {
+        closeWidgetNow();
+        return;
+      }
+      if (!inPiPFrame && window.opener) {
+        try {
+          if (openerStartPath && window.opener.location.pathname !== openerStartPath) {
+            closeWidgetNow();
+            return;
+          }
+        } catch {
+          closeWidgetNow();
+          return;
+        }
+      }
+      if (hadPing && Date.now() - lastPing > 1200) {
+        closeWidgetNow();
+      }
+    }, 300);
+  }
+}
 })();
 </script>
 

@@ -2,6 +2,7 @@ import { getCategoryById, getToolDimension } from '../config/tools.js';
 import { toolClip } from '../config/toolClips.js';
 import { iconSvg } from '../utils/icons.js';
 import { accentTitle, dimensionTag, escapeHtml, featureChips } from './ToolCard.js';
+import { isToolWidgetOpen, onToolWidgetChange, openPopoutPreviewModal, openToolWidget, resizeToolWidget, WIDGET_SIZES } from './ToolWidget.js';
 
 const reduceMotion = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -43,9 +44,69 @@ export function WinnerCard(tool, { badge = 'Most used tool' } = {}) {
       <h3 class="winner-card__title"><a href="${tool.route}">${accentTitle(tool.name)}</a></h3>
       <p class="winner-card__description">${escapeHtml(tool.description)}</p>
       ${featureChips(tool)}
-      <a class="btn btn--primary winner-card__cta" href="${tool.route}">Open ${escapeHtml(tool.name)}<span aria-hidden="true">→</span></a>
+      <div class="winner-card__actions">
+        <a class="btn btn--primary winner-card__cta" href="${tool.route}">Open ${escapeHtml(tool.name)}<span aria-hidden="true">→</span></a>
+        <div class="winner-card__widget-group">
+          <button type="button" class="btn btn--secondary winner-card__popout" title="Pop out ${escapeHtml(tool.name)} as a resizable desktop widget outside the browser (closes when webpage is left)" aria-pressed="${isToolWidgetOpen(tool.id)}">
+            ${iconSvg('popout', { class: 'winner-card__popout-icon' })}
+            <span class="winner-card__popout-label">${isToolWidgetOpen(tool.id) ? 'Widget active' : 'Pop out widget'}</span>
+          </button>
+          <div class="winner-card__sizes" role="group" aria-label="Widget window size">
+            ${Object.values(WIDGET_SIZES)
+              .map(
+                (s) =>
+                  `<button type="button" class="winner-card__size-btn" data-wsize="${s.id}" title="Resize widget window: ${s.title}" aria-pressed="${s.id === 'm'}">${s.label}</button>`,
+              )
+              .join('')}
+          </div>
+          <button type="button" class="btn btn--secondary winner-card__preview-popout" title="Open interactive Popout Widget Preview popup">Preview</button>
+        </div>
+      </div>
     </div>
   `;
+
+  let selectedSize = 'm';
+  const popoutBtn = card.querySelector('.winner-card__popout');
+  const popoutLabel = card.querySelector('.winner-card__popout-label');
+  popoutBtn?.addEventListener('click', (e) => {
+    e.preventDefault();
+    openToolWidget(tool, { detach: true, size: selectedSize });
+  });
+  card.querySelector('.winner-card__preview-popout')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    openPopoutPreviewModal(tool.id);
+  });
+
+  card.querySelectorAll('.winner-card__size-btn').forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      selectedSize = btn.dataset.wsize || 'm';
+      card.querySelectorAll('.winner-card__size-btn').forEach((b) => {
+        b.setAttribute('aria-pressed', String(b.dataset.wsize === selectedSize));
+      });
+      if (isToolWidgetOpen(tool.id)) {
+        resizeToolWidget(selectedSize);
+      } else {
+        openToolWidget(tool, { detach: true, size: selectedSize });
+      }
+    });
+  });
+
+  const syncWidgetState = ({ open, tool: active, detached, size }) => {
+    if (!card.isConnected) return;
+    const isThisOpen = open && active?.id === tool.id;
+    popoutBtn?.setAttribute('aria-pressed', String(isThisOpen));
+    if (popoutLabel) {
+      popoutLabel.textContent = isThisOpen ? (detached ? 'External widget active' : 'Widget active') : 'Pop out widget';
+    }
+    if (size) {
+      selectedSize = size;
+      card.querySelectorAll('.winner-card__size-btn').forEach((b) => {
+        b.setAttribute('aria-pressed', String(b.dataset.wsize === size));
+      });
+    }
+  };
+  onToolWidgetChange(syncWidgetState);
 
   const video = card.querySelector('video');
   if (video && !reduceMotion && typeof IntersectionObserver === 'function') {

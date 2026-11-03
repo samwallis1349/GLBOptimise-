@@ -156,3 +156,64 @@
 .colossus-hero__download .colossus-hero__download-note {
   flex-basis: 100%;
 }
+
+.colossus-hero__anims {
+  position: absolute;
+  z-index: 3;
+  left: 50%;
+  bottom: 12px;
+  transform: translateX(-50%);
+  display: inline-flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 4px 6px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 189, 67, 0.38);
+  background: rgba(12, 14, 18, 0.82);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55);
+  max-width: calc(100% - 16px);
+}
+
+.colossus-hero__anims[hidden] {
+  display: none;
+}
+
+.colossus-hero__anim-btn {
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: #d3c8ad;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease;
+}
+
+.colossus-hero__anim-btn:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.colossus-hero__anim-btn[aria-pressed='true'] {
+  background: linear-gradient(180deg, #ffd58a, #ffb547);
+  color: #161106;
+  border-color: rgba(255, 213, 138, 0.85);
+}
+
+.colossus-hero__anim-btn--cycle {
+  border-color: rgba(74, 148, 255, 0.4);
+  color: #8ec0ff;
+}
+
+.colossus-hero__anim-btn--cycle[aria-pressed='true'] {
+  background: rgba(74, 148, 255, 0.22);
+  border-color: #4a94ff;
+  color: #e6f1ff;
+}
