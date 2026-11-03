@@ -576,6 +576,8 @@ async function handleBanner(request, env) {
     const VALID_STYLES = new Set([
       'classic',
       'full-card',
+      'full-card-fit',
+      'full-card-btn',
       'full-card-plus',
       'neon-cyber',
       'cinema-backdrop',
@@ -594,9 +596,9 @@ async function handleBanner(request, env) {
     const rawStyle = String(body?.style || body?.template || 'classic').trim().toLowerCase();
     const record = {
       name: cleanName,
-      title: String(body?.title ?? 'Featured Announcement').trim().slice(0, 200),
+      title: String(body?.title ?? '').trim().slice(0, 200),
       text: String(body?.text || body?.description || '').trim().slice(0, 1000),
-      badge: String(body?.badge ?? 'UPDATE').trim().slice(0, 40),
+      badge: String(body?.badge ?? '').trim().slice(0, 40),
       style: VALID_STYLES.has(rawStyle) ? rawStyle : 'classic',
       mediaUrl,
       mediaType,

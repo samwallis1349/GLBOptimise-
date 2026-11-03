@@ -1250,10 +1250,12 @@
   color: #09090b;
 }
 
-/* ---------- Full-Card Upload, Slightly-Bigger Image & Image-in-Middle Templates ---------- */
+/* ---------- 3-Tools Full-Width Image Upload, Bigger Image & Image-in-Middle Templates (STRICT fixed card size: 1180×200 / 1132×126) ---------- */
 
-/* 0A. Full Card Upload (same size as card is now: 1180×200 Homepage / 1132×126 Tool page) */
+/* 0A, 0B, 0C, 0D. 3-Tools Full-Width Image/Video (spans entire 1180×200 / 1132×126 ad card, never changes card size) */
 .bento-post--full-card,
+.bento-post--full-card-fit,
+.bento-post--full-card-btn,
 .bento-post--full-card-plus {
   grid-template-columns: minmax(0, 1fr);
   padding: 0;
@@ -1262,12 +1264,9 @@
   background: #0a0a0d;
 }
 
-/* 0B. Full Card +12% Slightly Bigger (224px Homepage / 142px Tool page — slightly bigger, not by much) */
-.bento-post--full-card-plus {
-  height: calc(var(--post-h) + 24px);
-}
-
 .bento-post--full-card .bento-post__media,
+.bento-post--full-card-fit .bento-post__media,
+.bento-post--full-card-btn .bento-post__media,
 .bento-post--full-card-plus .bento-post__media {
   position: absolute;
   inset: 0;
@@ -1277,25 +1276,44 @@
   aspect-ratio: auto;
   object-fit: cover;
   border-radius: 0;
-  z-index: 0;
+  z-index: 1;
 }
 
-.bento-post--full-card .bento-post__body,
+.bento-post--full-card-fit .bento-post__media {
+  object-fit: contain;
+}
+
+.bento-post__full-hit {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: block;
+}
+
+.bento-post--full-card-btn .bento-post__body--btn-only {
+  position: relative;
+  z-index: 2;
+  justify-self: end;
+  align-self: end;
+  margin: 0 14px 12px 0;
+  padding: 0;
+}
+
 .bento-post--full-card-plus .bento-post__body {
   position: relative;
-  z-index: 1;
+  z-index: 2;
   justify-self: end;
   align-self: center;
   margin-right: 16px;
   padding: 10px 16px;
-  max-width: min(460px, 50%);
+  max-width: min(440px, 48%);
   border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.18);
   background: rgba(10, 10, 14, 0.82);
   backdrop-filter: blur(10px);
 }
 
-/* 1. Card-Height Image Left (356×200 — flush 100% height of the card as it is now, +12% bigger than 320×180) */
+/* 1. Card-Height Image Left (356×200 inside fixed 1180×200 card) */
 .bento-post--jumbo-left {
   grid-template-columns: auto minmax(0, 1fr);
   padding: 0;
@@ -1319,9 +1337,8 @@
   padding: 12px 22px;
 }
 
-/* 2. Slightly Bigger Image Right (+10% height: 392×220 Homepage / 249×140 Tool page — slightly bigger, not by much) */
+/* 2. Card-Height Image Right (356×200 on right inside fixed 1180×200 card) */
 .bento-post--jumbo-right {
-  height: calc(var(--post-h) + 20px);
   grid-template-columns: minmax(0, 1fr) auto;
   padding: 0;
   gap: 0;
@@ -1333,8 +1350,8 @@
 
 .bento-post--jumbo-right .bento-post__media {
   order: 2;
-  height: calc(var(--post-h) + 20px);
-  width: calc((var(--post-h) + 20px) * 16 / 9);
+  height: var(--post-h);
+  width: calc(var(--post-h) * 16 / 9);
   max-width: 46vw;
   aspect-ratio: 16 / 9;
   border-radius: 0;
@@ -1356,9 +1373,8 @@
   color: #ffffff;
 }
 
-/* 3. Slightly Bigger Image Left (+10% height: 392×220 Homepage / 249×140 Tool page with soft fade) */
+/* 3. Wide Image Left with Soft Fade (inside fixed 1180×200 card) */
 .bento-post--panoramic-bleed {
-  height: calc(var(--post-h) + 20px);
   grid-template-columns: auto minmax(0, 1fr);
   padding: 0;
   gap: 0;
@@ -1369,8 +1385,8 @@
 }
 
 .bento-post--panoramic-bleed .bento-post__media {
-  height: calc(var(--post-h) + 20px);
-  width: calc((var(--post-h) + 20px) * 16 / 9 + 24px);
+  height: var(--post-h);
+  width: calc(var(--post-h) * 16 / 9 + 40px);
   max-width: 48vw;
   aspect-ratio: auto;
   border-radius: 0;
@@ -1392,7 +1408,7 @@
   color: #04131a;
 }
 
-/* 4, 5, 6. Shared 3-Column "Image in Middle" Grid Mechanics (Headline Left · Center Image · Copy + CTA Right) */
+/* 4, 5, 6. Shared 3-Column "Image in Middle" Grid Mechanics (strictly inside fixed 1180×200 / 1132×126 card) */
 .bento-post--center-stage,
 .bento-post--center-cinema,
 .bento-post--center-neon {
@@ -1463,7 +1479,7 @@
   margin-top: 4px;
 }
 
-/* 4. Image in Middle · Gold Stage (Same card height 200px, image 338×190) */
+/* 4. Image in Middle · Gold Stage */
 .bento-post--center-stage {
   border-color: rgba(255, 198, 92, 0.5);
   background:
@@ -1476,17 +1492,16 @@
   box-shadow: 0 8px 26px rgba(0, 0, 0, 0.6), 0 0 20px rgba(255, 181, 71, 0.22);
 }
 
-/* 5. Image in Middle · Slightly Bigger Cinema (+10% height: 220px card, 392×220 center image) */
+/* 5. Image in Middle · Full-Height Cinema Slant (inside fixed 1180×200 card) */
 .bento-post--center-cinema {
-  height: calc(var(--post-h) + 20px);
   padding: 0 22px;
   border-color: rgba(255, 255, 255, 0.26);
   background: linear-gradient(90deg, rgba(9, 9, 12, 0.92) 0%, rgba(16, 16, 22, 0.75) 50%, rgba(9, 9, 12, 0.92) 100%), #09090c;
 }
 
 .bento-post--center-cinema .bento-post__media {
-  height: calc(var(--post-h) + 20px);
-  width: calc((var(--post-h) + 20px) * 16 / 9);
+  height: var(--post-h);
+  width: calc(var(--post-h) * 16 / 9 + 24px);
   border-radius: 0;
   clip-path: polygon(4% 0, 100% 0, 96% 100%, 0 100%);
 }
@@ -1502,9 +1517,8 @@
   color: #09090b;
 }
 
-/* 6. Image in Middle · Neon Portal (+8% height: 216px card, 362×204 center image) */
+/* 6. Image in Middle · Neon Portal (inside fixed 1180×200 card) */
 .bento-post--center-neon {
-  height: calc(var(--post-h) + 16px);
   border-color: rgba(0, 240, 255, 0.55);
   background:
     radial-gradient(50% 120% at 50% 50%, rgba(0, 240, 255, 0.22), transparent 68%),
@@ -1514,8 +1528,8 @@
 }
 
 .bento-post--center-neon .bento-post__media {
-  height: calc(var(--post-h) + 4px);
-  width: calc((var(--post-h) + 4px) * 16 / 9);
+  height: calc(var(--post-h) - 8px);
+  width: calc((var(--post-h) - 8px) * 16 / 9);
   border: 1px solid rgba(0, 240, 255, 0.7);
   box-shadow: 0 0 22px rgba(0, 240, 255, 0.32), 0 0 38px rgba(255, 43, 214, 0.18);
 }

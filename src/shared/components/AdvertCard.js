@@ -46,6 +46,8 @@ function media(post) {
 const VALID_STYLES = new Set([
   'classic',
   'full-card',
+  'full-card-fit',
+  'full-card-btn',
   'full-card-plus',
   'neon-cyber',
   'cinema-backdrop',
@@ -66,16 +68,22 @@ function render(card, post) {
   const link = safeUrl(post.linkUrl);
   const external = /^https?:/.test(link);
   const style = VALID_STYLES.has(post.style) ? post.style : 'classic';
-  const hasCopy = Boolean(post.badge || post.title || post.text || link);
+  const isPureBanner = style === 'full-card' || style === 'full-card-fit';
+  const isBtnOnly = style === 'full-card-btn';
+  const hasCopy = !isPureBanner && Boolean(post.badge || post.title || post.text || link);
   card.className = `bento-post bento-post--${style}${!safeUrl(post.mediaUrl) ? ' bento-post--text' : ''}${!hasCopy ? ' bento-post--media-only' : ''}`;
   card.dataset.style = style;
-  const bgMedia = (style === 'cinema-backdrop' || style === 'center-cinema') && safeUrl(post.mediaUrl) && post.mediaType !== 'video'
+  const bgMedia = (style === 'cinema-backdrop' || style === 'center-cinema' || style === 'full-card-fit') && safeUrl(post.mediaUrl) && post.mediaType !== 'video'
     ? `<img class="bento-post__backdrop" src="${esc(safeUrl(post.mediaUrl))}" alt="" aria-hidden="true" loading="lazy" decoding="async">`
+    : '';
+  const fullOverlayLink = isPureBanner && link
+    ? `<a class="bento-post__full-hit" href="${esc(link)}"${external ? ' target="_blank" rel="noopener"' : ''} aria-label="${esc(post.title || post.text || 'Open link')}"></a>`
     : '';
   card.innerHTML = `
     ${bgMedia}
     ${media(post)}
-    ${hasCopy ? `<div class="bento-post__body">
+    ${fullOverlayLink}
+    ${isBtnOnly && link ? `<div class="bento-post__body bento-post__body--btn-only"><a class="btn btn--primary bento-post__link" href="${esc(link)}"${external ? ' target="_blank" rel="noopener"' : ''}>${esc(post.linkText || 'Find out more →')}</a></div>` : hasCopy ? `<div class="bento-post__body">
       ${post.badge ? `<span class="bento-post__badge">${esc(post.badge)}</span>` : ''}
       ${post.title ? `<h3 class="bento-post__title">${esc(post.title)}</h3>` : ''}
       ${post.text ? `<p class="bento-post__text">${esc(post.text)}</p>` : ''}
