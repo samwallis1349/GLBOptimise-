@@ -1,5 +1,5 @@
 import { APP_DESCRIPTION } from '../../shared/config/app.js';
-import { GAME_2D_GROUPS, PINNED_ORDER, TOOLS, getOrderedTools, getToolById } from '../../shared/config/tools.js';
+import { CATEGORIES, GAME_2D_GROUPS, PINNED_ORDER, TOOLS, getOrderedTools, getToolById } from '../../shared/config/tools.js';
 import { dimensionLegend } from '../../shared/components/ToolCard.js';
 import { BentoCard } from '../../shared/components/BentoCard.js';
 import { groupByCategory, advertPlaces, sectionSpans } from '../../shared/config/homeLayout.js';
@@ -140,8 +140,24 @@ function ToolsBlock() {
   section.dataset.layoutName = 'Tools';
   section.setAttribute('data-layout-lock-children', '');
 
+  const catNav = document.createElement('nav');
+  catNav.className = 'home-cat-nav';
+  catNav.setAttribute('aria-label', 'Tool categories');
+  catNav.innerHTML = `
+    <span class="home-cat-nav__label">Categories:</span>
+    <button type="button" class="home-cat-nav__pill" data-cat="" aria-pressed="true">All Tools <span class="home-cat-nav__count">${TOOLS.length}</span></button>
+    ${CATEGORIES.map((c) => {
+      const cnt = TOOLS.filter((t) => t.category === c.id).length;
+      return `<button type="button" class="home-cat-nav__pill" data-cat="${c.id}" aria-pressed="false">${iconSvg(c.icon, { class: 'home-cat-nav__icon' })}<span>${c.label}</span><span class="home-cat-nav__count">${cnt}</span></button>`;
+    }).join('')}
+    <a class="home-cat-nav__pill" href="#home-iso">${iconSvg('grid', { class: 'home-cat-nav__icon' })}<span>Isometric &amp; 2D</span></a>
+  `;
+  section.appendChild(catNav);
+
   const grid = document.createElement('div');
   grid.className = 'bento';
+  let activeCat = '';
+  let latestCounts = cachedUsageCounts();
   // The adverts pushed by API (AdvertCard.js): full-width banners half a tool card tall, one every 6 tools (30 Oct, user:
   // 'an advert banner ... every 6 tools'; was every 3 rows). 'advert' first, then 'advert-2', 'advert-3'... An
   // empty one stays hidden. The worker's /api/banner/slots lists the same places (worker/index.js bannerSlots). Made once and moved back into place when the grid re-ranks.
@@ -153,7 +169,9 @@ function ToolsBlock() {
   // Grouped by category with a title over each (31 Oct, shared/config/homeLayout.js): ranked by usage inside each
   // section, the first section opening with the big feature card, a banner after every 6 tools at a row end.
   const fill = (counts) => {
-    const groups = groupByCategory(rankByUsage(getOrderedTools(), counts, PINNED_ORDER));
+    latestCounts = counts;
+    const allGroups = groupByCategory(rankByUsage(getOrderedTools(), counts, PINNED_ORDER));
+    const groups = activeCat ? allGroups.filter((g) => g.category.id === activeCat) : allGroups;
     const places = advertPlaces(groups.map((g) => g.tools.length));
     const children = [];
     groups.forEach(({ category, tools }, gi) => {
@@ -173,7 +191,16 @@ function ToolsBlock() {
     });
     grid.replaceChildren(...children);
   };
-  fill(cachedUsageCounts());
+  catNav.querySelectorAll('button[data-cat]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      activeCat = btn.dataset.cat || '';
+      catNav.querySelectorAll('button[data-cat]').forEach((b) => {
+        b.setAttribute('aria-pressed', String((b.dataset.cat || '') === activeCat));
+      });
+      fill(latestCounts);
+    });
+  });
+  fill(latestCounts);
   fetchUsageCounts().then((counts) => grid.isConnected && fill(counts));
   section.appendChild(grid);
 
@@ -185,6 +212,7 @@ function IsoAssetsBlock() {
   const group = GAME_2D_GROUPS.find((g) => g.id === 'isometric');
   const tools = (group?.tools ?? []).map(getToolById).filter(Boolean);
   const section = document.createElement('section');
+  section.id = 'home-iso';
   section.className = 'home-iso home-bento container';
   section.dataset.layoutEditable = '';
   section.dataset.layoutId = 'home-iso';
@@ -285,6 +313,7 @@ function CTAPanel() {
 /** A category's title across the full grid width (the /tools page's group header): icon, name, tool count, blurb. */
 function categoryTitle(category, count) {
   const head = document.createElement('header');
+  head.id = `home-cat-${category.id}`;
   head.className = 'bento-group__head bento-cat-title';
   head.innerHTML = `
     <span class="bento-group__icon" aria-hidden="true">${iconSvg(category.icon, { class: 'bento-group__icon-svg' })}</span>

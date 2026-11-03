@@ -1133,16 +1133,34 @@
 .bento > .bento-cat-title {
   grid-column: 1 / -1;
   grid-row: auto;
-  margin: 18px 0 0;
+  margin: 22px 0 2px;
+  color: #ffffff;
 }
 
 .bento > .bento-cat-title:first-child {
   margin-top: 0;
 }
 
+.bento-cat-title .bento-group__title {
+  color: #ffffff;
+  font-size: clamp(22px, 2.5vw, 28px);
+  font-weight: 700;
+}
+
+.bento-cat-title .bento-group__count {
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.28);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.bento-cat-title .bento-group__blurb {
+  color: #ffffff;
+  opacity: 0.92;
+}
+
 .bento-cat-title__all {
   margin-left: auto;
-  color: var(--accent);
+  color: #ffffff;
   font-size: 13px;
   font-weight: 600;
   text-decoration: none;
@@ -1150,4 +1168,86 @@
 
 .bento-cat-title__all:hover {
   text-decoration: underline;
+}
+
+/* Homepage category filter & jump bar + card category labels in crisp white text */
+.home-cat-nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 18px;
+  padding: 10px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 14px;
+  background: var(--bento-panel);
+  color: #ffffff;
+}
+
+.home-cat-nav__label {
+  margin-right: 4px;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.home-cat-nav__pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 12px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  color: #ffffff;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: border-color var(--transition-fast), background-color var(--transition-fast);
+}
+
+.home-cat-nav__pill:hover {
+  border-color: #ffffff;
+  background: rgba(255, 255, 255, 0.14);
+  color: #ffffff;
+}
+
+.home-cat-nav__pill[aria-pressed='true'] {
+  border-color: #ffffff;
+  background: rgba(255, 255, 255, 0.22);
+  color: #ffffff;
+  box-shadow: 0 0 14px rgba(255, 255, 255, 0.18);
+}
+
+.home-cat-nav__icon {
+  width: 14px;
+  height: 14px;
+  color: #ffffff;
+}
+
+.home-cat-nav__count {
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.16);
+  color: #ffffff;
+  font-size: 10.5px;
+  font-weight: 700;
+}
+
+.bento-card__category {
+  margin-bottom: -4px;
+  color: #ffffff;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.home-bento .winner-card__category {
+  color: #ffffff;
 }

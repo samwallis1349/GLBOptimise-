@@ -1,7 +1,7 @@
 import { StatusBadge } from './StatusBadge.js';
 import { iconSvg } from '../utils/icons.js';
 import { toolClip } from '../config/toolClips.js';
-import { getToolDimension } from '../config/tools.js';
+import { getCategoryById, getToolDimension } from '../config/tools.js';
 import { accentTitle, dimensionTag, escapeHtml, featureChips } from './ToolCard.js';
 import { isToolWidgetOpen, onToolWidgetChange, openToolWidget } from './ToolWidget.js';
 
@@ -28,6 +28,7 @@ const reduceMotion = typeof matchMedia === 'function' && matchMedia('(prefers-re
  */
 export function BentoCard(tool) {
   const isAvailable = tool.status === 'available' || tool.status === 'beta';
+  const category = getCategoryById(tool.category);
   const clip = toolClip(tool.id);
   const still = clip?.poster ?? tool.thumbnail;
 
@@ -36,6 +37,7 @@ export function BentoCard(tool) {
   card.href = tool.route;
   card.dataset.status = tool.status;
   card.dataset.dim = getToolDimension(tool).id;
+  if (category) card.dataset.category = category.id;
 
   const mcp = tool.mcp?.length ? `<span class="bento-card__mcp" title="Also in the AssetBench MCP server: ${escapeHtml(tool.mcp.join(', '))}">MCP</span>` : '';
   const cta = isAvailable
@@ -54,6 +56,7 @@ export function BentoCard(tool) {
       ${tool.free ? '<span class="bento-card__free">Free tool</span>' : ''}
     </div>
     <div class="bento-card__body">
+      ${category ? `<div class="bento-card__category">${escapeHtml(category.label)}</div>` : ''}
       <div class="bento-card__top">
         <span class="bento-card__tab" aria-hidden="true">${iconSvg(tool.icon, { class: 'bento-card__tab-icon' })}</span>
         <h3 class="bento-card__name">${accentTitle(tool.name)}</h3>
